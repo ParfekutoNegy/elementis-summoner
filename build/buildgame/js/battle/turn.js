@@ -550,6 +550,34 @@ function decideFirstPlayerForMatch(){
 function setNextFirstPlayer(winner){
 
     //----------------------------------
+    // 今回の勝者
+    //----------------------------------
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ setNextFirstPlayer 実行"
+    );
+
+    console.log(
+        "★ winner =",
+        winner
+    );
+
+    console.log(
+        "★ PLAYER =",
+        PLAYER
+    );
+
+    console.log(
+        "★ ENEMY =",
+        ENEMY
+    );
+
+
+    //----------------------------------
     // 勝者の反対側が次の先攻
     //----------------------------------
 
@@ -560,13 +588,12 @@ function setNextFirstPlayer(winner){
 
 
     console.log(
-        "今回の勝者:",
-        winner
+        "★ 次の先攻 nextFirstPlayer =",
+        nextFirstPlayer
     );
 
     console.log(
-        "次のゲームの先攻:",
-        nextFirstPlayer
+        "================================"
     );
 
 }

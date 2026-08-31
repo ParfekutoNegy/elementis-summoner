@@ -548,9 +548,11 @@ if(retryButton){
 
 }
 
-//------------------------------------------
+
+//=========================
 // ホームに戻るボタン
-//------------------------------------------
+//=========================
+
 
 const homeButton =
     document.getElementById(
@@ -577,6 +579,7 @@ if(homeButton){
     };
 
 }
+
 
 
     //=========================
@@ -811,8 +814,57 @@ if(menuHomeButton){
 
 
         //----------------------------------
+        // 確認
+        //----------------------------------
+
+        const result =
+            window.confirm(
+                "ホームに戻りますか？\n\n現在のゲーム内容は保存されません。"
+            );
+
+
+        console.log(
+            "★ ホームに戻る確認結果：",
+            result
+        );
+
+
+        //----------------------------------
+        // キャンセル
+        //----------------------------------
+
+        if(!result){
+
+            console.log(
+                "★ ホームに戻るキャンセル"
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // メニューを閉じる
+        //----------------------------------
+
+        if(gameMenu){
+
+            gameMenu.classList.remove(
+                "show"
+            );
+
+        }
+
+
+        //----------------------------------
         // ホーム画面へ移動
         //----------------------------------
+
+        console.log(
+            "★ ホーム画面へ移動"
+        );
+
 
         location.href =
             "../../index.html";
@@ -7325,6 +7377,8 @@ function finishBattleGame(winner){
             ? ENEMY
             : PLAYER;
 
+    nextGameLoser =
+    nextFirstPlayer;       
 
     console.log(
         "★ 次のゲームの先攻予定：",
@@ -7413,7 +7467,7 @@ function concedeGame(){
 // 前のゲームの敗者が先攻
 //======================================
 
-function startNextGame(winner){
+function startNextGame(){
 
     console.log(
         "================================"
@@ -7428,17 +7482,6 @@ function startNextGame(winner){
     //----------------------------------
 
     battleGameEnding = false;
-
-
-
-    //----------------------------------
-    // 次の先攻を決定
-    // 前のゲームの敗者
-    //----------------------------------
-
-    setNextFirstPlayer(
-        winner
-    );
 
 
     //----------------------------------
@@ -7565,27 +7608,28 @@ function startNextGame(winner){
         TURN_STATE.START;
 
 
-//----------------------------------
-// LIFEリセット
-//----------------------------------
+    //----------------------------------
+    // LIFEリセット
+    //----------------------------------
 
-const initialLife =
-    Number(
-        currentGameSettings.life
-    ) || 5;
-
-
-game.playerLife =
-    initialLife;
-
-game.enemyLife =
-    initialLife;
+    const initialLife =
+        Number(
+            currentGameSettings.life
+        ) || 5;
 
 
-console.log(
-    "★ 次のゲームの初期LIFE：",
-    initialLife
-);
+    game.playerLife =
+        initialLife;
+
+    game.enemyLife =
+        initialLife;
+
+
+    console.log(
+        "★ 次のゲームの初期LIFE：",
+        initialLife
+    );
+
 
     //----------------------------------
     // 1戦分の盤面を初期化
@@ -7630,7 +7674,6 @@ console.log(
     );
 
 }
-
 
 //======================================
 // 対戦終了
@@ -9244,9 +9287,7 @@ function setupSideDeckChangeButton(){
         // 第2戦開始
         //----------------------------------
 
-        startNextGame(
-            nextGameLoser
-        );
+        startNextGame();
 
     };
 
