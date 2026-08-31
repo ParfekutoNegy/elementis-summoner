@@ -8871,25 +8871,10 @@ let imagePath =
     card.image;
 
 
-// 「../」を取り除いて
-// サイトルートの images を参照
 if(imagePath){
 
     imagePath =
-        imagePath.replace(
-            /^(\.\.\/)+/,
-            ""
-        );
-
-
-    if(
-        !imagePath.startsWith("/")
-    ){
-
-        imagePath =
-            "/" + imagePath;
-
-    }
+        "../../" + imagePath;
 
 }
 
