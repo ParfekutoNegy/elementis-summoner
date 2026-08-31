@@ -1,0 +1,1533 @@
+#battle-screen{
+
+    width:1280px;
+    height:720px;
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform-origin:center center;
+
+    background-image:url("../../../images/background/battle-background-01.png");
+
+    background-size:100% 100%;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    overflow:hidden;
+}
+
+#game-container{
+
+    width:100vw;
+    height:100vh;
+
+    overflow:hidden;
+
+    position:relative;
+
+    background:#000;
+}
+
+
+#battle-ui{
+
+    display:grid;
+
+    grid-template-rows:
+
+    105px
+    1fr
+    15px
+    160px;
+
+    width:100%;
+
+    height:100%;
+
+    position:relative;
+
+    z-index:1;
+
+}
+
+/* 上下プレイヤー情報 */
+#enemy-header,
+#player-header{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:18px;
+
+    padding:0 1.2%;
+
+    color:var(--text-color);
+
+    background:rgba(0,0,0,0.18);
+
+    backdrop-filter:none;
+
+    position:relative;
+
+    overflow:visible;
+
+}
+
+/* メイン */
+
+#battle-main{
+
+    display:grid;
+
+    grid-template-columns:
+
+    90px
+    1fr
+    160px;
+
+}
+
+
+/* ==========================================
+   ログエリア
+========================================== */
+
+#log-area{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+/* フィールド */
+
+#field-area{
+
+    display:grid;
+
+    grid-template-rows:
+
+    1fr
+    1fr;
+
+    gap:15px;
+
+    padding:15px;
+
+}
+
+
+#enemy-field,
+#player-field{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-wrap:nowrap;
+
+    gap:60px;
+
+    overflow:visible;
+
+    min-height:110px;
+
+    padding:10px;
+
+    border-radius:10px;
+
+    border:none;
+
+    position:relative;
+
+    top:25px;
+}
+
+#player-field .card,
+#enemy-field .card{
+
+    filter:
+        drop-shadow(
+            0 4px 5px rgba(0,0,0,0.45)
+        );
+
+}
+
+
+/* ターン終了 */
+
+#endturn-area{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+}
+
+
+#player-icon-area{
+
+    width:128px;
+
+    height:128px;
+
+    flex-shrink:0;
+
+    margin-right:20px;
+
+}
+
+
+#player-icon{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+    border-radius:20%;
+
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+
+    border:3px solid rgba(255,255,255,0.8);
+
+}
+
+
+#hand-cards-area{
+
+    flex:1;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+}
+
+
+
+/* ==========================
+   相手プレイヤー情報
+   固定配置用
+========================== */
+
+#enemy-player-area{
+
+    flex:none;
+
+    width:200px;
+    height:140px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:flex-start;
+
+    position:relative;
+
+    overflow:visible;
+
+}
+
+#enemy-player-icon{
+
+    width:120px;
+    height:120px;
+
+    object-fit:cover;
+
+    border-radius:20%;
+
+    cursor:pointer;
+
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+
+    border:3px solid rgba(255,255,255,0.8);
+
+    transform:translate(290px,15px);
+
+
+
+    z-index:20;
+
+
+}
+
+/*==============================
+ ダメージ表示
+==============================*/
+
+.damage-number{
+
+    position:absolute;
+
+    color:red;
+
+    font-size:36px;
+
+    font-weight:bold;
+
+    pointer-events:none;
+
+    animation: damageFloat 2.5s ease-out forwards;
+
+    z-index:100;
+
+}
+
+
+@keyframes damageFloat{
+
+    0%{
+
+        opacity:1;
+
+        transform:
+        translateY(0);
+
+    }
+
+
+    70%{
+
+        opacity:1;
+
+    }
+
+
+    100%{
+
+        opacity:0;
+
+        transform:
+        translateY(-40px);
+
+    }
+
+}
+
+
+
+
+#turn-message.show{
+
+    opacity:1;
+
+}
+
+/*======================================
+  ターン開始演出
+======================================*/
+
+#turn-overlay{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:
+    rgba(0,0,0,0.65);
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+    z-index:3000;
+
+
+    opacity:0;
+
+    pointer-events:none;
+
+
+    transition:
+    opacity 0.3s;
+
+}
+
+
+
+#turn-overlay.show{
+
+    opacity:1;
+
+}
+
+
+
+/* TURN 3 */
+
+#turn-number{
+
+    font-size:70px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+    0 0 15px black;
+
+}
+
+
+
+/* PLAYER TURN */
+
+#turn-message{
+
+    margin-top:20px;
+
+    font-size:55px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+    0 0 20px black;
+
+}
+
+/* ==========================================
+   バトルログ
+========================================== */
+
+#battle-log{
+
+    position:absolute;
+
+    left:0;
+    bottom:250px;
+
+    width:260px;
+    max-height:400px;
+
+    padding:10px;
+
+    box-sizing:border-box;
+
+    background:rgba(0,0,0,0.85);
+
+    border:2px solid #888;
+
+    border-radius:8px;
+
+    overflow-y:auto;
+
+    display:block;
+
+    z-index:100;
+
+}
+
+/* ==========================================
+   ログ非表示
+========================================== */
+
+#log-area.log-closed #battle-log{
+
+    display:none;
+
+}
+
+
+/* ==========================================
+   ログ1行
+========================================== */
+
+.battle-log-entry{
+
+    padding:6px 4px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.2);
+
+    color:white;
+
+    font-size:14px;
+
+    line-height:1.4;
+
+}
+
+
+/* ==========================================
+   最新ログ
+========================================== */
+
+.battle-log-entry.latest-log{
+
+    font-weight:bold;
+
+    font-size:16px;
+
+    background:
+        rgba(255,255,255,0.18);
+
+    border-left:
+        4px solid white;
+
+    padding-left:8px;
+
+}
+
+
+/* ==========================================
+   LOGボタン
+========================================== */
+
+#log-button{
+
+    position:absolute;
+
+    top:10px;
+    left:10px;
+
+    z-index:101;
+
+    box-sizing:border-box;
+
+}
+
+/* ==========================================
+   プレイヤー行動案内
+========================================== */
+
+#action-guide{
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    min-width:300px;
+    max-width:600px;
+
+    padding:15px 25px;
+
+    box-sizing:border-box;
+
+    background:
+        rgba(0,0,0,0.85);
+
+    border:
+        2px solid white;
+
+    border-radius:10px;
+
+    text-align:center;
+
+    z-index:999999;
+
+    display:none;
+
+}
+
+
+/* ==========================================
+   行動案内テキスト
+========================================== */
+
+#action-guide-text{
+
+    color:white;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    line-height:1.4;
+
+}
+
+/*======================================
+  CPUカード使用演出
+======================================*/
+
+#cpu-card-action-overlay{
+
+    position:absolute;
+
+    left:0;
+    top:0;
+
+    width:100%;
+    height:100%;
+
+    display:none;
+
+    align-items:flex-start;
+
+    justify-content:flex-end;
+
+    padding-right:0;
+
+    box-sizing:border-box;
+
+    z-index:999998;
+
+    pointer-events:none;
+
+}
+
+
+#cpu-card-action-overlay.active{
+
+    display:flex;
+
+}
+
+
+/*======================================
+  CPUカード使用パネル
+======================================*/
+
+#cpu-card-action-panel{
+
+    width:380px;
+
+    height:550px;
+
+    padding:20px;
+
+    box-sizing:border-box;
+
+    background:
+        rgba(20,20,20,0.95);
+
+    border:
+        2px solid white;
+
+    border-top-left-radius:14px;
+
+    border-bottom-left-radius:14px;
+
+    border-top-right-radius:0;
+
+    border-bottom-right-radius:0;
+
+    box-shadow:
+        0 10px 35px
+        rgba(0,0,0,0.5);
+
+    text-align:center;
+
+    color:white;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    opacity:0;
+
+    transform:
+        translateX(30px);
+
+    animation:
+        cpuCardActionFadeIn
+        0.2s
+        ease-out
+        forwards;
+
+}
+
+
+/*======================================
+  CPUカード使用タイプ
+======================================*/
+
+#cpu-card-action-type{
+
+    font-size:24px;
+
+    font-weight:bold;
+
+    letter-spacing:2px;
+
+    margin-bottom:12px;
+
+}
+
+
+/*======================================
+  CPU使用カード画像
+======================================*/
+
+#cpu-card-action-image{
+
+    width:300px;
+
+    height:auto;
+
+    max-width:100%;
+
+    max-height:400px;
+
+    object-fit:contain;
+
+    display:block;
+
+    margin:0 auto 12px;
+
+    border-radius:8px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(0,0,0,0.5);
+
+}
+
+
+/*======================================
+  CPUカード名
+======================================*/
+
+#cpu-card-action-name{
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    margin-bottom:8px;
+
+}
+
+
+/*======================================
+  CPUカード対象
+======================================*/
+
+#cpu-card-action-target{
+
+    font-size:23px;
+
+}
+
+
+/*======================================
+  フェードイン
+======================================*/
+
+@keyframes cpuCardActionFadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            translateX(30px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            translateX(0);
+
+    }
+
+}
+
+
+/*======================================
+  フェードアウト
+======================================*/
+
+#cpu-card-action-overlay.fade-out
+#cpu-card-action-panel{
+
+    animation:
+        cpuCardActionFadeOut
+        0.3s
+        ease-in
+        forwards;
+
+}
+
+
+@keyframes cpuCardActionFadeOut{
+
+    from{
+
+        opacity:1;
+
+        transform:
+            translateX(0);
+
+    }
+
+    to{
+
+        opacity:0;
+
+        transform:
+            translateX(30px);
+
+    }
+
+}
+
+/*======================================
+  CPU手札表示
+======================================*/
+
+#enemy-hand-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    width:220px;
+
+    min-height:80px;
+
+    position:relative;
+
+    transform:translateX(290px);
+
+}
+
+/*--------------------------------------
+  裏面カード
+--------------------------------------*/
+
+#enemy-hand-cards{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:60px;
+
+}
+
+
+/*--------------------------------------
+  手札カード
+--------------------------------------*/
+
+.enemy-hand-card{
+
+    width:38px;
+
+    height:56px;
+
+    object-fit:cover;
+
+    border-radius:4px;
+
+    margin-left:-16px;
+
+    box-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.45);
+
+}
+
+
+.enemy-hand-card:first-child{
+
+    margin-left:0;
+
+}
+
+
+/*--------------------------------------
+  枚数
+--------------------------------------*/
+
+#enemy-hand-count{
+
+    margin-top:5px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        1px 1px 3px black;
+
+    white-space:nowrap;
+
+}
+/*======================================
+  CPUコスト表示
+======================================*/
+
+#enemy-cost-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    transform:translateX(300px);
+
+}
+
+
+/*--------------------------------------
+  コストカード
+--------------------------------------*/
+
+#enemy-cost-cards{
+
+    display:flex;
+
+    flex-direction:row;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:55px;
+
+}
+
+
+/*--------------------------------------
+  コストカード
+--------------------------------------*/
+
+.enemy-cost-card{
+
+    width:38px;
+
+    height:55px;
+
+    object-fit:cover;
+
+    border-radius:4px;
+
+    margin-left:-16px;
+
+    box-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.45);
+
+}
+
+
+.enemy-cost-card:first-child{
+
+    margin-left:0;
+
+}
+
+
+/*--------------------------------------
+  コスト枚数
+--------------------------------------*/
+
+#enemy-cost-count{
+
+    margin-top:4px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        1px 1px 3px black;
+
+    white-space:nowrap;
+
+}
+
+
+/*======================================
+  CPUクール表示
+======================================*/
+
+#enemy-cool-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    transform:translateX(320px);
+
+}
+
+
+/*--------------------------------------
+  クールカード
+--------------------------------------*/
+
+#enemy-cool-cards{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:55px;
+
+    overflow:visible;
+
+}
+
+
+/*--------------------------------------
+  クールカード画像
+--------------------------------------*/
+
+.enemy-cool-card{
+
+    width:38px;
+
+    height:55px;
+
+    object-fit:cover;
+
+    border-radius:4px;
+
+    margin-left:-16px;
+
+    filter:brightness(0.55);
+
+    box-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.45);
+
+}
+
+
+.enemy-cool-card:first-child{
+
+    margin-left:0;
+
+}
+
+
+/*--------------------------------------
+  クール枚数
+--------------------------------------*/
+
+#enemy-cool-count{
+
+    margin-top:4px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        1px 1px 3px black;
+
+    white-space:nowrap;
+
+}
+
+/*======================================
+  プレイヤーコスト表示
+======================================*/
+
+#player-cost-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transform:translateY(-30px);
+
+}
+
+
+/*--------------------------------------
+  コストカード
+--------------------------------------*/
+
+#player-cost-cards{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:55px;
+
+}
+
+
+/*--------------------------------------
+  コストカード1枚
+--------------------------------------*/
+
+.player-cost-card{
+
+    width:38px;
+
+    height:55px;
+
+    object-fit:cover;
+
+    border-radius:4px;
+
+    margin-left:-16px;
+
+    box-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.45);
+
+}
+
+
+.player-cost-card:first-child{
+
+    margin-left:0;
+
+}
+
+
+/*--------------------------------------
+  コスト枚数
+--------------------------------------*/
+
+#player-cost-count{
+
+    margin-top:4px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        1px 1px 3px black;
+
+    white-space:nowrap;
+
+}
+
+
+/*======================================
+  プレイヤークール表示
+======================================*/
+
+#player-cool-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transform:translateY(-30px);
+
+}
+
+
+/*--------------------------------------
+  クールカード
+--------------------------------------*/
+
+#player-cool-cards{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    height:55px;
+
+}
+
+
+/*--------------------------------------
+  クールカード1枚
+--------------------------------------*/
+
+.player-cool-card{
+
+    width:38px;
+
+    height:55px;
+
+    object-fit:cover;
+
+    border-radius:4px;
+
+    margin-left:-16px;
+
+    filter:brightness(0.55);
+
+    box-shadow:
+        0 2px 5px
+        rgba(0,0,0,0.45);
+
+}
+
+
+.player-cool-card:first-child{
+
+    margin-left:0;
+
+}
+
+
+/*--------------------------------------
+  クール枚数
+--------------------------------------*/
+
+#player-cool-count{
+
+    margin-top:4px;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        1px 1px 3px black;
+
+    white-space:nowrap;
+
+}
+
+#enemy-player-area,
+#player-icon-area{
+
+    display:flex;
+
+    align-items:center;
+
+}
+
+
+/* CPU */
+
+#enemy-player-area{
+
+    gap:8px;
+
+}
+
+
+/* PLAYER */
+
+#player-icon-area{
+
+    gap:8px;
+
+}
+
+
+/* LIFE */
+
+#player-life-display,
+#enemy-life-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:50px;
+
+    line-height:1;
+
+}
+
+
+/*======================================
+  LIFE表示
+======================================*/
+
+#player-life-display,
+#enemy-life-display{
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    min-width:72px;
+
+    padding:7px 10px;
+
+    background:
+        rgba(0,0,0,0.65);
+
+    border:
+        2px solid
+        rgba(255,255,255,0.5);
+
+    border-radius:10px;
+
+    box-sizing:border-box;
+
+    line-height:1;
+
+    box-shadow:
+        0 3px 8px
+        rgba(0,0,0,0.45);
+
+}
+
+#player-life-display{
+    margin-left:-22px;
+}
+
+#enemy-life-display{
+
+    transform:translate(285px, 12px);
+
+}
+
+
+/*======================================
+  LIFE文字
+======================================*/
+
+.life-label{
+
+    font-size:14px;
+
+    font-weight:bold;
+
+    letter-spacing:2px;
+
+    color:white;
+
+    text-shadow:
+        0 1px 3px black;
+
+}
+
+
+/*======================================
+  LIFE数値
+======================================*/
+
+#player-life-value,
+#enemy-life-value{
+
+    margin-top:5px;
+
+    font-size:38px;
+
+    font-weight:900;
+
+    color:white;
+
+    text-shadow:
+        0 2px 4px black,
+        0 0 8px rgba(255,255,255,0.35);
+
+}
+
+/*======================================
+  勝利数スター
+======================================*/
+
+#player-win-stars,
+#enemy-win-stars{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:4px;
+
+    margin-top:6px;
+
+}
+
+
+/*--------------------------------------
+  スター
+--------------------------------------*/
+
+.win-star{
+
+    font-size:22px;
+
+    line-height:1;
+
+    color:#777;
+
+    -webkit-text-stroke:
+    0.2px rgba(255,255,255,0.7);
+
+    text-shadow:
+        1px 1px 2px black;
+
+}
+
+
+/*--------------------------------------
+  獲得済み
+--------------------------------------*/
+
+.win-star.active{
+
+    color:#ffd700;
+
+    text-shadow:
+        0 0 5px rgba(255,215,0,0.8),
+        1px 1px 2px black;
+
+}
+
+/*======================================
+  マッチ結果表示
+======================================*/
+
+#match-result-overlay{
+
+    position:absolute;
+
+    top:0;
+    left:0;
+
+    width:100%;
+    height:100%;
+
+    background:
+        rgba(0,0,0,0.65);
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    z-index:3500;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    transition:
+        opacity 0.3s;
+
+}
+
+
+#match-result-overlay.show{
+
+    opacity:1;
+
+    pointer-events:auto;
+
+}
+
+
+/*--------------------------------------
+  勝敗
+--------------------------------------*/
+
+#match-result-title{
+
+    font-size:56px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        0 0 20px black;
+
+}
+
+
+/*--------------------------------------
+  スコア
+--------------------------------------*/
+
+#match-result-score{
+
+    margin-top:20px;
+
+    font-size:42px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        0 0 12px black;
+
+}

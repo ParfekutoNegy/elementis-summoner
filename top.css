@@ -1,0 +1,323 @@
+*{
+    box-sizing: border-box;
+}
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    min-height: 100%;
+
+}
+
+body {
+
+    background:
+        linear-gradient(
+            135deg,
+            #24170e,
+            #4a321b,
+            #21150d
+        );
+
+    color: #f4e6c5;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+}
+
+
+/* =========================
+   トップ画面
+========================= */
+
+#top-screen {
+
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    padding:
+        50px
+        20px
+        30px;
+
+}
+
+
+/* =========================
+   タイトル
+========================= */
+
+#top-header {
+
+    text-align: center;
+
+    margin-bottom: 50px;
+
+}
+
+#top-header h1 {
+
+    margin: 0;
+
+    font-size: 42px;
+
+    letter-spacing: 4px;
+
+    color: #f1dfb5;
+
+    text-shadow:
+        0 3px 5px
+        rgba(0,0,0,0.7);
+
+}
+
+#top-header p {
+
+    margin-top: 14px;
+
+    font-size: 14px;
+
+    letter-spacing: 5px;
+
+    color: #c9ae78;
+
+}
+
+
+/* =========================
+   メニュー
+========================= */
+
+#top-menu {
+
+    width: 100%;
+
+    max-width: 620px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 18px;
+
+}
+
+
+/* =========================
+   メニューボタン
+========================= */
+
+.top-menu-button {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 95px;
+
+    padding: 18px 25px;
+
+    text-decoration: none;
+
+    color: #f5e6c5;
+
+    background:
+        linear-gradient(
+            145deg,
+            #5b4024,
+            #362313
+        );
+
+    border:
+        2px solid #9a7742;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 7px 12px
+        rgba(0,0,0,0.45),
+
+        inset 0 1px 0
+        rgba(255,255,255,0.12);
+
+    transition:
+        transform 0.15s,
+        box-shadow 0.15s;
+
+}
+
+
+/* =========================
+   ボタンタイトル
+========================= */
+
+.menu-title {
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+}
+
+
+/* =========================
+   説明
+========================= */
+
+.menu-description {
+
+    margin-top: 7px;
+
+    font-size: 13px;
+
+    color: #cbb68d;
+
+}
+
+
+/* =========================
+   押したとき
+========================= */
+
+.top-menu-button:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 18px
+        rgba(0,0,0,0.55),
+
+        inset 0 1px 0
+        rgba(255,255,255,0.16);
+
+}
+
+
+.top-menu-button:active {
+
+    transform:
+        translateY(2px);
+
+    box-shadow:
+        0 3px 7px
+        rgba(0,0,0,0.5);
+
+}
+
+
+/* =========================
+   フッター
+========================= */
+
+#top-footer {
+
+    margin-top: auto;
+
+    padding-top: 45px;
+
+    text-align: center;
+
+}
+
+#top-footer p {
+
+    margin: 0;
+
+    font-size: 11px;
+
+    letter-spacing: 4px;
+
+    color: #92794d;
+
+}
+
+
+/* =========================
+   スマートフォン
+========================= */
+
+@media (max-width: 600px) {
+
+    #top-screen {
+
+        padding:
+            35px
+            15px
+            20px;
+
+    }
+
+
+    #top-header {
+
+        margin-bottom: 35px;
+
+    }
+
+
+    #top-header h1 {
+
+        font-size: 28px;
+
+        letter-spacing: 2px;
+
+    }
+
+
+    #top-header p {
+
+        font-size: 11px;
+
+        letter-spacing: 3px;
+
+    }
+
+
+    #top-menu {
+
+        gap: 14px;
+
+    }
+
+
+    .top-menu-button {
+
+        min-height: 82px;
+
+    }
+
+
+    .menu-title {
+
+        font-size: 20px;
+
+    }
+
+
+    .menu-description {
+
+        font-size: 11px;
+
+    }
+
+}

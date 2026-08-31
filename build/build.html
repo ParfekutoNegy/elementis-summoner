@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>ビルドルール - Elementis Summoner</title>
+
+    <link
+        rel="stylesheet"
+        href="build.css">
+
+</head>
+
+<body>
+
+<div id="build-screen">
+
+    <!-- =========================
+         ヘッダー
+    ========================= -->
+
+    <header id="build-header">
+
+        <div id="build-title-area">
+
+            <h1>
+                ✦ ビルドルール ✦
+            </h1>
+
+            <p>
+                レギュレーション・ライフ・使用デッキを選択してください
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         ゲーム条件
+    ========================= -->
+
+    <section id="settings-section">
+
+        <!-- レギュレーション -->
+
+        <div class="setting-box">
+
+            <label
+                for="regulation-select">
+
+                レギュレーション
+
+            </label>
+
+            <select
+                id="regulation-select">
+
+                <option value="all">
+                    オールカード
+                </option>
+
+                <option value="basic">
+                    ベーシック
+                </option>
+
+                <option value="folklore">
+                    フォークロア
+                </option>
+
+                <option value="mythology">
+                    ミソロジー
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ライフ -->
+
+        <div class="setting-box">
+
+            <label
+                for="life-select">
+
+                ライフ
+
+            </label>
+
+            <select
+                id="life-select">
+
+                <option value="1">
+                    1
+                </option>
+
+                <option value="2">
+                    2
+                </option>
+
+                <option value="3">
+                    3
+                </option>
+
+                <option value="4">
+                    4
+                </option>
+
+                <option
+                    value="5"
+                    selected>
+
+                    5
+
+                </option>
+
+            </select>
+
+            <p
+                id="life-description"
+                class="setting-description">
+
+                オールカードではライフ5固定
+
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         デッキ選択
+    ========================= -->
+
+    <section id="deck-section">
+
+        <div class="section-title">
+
+            <h2>
+                使用デッキ
+            </h2>
+
+            <p id="deck-count">
+                0個のデッキ
+            </p>
+
+        </div>
+
+
+        <div id="saved-decks">
+
+            <!-- build.jsで生成 -->
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         ゲーム開始
+    ========================= -->
+
+<!-- =========================
+     下部固定操作エリア
+========================= -->
+
+<div id="fixed-action-area">
+
+    <button
+        id="back-button"
+        type="button"
+        onclick="backToHome()">
+
+        ホームへ戻る
+
+    </button>
+
+
+    <div id="selected-deck-message">
+
+        デッキを選んでください
+
+    </div>
+
+
+    <button
+        id="start-game-button"
+        type="button"
+        onclick="startBuildGame()"
+        disabled>
+
+        ゲーム開始
+
+    </button>
+
+</div>
+
+</div>
+
+
+<!-- =========================
+     デッキリスト表示モーダル
+========================= -->
+
+<div
+    id="deck-list-modal"
+    class="deck-list-modal">
+
+    <div class="deck-list-modal-content">
+
+        <!-- ヘッダー -->
+
+        <div class="deck-list-modal-header">
+
+            <h2 id="deck-list-modal-title">
+                デッキリスト
+            </h2>
+
+        </div>
+
+
+        <!-- メインデッキ -->
+
+        <section class="deck-list-group">
+
+            <h3>
+                MAIN DECK
+            </h3>
+
+            <div
+                id="modal-main-deck"
+                class="modal-card-grid">
+
+                <!-- build.jsで生成 -->
+
+            </div>
+
+        </section>
+
+
+        <!-- サイドデッキ -->
+
+        <section class="deck-list-group">
+
+            <h3>
+                SIDE DECK
+            </h3>
+
+            <div
+                id="modal-side-deck"
+                class="modal-card-grid">
+
+                <!-- build.jsで生成 -->
+
+            </div>
+
+        </section>
+
+
+        <!-- 閉じる -->
+
+        <button
+            type="button"
+            id="deck-list-modal-bottom-close"
+            onclick="closeDeckListModal()">
+
+            閉じる
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="../deck/cards.js"></script>
+
+<script src="build.js"></script>
+
+</body>
+
+</html>
+

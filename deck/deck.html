@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grimoire - デッキ構築</title>
+    <meta name="apple-mobile-web-app-title" content="Grimoire">
+    <meta name="theme-color" content="#6e4d22">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- =========================
+     デッキ一覧画面
+========================= -->
+
+<div id="deck-list-screen">
+
+    <div id="title">
+        <h1>✦─── GRIMOIRE ───✦</h1>
+    </div>
+
+    <div id="saved-decks"></div>
+
+    <div class="floating-buttons">
+
+        <input
+            type="file"
+            id="qr-image-input"
+            accept="image/*"
+            style="display:none;">
+
+        <button
+            id="create-deck-button"
+            class="floating-btn"
+            onclick="createNewDeck()">
+            ✒️
+        </button>
+
+        <button
+            id="qr-load-button"
+            class="floating-btn"
+            onclick="document.getElementById('qr-image-input').click()">
+            📖
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     下部固定操作エリア
+     deck-list-screenの外
+========================= -->
+
+<div id="deck-home-button-area">
+
+    <button
+        type="button"
+        id="deck-home-button"
+        onclick="goToHome()">
+
+        ホーム画面へ戻る
+
+    </button>
+
+    <button
+        type="button"
+        id="deck-build-button"
+        onclick="goToBuildRule()">
+
+        ビルドルールで対戦
+
+    </button>
+
+</div>
+
+<!-- =========================
+     デッキ画像作成用Canvas
+========================= -->
+<canvas
+    id="deck-canvas"
+    width="800"
+    height="1200"
+    style="display:none;">
+</canvas>
+<!-- =========================
+     デッキ画像プレビュー画面
+========================= -->
+<div
+    id="deck-image-screen"
+    style="display:none;">
+    <img
+        id="preview"
+        style="width:100%; max-width:none;height:auto;">
+    <div id="qr-preview"></div>
+    <div
+        id="deck-image-buttons"
+        style="
+        display:flex;
+        gap:12px;
+        justify-content:center;
+        margin-top:20px;
+        flex-wrap:wrap;">
+        <button
+            id="save-image-btn"
+            class="deck-image-btn">
+            画像を保存
+        </button>
+        <button
+            onclick="showDeckListScreen()"
+            class="deck-image-btn">
+            一覧へ戻る
+        </button>
+        <button
+            onclick="showBuilderScreen()"
+            class="deck-image-btn">
+            編集へ戻る
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     編集画面（builder-screen）
+========================= -->
+
+
+
+<div id="builder-screen">
+        <!-- =========================
+         メインデッキ
+    ========================= -->
+    <div id="main-deck-section">
+        <div class="main-header">
+        </div>
+        <div id="main-deck"></div>
+    </div>
+    <div id="main-deck-spacer"></div>
+    <!-- =========================
+         サイドデッキ＋編集
+    ========================= -->
+    <div id="middle-section">
+        <div id="side-section">
+            <div id="sub-deck"></div>
+        </div>
+        <div id="editor-section">
+            <input
+                type="text"
+                id="deck-name"
+                class="deck-name-input"
+                placeholder="デッキ名を入力する"
+                oninput="autoSaveDeck()">
+            <button onclick="showDeckImagePage()">
+                デッキ画像を表示
+            </button>
+            <button onclick="showDeckListScreen()">
+                デッキ一覧へ戻る
+            </button>
+            <button
+                id="candidate-toggle-btn"
+                class="candidate-toggle-btn"
+                onclick="showCandidates()">
+                検討中カードを表示
+            </button>
+        </div>
+    </div>
+    <!-- =========================
+         検討中カード
+    ========================= -->
+    <div id="candidate-section">
+        <div id="candidate-area"></div>
+    </div>
+    <!-- =========================
+         フローティングボタン
+    ======================== -->
+    <button
+    class="floating-btn filter-fab"
+    onclick="openFilterModal()">
+    🔍
+</button>
+<button
+    id="pin-deck-btn"
+    class="floating-btn pin-fab"
+    onclick="toggleDeckPin()">
+    📌
+</button>
+
+    <!-- =========================
+         フィルターモーダル
+    ========================= -->
+    <div id="filter-modal" class="modal">
+        <div class="modal-content">
+            <h2></h2>
+            <div id="filter-content">
+                <p></p>
+                <label>
+                    <input
+                        type="text"
+                        id="search"
+                        placeholder="カード名を検索">
+                </label>
+                <label class="elementButton">
+                    <input type="checkbox" value="火" class="elementFilter" onchange="displayCards()">
+                    <span>
+                        <img src="images/ignis.png"
+                        class="element-icon"
+                        alt="火">
+                    </span>
+                </label>
+                <label class="elementButton">
+                    <input type="checkbox" value="風" class="elementFilter" onchange="displayCards()">
+                    <span>
+                        <img src="images/aer.png"
+                        class="element-icon"
+                        alt="風">
+                    </span>
+                </label>
+                <label class="elementButton">
+                    <input type="checkbox" value="水" class="elementFilter" onchange="displayCards()">
+                    <span>
+                        <img src="images/aqua.png"
+                        class="element-icon"
+                        alt="水">
+                    </span>
+                </label>
+                <label class="elementButton">
+                    <input type="checkbox" value="土" class="elementFilter" onchange="displayCards()">
+                    <span>
+                        <img src="images/terra.png"
+                        class="element-icon"
+                        alt="土">
+                    </span>
+                </label>
+                <p></p>
+                <label class="typeButton">
+                    <input type="checkbox" value="サモン" class="typeFilter" onchange="displayCards()">
+                    <span>サモン</span>
+                </label>
+                <label class="typeButton">
+                    <input type="checkbox" value="マギア" class="typeFilter" onchange="displayCards()">
+                    <span>マギア</span>
+                </label>
+                <label class="typeButton">
+                    <input type="checkbox" value="レジスト" class="typeFilter" onchange="displayCards()">
+                    <span>レジスト</span>
+                </label>
+                <p></p>
+                <div id="costFilters">
+                    <span class="filter-title">コスト</span>
+                    <label class="costButton">
+                        <input type="checkbox" value="1" class="costFilter" onchange="displayCards()">
+                        <span>1</span>
+                    </label>
+                    <label class="costButton">
+                        <input type="checkbox" value="2" class="costFilter" onchange="displayCards()">
+                        <span>2</span>
+                    </label>
+                    <label class="costButton">
+                        <input type="checkbox" value="3" class="costFilter" onchange="displayCards()">
+                        <span>3</span>
+                    </label>
+                    <label class="costButton">
+                        <input type="checkbox" value="4" class="costFilter" onchange="displayCards()">
+                        <span>4</span>
+                    </label>
+                    <label class="costButton">
+                        <input type="checkbox" value="5" class="costFilter" onchange="displayCards()">
+                        <span>5</span>
+                    </label>
+                </div>
+                <p></p>
+                <label>
+                    <select id="seriesFilter" onchange="displayCards()">
+                        <option value="">シリーズ</option>
+                        <option value="basic">basic</option>
+                        <option value="folklore">folklore</option>
+                        <option value="mythology">mythology</option>
+                        <option value="promo">promo</option>
+                    </select>
+                    <button
+                        id="reset-button"
+                        onclick="resetFilters()">
+                        初期化
+                    </button>
+                </label>
+                <button
+                    id="apply-filter-button"
+                    onclick="displayCards();closeFilterModal()">
+                    適用
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- カード一覧 -->
+    <div id="card-area"></div>
+    <!-- カード詳細 -->
+    <div id="card-modal" class="card-modal">
+        <div class="card-modal-content">
+            <div class="fake-close">×</div>
+            <img
+                id="modal-card-image"
+                class="modal-card-image"
+                onclick="closeCardModal()">
+            <button
+                id="main-btn"
+                onclick="addToMainDeck()">
+                メインデッキに追加
+            </button>
+            <button
+                id="side-btn"
+                onclick="addToSideDeck()">
+                サイドデッキに追加
+            </button>
+            <button
+                id="candidate-btn"
+                onclick="addToCandidate()">
+                検討中に追加
+            </button>
+            <button
+                id="delete-card-btn"
+                onclick="removeSelectedCard()">
+                削除
+            </button>
+        </div>
+    </div>
+    <div id="deck-name-overlay"></div>
+</div>
+<!-- builder-screen 終了 -->
+<script src="cards.js"></script>
+<script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+</body>
+</html>

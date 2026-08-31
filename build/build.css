@@ -1,0 +1,1361 @@
+/* =========================================================
+   基本
+========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    min-height: 100%;
+
+}
+
+
+body {
+
+    background:
+        linear-gradient(
+            135deg,
+            #24170e,
+            #4a321b,
+            #21150d
+        );
+
+    color: #f4e6c5;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+}
+
+
+/* =========================================================
+   ビルドルール全体
+========================================================= */
+
+#build-screen {
+
+    width: 100%;
+    min-height: 100vh;
+
+    padding:
+        25px
+        20px
+        120px;
+
+}
+
+
+/* =========================================================
+   ヘッダー
+========================================================= */
+
+#build-header {
+
+    position: relative;
+
+    width: 100%;
+    max-width: 900px;
+
+    margin:
+        0 auto 25px;
+
+    text-align: center;
+
+}
+
+
+#build-title-area h1 {
+
+    margin:
+        5px 0 8px;
+
+    font-size: 34px;
+
+    letter-spacing: 3px;
+
+    color: #f1dfb5;
+
+    text-shadow:
+        0 3px 5px
+        rgba(0,0,0,0.7);
+
+}
+
+
+#build-title-area p {
+
+    margin: 0;
+
+    font-size: 13px;
+
+    color: #c9ae78;
+
+}
+
+
+/* =========================================================
+   設定
+========================================================= */
+
+#settings-section {
+
+    width: 100%;
+    max-width: 900px;
+
+    margin:
+        0 auto 20px;
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+
+}
+
+
+.setting-box {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    padding: 14px;
+
+    border:
+        1px solid #947244;
+
+    border-radius: 12px;
+
+    background:
+        rgba(30,20,12,0.72);
+
+    box-shadow:
+        0 6px 12px
+        rgba(0,0,0,0.35);
+
+}
+
+
+.setting-box label {
+
+    font-size: 14px;
+
+    color: #d9c18f;
+
+}
+
+
+.setting-box select {
+
+    width: 100%;
+
+    padding:
+        10px;
+
+    border:
+        1px solid #87683a;
+
+    border-radius: 7px;
+
+    background: #24170e;
+
+    color: #f4e6c5;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+}
+
+
+.setting-box select:disabled {
+
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+}
+
+
+.setting-description {
+
+    margin:
+        3px
+        0
+        0;
+
+    font-size: 11px;
+
+    color: #bba276;
+
+}
+
+
+/* =========================================================
+   使用デッキ
+========================================================= */
+
+#deck-section {
+
+    width: 100%;
+    max-width: 900px;
+
+    margin:
+        0 auto;
+
+}
+
+
+.section-title {
+
+    display: flex;
+
+    align-items: baseline;
+
+    justify-content: space-between;
+
+    margin-bottom: 8px;
+
+}
+
+
+.section-title h2 {
+
+    margin: 0;
+
+    font-size: 22px;
+
+}
+
+
+#deck-count {
+
+    margin: 0;
+
+    font-size: 12px;
+
+    color: #bba276;
+
+}
+
+
+/* =========================================================
+   デッキ一覧
+========================================================= */
+
+#saved-decks {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(320px, 1fr)
+        );
+
+    gap: 8px;
+
+}
+
+
+/* =========================================================
+   デッキカード
+========================================================= */
+
+.saved-deck-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    min-height: 92px;
+
+    padding: 7px;
+
+    border:
+        2px solid #76572e;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(90,62,32,0.96),
+            rgba(45,29,18,0.96)
+        );
+
+    box-shadow:
+        0 5px 10px
+        rgba(0,0,0,0.35);
+
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+
+}
+
+
+/* =========================================================
+   使用可能
+========================================================= */
+
+.saved-deck-card.selectable {
+
+    cursor: default;
+
+}
+
+
+.saved-deck-card.selectable:hover {
+
+    border-color:
+        #c6a260;
+
+}
+
+
+/* =========================================================
+   選択中
+========================================================= */
+
+.saved-deck-card.selected {
+
+    border-color:
+        #e1c27b;
+
+    box-shadow:
+        0 0 0 2px
+        rgba(225,194,123,0.25),
+        0 6px 12px
+        rgba(0,0,0,0.45);
+
+}
+
+
+/* =========================================================
+   使用不可
+========================================================= */
+
+.saved-deck-card.illegal {
+
+    opacity: 0.65;
+
+}
+
+
+/* =========================================================
+   デッキ画像
+========================================================= */
+
+.saved-deck-thumbnail {
+
+    width: 54px;
+
+    height: 75px;
+
+    object-fit: cover;
+
+    flex-shrink: 0;
+
+    border-radius: 5px;
+
+    box-shadow:
+        0 3px 6px
+        rgba(0,0,0,0.45);
+
+}
+
+
+/* =========================================================
+   デッキ情報
+========================================================= */
+
+.deck-info {
+
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+}
+
+
+/* =========================================================
+   デッキ名
+========================================================= */
+
+.saved-deck-name {
+
+    margin:
+        0
+        0
+        2px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+}
+
+
+/* =========================================================
+   使用可否
+========================================================= */
+
+.deck-status {
+
+    margin:
+        0
+        0
+        2px;
+
+    font-size: 10px;
+
+    line-height: 1.2;
+
+}
+
+
+.deck-status.legal {
+
+    color: #d8c18b;
+
+}
+
+
+.deck-status.illegal {
+
+    color: #e2a18b;
+
+}
+
+
+.deck-status.unknown {
+
+    color: #d5c5a3;
+
+}
+
+
+/* =========================================================
+   デッキ内容
+========================================================= */
+
+.deck-reason {
+
+    min-height: 0;
+
+    margin: 0;
+
+    font-size: 9px;
+
+    line-height: 1.25;
+
+    color: #baa27a;
+
+}
+
+
+/* =========================================================
+   デッキ操作ボタン
+========================================================= */
+
+.deck-buttons {
+
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin:
+        4px
+        0
+        0;
+
+}
+
+
+/* =========================================================
+   デッキ選択・リスト表示ボタン
+========================================================= */
+
+.deck-select-button,
+.deck-list-view-button {
+
+    margin: 0;
+
+    padding:
+        4px
+        7px;
+
+    border:
+        1px solid #98733d;
+
+    border-radius: 5px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #6a4926,
+            #3a2413
+        );
+
+    color: #ead5a7;
+
+    font-family: inherit;
+
+    font-size: 9px;
+
+    line-height: 1.2;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+}
+
+
+.deck-select-button {
+
+    font-weight: bold;
+
+}
+
+
+.deck-list-view-button {
+
+    background:
+        linear-gradient(
+            145deg,
+            #554126,
+            #302215
+        );
+
+}
+
+
+/* =========================================================
+   選択不可
+========================================================= */
+
+.deck-select-label {
+
+    display: inline-block;
+
+    margin: 0;
+
+    padding:
+        4px
+        7px;
+
+    border:
+        1px solid #604b34;
+
+    border-radius: 5px;
+
+    font-size: 9px;
+
+    line-height: 1.2;
+
+    color: #957e68;
+
+}
+
+
+/* =========================================================
+   デッキなし
+========================================================= */
+
+#empty-message {
+
+    padding:
+        40px
+        20px;
+
+    text-align: center;
+
+    border:
+        1px dashed #79603a;
+
+    border-radius: 12px;
+
+    color: #bca681;
+
+    background:
+        rgba(20,13,8,0.5);
+
+}
+
+
+#empty-message p {
+
+    margin:
+        8px
+        0;
+
+}
+
+
+/* =========================================================
+   下部固定操作エリア
+========================================================= */
+
+#fixed-action-area {
+
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    width: 100%;
+
+    min-height: 76px;
+
+    padding:
+        10px
+        20px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 15px;
+
+    z-index: 1000;
+
+    background:
+        rgba(25,16,9,0.96);
+
+    border-top:
+        2px solid #8d6b38;
+
+    box-shadow:
+        0 -5px 15px
+        rgba(0,0,0,0.45);
+
+}
+
+
+/* =========================================================
+   ホームボタン
+========================================================= */
+
+#back-button {
+
+    min-width: 110px;
+
+    padding:
+        12px
+        18px;
+
+    border:
+        1px solid #947244;
+
+    border-radius: 8px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #5b4024,
+            #362313
+        );
+
+    color: #f4e6c5;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+   選択中デッキ
+========================================================= */
+
+#selected-deck-message {
+
+    min-width: 180px;
+
+    margin: 0;
+
+    text-align: center;
+
+    font-size: 30px;
+
+    color: #ceb888;
+
+}
+
+
+/* =========================================================
+   ゲーム開始
+========================================================= */
+
+#start-game-button {
+
+    min-width: 180px;
+
+    padding:
+        12px
+        25px;
+
+    border:
+        2px solid #a58249;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #6a4926,
+            #3a2413
+        );
+
+    color: #f7e8c1;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 10px
+        rgba(0,0,0,0.4);
+
+}
+
+
+#start-game-button:disabled {
+
+    opacity: 0.45;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+
+}
+
+
+#start-game-button:not(:disabled):hover {
+
+    transform:
+        translateY(-1px);
+
+}
+
+
+#start-game-button:not(:disabled):active {
+
+    transform:
+        translateY(2px);
+
+}
+
+
+/* =========================================================
+   デッキリストモーダル
+========================================================= */
+
+.deck-list-modal {
+
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 10000;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 10px;
+
+    background:
+        rgba(0,0,0,0.78);
+
+}
+
+
+/* =========================================================
+   モーダル本体
+========================================================= */
+
+.deck-list-modal-content {
+
+    position: relative;
+
+    width: 92vw;
+
+    max-width: 700px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    padding:
+        12px
+        12px
+        15px;
+
+    border:
+        2px solid #8d6b38;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #3f2a18,
+            #24170e
+        );
+
+    color: #f4e6c5;
+
+    box-shadow:
+        0 12px 30px
+        rgba(0,0,0,0.65);
+
+}
+
+
+/* =========================================================
+   モーダルタイトル
+========================================================= */
+
+.deck-list-modal-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 38px;
+
+    margin-bottom: 8px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.18);
+
+}
+
+
+.deck-list-modal-header h2 {
+
+    margin: 0;
+
+    padding: 0;
+
+    text-align: center;
+
+    font-size: 20px;
+
+    color: #f1dfb5;
+
+}
+
+
+/* =========================================================
+   MAIN / SIDE見出し
+========================================================= */
+
+.deck-list-group {
+
+    margin:
+        0 0 12px;
+
+}
+
+
+.deck-list-group h3 {
+
+    margin:
+        0 0 6px;
+
+    padding-bottom: 5px;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.18);
+
+    color: #d7bd88;
+
+    font-size: 15px;
+
+}
+
+
+
+/* =========================================================
+   モーダル内カード
+========================================================= */
+
+.modal-card-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0,1fr)
+        );
+
+    gap: 6px;
+
+}
+
+
+.modal-card-item {
+
+    margin: 0;
+
+    min-width: 0;
+
+}
+
+
+.modal-card-item img {
+
+    display: block;
+
+    width: 100%;
+
+    height: auto;
+
+    border-radius: 5px;
+
+    box-shadow:
+        0 3px 6px
+        rgba(0,0,0,0.45);
+
+}
+
+
+/* =========================================================
+   カードなし
+========================================================= */
+
+.modal-empty-message {
+
+    grid-column:
+        1 / -1;
+
+    padding:
+        20px
+        10px;
+
+    text-align: center;
+
+    color: #bba276;
+
+}
+
+
+/* =========================================================
+   モーダル閉じる
+========================================================= */
+
+#deck-list-modal-bottom-close {
+
+    display: block;
+
+    min-width: 130px;
+
+    margin:
+        8px
+        auto
+        0;
+
+    padding:
+        9px
+        20px;
+
+    border:
+        2px solid #a58249;
+
+    border-radius: 9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #6a4926,
+            #3a2413
+        );
+
+    color: #f7e8c1;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+   スマートフォン
+========================================================= */
+
+@media (max-width: 650px) {
+
+    /* -----------------------------------------------------
+       全体
+    ----------------------------------------------------- */
+
+    #build-screen {
+
+        padding:
+            20px
+            12px
+            120px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       ヘッダー
+    ----------------------------------------------------- */
+
+    #build-header {
+
+        margin-bottom: 18px;
+
+        padding-top: 5px;
+
+    }
+
+
+    #build-title-area h1 {
+
+        font-size: 25px;
+
+        letter-spacing: 2px;
+
+    }
+
+
+    #build-title-area p {
+
+        font-size: 11px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       設定
+    ----------------------------------------------------- */
+
+    #settings-section {
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 8px;
+
+        margin-bottom: 15px;
+
+    }
+
+
+    .setting-box {
+
+        padding: 11px;
+
+        gap: 6px;
+
+    }
+
+
+    .setting-box label {
+
+        font-size: 12px;
+
+    }
+
+
+    .setting-box select {
+
+        padding: 9px;
+
+        font-size: 14px;
+
+    }
+
+
+    .setting-description {
+
+        font-size: 10px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       デッキ一覧
+    ----------------------------------------------------- */
+
+    #saved-decks {
+
+        grid-template-columns: 1fr;
+
+        gap: 7px;
+
+    }
+
+
+    .saved-deck-card {
+
+        min-height: 86px;
+
+        gap: 7px;
+
+        padding: 6px;
+
+    }
+
+
+    .saved-deck-thumbnail {
+
+        width: 48px;
+
+        height: 67px;
+
+    }
+
+
+    .saved-deck-name {
+
+        font-size: 13px;
+
+    }
+
+
+    .deck-status {
+
+        font-size: 9px;
+
+    }
+
+
+    .deck-reason {
+
+        font-size: 8px;
+
+        line-height: 1.15;
+
+    }
+
+
+    .deck-buttons {
+
+        gap: 4px;
+
+        margin-top: 3px;
+
+    }
+
+
+    .deck-select-button,
+    .deck-list-view-button,
+    .deck-select-label {
+
+        padding:
+            3px
+            5px;
+
+        font-size: 8px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       固定バー
+    ----------------------------------------------------- */
+
+    #fixed-action-area {
+
+        min-height: 68px;
+
+        padding:
+            8px
+            10px;
+
+        gap: 7px;
+
+    }
+
+
+    #back-button {
+
+        min-width: 80px;
+
+        padding:
+            10px
+            8px;
+
+        font-size: 12px;
+
+    }
+
+
+    #selected-deck-message {
+
+        min-width: 0;
+
+        flex: 1;
+
+        font-size: 11px;
+
+        line-height: 1.3;
+
+    }
+
+
+    #start-game-button {
+
+        min-width: 105px;
+
+        padding:
+            10px
+            8px;
+
+        font-size: 13px;
+
+    }
+
+
+    /* -----------------------------------------------------
+       モーダル
+    ----------------------------------------------------- */
+
+    .deck-list-modal {
+
+        padding: 8px;
+
+    }
+
+
+    .deck-list-modal-content {
+
+        width: 96vw;
+
+        max-width: none;
+
+        max-height: 92vh;
+
+        padding:
+            10px
+            8px
+            12px;
+
+        border-radius: 10px;
+
+    }
+
+
+    .deck-list-modal-header {
+
+        min-height: 34px;
+
+        margin-bottom: 6px;
+
+    }
+
+
+    .deck-list-modal-header h2 {
+
+        font-size: 17px;
+
+    }
+
+
+    .deck-list-group {
+
+        margin-bottom: 10px;
+
+    }
+
+
+    .deck-list-group h3 {
+
+        margin-bottom: 5px;
+
+        padding-bottom: 4px;
+
+        font-size: 13px;
+
+    }
+
+    .modal-card-grid {
+
+        grid-template-columns:
+            repeat(
+                4,
+                minmax(0,1fr)
+            );
+
+        gap: 4px;
+
+    }
+
+
+    #deck-list-modal-bottom-close {
+
+        min-width: 120px;
+
+        padding:
+            8px
+            18px;
+
+        font-size: 13px;
+
+    }
+
+}
