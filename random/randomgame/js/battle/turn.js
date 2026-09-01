@@ -397,10 +397,6 @@ function startMatch(){
         restartLife
     );
 
-
-    game.currentPlayer = null;
-
-
     //----------------------------------
     // 1戦目の盤面・手札を生成
     //----------------------------------
