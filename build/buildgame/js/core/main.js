@@ -7387,10 +7387,22 @@ nextGameLoser =
 nextFirstPlayer =
     nextGameLoser;
 
+console.log(
+    "★★★★★★★★★★★★★★★★"
+);
 
 console.log(
-    "★ 次のゲームの先攻予定：",
+    "★ 1戦目終了時の勝者：",
+    winner
+);
+
+console.log(
+    "★ 次のゲームの先攻：",
     nextFirstPlayer
+);
+
+console.log(
+    "★★★★★★★★★★★★★★★★"
 );
 
 
@@ -7585,12 +7597,14 @@ function startNextGame(){
         "===== 次の戦闘開始 ====="
     );
 
+
     //----------------------------------
     // 新しいゲーム開始
     // 投了状態を解除
     //----------------------------------
 
     battleGameConceded = false;
+
 
     //----------------------------------
     // ゲーム終了状態解除
@@ -7613,22 +7627,44 @@ function startNextGame(){
     decideFirstPlayerForMatch();
 
 
+    //----------------------------------
+    // 確認ログ
+    //----------------------------------
+
     console.log(
-        "第" +
-        matchGameNumber +
-        "戦開始"
+        "★★★★★★★★★★★★★★★★"
     );
 
     console.log(
-        "次のゲームの先攻：",
+        "★ 第2戦開始"
+    );
+
+    console.log(
+        "★ matchGameNumber：",
+        matchGameNumber
+    );
+
+    console.log(
+        "★ nextFirstPlayer：",
+        nextFirstPlayer
+    );
+
+    console.log(
+        "★ firstPlayer：",
         firstPlayer
     );
 
     console.log(
-        "次のゲームの後攻：",
+        "★ secondPlayer：",
         secondPlayer
     );
 
+    console.log(
+        "★★★★★★★★★★★★★★★★"
+    );
+
+
+    // 以下、現在の処理を続ける
 
     //----------------------------------
     // モーダルを閉じる
@@ -8712,9 +8748,7 @@ function startSecondGame(){
     // 2戦目開始
     //----------------------------------
 
-    startNextGame(
-        lastBattleWinner
-    );
+    startNextGame();
 
 }
 
