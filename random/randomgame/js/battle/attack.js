@@ -355,114 +355,121 @@ function executeAttack(
 
     hideActionGuide();
 
+
     console.log(
         "=== executeAttack ===",
         {
             attacker:
-            attacker.owner,
+                attacker.owner,
 
             attackerName:
-            attacker.card.name,
+                attacker.card.name,
 
             target:
-            target
+                target
         }
     );
 
 
-    attackingSummon = attacker;
+    attackingSummon =
+        attacker;
 
 
-//----------------------------------
-// バトルログ用情報
-//----------------------------------
+    //----------------------------------
+    // バトルログ用情報
+    //----------------------------------
 
-let attackerName =
-    attacker.card.name;
-
-let attackerOwner =
-    attacker.owner === PLAYER
-        ? "PLAYER"
-        : "CPU";
-
-let targetName;
+    const attackerName =
+        attacker.card.name;
 
 
-//----------------------------------
-// 攻撃対象
-//----------------------------------
-
-if(target instanceof Summon){
-
-    targetName =
-        target.card.name;
-
-}
-else if(
-    target === PLAYER ||
-    target === "player"
-){
-
-    targetName =
-        "PLAYER";
-
-}
-else if(
-    target === ENEMY ||
-    target === "enemy"
-){
-
-    targetName =
-        "CPU";
-
-}
-else{
-
-    targetName =
-        "不明";
-
-}
+    const attackerOwner =
+        attacker.owner === PLAYER
+            ? "PLAYER"
+            : "CPU";
 
 
-//----------------------------------
-// 攻撃可能確認
-//----------------------------------
+    let targetName;
 
-if(!canAttack(target)){
 
-    console.log(
-        "攻撃不可"
+    //----------------------------------
+    // 攻撃対象
+    //----------------------------------
+
+    if(target instanceof Summon){
+
+        targetName =
+            target.card.name;
+
+    }
+
+    else if(
+        target === PLAYER ||
+        target === "player"
+    ){
+
+        targetName =
+            "PLAYER";
+
+    }
+
+    else if(
+        target === ENEMY ||
+        target === "enemy"
+    ){
+
+        targetName =
+            "CPU";
+
+    }
+
+    else{
+
+        targetName =
+            "不明";
+
+    }
+
+
+    //----------------------------------
+    // 攻撃可能確認
+    //----------------------------------
+
+    if(!canAttack(target)){
+
+        console.log(
+            "攻撃不可"
+        );
+
+
+        finishAttack();
+
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃ログ
+    //----------------------------------
+
+    addBattleLog(
+        `${attackerOwner}：${attackerName} → ${targetName}を攻撃`
     );
-
-    finishAttack();
-
-    return false;
-
-}
-
-
-//----------------------------------
-// 攻撃可能だった場合だけ
-// バトルログを表示
-//----------------------------------
-
-addBattleLog(
-    `${attackerOwner}：${attackerName} → ${targetName}を攻撃`
-);
-
 
 
     //----------------------------------
     // 攻撃済み状態
     //----------------------------------
 
-    attackingSummon.isRest = true;
+    attackingSummon.isRest =
+        true;
 
 
     attackingSummon.view.setHorizontal(
         true
     );
-
 
 
     //----------------------------------
@@ -471,35 +478,35 @@ addBattleLog(
 
     if(target instanceof Summon){
 
-//----------------------------------
-// バジリスク：バトル相手を記録
-//----------------------------------
+        //----------------------------------
+        // バジリスク：バトル相手を記録
+        //----------------------------------
 
-setBasiliskBattleTarget(
-    attackingSummon,
-    target
-);
+        setBasiliskBattleTarget(
+            attackingSummon,
+            target
+        );
 
 
-//----------------------------------
-// ダメージ交換
-//----------------------------------
+        //----------------------------------
+        // ダメージ交換
+        //----------------------------------
 
-dealDamage(
-    target,
-    getPower(attackingSummon)
-);
+        dealDamage(
+            target,
+            getPower(attackingSummon)
+        );
 
-dealDamage(
-    attackingSummon,
-    getPower(target)
-);
-}
 
+        dealDamage(
+            attackingSummon,
+            getPower(target)
+        );
+
+    }
 
 
     //----------------------------------
-    // プレイヤーへの攻撃
     // CPU → PLAYER
     //----------------------------------
 
@@ -508,20 +515,17 @@ dealDamage(
         target === "player"
     ){
 
-
         console.log(
             "プレイヤーへの攻撃"
         );
 
 
-
         //----------------------------------
-        // ブロック確認
+        // ブロッカー確認
         //----------------------------------
 
         const blockers =
-        findBlockSummons();
-
+            findBlockSummons();
 
 
         if(blockers.length > 0){
@@ -532,7 +536,9 @@ dealDamage(
             );
 
 
-            startBlock(blockers);
+            startBlock(
+                blockers
+            );
 
 
             return "WAIT_BLOCK";
@@ -540,194 +546,176 @@ dealDamage(
         }
 
 
+        //----------------------------------
+        // ブロックなし
+        //
+        // 必ず damagePlayer() を通す
+        //----------------------------------
+
         damagePlayer(
 
             PLAYER,
 
             getPower(attackingSummon),
+
             false,
+
             attackingSummon.card
 
         );
 
 
+        //----------------------------------
+        // レジスト中なら停止
+        //----------------------------------
+
+        if(resistMode){
+
+            console.log(
+                "レジスト中なので戦闘終了停止"
+            );
+
+            return "WAIT_RESIST";
+
+        }
 
     }
 
 
-
-//----------------------------------
-// 敵プレイヤーへの攻撃
-// PLAYER → CPU
-//----------------------------------
-
-else if(
-    target === ENEMY ||
-    target === "enemy"
-){
-
-    console.log(
-        "CPUへの攻撃"
-    );
-
-
     //----------------------------------
-    // CPUブロッカー確認
+    // PLAYER → CPU
     //----------------------------------
 
-    const blockers =
-    findBlockSummons();
-
-
-    //----------------------------------
-    // ブロック可能
-    //----------------------------------
-
-    if(
-        blockers.length > 0
+    else if(
+        target === ENEMY ||
+        target === "enemy"
     ){
 
         console.log(
-            "CPUブロック可能",
-            blockers.map(
-                summon =>
-                    summon.card.name
-            )
+            "CPUへの攻撃"
         );
 
 
         //----------------------------------
-        // CPUがブロックするか判断
+        // CPUブロッカー確認
         //----------------------------------
 
-        const shouldBlock =
-        cpuShouldBlock(
-            blockers,
-            attackingSummon
-        );
+        const blockers =
+            findBlockSummons();
 
 
-        if(
-            shouldBlock
-        ){
+        if(blockers.length > 0){
 
             console.log(
-                "CPUブロック"
+                "CPUブロック可能",
+                blockers.map(
+                    summon =>
+                        summon.card.name
+                )
             );
 
 
-            executeCpuBlock(
-                blockers,
-                attackingSummon
+            //----------------------------------
+            // CPUがブロックするか判断
+            //----------------------------------
+
+            const shouldBlock =
+                cpuShouldBlock(
+                    blockers,
+                    attackingSummon
+                );
+
+
+            if(shouldBlock){
+
+                console.log(
+                    "CPUブロック"
+                );
+
+
+                executeCpuBlock(
+                    blockers,
+                    attackingSummon
+                );
+
+
+                return;
+
+            }
+
+
+            console.log(
+                "CPUブロックしない"
             );
-
-
-            return;
 
         }
 
 
-        console.log(
-            "CPUブロックしない"
+        //----------------------------------
+        // CPUへのダメージ
+        //
+        // damagePlayer() に統一
+        //----------------------------------
+
+        damagePlayer(
+
+            ENEMY,
+
+            getPower(attackingSummon),
+
+            false,
+
+            attackingSummon.card
+
         );
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(resistMode){
+
+            console.log(
+                "CPUへのダメージ：レジスト待機"
+            );
+
+
+            return "WAIT_RESIST";
+
+        }
 
     }
 
 
     //----------------------------------
-    // ブロックなし
+    // レジスト中なら戦闘終了しない
     //----------------------------------
 
-    const waiting =
-    emitGameEvent({
+    if(resistMode){
 
-        type:
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE,
-
-        player:
-        ENEMY,
-
-        attacker:
-        attackingSummon,
-
-        source:
-        attackingSummon.card,
-
-        sourceType:
-        "サモン",
-
-        element:
-        attackingSummon.card.elementType,
-
-        damage:
-        getPower(attackingSummon)
-
-    });
+        console.log(
+            "レジスト中なので戦闘終了停止"
+        );
 
 
-if(waiting){
+        return;
 
-    console.log(
-        "CPUへのダメージ：レジスト待機"
-    );
+    }
 
-    return "WAIT_RESIST";
-
-}
-
-
-//----------------------------------
-// CPUへのダメージ
-// レジストが発生しなかった場合
-//----------------------------------
-
-damagePlayer(
-
-    ENEMY,
-
-    getPower(attackingSummon),
-
-    true,
-
-    attackingSummon.card
-
-);
-
-
-resolveBattle();
-
-}
-
-
-    //----------------------------------
-    // 戦闘終了処理
-    //----------------------------------
-
-if(resistMode){
-
-    console.log(
-        "レジスト中なので戦闘終了停止"
-    );
-
-    return;
-}
-
-setTimeout(()=>{
 
     //----------------------------------
     // バトル解決
     //----------------------------------
 
-    resolveBattle();
+    setTimeout(()=>{
 
+        resolveBattle();
 
-    //----------------------------------
-    // 攻撃終了
-    //----------------------------------
+        finishAttack();
 
-    finishAttack();
+    },1000);
 
-},1000);
 }
 
 //======================================
@@ -934,7 +922,12 @@ function damagePlayer(
     );
 
 
-    let event = null;
+    //----------------------------------
+    // 元ダメージを保存
+    //----------------------------------
+
+    const originalDamage =
+        damage;
 
 
     //----------------------------------
@@ -964,10 +957,6 @@ function damagePlayer(
             gargoyle.card.ability.value ?? 1;
 
 
-        const originalDamage =
-            damage;
-
-
         damage =
             Math.max(
                 0,
@@ -989,60 +978,145 @@ function damagePlayer(
 
 
     //----------------------------------
+    // レジストをスキップする場合
+    //----------------------------------
+
+    if(skipResist){
+
+        console.log(
+            "レジストスキップ：確定ダメージ",
+            damage
+        );
+
+
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        if(damage > 0){
+
+            const damageTarget =
+                player === PLAYER
+                ?
+                "PLAYER"
+                :
+                "CPU";
+
+
+            addBattleLog(
+                `${damageTarget}：${damage}ダメージ`
+            );
+
+        }
+
+
+        //----------------------------------
+        // ダメージ適用
+        //----------------------------------
+
+        applyPlayerDamage(
+            player,
+            damage
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // レジスト用イベント作成
+    //----------------------------------
+
+    const event = {
+
+        type:
+            GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+
+        player:
+            player,
+
+        damage:
+            damage,
+
+        source:
+            sourceCard,
+
+        sourceType:
+            sourceCard?.type,
+
+        element:
+            sourceCard?.elementType
+
+    };
+
+
+    //----------------------------------
     // レジスト確認
     //----------------------------------
 
-    if(!skipResist){
+    const resist =
+        emitGameEvent(event);
 
-        event = {
 
-            type:
-                GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+    //----------------------------------
+    // レジスト待機
+    //----------------------------------
 
-            player:
-                player,
+    if(resist){
 
-            damage:
-                damage,
+        console.log(
+            "レジスト待機",
+            "ガーゴイル軽減後ダメージ=",
+            event.damage
+        );
 
-            source:
-                sourceCard,
 
-            sourceType:
-                sourceCard?.type,
+        pendingDamage = {
 
-            element:
-                sourceCard?.elementType
+            event:
+                event
 
         };
 
 
-        const resist =
-            emitGameEvent(event);
+        return;
+
+    }
 
 
-        //----------------------------------
-        // レジスト待機
-        //----------------------------------
+    //----------------------------------
+    // レジストなし
+    //----------------------------------
 
-        if(resist){
-
-            console.log(
-                "レジスト待機"
-            );
+    const finalDamage =
+        event.damage;
 
 
-            pendingDamage = {
-
-                event:
-                    event
-
-            };
+    console.log(
+        "レジストなし：確定ダメージ",
+        finalDamage
+    );
 
 
-            return;
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
 
-        }
+    if(finalDamage > 0){
+
+        const damageTarget =
+            player === PLAYER
+            ?
+            "PLAYER"
+            :
+            "CPU";
+
+
+        addBattleLog(
+            `${damageTarget}：${finalDamage}ダメージ`
+        );
 
     }
 
@@ -1051,54 +1125,19 @@ function damagePlayer(
     // ダメージ適用
     //----------------------------------
 
- const finalDamage =
-    event
-    ?
-    event.damage
-    :
-    damage;
-
-
-//----------------------------------
-// バトルログ
-//----------------------------------
-
-if(finalDamage > 0){
-
-    const damageTarget =
-        player === PLAYER
-        ?
-        "PLAYER"
-        :
-        "CPU";
-
-
-    addBattleLog(
-        `${damageTarget}：${finalDamage}ダメージ`
+    applyPlayerDamage(
+        player,
+        finalDamage
     );
 
 }
-
-
-applyPlayerDamage(
-
-    player,
-
-    finalDamage
-
-);
-
-}
-
 
 function applyPlayerDamage(
     player,
     damage
 ){
 
-
     if(player === PLAYER){
-
 
         game.playerLife -= damage;
 
@@ -1111,7 +1150,6 @@ function applyPlayerDamage(
 
     }else{
 
-
         game.enemyLife -= damage;
 
 
@@ -1120,14 +1158,12 @@ function applyPlayerDamage(
             damage
         );
 
-
     }
 
 
     updateLifeDisplay();
 
     checkGameOver();
-
 
 }
 
@@ -1248,6 +1284,7 @@ function skipBlock(){
 
     hideActionGuide();
 
+
     console.log(
         "ブロックしない"
     );
@@ -1257,130 +1294,121 @@ function skipBlock(){
     // ブロック状態解除
     //----------------------------------
 
-    blockMode = false;
+    blockMode =
+        false;
 
-    selectableBlockSummons = [];
+
+    selectableBlockSummons =
+        [];
 
 
     //----------------------------------
     // ハイライト解除
     //----------------------------------
 
-    playerField.forEach(summon=>{
+    playerField.forEach(
+        summon => {
 
-        summon.view.setHighlight(
-            false
-        );
-
-    });
-
-
-    //----------------------------------
-    // 攻撃続行
-    //----------------------------------
-
-    if(attackingSummon){
-
-        const waiting =
-        emitGameEvent({
-
-            type:
-            GAME_EVENT.BEFORE_PLAYER_DAMAGE,
-
-            player:
-            PLAYER,
-
-            attacker:
-            attackingSummon,
-
-            source:
-            attackingSummon.card,
-
-            sourceType:
-            "サモン",
-
-            element:
-            attackingSummon.card.elementType,
-
-            damage:
-            getPower(attackingSummon)
-
-        });
-
-
-        //----------------------------------
-        // レジスト待機
-        //----------------------------------
-
-        if(waiting){
-
-            console.log(
-                "レジスト待機"
+            summon.view.setHighlight(
+                false
             );
 
-            waitingAttackAfterResist = true;
-
-            return;
-
         }
+    );
 
 
-        //----------------------------------
-        // レジストなし
-        // そのままダメージ
-        //----------------------------------
+    //----------------------------------
+    // 攻撃者確認
+    //----------------------------------
 
-        damagePlayer(
+    if(!attackingSummon){
 
-            PLAYER,
-
-            getPower(attackingSummon),
-
-            true,
-
-            attackingSummon.card
-
+        console.log(
+            "ブロックなし：攻撃者なし"
         );
 
-
-        //----------------------------------
-        // 戦闘解決
-        //----------------------------------
-
-        resolveBattle();
 
         finishAttack();
 
-
-        //----------------------------------
-        // CPU攻撃なら次へ
-        //----------------------------------
-
-        if(
-            game.currentPlayer === ENEMY
-        ){
-
-            cpuAttackIndex++;
-
-            setTimeout(
-                cpuNextAttack,
-                2000
-            );
-
-            return;
-
-        }
+        return;
 
     }
 
 
     //----------------------------------
-    // 攻撃終了
+    // プレイヤーへのダメージ
+    //
+    // ★重要
+    //
+    // ここで必ず
+    //
+    // 攻撃力
+    // ↓
+    // ガーゴイル軽減
+    // ↓
+    // レジスト
+    //
+    // の順番にする
     //----------------------------------
 
-    if(!resistMode){
+    damagePlayer(
 
-        finishAttack();
+        PLAYER,
+
+        getPower(attackingSummon),
+
+        false,
+
+        attackingSummon.card
+
+    );
+
+
+    //----------------------------------
+    // レジスト待機
+    //----------------------------------
+
+    if(resistMode){
+
+        console.log(
+            "レジスト待機"
+        );
+
+
+        waitingAttackAfterResist =
+            true;
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // レジストなし
+    //----------------------------------
+
+    resolveBattle();
+
+
+    finishAttack();
+
+
+    //----------------------------------
+    // CPU攻撃なら次へ
+    //----------------------------------
+
+    if(
+        game.currentPlayer === ENEMY
+    ){
+
+        cpuAttackIndex++;
+
+
+        setTimeout(
+            cpuNextAttack,
+            2000
+        );
 
     }
 
@@ -1394,92 +1422,116 @@ function resumePlayerDamage(){
 
     if(!currentResistEvent){
 
+        console.log(
+            "レジスト後ダメージ：イベントなし"
+        );
+
         return;
 
     }
 
+
+    //----------------------------------
+    // イベント取得
+    //----------------------------------
+
+    const event =
+        currentResistEvent;
+
+
+    //----------------------------------
+    // 最終ダメージ
+    //
+    // ガーゴイル軽減とレジスト処理は
+    // すでにイベント側で完了している
+    //----------------------------------
+
+    const finalDamage =
+        Math.max(
+            0,
+            event.damage
+        );
+
+
     console.log(
         "レジスト後ダメージ",
-        currentResistEvent.damage
+        finalDamage
     );
 
+
     //----------------------------------
-    // ダメージ0なら終了
+    // ダメージ0
     //----------------------------------
 
-    if(currentResistEvent.damage <= 0){
+    if(finalDamage <= 0){
 
         console.log(
             "ダメージ無効"
         );
 
+
+        currentResistEvent =
+            null;
+
+
         resolveBattle();
 
         finishAttack();
 
-        currentResistEvent = null;
 
         return;
 
     }
 
+
     //----------------------------------
-    // さらに使えるレジスト確認
+    // プレイヤーへのダメージ
+    //
+    // ★ damagePlayer() は呼ばない
     //----------------------------------
 
-    const resistCards =
-    findResistCards(
-        currentResistEvent
+    applyPlayerDamage(
+
+        event.player,
+
+        finalDamage
+
     );
 
-    if(resistCards.length > 0){
-
-        console.log(
-            "追加レジスト可能"
-        );
-
-        showResistSelection(
-            resistCards,
-            currentResistEvent
-        );
-
-        return;
-    }
 
     //----------------------------------
-    // レジスト終了
+    // AFTERイベント
     //----------------------------------
-
-    damagePlayer(
-
-        PLAYER,
-
-        currentResistEvent.damage,
-        false,
-        attackingSummon.card
-
-
-
-    );
 
     emitGameEvent({
 
         type:
-        GAME_EVENT.AFTER_PLAYER_DAMAGE,
+            GAME_EVENT.AFTER_PLAYER_DAMAGE,
 
         player:
-        PLAYER,
+            event.player,
 
         damage:
-        currentResistEvent.damage
+            finalDamage
 
     });
+
+
+    //----------------------------------
+    // イベント終了
+    //----------------------------------
+
+    currentResistEvent =
+        null;
+
+
+    //----------------------------------
+    // 戦闘解決
+    //----------------------------------
 
     resolveBattle();
 
     finishAttack();
-
-    currentResistEvent = null;
 
 }
 

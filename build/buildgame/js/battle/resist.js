@@ -489,6 +489,7 @@ function passResist(){
         "レジストをプレイしない"
     );
 
+
     //----------------------------------
     // 行動案内を消す
     //----------------------------------
@@ -497,11 +498,11 @@ function passResist(){
 
 
     //----------------------------------
-    // 現在のイベントを保持
+    // 現在のイベント
     //----------------------------------
 
     const event =
-    currentResistEvent;
+        currentResistEvent;
 
 
     if(!event){
@@ -516,7 +517,7 @@ function passResist(){
 
 
     //----------------------------------
-    // 手札モーダル閉じる
+    // 手札モーダルを閉じる
     //----------------------------------
 
     closeHandModal();
@@ -526,48 +527,48 @@ function passResist(){
     // レジスト表示解除
     //----------------------------------
 
-    selectableResistCards.forEach(card=>{
+    selectableResistCards.forEach(
+        card => {
 
-        card.setSelected(false);
+            card.setSelected(false);
 
-        card.setHighlight(false);
+            card.setHighlight(false);
 
-    });
-
-
-    selectableResistCards = [];
-
-
-    //----------------------------------
-    // レジスト終了
-    //----------------------------------
-
-    resistMode = false;
-
-
-    //----------------------------------
-    // 残りダメージ確認
-    //----------------------------------
-
-    event.damage =
-    Math.max(
-        0,
-        event.damage
+        }
     );
 
 
+    selectableResistCards =
+        [];
+
+
     //----------------------------------
-    // ダメージ処理
+    // レジストモード解除
+    //----------------------------------
+
+    resistMode =
+        false;
+
+
+    //----------------------------------
+    // ダメージを正規化
+    //----------------------------------
+
+    event.damage =
+        Math.max(
+            0,
+            event.damage
+        );
+
+
+    //----------------------------------
+    // サモンへのダメージ
     //----------------------------------
 
     if(
         event.type ===
         GAME_EVENT.BEFORE_SUMMON_DAMAGE
     ){
-
-        //----------------------------------
-        // サモンへのダメージ
-        //----------------------------------
 
         console.log(
             "レジストなし：サモンへダメージ",
@@ -591,14 +592,14 @@ function passResist(){
     }
 
 
+    //----------------------------------
+    // プレイヤーへのダメージ
+    //----------------------------------
+
     else if(
         event.type ===
         GAME_EVENT.BEFORE_PLAYER_DAMAGE
     ){
-
-        //----------------------------------
-        // プレイヤーへのダメージ
-        //----------------------------------
 
         console.log(
             "レジストなし：プレイヤーへダメージ",
@@ -607,15 +608,58 @@ function passResist(){
         );
 
 
-        if(event.damage > 0){
+        //----------------------------------
+        // ★重要
+        //
+        // ここでは damagePlayer() を
+        // 呼ばない
+        //
+        // ガーゴイル軽減はすでに
+        // 終了しているため
+        //----------------------------------
 
-            damagePlayer(
-                event.player,
-                event.damage,
-                true
+        const finalDamage =
+            event.damage;
+
+
+        console.log(
+            "レジストなし：確定ダメージ",
+            finalDamage
+        );
+
+
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        if(finalDamage > 0){
+
+            const damageTarget =
+                event.player === PLAYER
+                ?
+                "PLAYER"
+                :
+                "CPU";
+
+
+            addBattleLog(
+                `${damageTarget}：${finalDamage}ダメージ`
             );
 
         }
+
+
+        //----------------------------------
+        // ★確定ダメージを直接適用
+        //----------------------------------
+
+        applyPlayerDamage(
+
+            event.player,
+
+            finalDamage
+
+        );
 
     }
 
@@ -626,7 +670,8 @@ function passResist(){
 
     for(const card of board.handCards){
 
-        card.usedThisEvent = false;
+        card.usedThisEvent =
+            false;
 
     }
 
@@ -635,7 +680,8 @@ function passResist(){
     // イベント終了
     //----------------------------------
 
-    currentResistEvent = null;
+    currentResistEvent =
+        null;
 
 
     //----------------------------------
@@ -643,6 +689,7 @@ function passResist(){
     //----------------------------------
 
     resolveBattle();
+
 
     finishAttack();
 
@@ -673,43 +720,46 @@ function passResist(){
 
 
     //----------------------------------
-    // CPU攻撃中だった場合
+    // CPU攻撃中なら再開
     //----------------------------------
 
- if(
-    game.currentPlayer === ENEMY &&
-    game.state === TURN_STATE.PLAYING
-){
+    if(
+        game.currentPlayer === ENEMY &&
+        game.state === TURN_STATE.PLAYING
+    ){
 
-    console.log(
-        "レジストなし CPU攻撃再開"
-    );
-
-
-    cpuWaiting = false;
+        console.log(
+            "レジストなし CPU攻撃再開"
+        );
 
 
-    //----------------------------------
-    // 今回の攻撃を完了
-    //----------------------------------
-
-    cpuAttackIndex++;
+        cpuWaiting =
+            false;
 
 
-    //----------------------------------
-    // 次のCPU攻撃へ
-    //----------------------------------
+        //----------------------------------
+        // 今回の攻撃完了
+        //----------------------------------
 
-    setTimeout(()=>{
+        cpuAttackIndex++;
 
-        cpuNextAttack();
 
-    },2000);
+        //----------------------------------
+        // 次の攻撃へ
+        //----------------------------------
+
+        setTimeout(
+            () => {
+
+                cpuNextAttack();
+
+            },
+            2000
+        );
+
+    }
 
 }
-
-}
-
 
 //======================================
 // レジスト選択開始
