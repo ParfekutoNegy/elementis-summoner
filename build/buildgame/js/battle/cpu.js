@@ -66,6 +66,19 @@ function resetCpuTurnState(){
 
 function startCpuAction(){
 
+    if(
+    battleGameEnding ||
+    battleGameConceded
+){
+
+    console.log(
+        "CPU行動中止：ゲーム終了・投了"
+    );
+
+    return;
+
+}
+
     //----------------------------------
     // ゲーム終了後はCPU行動禁止
     //----------------------------------
@@ -109,6 +122,19 @@ function startCpuAction(){
 //======================================
 
 function runCpuTurnStep(){
+
+if(
+    battleGameEnding ||
+    battleGameConceded
+){
+
+    console.log(
+        "CPUターンステップ中止：ゲーム終了・投了"
+    );
+
+    return;
+
+}
 
     //----------------------------------
     // ゲーム終了後はCPU行動禁止

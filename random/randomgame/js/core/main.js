@@ -104,6 +104,8 @@ let turnAnimation = false;
 
 let battleGameEnding = false;
 
+let battleGameConceded = false;
+
 //==================================================
 // プレイヤー・CPUアイコン
 //==================================================
@@ -6680,41 +6682,142 @@ function finishBattleGame(winner){
 
 function concedeGame(){
 
-    console.log(
-        "================================"
-    );
+console.log(
+    "================================"
+);
+
+console.log(
+    "===== PLAYER 投了 ====="
+);
+
+
+//----------------------------------
+// すでにゲーム終了なら無視
+//----------------------------------
+
+if(
+    battleGameConceded ||
+    game.state === TURN_STATE.END
+){
 
     console.log(
-        "===== PLAYER 投了 ====="
+        "投了処理：すでにゲーム終了"
     );
 
-
-    //----------------------------------
-    // すでにゲーム終了なら無視
-    //----------------------------------
-
-    if(
-        game.state === TURN_STATE.END
-    ){
-
-        console.log(
-            "投了処理：すでにゲーム終了"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // CPU勝利として1戦終了
-    //----------------------------------
-
-    finishBattleGame(
-        ENEMY
-    );
+    return;
 
 }
+
+
+//----------------------------------
+// 投了状態にする
+//----------------------------------
+
+battleGameConceded = true;
+
+battleGameEnding = true;
+
+
+//----------------------------------
+// ゲーム状態を終了
+//----------------------------------
+
+game.state =
+    TURN_STATE.END;
+
+
+//----------------------------------
+// CPU行動を停止
+//----------------------------------
+
+cpuWaiting = false;
+
+cpuTurnStep = 4;
+
+cpuAttackQueue = [];
+
+cpuAttackIndex = 0;
+
+
+//----------------------------------
+// 選択状態を解除
+//----------------------------------
+
+selectedHandCard = null;
+
+selectedSummon = null;
+
+selectedFieldCard = null;
+
+selectedEnemySummon = null;
+
+selectedCoolCard = null;
+
+summonCard = null;
+
+selectedCostCards = [];
+
+selectedResistCostCards = [];
+
+resistUsingCard = null;
+
+resistEvent = null;
+
+resistMode = false;
+
+coolRecoveryMode = false;
+
+coolViewMode = false;
+
+
+//----------------------------------
+// 各種モーダルを閉じる
+//----------------------------------
+
+closeEnemyCoolModal();
+
+closeCoolModal();
+
+closeHandModal();
+
+closeSummonActionModal();
+
+closeCostView();
+
+
+//----------------------------------
+// 攻撃状態を解除
+//----------------------------------
+
+resetAttackState();
+
+
+//----------------------------------
+// ボタンを停止
+//----------------------------------
+
+const endTurnButton =
+    document.getElementById(
+        "endturn-button"
+    );
+
+if(endTurnButton){
+
+    endTurnButton.disabled = true;
+
+}
+
+
+//----------------------------------
+// CPU勝利として終了
+//----------------------------------
+
+finishBattleGame(
+    ENEMY
+);
+
+}
+
 
 
 
@@ -6736,6 +6839,8 @@ function startNextGame(winner){
     //----------------------------------
     // ゲーム終了状態解除
     //----------------------------------
+
+    battleGameConceded = false;
 
     battleGameEnding = false;
 

@@ -325,6 +325,9 @@ let secondPlayer = null;
 
 function startMatch(){
 
+    battleGameConceded = false;
+
+
     //----------------------------------
     // 新しいマッチのアイコン決定
     //----------------------------------

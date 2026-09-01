@@ -102,6 +102,8 @@ let turnAnimation = false;
 
 let battleGameEnding = false;
 
+let battleGameConceded = false;
+
 
 //======================================
 // ビルドルール デッキ入れ替え
@@ -7367,23 +7369,29 @@ function finishBattleGame(winner){
     }
 
 
-    //----------------------------------
-    // 次のゲームの先攻決定用
-    // 第1戦の敗者を保存
-    //----------------------------------
+//----------------------------------
+// 次のゲームの先攻決定用
+// 今回の敗者が次のゲームの先攻
+//----------------------------------
 
-    nextGameLoser =
-        winner === PLAYER
-            ? ENEMY
-            : PLAYER;
+nextGameLoser =
+    winner === PLAYER
+        ? ENEMY
+        : PLAYER;
 
-    nextGameLoser =
-    nextFirstPlayer;       
 
-    console.log(
-        "★ 次のゲームの先攻予定：",
-        nextGameLoser
-    );
+//----------------------------------
+// 次のゲームの先攻を保存
+//----------------------------------
+
+nextFirstPlayer =
+    nextGameLoser;
+
+
+console.log(
+    "★ 次のゲームの先攻予定：",
+    nextFirstPlayer
+);
 
 
     //----------------------------------
@@ -7424,39 +7432,139 @@ function finishBattleGame(winner){
 
 function concedeGame(){
 
-    console.log(
-        "================================"
-    );
+console.log(
+    "================================"
+);
+
+console.log(
+    "===== PLAYER 投了 ====="
+);
+
+
+//----------------------------------
+// すでにゲーム終了なら無視
+//----------------------------------
+
+if(
+    battleGameConceded ||
+    game.state === TURN_STATE.END
+){
 
     console.log(
-        "===== PLAYER 投了 ====="
+        "投了処理：すでにゲーム終了"
     );
 
+    return;
 
-    //----------------------------------
-    // すでにゲーム終了なら無視
-    //----------------------------------
-
-    if(
-        game.state === TURN_STATE.END
-    ){
-
-        console.log(
-            "投了処理：すでにゲーム終了"
-        );
-
-        return;
-
-    }
+}
 
 
-    //----------------------------------
-    // CPU勝利として1戦終了
-    //----------------------------------
+//----------------------------------
+// 投了状態にする
+//----------------------------------
 
-    finishBattleGame(
-        ENEMY
+battleGameConceded = true;
+
+battleGameEnding = true;
+
+
+//----------------------------------
+// ゲーム状態を終了
+//----------------------------------
+
+game.state =
+    TURN_STATE.END;
+
+
+//----------------------------------
+// CPU行動を停止
+//----------------------------------
+
+cpuWaiting = false;
+
+cpuTurnStep = 4;
+
+cpuAttackQueue = [];
+
+cpuAttackIndex = 0;
+
+
+//----------------------------------
+// 選択状態を解除
+//----------------------------------
+
+selectedHandCard = null;
+
+selectedSummon = null;
+
+selectedFieldCard = null;
+
+selectedEnemySummon = null;
+
+selectedCoolCard = null;
+
+summonCard = null;
+
+selectedCostCards = [];
+
+selectedResistCostCards = [];
+
+resistUsingCard = null;
+
+resistEvent = null;
+
+resistMode = false;
+
+coolRecoveryMode = false;
+
+coolViewMode = false;
+
+
+//----------------------------------
+// 各種モーダルを閉じる
+//----------------------------------
+
+closeEnemyCoolModal();
+
+closeCoolModal();
+
+closeHandModal();
+
+closeSummonActionModal();
+
+closeCostView();
+
+
+//----------------------------------
+// 攻撃状態を解除
+//----------------------------------
+
+resetAttackState();
+
+
+//----------------------------------
+// ボタンを停止
+//----------------------------------
+
+const endTurnButton =
+    document.getElementById(
+        "endturn-button"
     );
+
+if(endTurnButton){
+
+    endTurnButton.disabled = true;
+
+}
+
+
+//----------------------------------
+// CPU勝利として終了
+//----------------------------------
+
+finishBattleGame(
+    ENEMY
+);
 
 }
 
@@ -7476,6 +7584,13 @@ function startNextGame(){
     console.log(
         "===== 次の戦闘開始 ====="
     );
+
+    //----------------------------------
+    // 新しいゲーム開始
+    // 投了状態を解除
+    //----------------------------------
+
+    battleGameConceded = false;
 
     //----------------------------------
     // ゲーム終了状態解除

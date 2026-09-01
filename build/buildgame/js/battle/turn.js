@@ -325,6 +325,7 @@ let secondPlayer = null;
 
 function startMatch(){
 
+    battleGameConceded = false;
 
     //----------------------------------
     // CPUデッキ決定
@@ -500,21 +501,7 @@ function decideFirstPlayerForMatch(){
 
 
     //----------------------------------
-    // 念のため
-    //----------------------------------
-
-    if(!firstPlayer){
-
-        firstPlayer =
-            Math.random() < 0.5
-                ? PLAYER
-                : ENEMY;
-
-    }
-
-
-    //----------------------------------
-    // 後攻
+    // 後攻決定
     //----------------------------------
 
     secondPlayer =
@@ -523,24 +510,21 @@ function decideFirstPlayerForMatch(){
             : PLAYER;
 
 
-    console.log(
-        "第" +
-        matchGameNumber +
-        "戦"
-    );
+    //----------------------------------
+    // 確認ログ
+    //----------------------------------
 
     console.log(
-        "先攻:",
+        "★ 先攻：",
         firstPlayer
     );
 
     console.log(
-        "後攻:",
+        "★ 後攻：",
         secondPlayer
     );
 
 }
-
 
 //======================================
 // 次のゲームの先攻決定
