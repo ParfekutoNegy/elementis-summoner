@@ -1,0 +1,547 @@
+.card{
+
+    width:var(--card-width);
+
+    height:var(--card-height);
+
+    position:relative;
+
+    border-radius:8px;
+
+    overflow:hidden;
+
+    background:white;
+
+    flex-shrink:0;
+
+}
+
+
+.card{
+    filter:
+        drop-shadow(
+            0 4px 5px rgba(0,0,0,0.45)
+        );
+}
+
+.card-image{
+
+    width:100%;
+
+    height:100%;
+
+    object-fit:cover;
+
+    display:block;
+
+}
+
+
+
+/* 選択状態 */
+
+.card.selected{
+
+    transform:
+    translateY(-15px);
+
+    outline:
+    2px solid rgb(255, 255, 252);
+
+}
+
+
+
+/* 横向きカード */
+
+.card.horizontal{
+
+    transform:
+    rotate(90deg);
+
+}
+
+
+
+/* 手札 */
+
+#hand-area{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:10px;
+
+    width:100%;
+
+    background:
+    rgba(0,0,0,0.15);
+
+}
+
+
+
+
+#hand-area .card{
+
+    width:95px;
+
+    height:143px;
+
+    flex-shrink:0;
+
+}
+
+
+
+
+.card-cost{
+
+    position:absolute;
+
+    top:4px;
+
+    left:1px;
+
+
+    width:24px;
+
+    height:24px;
+
+
+    border-radius:50%;
+
+
+    background:#222;
+
+    color:white;
+
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+
+    font-weight:bold;
+
+    z-index:2;
+
+}
+
+.card-marker.marker-target{
+
+    position:absolute;
+
+    left:0;
+    top:0;
+
+    width:100%;
+    height:100%;
+
+    transform:none;
+
+    border-radius:0;
+
+    box-sizing:border-box;
+
+    border:4px solid #00d8ff;
+
+    box-shadow:
+        0 0 8px rgba(0,216,255,0.8),
+        0 0 16px rgba(0,216,255,0.5);
+
+    animation:
+        attackTargetFlash
+        0.8s
+        infinite;
+
+}
+
+@keyframes attackTargetFlash{
+
+    0%{
+
+        border-color:#00d8ff;
+
+        box-shadow:
+            0 0 8px rgba(0,216,255,0.8),
+            0 0 16px rgba(0,216,255,0.5);
+
+    }
+
+    50%{
+
+        border-color:#ffffff;
+
+        box-shadow:
+            0 0 10px rgba(255,255,255,0.9),
+            0 0 20px rgba(255,255,255,0.6);
+
+    }
+
+    100%{
+
+        border-color:#00d8ff;
+
+        box-shadow:
+            0 0 8px rgba(0,216,255,0.8),
+            0 0 16px rgba(0,216,255,0.5);
+
+    }
+
+}
+
+/*==================================================
+  攻撃対象プレイヤー
+==================================================*/
+
+.attack-target{
+
+    position:relative;
+
+    outline:4px solid #00d8ff;
+
+    outline-offset:2px;
+
+    box-shadow:
+        0 0 8px rgba(0,216,255,0.8),
+        0 0 16px rgba(0,216,255,0.5);
+
+    cursor:pointer;
+
+    animation:
+        attackTargetPlayerFlash
+        0.8s
+        infinite;
+
+}
+
+@keyframes attackTargetPlayerFlash{
+
+    0%{
+
+        outline-color:#00d8ff;
+
+        box-shadow:
+            0 0 8px rgba(0,216,255,0.8),
+            0 0 16px rgba(0,216,255,0.5);
+
+    }
+
+    50%{
+
+        outline-color:#ffffff;
+
+        box-shadow:
+            0 0 10px rgba(255,255,255,0.9),
+            0 0 20px rgba(255,255,255,0.6);
+
+    }
+
+    100%{
+
+        outline-color:#00d8ff;
+
+        box-shadow:
+            0 0 8px rgba(0,216,255,0.8),
+            0 0 16px rgba(0,216,255,0.5);
+
+    }
+
+}
+
+/*----------------------------------
+  剣マーク
+----------------------------------*/
+
+.attack-target::after{
+
+    content:"⚔";
+
+    position:absolute;
+
+    top:-30px;
+    right:-10px;
+
+    font-size:28px;
+
+    font-weight:bold;
+
+    color:white;
+
+    text-shadow:
+        0 0 4px #00d8ff,
+        0 0 8px #00d8ff;
+
+    pointer-events:none;
+
+}
+
+/*================================
+ 使用カード選択
+================================*/
+
+.card.selected-use{
+
+
+    transform:
+    translateY(-20px);
+
+
+    border:
+    3px solid gold;
+
+
+    box-shadow:
+    0 0 15px gold;
+
+
+}
+
+
+
+/*================================
+ コストカード選択
+================================*/
+
+
+.card.selected-cost{
+
+
+    border:
+    3px solid cyan;
+
+
+    box-shadow:
+    0 0 15px cyan;
+
+
+    filter:
+    brightness(0.7);
+
+
+}
+
+/*======================================
+  場カード選択
+======================================*/
+
+.card.field-selected{
+
+    outline:4px solid #00ffff;
+
+    outline-offset:4px;
+
+    border-radius:10px;
+
+}
+
+
+/*=========================
+  マギア対象
+=========================*/
+
+.magia-target{
+
+    outline:4px solid #00d8ff;
+    outline-offset:2px;
+
+    cursor:pointer;
+
+    animation:
+        magiaTargetFlash
+        0.8s
+        infinite;
+
+}
+
+@keyframes magiaTargetFlash{
+
+    0%{
+
+        outline-color:#00d8ff;
+
+    }
+
+    50%{
+
+        outline-color:#ffffff;
+
+    }
+
+    100%{
+
+        outline-color:#00d8ff;
+
+    }
+
+}
+
+
+
+
+/*======================================
+ 発光
+======================================*/
+
+.card-highlight{
+
+    box-shadow:
+        0 0 10px gold,
+        0 0 20px gold,
+        0 0 30px gold;
+
+}
+
+
+/*======================================
+ マーカー
+======================================*/
+
+.card{
+
+    position:relative;
+
+}
+
+.card-marker{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:90px;
+    height:90px;
+
+    transform:
+        translate(-50%,-50%);
+
+    border-radius:50%;
+
+    border:4px solid #ffffff;
+
+    box-sizing:border-box;
+
+    pointer-events:none;
+
+    z-index:100;
+
+}
+
+.cool-card-wrapper{
+
+    position:relative;
+
+    display:inline-block;
+
+}
+
+/*======================================
+ 選択中
+======================================*/
+
+.marker-selected{
+
+    border:
+    6px solid white;
+
+}
+
+.card-current-power{
+
+    position:absolute;
+
+    left:4px;
+    bottom:4px;
+
+    width:30px;
+    height:30px;
+
+    border-radius:50%;
+
+    background:#e9e7da;
+
+    color:#440ae4;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    pointer-events:none;
+
+     position:absolute;
+
+    left:4px;
+    bottom:4px;
+
+    width:30px;
+    height:30px;
+
+    border-radius:50%;
+
+    background:#e2e2e1;
+
+    color:#4b03f3;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    pointer-events:none;
+
+    border:2px solid #ffffff;
+
+    box-shadow:
+        0 0 6px rgba(255,140,0,0.8);
+}
+
+
+#cool-modal.cool-recovery-mode .cool-card{
+
+    outline:4px solid #00d8ff;
+    outline-offset:2px;
+
+    cursor:pointer;
+
+    animation:
+        coolRecoveryTargetFlash
+        0.8s
+        infinite;
+
+}
+
+@keyframes coolRecoveryTargetFlash{
+
+    0%{
+        outline-color:#00d8ff;
+    }
+
+    50%{
+        outline-color:#ffffff;
+    }
+
+    100%{
+        outline-color:#00d8ff;
+    }
+
+}

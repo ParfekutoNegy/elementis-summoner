@@ -1668,7 +1668,6 @@ function createBuildDeckHand(
         deckIds
     );
 
-
     //----------------------------------
     // デッキID確認
     //----------------------------------
@@ -1757,6 +1756,21 @@ function createBuildDeckHand(
                     Number(card.id) ===
                     Number(cardId)
             );
+
+
+            console.log(
+    "★ createBuildDeckHand cardData確認",
+    {
+        id: cardData?.id,
+        name: cardData?.name,
+        type: cardData?.type,
+        text: cardData?.text,
+        ability: cardData?.ability,
+        element: cardData?.element,
+        cost: cardData?.cost,
+        power: cardData?.power
+    }
+);
 
 
         if(!cardData){
@@ -1884,6 +1898,25 @@ function onCardClick(card){
     console.log(
         "クリックカード",
         card
+    );
+
+        console.log(
+        "クリックカード",
+        card
+    );
+
+    console.log(
+        "=== カード情報確認 ===",
+        {
+            id: card.id,
+            name: card.name,
+            type: card.type,
+            text: card.text,
+            ability: card.ability,
+            elementType: card.elementType,
+            cost: card.cost,
+            power: card.power
+        }
     );
 
 

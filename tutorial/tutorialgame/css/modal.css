@@ -1,0 +1,1015 @@
+/*==================================================
+  通知
+==================================================*/
+
+#notification{
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    display:none;
+
+    z-index:4000;
+
+}
+
+
+/*==================================================
+  共通モーダル領域
+==================================================*/
+
+#modal{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    pointer-events:none;
+
+    z-index:9000;
+
+}
+
+
+/*==================================================
+  コスト確認モーダル
+==================================================*/
+
+#cost-modal{
+
+    display:none;
+
+    position:absolute;
+
+    /*==================================================
+      表示位置
+      左端を固定
+    ==================================================*/
+
+    top:86%;
+    left:18%;
+
+    /*
+      X方向には移動させない。
+      Y方向だけ中央合わせ。
+    */
+
+    transform:
+        translateY(-50%);
+
+
+    /*==================================================
+      サイズ
+    ==================================================*/
+
+    width:max-content;
+
+    min-width:180px;
+
+    max-width:80%;
+
+
+    /*==================================================
+      内側
+    ==================================================*/
+
+    padding:15px;
+
+    box-sizing:border-box;
+
+
+    /*==================================================
+      表示
+    ==================================================*/
+
+    background:
+        rgba(0,0,0,0.92);
+
+    color:white;
+
+    border:
+        2px solid white;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 6px 20px
+        rgba(0,0,0,0.6);
+
+
+    /*==================================================
+      文字
+    ==================================================*/
+
+    font-family:
+        sans-serif;
+
+    font-size:18px;
+
+    line-height:1.4;
+
+
+    /*==================================================
+      操作
+    ==================================================*/
+
+    pointer-events:auto;
+
+    z-index:100;
+
+}
+
+
+/*==================================================
+  自分クール / 相手クール
+==================================================*/
+
+#cool-modal,
+#enemy-cool-modal{
+
+    display:none;
+
+    position:absolute;
+
+    right:20px;
+
+    width:max-content;
+
+    min-width:260px;
+
+    max-width:80%;
+
+    min-height:140px;
+
+    padding:8px;
+
+    box-sizing:border-box;
+
+    background:
+        rgba(0,0,0,0.75);
+
+    color:white;
+
+    border:
+        2px solid white;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 6px 20px
+        rgba(0,0,0,0.6);
+
+    font-family:
+        sans-serif;
+
+    font-size:18px;
+
+    line-height:1.4;
+
+    z-index:9999;
+
+}
+
+
+/*==================================================
+  自分クール位置
+==================================================*/
+
+#cool-modal{
+
+    top:51%;
+
+    transform:
+        translateY(-50%);
+
+}
+
+
+/*==================================================
+  相手クール位置
+==================================================*/
+
+#enemy-cool-modal{
+
+    top:26%;
+
+    transform:
+        translateY(-50%);
+
+}
+
+
+/*==================================================
+  モーダルタイトル
+==================================================*/
+
+#cost-modal h2,
+#cool-modal h2,
+#enemy-cool-modal h2{
+
+    margin:0 0 8px;
+
+    padding-bottom:5px;
+
+    text-align:center;
+
+    font-size:20px;
+
+    line-height:1.2;
+
+    font-weight:bold;
+
+    color:white;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.5);
+
+}
+
+
+/*==================================================
+  コスト一覧
+==================================================*/
+
+#cost-list{
+
+    display:flex;
+
+    flex-direction:row;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin:8px 0;
+
+    flex-wrap:nowrap;
+
+}
+
+
+/*==================================================
+  クール一覧
+==================================================*/
+
+#cool-list,
+#enemy-cool-list{
+
+    display:flex;
+
+    flex-direction:row;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:6px;
+
+    margin:8px 0;
+
+    flex-wrap:nowrap;
+
+}
+
+
+/*==================================================
+  コストカード
+==================================================*/
+
+.cost-card{
+
+    display:block;
+
+    flex-shrink:0;
+
+}
+
+
+.cost-card img{
+
+    width:80px;
+
+    height:auto;
+
+    object-fit:cover;
+
+    display:block;
+
+    cursor:pointer;
+
+    transition:
+        transform 0.2s;
+
+}
+
+
+.cost-card.selected img{
+
+    transform:
+        scale(1.08);
+
+}
+
+
+/*==================================================
+  クールカード
+==================================================*/
+
+.cool-card{
+
+    width:80px;
+
+    flex-shrink:0;
+
+    cursor:pointer;
+
+    transition:
+        transform 0.2s;
+
+}
+
+
+#enemy-cool-list .cool-card{
+
+    width:80px;
+
+}
+
+
+.cool-card:hover{
+
+    transform:
+        scale(1.08);
+
+}
+
+
+/*==================================================
+  クールカード選択状態
+==================================================*/
+
+.cool-card.selected{
+
+    outline:
+        3px solid gold;
+
+    outline-offset:2px;
+
+    box-shadow:
+        0 0 10px gold;
+
+}
+
+
+/*==================================================
+  コスト / クール ×
+==================================================*/
+
+#cost-modal > button,
+#close-cool-x-button,
+#close-enemy-cool-x-button{
+
+    position:absolute;
+
+    top:6px;
+    right:6px;
+
+    width:26px;
+    height:26px;
+
+    padding:0;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border:
+        1px solid white;
+
+    border-radius:5px;
+
+    background:
+        rgba(0,0,0,0.8);
+
+    color:white;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size:18px;
+
+    line-height:1;
+
+    cursor:pointer;
+
+    z-index:10;
+
+}
+
+
+#cost-modal > button:hover,
+#close-cool-x-button:hover,
+#close-enemy-cool-x-button:hover{
+
+    background:white;
+
+    color:black;
+
+}
+
+
+/*==================================================
+  自分クール
+  戻すカードを決定
+==================================================*/
+
+#close-cool-button{
+
+    display:block;
+
+    margin:6px auto 0;
+
+    padding:6px 14px;
+
+    font-size:24px;
+
+    line-height:1.2;
+
+    font-weight:bold;
+
+    color:white;
+
+    background:black;
+
+    border:
+        1px solid white;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+
+/*==================================================
+  クールモーダル ACTIVE
+==================================================*/
+
+#cool-modal.active{
+
+    pointer-events:auto;
+
+}
+
+
+/*==================================================
+  手札カード詳細モーダル
+==================================================*/
+
+#hand-card-modal{
+
+    display:none;
+
+    position:absolute;
+
+    top:10%;
+    left:0%;
+
+    z-index:1000;
+
+
+}
+
+
+/*==================================================
+  カード詳細モーダル本体
+==================================================*/
+
+#hand-card-modal-content{
+
+    position:relative;
+
+    width:350px;
+
+    padding:12px;
+
+    box-sizing:border-box;
+
+    background:
+        rgba(0,0,0,0.75);
+
+    color:white;
+
+    border:
+        2px solid white;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 6px 20px
+        rgba(0,0,0,0.6);
+
+    font-family:
+        sans-serif;
+
+    font-size:28px;
+
+    line-height:1.4;
+
+}
+
+
+/*==================================================
+  カード詳細モーダル ×
+==================================================*/
+
+#close-hand-modal-x{
+
+    position:absolute;
+
+    top:6px;
+    right:6px;
+
+    width:26px;
+    height:26px;
+
+    margin:0;
+    padding:0;
+
+    box-sizing:border-box;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border:
+        1px solid white;
+
+    border-radius:5px;
+
+    background:
+        rgba(0,0,0,0.8);
+
+    color:white;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size:20px;
+
+    line-height:1;
+
+    cursor:pointer;
+
+    z-index:100;
+
+}
+
+
+#close-hand-modal-x:hover{
+
+    background:white;
+
+    color:black;
+
+}
+
+
+/*==================================================
+  カード画像
+==================================================*/
+
+#hand-card-modal #info-image{
+
+    width:140px;
+    height:200px;
+
+    margin:auto;
+
+    display:block;
+
+}
+
+
+/*==================================================
+  カード情報
+==================================================*/
+
+#hand-card-modal #info-text{
+
+    margin-top:8px;
+
+    font-size:20px;
+
+    line-height:1.4;
+
+    color:white;
+
+}
+
+
+#hand-card-modal #info-text h2{
+
+    margin:0 0 6px;
+
+    padding-bottom:5px;
+
+    text-align:center;
+
+    font-size:20px;
+
+    line-height:1.2;
+
+    font-weight:bold;
+
+    color:white;
+
+    border-bottom:
+        1px solid
+        rgba(255,255,255,0.5);
+
+}
+
+
+/*==================================================
+  カード詳細ボタン
+==================================================*/
+
+#hand-card-modal #info-buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:8px;
+
+    margin-top:10px;
+
+}
+
+
+#hand-card-modal #info-buttons button{
+
+    width:55px;
+    height:25px;
+
+    padding:0;
+
+    font-size:11px;
+
+    line-height:1.2;
+
+    font-weight:bold;
+
+    color:white;
+
+    background:black;
+
+    border:
+        1px solid white;
+
+    border-radius:6px;
+
+    cursor:pointer;
+
+}
+
+
+#hand-card-modal #info-buttons button:hover{
+
+    background:white;
+
+    color:black;
+
+}
+
+
+/*==================================================
+  サモン操作モーダル
+==================================================*/
+
+#summon-action-modal{
+
+    display:none;
+
+    position:absolute;
+
+    bottom:8%;
+    left:10%;
+
+    z-index:1000;
+
+}
+
+
+/*==================================================
+  サモン操作モーダル本体
+==================================================*/
+
+#summon-action-modal-content{
+
+    width:140px;
+
+    background:white;
+
+    border-radius:10px;
+
+    padding:8px;
+
+    box-sizing:border-box;
+
+}
+
+
+/*==================================================
+  サモン画像
+==================================================*/
+
+#summon-info-image{
+
+    width:70px;
+    height:98px;
+
+    margin:auto;
+
+}
+
+
+/*==================================================
+  サモン情報
+==================================================*/
+
+#summon-info-text{
+
+    font-size:12px;
+
+}
+
+
+#summon-info-text h2{
+
+    font-size:14px;
+
+}
+
+
+/*==================================================
+  サモン操作ボタン
+==================================================*/
+
+#summon-action-buttons{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    margin-top:15px;
+
+}
+
+
+#summon-action-buttons button{
+
+    width:100%;
+
+    height:25px;
+
+    font-size:11px;
+
+}
+
+
+/*==================================================
+  サモン操作モーダル本体
+==================================================*/
+
+#summon-action-modal-content{
+
+    width:140px;
+
+    background:white;
+
+    border-radius:10px;
+
+    padding:8px;
+
+}
+
+
+/*==================================================
+  サモン画像
+==================================================*/
+
+#summon-info-image{
+
+    width:70px;
+
+    height:98px;
+
+    margin:auto;
+
+}
+
+
+/*==================================================
+  サモン操作ボタン
+==================================================*/
+
+#summon-action-buttons{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:6px;
+
+    margin-top:15px;
+
+    transform:
+        translateY(-1000px);
+
+}
+
+
+#summon-action-buttons button{
+
+    width:100%;
+
+    height:25px;
+
+    font-size:11px;
+
+}
+
+
+/*==================================================
+  サモン情報
+==================================================*/
+
+#summon-info-text{
+
+    font-size:12px;
+
+}
+
+
+#summon-info-text h2{
+
+    font-size:14px;
+
+}
+
+
+/*==================================================
+  コスト選択・行動ボタンエリア
+==================================================*/
+
+#cost-action-area{
+
+    display:none;
+
+    position:absolute;
+
+    right:20px;
+    bottom:175px;
+
+    z-index:9999;
+
+    flex-direction:row;
+
+    align-items:center;
+
+    justify-content:flex-end;
+
+    gap:20px;
+
+    padding:10px;
+
+    background:transparent;
+
+    border:none;
+
+    box-shadow:none;
+
+    box-sizing:border-box;
+
+}
+
+
+/*==================================================
+  表示中
+==================================================*/
+
+#cost-action-area.active{
+
+    display:flex;
+
+}
+
+
+/*==================================================
+  コスト選択ボタン
+==================================================*/
+
+#cost-action-area button{
+
+    width:200px;
+
+    height:72px;
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #c94a4a,
+            #8f2020
+        );
+
+    color:white;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 3px 8px
+        rgba(0,0,0,0.5);
+
+    text-shadow:
+        0 1px 2px
+        rgba(0,0,0,0.7);
+
+    transition:
+        transform 0.15s,
+        filter 0.15s,
+        box-shadow 0.15s;
+
+}
+
+
+/*==================================================
+  ホバー
+==================================================*/
+
+#cost-action-area button:hover{
+
+    filter:brightness(1.2);
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 0 12px
+        #8f2020;
+
+}
+
+
+/*==================================================
+  クリック
+==================================================*/
+
+#cost-action-area button:active{
+
+    transform:
+        translateY(1px);
+
+}
+
+
+/*==================================================
+  コストモーダル表示中の手札位置
+==================================================*/
+
+#hand-cards-area.cost-view-open{
+
+    transform:
+        translateX(
+            var(--cost-hand-shift, 0px)
+        );
+
+}

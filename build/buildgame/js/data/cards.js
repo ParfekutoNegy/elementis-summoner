@@ -1092,6 +1092,7 @@ const CARD_LIST = [
         series:"mythology",
         image: "images/096-アースディフェンス.jpg"
     },
+
     {
         id: 1001,
         name:"ドラゴン",
@@ -1100,8 +1101,14 @@ const CARD_LIST = [
         cost: 4,
         power: 5,
         series:"promo",
-        image: "images/PR-001 ドラゴンフルアート.jpg"
+        image: "images/PR-001 ドラゴンフルアート.jpg",
+        ability: {
+        type: "turnPowerUp",
+        value: 2
     },
+        text:"自分のターン中、このカードのパワーは＋２される。" 
+    },
+
     {
         id: 1002,
         name:"ドラゴン",
@@ -1110,7 +1117,12 @@ const CARD_LIST = [
         cost: 4,
         power: 5,
         series:"promo",
-        image: "images/PR-002 ドラゴン.jpg"
+        image: "images/PR-002 ドラゴン.jpg",
+        ability: {
+        type: "turnPowerUp",
+        value: 2
+    },
+        text:"自分のターン中、このカードのパワーは＋２される。" 
     },
     {
         id: 1003,
@@ -1120,7 +1132,14 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-003 サラマンダー.jpg"
+        image: "images/PR-003 サラマンダー.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "火",
+        value: 1
+    },
+        text:"自分の【火】のカードのコストは－１される。"
+
     },
     {
         id: 1004,
@@ -1130,7 +1149,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-004 シルフ.jpg"
+        image: "images/PR-004 シルフ.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "風",
+        value: 1},
+        text:"自分の【風】のカードのコストは－１される。"
     },
     {
         id: 1005,
@@ -1140,7 +1164,14 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-005 ウンディーネ.jpg"
+        image: "images/PR-005 ウンディーネ.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "水",
+        value: 1
+    },
+    text:"自分の【水】のカードのコストは－１される。"
+
     },
     {
         id: 1006,
@@ -1150,7 +1181,13 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-006 ノーム.jpg"
+        image: "images/PR-006 ノーム.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "土",
+        value: 1
+    },
+    text:"自分の【土】のカードのコストは－１される。"
     },
     {
         id: 1007,
@@ -1160,7 +1197,14 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-007 サラマンダーフルアート.jpg"
+        image: "images/PR-007 サラマンダーフルアート.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "火",
+        value: 1
+    },
+        text:"自分の【火】のカードのコストは－１される。"
+
     },
     {
         id: 1008,
@@ -1170,7 +1214,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-008 シルフフルアート.jpg"
+        image: "images/PR-008 シルフフルアート.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "風",
+        value: 1},
+        text:"自分の【風】のカードのコストは－１される。"
     },
     {
         id: 1009,
@@ -1180,7 +1229,14 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-009 ウンディーネフルアート.jpg"
+        image: "images/PR-009 ウンディーネフルアート.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "水",
+        value: 1
+    },
+    text:"自分の【水】のカードのコストは－１される。"
+
     },
     {
         id: 1010,
@@ -1190,9 +1246,14 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"promo",
-        image: "images/PR-010 ノームフルアート.jpg"
+        image: "images/PR-010 ノームフルアート.jpg",
+        ability: {
+        type: "elementCostDown",
+        element: "土",
+        value: 1
     },
-
+    text:"自分の【土】のカードのコストは－１される。"
+    },
 
 
 ];

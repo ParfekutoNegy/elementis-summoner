@@ -1,0 +1,196 @@
+/* =========================================================
+Elementis Summoner
+Tutorial UI
+========================================================= */
+
+/* =========================================================
+Tutorial Guide
+========================================================= */
+
+#tutorial-guide{
+
+
+position:absolute;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+display:none;
+
+align-items:center;
+justify-content:center;
+
+background:rgba(0,0,0,0.35);
+
+z-index:9999;
+
+color:white;
+
+
+}
+
+/* =========================================================
+Tutorial Panel
+========================================================= */
+
+#tutorial-guide-panel{
+
+position:relative;
+
+width:520px;
+
+min-height:280px;
+
+padding:30px;
+
+box-sizing:border-box;
+
+background:rgba(20,20,25,0.96);
+
+border:3px solid white;
+
+border-radius:20px;
+
+text-align:center;
+
+color:white;
+
+box-shadow:
+    0 10px 40px rgba(0,0,0,0.8);
+
+
+}
+
+/* =========================================================
+Title
+========================================================= */
+
+#tutorial-guide-title{
+
+
+display:block;
+
+color:white;
+
+font-size:30px;
+
+font-weight:bold;
+
+line-height:1.3;
+
+margin-bottom:12px;
+
+
+}
+
+/* =========================================================
+Step
+========================================================= */
+
+#tutorial-guide-step{
+
+
+display:block;
+
+color:white;
+
+font-size:20px;
+
+font-weight:bold;
+
+line-height:1.4;
+
+margin-bottom:20px;
+
+
+}
+
+/* =========================================================
+Text
+========================================================= */
+
+#tutorial-guide-text{
+
+
+display:block;
+
+color:white;
+
+font-size:22px;
+
+font-weight:normal;
+
+line-height:1.7;
+
+white-space:pre-line;
+
+min-height:90px;
+
+margin-bottom:25px;
+
+}
+
+/* =========================================================
+Next Button
+========================================================= */
+
+#tutorial-next-button{
+
+
+display:inline-block;
+
+min-width:180px;
+
+padding:12px 30px;
+
+box-sizing:border-box;
+
+background:white;
+
+color:black;
+
+border:2px solid white;
+
+border-radius:10px;
+
+font-size:20px;
+
+font-weight:bold;
+
+line-height:1.3;
+
+cursor:pointer;
+
+
+}
+
+/* =========================================================
+Hover
+========================================================= */
+
+#tutorial-next-button:hover{
+
+
+transform:scale(1.05);
+
+
+}
+
+/* =========================================================
+Disabled
+========================================================= */
+
+#tutorial-next-button:disabled{
+
+
+opacity:0.5;
+
+cursor:default;
+
+transform:none;
+
+
+}
