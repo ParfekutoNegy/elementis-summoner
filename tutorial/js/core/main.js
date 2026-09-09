@@ -7625,10 +7625,8 @@ if(homeButton){
 function setRandomBattleBackground(){
 
     const backgrounds = [
-        "../../images/background/battle-background-01.png",
-        "../../images/background/battle-background-02.png",
-        "../../images/background/battle-background-03.png",
-        "../../images/background/battle-background-04.png"
+        "../images/background/battle-background-01.png",
+
     ];
 
     const randomIndex =
