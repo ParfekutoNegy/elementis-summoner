@@ -132,7 +132,7 @@ if(endTurnButton){
 
     beginTutorialStep(
         "STEP 2",
-        "カードのプレイ方法を学びます。"
+        "カードのプレイ方法を学びます。\nまずはサモンをプレイしてみましょう。"
     );
 
 
@@ -703,7 +703,7 @@ function tutorialStep2StartMagiaSelection(){
 
     setTutorialGuide(
         "STEP 2",
-        "マギアを1枚選び、プレイボタンを押してください。"
+        "マギアを1枚選び、プレイボタンを押してください。対象が選べないマギアはプレイできません。"
     );
 
 
@@ -2146,7 +2146,7 @@ function tutorialStep2AfterUseButton(){
 
 
         setTutorialMessage(
-            "発光している対象を選んでください。"
+            "選べる対象が発光します。相手のアイコンを対象に選んでください。"
         );
 
 
@@ -3161,7 +3161,7 @@ function executeTutorialStep2CpuMagia(){
 
     setTutorialGuide(
         "STEP 2",
-        "相手がパイロフレイムをプレイしました。\nあなたは5ダメージを受けます。"
+        "相手が3ダメージを与える『パイロフレイム』をプレイしました。レジストをプレイしてダメージを防ぎましょう。"
     );
 
 
@@ -3227,7 +3227,7 @@ function executeTutorialStep2CpuMagia(){
                     PLAYER,
 
                 damage:
-                    5,
+                    3,
 
                 source:
                     magia,
@@ -3481,7 +3481,7 @@ function completeTutorialStep2(){
 
     setTutorialGuide(
         "STEP 2",
-        "サモン・マギア・レジストのプレイ方法を確認しました。"
+        "サモン・マギア・レジストのプレイ方法を確認しました。STEP2はこれで完了です。"
     );
 
 

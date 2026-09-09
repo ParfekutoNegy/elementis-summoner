@@ -967,7 +967,7 @@ function startTutorialStep1CardTypes(){
 
     setTutorialGuide(
         "STEP 1",
-        "まず3種類のカードを確認します。\nサモンの「ユニコーン」を選んでください。"
+        "まず3種類のカードを確認します。\nサモンの『ユニコーン』を選んでください。"
     );
 
 }
@@ -1185,7 +1185,7 @@ function tutorialStep1AfterCardClick(
         ){
 
             setTutorialMessage(
-                "「ユニコーン」を選んでください。"
+                "『ユニコーン』を選んでください。"
             );
 
 
@@ -1259,7 +1259,7 @@ function tutorialStep1AfterCardClick(
         ){
 
             setTutorialMessage(
-                "「ファイアボール」を選んでください。"
+                "『ファイアボール』を選んでください。"
             );
 
 
@@ -1320,7 +1320,7 @@ function tutorialStep1AfterCardClick(
         ){
 
             setTutorialMessage(
-                "「ストーンガード」を選んでください。"
+                "『ストーンガード』を選んでください。"
             );
 
 
@@ -1455,7 +1455,7 @@ function startTutorialStep1Magia(){
 
     setTutorialGuide(
         "STEP 1",
-        "次はマギアの「ファイアボール」を選んでください。"
+        "次はマギアの『ファイアボール』を選んでください。"
     );
 
 }
@@ -1520,7 +1520,7 @@ function startTutorialStep1Resist(){
 
     setTutorialGuide(
         "STEP 1",
-        "最後にレジストの「ストーンガード」を選んでください。"
+        "最後にレジストの『ストーンガード』を選んでください。"
     );
 
 }
@@ -1837,7 +1837,7 @@ function completeTutorialStep1(){
 
     setTutorialGuide(
         "STEP 1",
-        "カードの種類と、それぞれのカードを置く場所を確認しました。"
+        "カードの種類と、それぞれのカードを置く場所を確認しました。STEP1はこれで完了です。"
     );
 
 

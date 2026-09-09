@@ -192,9 +192,9 @@ Tutorial Panel
     display:grid;
 
     grid-template-columns:
-        95px
+        125px
         minmax(0,1fr)
-        125px;
+        120px;
 
     align-items:center;
 
@@ -698,9 +698,9 @@ Smartphone Landscape
     #tutorial-panel{
 
         grid-template-columns:
-            72px
+            115px
             minmax(0,1fr)
-            96px;
+            200px;
 
         gap:6px;
 
@@ -757,9 +757,9 @@ Very Narrow Width
     #tutorial-panel{
 
         grid-template-columns:
-            68px
+            80px
             minmax(0,1fr)
-            92px;
+            170px;
 
         gap:5px;
 
@@ -824,7 +824,7 @@ and
     #tutorial-panel{
 
         grid-template-columns:
-            72px
+            105px
             minmax(0, 1fr)
             94px;
 
