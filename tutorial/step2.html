@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    Elementis Summoner Tutorial STEP1
+</title>
+
+
+<!-- =========================================================
+Game CSS
+========================================================= -->
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/battle.css">
+<link rel="stylesheet" href="css/card.css">
+<link rel="stylesheet" href="css/button.css">
+<link rel="stylesheet" href="css/panel.css">
+<link rel="stylesheet" href="css/modal.css">
+
+
+<!-- =========================================================
+Tutorial CSS
+========================================================= -->
+
+<link rel="stylesheet" href="tutorial.css">
+
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+Tutorial Layout
+========================================================= -->
+
+<div id="tutorial-layout">
+
+
+    <!-- =====================================================
+        Game Area
+    ====================================================== -->
+
+    <div id="tutorial-game-area">
+
+
+        <!-- =================================================
+            Game Container
+        ================================================== -->
+
+        <div id="game-container">
+
+
+            <!-- =================================================
+                Battle Screen
+                Base Size : 1280 × 720
+            ================================================== -->
+
+            <div id="battle-screen">
+
+
+                <!-- =================================================
+                    Game UI
+                ================================================== -->
+
+                <div id="battle-ui">
+
+
+                    <!-- =============================================
+                        Enemy Header
+                    ============================================= -->
+
+                    <header id="enemy-header">
+
+
+                        <!-- CPU Hand -->
+
+                        <div id="enemy-hand-display">
+
+                            <div id="enemy-hand-cards">
+                            </div>
+
+                            <div id="enemy-hand-count">
+                                手札×10
+                            </div>
+
+                        </div>
+
+
+                        <!-- CPU Player + LIFE -->
+
+                        <div id="enemy-player-area">
+
+
+                            <div id="enemy-player">
+
+                                <img
+                                    id="enemy-player-icon"
+                                    src=""
+                                    alt="Enemy Player"
+                                >
+
+                            </div>
+
+
+                            <div id="enemy-life-display">
+
+                                <div class="life-label">
+                                    LIFE
+                                </div>
+
+                                <div id="enemy-life-value">
+                                    5
+                                </div>
+
+                                <div id="enemy-win-stars">
+
+                                    <span class="win-star">
+                                        ☆
+                                    </span>
+
+                                    <span class="win-star">
+                                        ☆
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- CPU Cost -->
+
+                        <div id="enemy-cost-display">
+
+                            <div id="enemy-cost-cards">
+                            </div>
+
+                            <div id="enemy-cost-count">
+                                コスト×0
+                            </div>
+
+                        </div>
+
+
+                        <!-- CPU Cool -->
+
+                        <div id="enemy-cool-display">
+
+                            <div id="enemy-cool-cards">
+                            </div>
+
+                            <div id="enemy-cool-count">
+                                クール×0
+                            </div>
+
+                        </div>
+
+
+                        <!-- Menu -->
+
+                        <button
+                            id="menu-button"
+                            type="button"
+                        >
+                            ☰
+                        </button>
+
+
+                        <!-- Game Menu -->
+
+                        <div id="game-menu">
+
+                            <button
+                                id="concede-button"
+                                type="button"
+                            >
+                                投了
+                            </button>
+
+                            <button
+                                id="reset-game-button"
+                                type="button"
+                            >
+                                ゲーム初期化
+                            </button>
+
+                            <button
+                                id="menu-home-button"
+                                type="button"
+                            >
+                                ホームに戻る
+                            </button>
+
+                            <button
+                                id="close-menu-button"
+                                type="button"
+                            >
+                                閉じる
+                            </button>
+
+                        </div>
+
+
+                    </header>
+
+
+
+                    <!-- =============================================
+                        Battle Main
+                    ============================================= -->
+
+                    <main id="battle-main">
+
+
+                        <!-- LOG -->
+
+                        <aside id="log-area">
+
+
+                            <button
+                                id="log-button"
+                                type="button"
+                            >
+                                📜 LOG
+                            </button>
+
+
+                            <div id="battle-log">
+                            </div>
+
+
+                        </aside>
+
+
+
+                        <!-- Field -->
+
+                        <section id="field-area">
+
+
+                            <div id="enemy-field">
+                            </div>
+
+
+                            <div id="player-field">
+                            </div>
+
+
+                        </section>
+
+
+
+                        <!-- Turn End -->
+
+                        <aside id="endturn-area">
+
+
+                            <button
+                                id="endturn-button"
+                                type="button"
+                            >
+
+                                <img
+                                    src="../images/ui/turn-end-button.png"
+                                    alt="ターン終了"
+                                >
+
+                            </button>
+
+
+                        </aside>
+
+
+                    </main>
+
+
+
+                    <!-- =============================================
+                        Player Header
+                    ============================================= -->
+
+                    <footer id="player-header">
+
+
+                        <!-- Player Cost -->
+
+                        <div
+                            id="player-cost-display"
+                            onclick="openCostView()"
+                        >
+
+                            <div id="player-cost-cards">
+                            </div>
+
+
+                            <div id="player-cost-count">
+                                コスト×0
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- Player Cool -->
+
+                        <div id="player-cool-display">
+
+                            <div id="player-cool-cards">
+                            </div>
+
+
+                            <div id="player-cool-count">
+                                クール×0
+                            </div>
+
+
+                        </div>
+
+
+                    </footer>
+
+
+
+                    <!-- =============================================
+                        Hand
+                    ============================================= -->
+
+                    <section id="hand-area">
+
+
+                        <!-- Player Icon -->
+
+                        <div id="player-icon-area">
+
+
+                            <img
+                                id="player-icon"
+                                src=""
+                                alt="Player"
+                            >
+
+
+                        </div>
+
+
+                        <!-- Player LIFE -->
+
+                        <div id="player-life-display">
+
+
+                            <div class="life-label">
+                                LIFE
+                            </div>
+
+
+                            <div id="player-life-value">
+                                5
+                            </div>
+
+
+                            <div id="player-win-stars">
+
+                                <span class="win-star">
+                                    ☆
+                                </span>
+
+                                <span class="win-star">
+                                    ☆
+                                </span>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- Player Hand -->
+
+                        <div id="hand-cards-area">
+                        </div>
+
+
+                    </section>
+
+
+                </div>
+                <!-- #battle-ui -->
+
+
+
+                <!-- =================================================
+                    Notification
+                ================================================== -->
+
+                <div id="notification">
+                </div>
+
+
+
+                <!-- =================================================
+                    Turn Overlay
+                ================================================== -->
+
+                <div id="turn-overlay">
+
+
+                    <div id="turn-number">
+                    </div>
+
+
+                    <div id="turn-message">
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Match Result
+                ================================================== -->
+
+                <div id="match-result-overlay">
+
+
+                    <div id="match-result-title">
+                        PLAYER WIN
+                    </div>
+
+
+                    <div id="match-result-score">
+                        1 - 0
+                    </div>
+
+
+                    <button
+                        id="retry-game-button"
+                        type="button"
+                        onclick="restartGame();"
+                    >
+                        もう一度遊ぶ
+                    </button>
+
+
+                    <button
+                        id="home-button"
+                        type="button"
+                    >
+                        ホームに戻る
+                    </button>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    CPU Card Action
+                ================================================== -->
+
+                <div id="cpu-card-action-overlay">
+
+
+                    <div id="cpu-card-action-panel">
+
+
+                        <div id="cpu-card-action-type">
+                            CPU MAGIA
+                        </div>
+
+
+                        <img
+                            id="cpu-card-action-image"
+                            src=""
+                            alt=""
+                        >
+
+
+                        <div id="cpu-card-action-name">
+                            カード名
+                        </div>
+
+
+                        <div id="cpu-card-action-target">
+                            対象：PLAYER
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Action Guide
+                ================================================== -->
+
+                <div id="action-guide">
+
+
+                    <div id="action-guide-text">
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Game Action Buttons
+                ================================================== -->
+
+                <div id="cost-action-area">
+
+
+                    <button
+                        id="use-button"
+                        type="button"
+                    >
+                        プレイ
+                    </button>
+
+
+                    <button
+                        id="attack-button"
+                        type="button"
+                    >
+                        アタック
+                    </button>
+
+
+                    <button
+                        id="ability-button"
+                        type="button"
+                    >
+                        能力使用
+                    </button>
+
+
+                    <button
+                        id="block-button"
+                        type="button"
+                    >
+                        ブロック
+                    </button>
+
+
+                    <button
+                        id="confirm-button"
+                        type="button"
+                    >
+                        決定
+                    </button>
+
+
+                    <button
+                        id="cancel-button"
+                        type="button"
+                    >
+                        キャンセル
+                    </button>
+
+
+                    <button
+                        id="block-skip-button"
+                        type="button"
+                    >
+                        ブロックなし
+                    </button>
+
+
+                    <button
+                        id="resist-pass-button"
+                        type="button"
+                    >
+                        パス
+                    </button>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Cost Modal
+                ================================================== -->
+
+                <div id="modal">
+
+
+                    <div id="cost-modal">
+
+
+                        <h2>
+                            コストゾーン
+                        </h2>
+
+
+                        <div id="cost-list">
+                        </div>
+
+
+                        <button
+                            type="button"
+                            onclick="closeCostView()"
+                        >
+                            ×
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Player Cool Modal
+                ================================================== -->
+
+                <div id="cool-modal">
+
+
+                    <div id="cool-modal-content">
+
+
+                        <h2>
+                            クールゾーン
+                        </h2>
+
+
+                        <div id="cool-list">
+                        </div>
+
+
+                        <button
+                            id="close-cool-x-button"
+                            type="button"
+                            onclick="closeCoolModal()"
+                        >
+                            ×
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Enemy Cool Modal
+                ================================================== -->
+
+                <div id="enemy-cool-modal">
+
+
+                    <div class="enemy-cool-modal-content">
+
+
+                        <h2>
+                            相手のクールゾーン
+                        </h2>
+
+
+                        <div id="enemy-cool-list">
+                        </div>
+
+
+                        <button
+                            id="close-enemy-cool-x-button"
+                            type="button"
+                            onclick="closeEnemyCoolModal()"
+                        >
+                            ×
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Hand Card Modal
+                ================================================== -->
+
+                <div id="hand-card-modal">
+
+
+                    <div id="hand-card-modal-content">
+
+
+                        <button
+                            id="close-hand-modal-x"
+                            type="button"
+                            onclick="closeHandModal()"
+                        >
+                            ×
+                        </button>
+
+
+                        <div id="info-image">
+                            カード画像
+                        </div>
+
+
+                        <div id="info-text">
+                        </div>
+
+
+                        <div id="info-buttons">
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- =================================================
+                    Summon Action Modal
+                ================================================== -->
+
+                <div id="summon-action-modal">
+
+
+                    <div id="summon-action-modal-content">
+
+
+                        <div id="summon-info-image">
+                            サモン画像
+                        </div>
+
+
+                        <div id="summon-info-text">
+                        </div>
+
+
+                        <div id="summon-action-buttons">
+
+
+                            <button
+                                id="summon-attack-button"
+                                type="button"
+                            >
+                                アタック
+                            </button>
+
+
+                            <button
+                                id="summon-ability-button"
+                                type="button"
+                            >
+                                能力使用
+                            </button>
+
+
+                            <button
+                                id="close-summon-modal"
+                                type="button"
+                            >
+                                閉じる
+                            </button>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+            <!-- #battle-screen -->
+
+
+        </div>
+        <!-- #game-container -->
+
+
+    </div>
+    <!-- #tutorial-game-area -->
+
+
+
+    <!-- =====================================================
+        Tutorial Panel
+    ====================================================== -->
+
+    <div id="tutorial-panel">
+
+
+        <!-- STEP -->
+
+        <div id="tutorial-step-area">
+
+            <div id="tutorial-step-label">
+                STEP 2
+            </div>
+
+        </div>
+
+
+
+        <!-- Message -->
+
+        <div id="tutorial-message-area">
+
+            <div id="tutorial-message">
+                カードのプレイについて学びます。
+            </div>
+
+        </div>
+
+
+
+        <!-- Navigation -->
+
+        <div id="tutorial-navigation">
+
+
+            <button
+                id="tutorial-next-button"
+                type="button"
+            >
+                次へ
+            </button>
+
+
+        </div>
+
+
+    </div>
+    <!-- #tutorial-panel -->
+
+
+</div>
+<!-- #tutorial-layout -->
+
+
+
+<!-- =========================================================
+JavaScript
+========================================================= -->
+
+
+<!-- =========================================================
+Data
+========================================================= -->
+
+<script src="js/data/resistCondition.js"></script>
+<script src="js/data/cards.js"></script>
+
+
+
+<!-- =========================================================
+Core
+========================================================= -->
+
+<script src="js/core/game.js"></script>
+<script src="js/core/player.js"></script>
+<script src="js/core/zone.js"></script>
+<script src="js/core/turn.js"></script>
+<script src="js/core/resize.js"></script>
+
+
+
+<!-- =========================================================
+Battle
+========================================================= -->
+
+<script src="js/battle/testdeck.js"></script>
+<script src="js/battle/summon.js"></script>
+<script src="js/battle/attack.js"></script>
+<script src="js/battle/magia.js"></script>
+<script src="js/battle/resist.js"></script>
+<script src="js/battle/cost.js"></script>
+<script src="js/battle/cool.js"></script>
+<script src="js/battle/effect.js"></script>
+<script src="js/battle/event.js"></script>
+<script src="js/battle/resolve.js"></script>
+<script src="js/battle/turn.js"></script>
+<script src="js/battle/cpu.js"></script>
+
+
+
+<!-- =========================================================
+UI
+========================================================= -->
+
+<script src="js/ui/card.js"></script>
+<script src="js/ui/board.js"></script>
+
+
+
+<!-- =========================================================
+Main
+========================================================= -->
+
+<script src="js/core/main.js"></script>
+
+
+
+<!-- =========================================================
+Tutorial Common
+========================================================= -->
+
+<script src="js/tutorial-common.js"></script>
+
+
+
+<!-- =========================================================
+STEP1
+========================================================= -->
+
+<script src="js/step2.js"></script>
+
+
+</body>
+
+</html>

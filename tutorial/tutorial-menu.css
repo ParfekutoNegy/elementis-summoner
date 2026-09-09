@@ -1,0 +1,827 @@
+/* =========================================================
+Elementis Summoner
+Tutorial Menu
+========================================================= */
+
+
+/* =========================================================
+Reset
+========================================================= */
+
+*{
+
+    box-sizing:
+        border-box;
+
+}
+
+
+html,
+body{
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    width:
+        100%;
+
+    min-height:
+        100%;
+
+}
+
+
+/* =========================================================
+Body
+========================================================= */
+
+body{
+
+    min-height:
+        100vh;
+
+    overflow-x:
+        hidden;
+
+    color:
+        #f4ead9;
+
+    font-family:
+        "Yu Mincho",
+        "Hiragino Mincho ProN",
+        "YuMincho",
+        serif;
+
+    background:
+
+        radial-gradient(
+            circle at 50% 15%,
+            rgba(
+                151,
+                107,
+                51,
+                0.28
+            ),
+            transparent 42%
+        ),
+
+        linear-gradient(
+            180deg,
+            #24180e 0%,
+            #120d09 100%
+        );
+
+}
+
+
+/* =========================================================
+Menu Screen
+========================================================= */
+
+#tutorial-menu-screen{
+
+    width:
+        100%;
+
+    min-height:
+        100vh;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    align-items:
+        center;
+
+    padding:
+        26px 20px 22px;
+
+}
+
+
+/* =========================================================
+Header
+========================================================= */
+
+#tutorial-menu-header{
+
+    width:
+        min(
+            960px,
+            100%
+        );
+
+    text-align:
+        center;
+
+    margin-bottom:
+        22px;
+
+}
+
+
+/* =========================================================
+Main Title
+========================================================= */
+
+#tutorial-menu-title{
+
+    color:
+        #f0d088;
+
+    font-size:
+        clamp(
+            28px,
+            4vw,
+            46px
+        );
+
+    font-weight:
+        700;
+
+    letter-spacing:
+        5px;
+
+    line-height:
+        1.1;
+
+    text-shadow:
+
+        0 2px 3px
+        rgba(
+            0,
+            0,
+            0,
+            0.9
+        ),
+
+        0 0 16px
+        rgba(
+            210,
+            164,
+            77,
+            0.15
+        );
+
+}
+
+
+/* =========================================================
+Subtitle
+========================================================= */
+
+#tutorial-menu-subtitle{
+
+    margin-top:
+        6px;
+
+    color:
+        #c9ad72;
+
+    font-size:
+        16px;
+
+    font-weight:
+        bold;
+
+    letter-spacing:
+        6px;
+
+}
+
+
+/* =========================================================
+Introduction
+========================================================= */
+
+#tutorial-menu-introduction{
+
+    margin-top:
+        13px;
+
+    color:
+        #d6cab8;
+
+    font-size:
+        14px;
+
+}
+
+
+/* =========================================================
+Menu List
+========================================================= */
+
+#tutorial-menu-list{
+
+    width:
+        min(
+            960px,
+            100%
+        );
+
+    display:
+        grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap:
+        13px;
+
+}
+
+
+/* =========================================================
+Menu Card
+========================================================= */
+
+.tutorial-menu-card{
+
+    position:
+        relative;
+
+    min-height:
+        112px;
+
+    display:
+        flex;
+
+    flex-direction:
+        column;
+
+    justify-content:
+        center;
+
+    padding:
+        17px 20px;
+
+    overflow:
+        hidden;
+
+    text-decoration:
+        none;
+
+    color:
+        #fff7e8;
+
+    border:
+        1px solid
+        rgba(
+            220,
+            183,
+            104,
+            0.62
+        );
+
+    border-radius:
+        12px;
+
+    background:
+
+        linear-gradient(
+            135deg,
+            rgba(
+                106,
+                72,
+                37,
+                0.96
+            ),
+            rgba(
+                54,
+                35,
+                21,
+                0.98
+            )
+        );
+
+    box-shadow:
+
+        inset
+        0 0 0 1px
+        rgba(
+            255,
+            255,
+            255,
+            0.04
+        ),
+
+        0 6px 16px
+        rgba(
+            0,
+            0,
+            0,
+            0.34
+        );
+
+    transition:
+
+        transform
+        0.12s
+        ease,
+
+        filter
+        0.15s
+        ease,
+
+        box-shadow
+        0.15s
+        ease;
+
+}
+
+
+/* =========================================================
+Card Decoration
+========================================================= */
+
+.tutorial-menu-card::before{
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        0;
+
+    left:
+        0;
+
+    width:
+        5px;
+
+    height:
+        100%;
+
+    background:
+
+        linear-gradient(
+            180deg,
+            #e4c477,
+            #79511f
+        );
+
+}
+
+
+/* =========================================================
+INTRO
+========================================================= */
+
+.tutorial-menu-card-intro{
+
+    grid-column:
+        1 / -1;
+
+    min-height:
+        92px;
+
+}
+
+
+/* =========================================================
+Hover
+========================================================= */
+
+.tutorial-menu-card:hover{
+
+    filter:
+        brightness(
+            1.12
+        );
+
+    transform:
+        translateY(
+            -2px
+        );
+
+    box-shadow:
+
+        0 8px 20px
+        rgba(
+            0,
+            0,
+            0,
+            0.42
+        ),
+
+        0 0 13px
+        rgba(
+            232,
+            193,
+            105,
+            0.14
+        );
+
+}
+
+
+/* =========================================================
+Press
+========================================================= */
+
+.tutorial-menu-card:active{
+
+    transform:
+        translateY(
+            1px
+        );
+
+}
+
+
+/* =========================================================
+Step Number
+========================================================= */
+
+.tutorial-menu-number{
+
+    margin-bottom:
+        4px;
+
+    color:
+        #e8c873;
+
+    font-size:
+        13px;
+
+    font-weight:
+        bold;
+
+    letter-spacing:
+        1.5px;
+
+}
+
+
+/* =========================================================
+Card Title
+========================================================= */
+
+.tutorial-menu-card-title{
+
+    color:
+        #fff7e6;
+
+    font-size:
+        20px;
+
+    font-weight:
+        bold;
+
+    line-height:
+        1.25;
+
+}
+
+
+/* =========================================================
+Card Description
+========================================================= */
+
+.tutorial-menu-card-description{
+
+    margin-top:
+        6px;
+
+    color:
+        #d8cbb8;
+
+    font-size:
+        13px;
+
+    line-height:
+        1.45;
+
+}
+
+
+/* =========================================================
+Footer
+========================================================= */
+
+#tutorial-menu-footer{
+
+    width:
+        min(
+            960px,
+            100%
+        );
+
+    display:
+        flex;
+
+    justify-content:
+        center;
+
+    margin-top:
+        18px;
+
+}
+
+
+/* =========================================================
+Home
+========================================================= */
+
+#tutorial-home-button{
+
+    min-width:
+        170px;
+
+    height:
+        44px;
+
+    display:
+        inline-flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    padding:
+        0 20px;
+
+    color:
+        #efe5d4;
+
+    font-size:
+        14px;
+
+    font-weight:
+        bold;
+
+    text-decoration:
+        none;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.28
+        );
+
+    border-radius:
+        8px;
+
+    background:
+
+        linear-gradient(
+            180deg,
+            #494034,
+            #29231d
+        );
+
+    box-shadow:
+
+        0 4px 10px
+        rgba(
+            0,
+            0,
+            0,
+            0.3
+        );
+
+}
+
+
+#tutorial-home-button:hover{
+
+    filter:
+        brightness(
+            1.12
+        );
+
+}
+
+
+/* =========================================================
+Tablet / Narrow
+========================================================= */
+
+@media(
+    max-width:
+        720px
+){
+
+    #tutorial-menu-screen{
+
+        padding:
+            17px 12px;
+
+    }
+
+
+    #tutorial-menu-list{
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .tutorial-menu-card-intro{
+
+        grid-column:
+            auto;
+
+    }
+
+
+    .tutorial-menu-card{
+
+        min-height:
+            88px;
+
+        padding:
+            12px 15px;
+
+    }
+
+
+    .tutorial-menu-card-title{
+
+        font-size:
+            17px;
+
+    }
+
+
+    .tutorial-menu-card-description{
+
+        font-size:
+            12px;
+
+    }
+
+}
+
+
+/* =========================================================
+Smartphone Landscape
+
+横画面で縦が狭いとき
+========================================================= */
+
+@media(
+    max-height:
+        500px
+){
+
+    #tutorial-menu-screen{
+
+        justify-content:
+            flex-start;
+
+        padding:
+            9px 14px;
+
+    }
+
+
+    #tutorial-menu-header{
+
+        margin-bottom:
+            8px;
+
+    }
+
+
+    #tutorial-menu-title{
+
+        font-size:
+            23px;
+
+        letter-spacing:
+            3px;
+
+    }
+
+
+    #tutorial-menu-subtitle{
+
+        margin-top:
+            2px;
+
+        font-size:
+            11px;
+
+        letter-spacing:
+            4px;
+
+    }
+
+
+    #tutorial-menu-introduction{
+
+        margin-top:
+            5px;
+
+        font-size:
+            11px;
+
+    }
+
+
+    #tutorial-menu-list{
+
+        gap:
+            7px;
+
+    }
+
+
+    .tutorial-menu-card{
+
+        min-height:
+            65px;
+
+        padding:
+            8px 12px;
+
+        border-radius:
+            8px;
+
+    }
+
+
+    .tutorial-menu-card-intro{
+
+        min-height:
+            58px;
+
+    }
+
+
+    .tutorial-menu-number{
+
+        margin-bottom:
+            1px;
+
+        font-size:
+            10px;
+
+    }
+
+
+    .tutorial-menu-card-title{
+
+        font-size:
+            14px;
+
+    }
+
+
+    .tutorial-menu-card-description{
+
+        margin-top:
+            2px;
+
+        font-size:
+            10px;
+
+        line-height:
+            1.25;
+
+    }
+
+
+    #tutorial-menu-footer{
+
+        margin-top:
+            7px;
+
+    }
+
+
+    #tutorial-home-button{
+
+        min-width:
+            130px;
+
+        height:
+            32px;
+
+        font-size:
+            11px;
+
+    }
+
+}

@@ -387,7 +387,7 @@ updateCostCount(){
 
 
             image.src =
-                "../../images/ui/card-back.png";
+                "../images/ui/card-back.png";
 
 
             image.alt =

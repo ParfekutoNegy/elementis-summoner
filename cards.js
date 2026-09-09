@@ -1092,6 +1092,7 @@ const CARD_LIST = [
         series:"mythology",
         image: "images/096-アースディフェンス.jpg"
     },
+
     {
         id: 1001,
         name:"ドラゴン",
@@ -1103,10 +1104,11 @@ const CARD_LIST = [
         image: "images/PR-001 ドラゴンフルアート.jpg",
         ability: {
         type: "turnPowerUp",
-        value: 2,
+        value: 2
     },
         text:"自分のターン中、このカードのパワーは＋２される。" 
     },
+
     {
         id: 1002,
         name:"ドラゴン",
@@ -1118,7 +1120,7 @@ const CARD_LIST = [
         image: "images/PR-002 ドラゴン.jpg",
         ability: {
         type: "turnPowerUp",
-        value: 2,
+        value: 2
     },
         text:"自分のターン中、このカードのパワーは＋２される。" 
     },

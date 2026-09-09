@@ -1,3 +1,20 @@
+
+//==================================================
+// Elementis Summoner
+// Tutorial専用 main.js
+//
+// 元：Random Rule main.js
+//
+// 方針：
+// ・通常対戦とファイルは完全分離
+// ・通常のカード操作/UI処理は維持
+// ・通常の setupGame / startMatch の自動実行だけ停止
+// ・チュートリアル盤面初期化は tutorial.js に任せる
+//==================================================
+
+
+
+
 //==================================================
 // Elementis Summoner
 // main.js
@@ -112,22 +129,22 @@ let battleGameConceded = false;
 
 const characterIcons = [
 
-    "../../images/ui/character-01.png",
-    "../../images/ui/character-02.png",
-    "../../images/ui/character-03.png",
-    "../../images/ui/character-04.png",
-    "../../images/ui/character-05.png",
-    "../../images/ui/character-06.png",
-    "../../images/ui/character-07.png",
-    "../../images/ui/character-08.png",
-    "../../images/ui/character-09.png",
-    "../../images/ui/character-10.png",
-    "../../images/ui/character-11.png",
-    "../../images/ui/character-12.png",
-    "../../images/ui/character-13.png",
-    "../../images/ui/character-14.png",
-    "../../images/ui/character-15.png",
-    "../../images/ui/character-16.png",
+    "../images/ui/character-01.png",
+    "../images/ui/character-02.png",
+    "../images/ui/character-03.png",
+    "../images/ui/character-04.png",
+    "../images/ui/character-05.png",
+    "../images/ui/character-06.png",
+    "../images/ui/character-07.png",
+    "../images/ui/character-08.png",
+    "../images/ui/character-09.png",
+    "../images/ui/character-10.png",
+    "../images/ui/character-11.png",
+    "../images/ui/character-12.png",
+    "../images/ui/character-13.png",
+    "../images/ui/character-14.png",
+    "../images/ui/character-15.png",
+    "../images/ui/character-16.png",
 
 ];
 
@@ -858,11 +875,19 @@ if(resetGameButton){
 
 
 
-    //------------------------------------------
-    // 初期カード生成
-    //------------------------------------------
+//------------------------------------------
+// チュートリアル版
+//
+// 通常ゲームの setupGame() は
+// ここでは実行しない。
+//
+// チュートリアル用の固定盤面・固定手札は
+// tutorial.js 側から生成する。
+//------------------------------------------
 
-    setupGame();
+console.log(
+    "★ Tutorial main.js：通常 setupGame 自動実行を停止"
+);
 
 
     //------------------------------------------
@@ -903,12 +928,26 @@ enemyMatchStartingCards = [];
 
 
 
-    //------------------------------------------
-    // ★ マッチ開始
-    // 1戦目の先攻をランダム決定
-    //------------------------------------------
+//------------------------------------------
+// チュートリアル版
+//
+// 通常のランダムマッチは開始しない。
+//
+// tutorial.js 側で
+//
+// ・PLAYER先攻
+// ・固定手札
+// ・固定CPU手札
+// ・固定LIFE
+// ・固定盤面
+//
+// を設定してから
+// チュートリアルを開始する。
+//------------------------------------------
 
-    startMatch();
+console.log(
+    "★ Tutorial main.js：通常 startMatch 自動実行を停止"
+);
 
 
 
@@ -1109,7 +1148,7 @@ function createCard(
 
         name: cardData.name,
 
-        image: "../../" + cardData.image,
+        image: "../" + cardData.image,
 
         cost: cardData.cost ?? 0,
 
@@ -4367,6 +4406,50 @@ function openCoolModal(
                 updateButtons();
 
 
+                //----------------------------------
+// Tutorial STEP6
+//----------------------------------
+
+if(
+    typeof tutorialState !==
+        "undefined" &&
+    tutorialState.step === 6 &&
+    tutorialState.phase ===
+        "selectCool"
+){
+
+    tutorialState.phase =
+        "confirmCool";
+
+
+    if(
+        typeof setTutorialMessage ===
+        "function"
+    ){
+
+        setTutorialMessage(
+            card.name +
+            "を選択しました。"
+        );
+
+    }
+
+
+    if(
+        typeof showTutorialButton ===
+        "function"
+    ){
+
+        showTutorialButton(
+            "このカードを手札に戻す"
+        );
+
+    }
+
+}
+
+
+
                 console.log(
                     "クール回収選択:",
                     selectedCoolCard
@@ -4747,6 +4830,29 @@ function closeEnemyCoolModal(){
 function recoverCoolCards(owner){
 
     //----------------------------------
+    // Tutorial STEP6
+    // 通常ゲーム側では回収しない
+    //----------------------------------
+
+    if(
+        typeof tutorialState !== "undefined" &&
+        tutorialState.step === 6 &&
+        (
+            tutorialState.phase === "selectCool" ||
+            tutorialState.phase === "confirmCool"
+        )
+    ){
+
+        console.log(
+            "Tutorial STEP6：通常 recoverCoolCards を停止"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
     // カード未選択の場合
     //----------------------------------
 
@@ -4965,7 +5071,7 @@ function updateEnemyZoneDisplay(){
 
 
                 image.src =
-                    "../../images/ui/card-back.png";
+                    "../images/ui/card-back.png";
 
 
                 image.alt =
@@ -5044,7 +5150,7 @@ if(
 
 
             image.src =
-                "../../images/ui/card-back.png";
+                "../images/ui/card-back.png";
 
 
             image.alt =

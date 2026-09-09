@@ -242,7 +242,7 @@ else{
         if (this.faceDown) {
 
             this.imageElement.src =
-            "../../images/ui/card-back.png";
+            "../images/ui/card-back.png";
 
 
         } else {
