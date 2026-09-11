@@ -30,7 +30,33 @@ Tutorial Size Variables
 }
 
 
-html,
+/* =========================================================
+HTML / BODY
+========================================================= */
+
+html{
+
+    margin:
+        0;
+
+    padding:
+        0;
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    overflow:
+        hidden;
+
+    background:
+        #000;
+
+}
+
+
 body{
 
     margin:
@@ -56,22 +82,36 @@ body{
 
 /* =========================================================
 Tutorial Layout
+
+スマホの縦横切り替えに対応するため
+100dvh を使用する。
 ========================================================= */
 
 #tutorial-layout{
 
-    position:fixed;
+    position:
+        fixed;
 
-    inset:0;
+    top:
+        0;
 
-    width:100vw;
+    left:
+        0;
 
-    height:100vh;
-    height:100dvh;
+    width:
+        100vw;
 
-    overflow:hidden;
+    height:
+        100vh;
 
-    background:#000;
+    height:
+        100dvh;
+
+    overflow:
+        hidden;
+
+    background:
+        #000;
 
 }
 
@@ -79,25 +119,48 @@ Tutorial Layout
 /* =========================================================
 Game Area
 
-説明バーの上までをゲーム領域として固定する
+説明バーより上を
+ゲーム専用領域として使用する。
 ========================================================= */
 
 #tutorial-game-area{
 
-    position:absolute;
+    position:
+        absolute;
 
-    top:0;
-    left:0;
-    right:0;
+    top:
+        0;
+
+    left:
+        0;
+
+    right:
+        0;
 
     bottom:
         var(
             --tutorial-panel-height
         );
 
-    overflow:hidden;
+    width:
+        auto;
 
-    background:#000;
+    height:
+        auto;
+
+    overflow:
+        hidden;
+
+    background:
+        #000;
+
+    /*
+        スマホでブラウザ側の
+        ダブルタップズームなどに
+        タップを取られにくくする。
+    */
+    touch-action:
+        manipulation;
 
 }
 
@@ -105,10 +168,9 @@ Game Area
 /* =========================================================
 Game Container
 
-本番CSSでは100vw / 100vhになっているため、
-チュートリアルではこの領域いっぱいに変更する。
-
-ゲーム内部の配置には触れない。
+本番CSSでは100vw / 100vhだが
+チュートリアルでは
+tutorial-game-areaいっぱいにする。
 ========================================================= */
 
 #tutorial-game-area #game-container{
@@ -116,7 +178,16 @@ Game Container
     position:
         absolute;
 
-    inset:
+    top:
+        0;
+
+    left:
+        0;
+
+    right:
+        0;
+
+    bottom:
         0;
 
     width:
@@ -137,9 +208,19 @@ Game Container
 /* =========================================================
 Battle Screen
 
-本番の1280×720配置をそのまま使用する。
+基準サイズ
+1280 × 720
 
-実際のscale値は tutorial-common.js から設定する。
+中央位置は
+margin-left / margin-top で固定する。
+
+scaleのみJS側から変更する。
+========================================================= */
+
+/* =========================================================
+Battle Screen
+
+基準サイズ 1280 × 720
 ========================================================= */
 
 #tutorial-game-area #battle-screen{
@@ -159,11 +240,34 @@ Battle Screen
     height:
         720px;
 
+    /*
+        margin方式は使用しない
+    */
+    margin:
+        0;
+
+    /*
+        実際のscale値は
+        resize.jsから上書きされる
+    */
     transform:
-        translate(-50%, -50%);
+        translate(-50%, -50%)
+        scale(1);
 
     transform-origin:
         center center;
+
+    background-size:
+        100% 100%;
+
+    background-position:
+        center;
+
+    background-repeat:
+        no-repeat;
+
+    overflow:
+        hidden;
 
 }
 
@@ -171,38 +275,58 @@ Battle Screen
 /* =========================================================
 Tutorial Panel
 
-画面下部へ完全固定
+画面下部へ固定
 ========================================================= */
 
 #tutorial-panel{
 
-    position:absolute;
+    position:
+        absolute;
 
-    left:0;
-    right:0;
-    bottom:0;
+    left:
+        0;
 
-    width:100%;
+    right:
+        0;
+
+    bottom:
+        0;
+
+    width:
+        100%;
 
     height:
         var(
             --tutorial-panel-height
         );
 
-    display:grid;
+    display:
+        grid;
 
+    /*
+        左：
+        STEP番号 / ゾーン名
+
+        中：
+        説明文
+
+        右：
+        次へボタン
+    */
     grid-template-columns:
-        125px
-        minmax(0,1fr)
-        120px;
+        115px
+        minmax(0, 1fr)
+        96px;
 
-    align-items:center;
+    align-items:
+        center;
 
-    gap:10px;
+    column-gap:
+        6px;
 
     padding:
-        8px
-        14px;
+        5px
+        7px;
 
     border-top:
         2px solid
@@ -220,10 +344,13 @@ Tutorial Panel
             #0e0c09
         );
 
-    color:#fff;
+    color:
+        #fff;
 
     box-shadow:
-        0 -5px 18px
+        0
+        -5px
+        18px
         rgba(
             0,
             0,
@@ -231,19 +358,30 @@ Tutorial Panel
             0.65
         );
 
-    z-index:20000;
+    z-index:
+        20000;
+
+    pointer-events:
+        auto;
 
 }
 
 
 /* =========================================================
-STEP Label Area
+Tutorial Panel
+左側
 ========================================================= */
 
 #tutorial-step-area{
 
+    width:
+        100%;
+
     height:
         100%;
+
+    min-width:
+        0;
 
     display:
         flex;
@@ -253,6 +391,9 @@ STEP Label Area
 
     justify-content:
         center;
+
+    padding-right:
+        6px;
 
     border-right:
         1px solid
@@ -266,43 +407,61 @@ STEP Label Area
 }
 
 
-/* =========================================================
-STEP Label
-========================================================= */
-
 #tutorial-step-label{
+
+    width:
+        100%;
+
+    min-width:
+        0;
+
+    margin:
+        0;
+
+    padding:
+        0;
 
     color:
         #e4c36d;
 
     font-size:
-        17px;
+        12px;
 
     font-weight:
         bold;
 
-    letter-spacing:
-        1px;
+    line-height:
+        1.2;
 
     text-align:
         center;
 
     white-space:
-        nowrap;
+        normal;
+
+    overflow-wrap:
+        normal;
+
+    word-break:
+        normal;
 
 }
 
 
 /* =========================================================
-Message Area
+Tutorial Panel
+中央
 ========================================================= */
 
 #tutorial-message-area{
 
+    width:
+        100%;
+
     min-width:
         0;
 
-    width:
+    height:
         100%;
 
     display:
@@ -311,15 +470,17 @@ Message Area
     align-items:
         center;
 
+    margin:
+        0;
+
+    padding:
+        0;
+
+    overflow:
+        hidden;
+
 }
 
-
-/* =========================================================
-Message
-
-\n を使った改行をそのまま表示する。
-2行程度を想定。
-========================================================= */
 
 #tutorial-message{
 
@@ -329,52 +490,53 @@ Message
     min-width:
         0;
 
+    margin:
+        0;
+
+    padding:
+        0;
+
     color:
         #f4efe3;
 
     font-size:
-        16px;
+        12px;
 
     font-weight:
         600;
 
     line-height:
-        1.45;
+        1.3;
 
     letter-spacing:
-        0.2px;
+        0;
 
     white-space:
         pre-line;
 
     overflow-wrap:
-        anywhere;
+        break-word;
+
+    word-break:
+        normal;
 
 }
 
 
 /* =========================================================
-古い構成で tutorial-guide-text を
-使っているSTEPがあっても改行できるようにする
-========================================================= */
-
-#tutorial-guide-text{
-
-    white-space:
-        pre-line;
-
-}
-
-
-/* =========================================================
-Navigation
-
-現在は「次へ」ボタンだけ
+Tutorial Panel
+右側
 ========================================================= */
 
 #tutorial-navigation{
 
     width:
+        96px;
+
+    min-width:
+        96px;
+
+    height:
         100%;
 
     display:
@@ -386,6 +548,12 @@ Navigation
     justify-content:
         flex-end;
 
+    margin:
+        0;
+
+    padding:
+        0;
+
 }
 
 
@@ -396,17 +564,20 @@ Next Button
 #tutorial-next-button{
 
     width:
-        115px;
+        90px;
 
-    max-width:
-        100%;
+    min-width:
+        0;
 
     height:
-        42px;
+        36px;
+
+    margin:
+        0;
 
     padding:
         0
-        10px;
+        4px;
 
     border:
         1px solid
@@ -425,30 +596,20 @@ Next Button
             #76501f
         );
 
-    box-shadow:
-        0 3px 7px
-        rgba(
-            0,
-            0,
-            0,
-            0.4
-        );
-
     font-size:
-        14px;
+        11px;
 
     font-weight:
         bold;
 
-    cursor:
-        pointer;
-
     white-space:
         nowrap;
 
-    transition:
-        transform 0.08s,
-        filter 0.12s;
+    cursor:
+        pointer;
+
+    touch-action:
+        manipulation;
 
 }
 
@@ -515,10 +676,6 @@ Hide Navigation Button
 
 /* =========================================================
 Zone Tutorial Highlight
-
-ゾーン説明専用。
-カード・コスト選択・対象発光などは
-実ゲームの既存クラスを使用する。
 ========================================================= */
 
 .tutorial-zone-highlight{
@@ -554,15 +711,86 @@ Zone Tutorial Highlight
         tutorialZonePulse
         0.85s
         ease-in-out
-        infinite alternate;
+        infinite
+        alternate;
 
 }
 
 
 /* =========================================================
-Player/LIFE Highlight
+Field Tutorial Highlight
 
-LIFEなど長方形でない場所にも使える
+自分の場・相手の場は
+要素自体を変えず、
+黄色枠だけ内側へ描画する
+========================================================= */
+
+#player-field.tutorial-zone-highlight,
+#enemy-field.tutorial-zone-highlight{
+
+    outline:
+        none !important;
+
+    box-shadow:
+        none !important;
+
+}
+
+
+#player-field.tutorial-zone-highlight::after,
+#enemy-field.tutorial-zone-highlight::after{
+
+    content:
+        "";
+
+    position:
+        absolute;
+
+    top:
+        4px;
+
+    bottom:
+        4px;
+
+    left:
+        160px;
+
+    right:
+        60px;
+
+    border:
+        4px solid
+        #ffe16b;
+
+    border-radius:
+        8px;
+
+    box-shadow:
+        0 0 10px
+        #ffe16b,
+        0 0 22px
+        rgba(
+            255,
+            225,
+            107,
+            0.78
+        );
+
+    pointer-events:
+        none;
+
+    animation:
+        tutorialZonePulse
+        0.85s
+        ease-in-out
+        infinite
+        alternate;
+
+}
+
+
+/* =========================================================
+Player / LIFE Highlight
 ========================================================= */
 
 .tutorial-info-highlight{
@@ -584,9 +812,13 @@ LIFEなど長方形でない場所にも使える
         10px;
 
     box-shadow:
-        0 0 10px
+        0
+        0
+        10px
         #ffe16b,
-        0 0 22px
+        0
+        0
+        22px
         rgba(
             255,
             225,
@@ -622,7 +854,7 @@ Tutorial Pulse
 
 
 /* =========================================================
-チュートリアル中に完全停止させたい要素
+Tutorial Disabled
 ========================================================= */
 
 .tutorial-disabled{
@@ -634,7 +866,7 @@ Tutorial Pulse
 
 
 /* =========================================================
-チュートリアルで特定要素だけ操作可能に戻す
+Tutorial Enabled
 ========================================================= */
 
 .tutorial-enabled{
@@ -646,10 +878,7 @@ Tutorial Pulse
 
 
 /* =========================================================
-無効ボタン表示
-
-ターン終了など、
-STEP側で無効化したボタン用
+Disabled Button
 ========================================================= */
 
 .tutorial-disabled-button{
@@ -666,8 +895,7 @@ STEP側で無効化したボタン用
 /* =========================================================
 STEP2
 
-STEP2ではアタックを行わないため
-一瞬も表示させない。
+STEP2ではアタックを行わない。
 ========================================================= */
 
 body.tutorial-step2 #attack-button,
@@ -680,11 +908,28 @@ body.tutorial-step2 #summon-attack-button{
 
 
 /* =========================================================
+STEP1
+
+STEP1ではプレイボタンを表示しない。
+========================================================= */
+
+body.tutorial-step1 #use-button{
+
+    display:
+        none !important;
+
+}
+
+
+/* =========================================================
 Smartphone Landscape
+
+高さ500px以下
 ========================================================= */
 
 @media(
-    max-height:500px
+    max-height:
+        500px
 ){
 
     :root{
@@ -698,142 +943,24 @@ Smartphone Landscape
     #tutorial-panel{
 
         grid-template-columns:
-            115px
-            minmax(0,1fr)
-            200px;
-
-        gap:6px;
-
-        padding:
-            5px
-            7px;
-
-    }
-
-
-    #tutorial-step-label{
-
-        font-size:12px;
-
-    }
-
-
-    #tutorial-message{
-
-        font-size:12px;
-
-        line-height:1.3;
-
-    }
-
-
-    #tutorial-next-button{
-
-        width:92px;
-
-        height:36px;
-
-        padding:
-            0
-            4px;
-
-        font-size:11px;
-
-    }
-
-}
-
-
-/* =========================================================
-Very Narrow Width
-
-スマホ幅がかなり狭い場合
-========================================================= */
-
-@media(
-    max-width:650px
-){
-
-    #tutorial-panel{
-
-        grid-template-columns:
-            80px
-            minmax(0,1fr)
-            170px;
-
-        gap:5px;
-
-        padding-left:6px;
-
-        padding-right:6px;
-
-    }
-
-
-    #tutorial-step-label{
-
-        font-size:12px;
-
-    }
-
-
-    #tutorial-message{
-
-        font-size:12px;
-
-    }
-
-
-    #tutorial-next-button{
-
-        width:88px;
-
-        padding:
-            0
-            4px;
-
-        font-size:11px;
-
-    }
-
-}
-
-
-/* =========================================================
-横画面かつ幅も狭いスマホ
-
-667 × 375 前後を想定
-========================================================= */
-
-@media(
-    max-width:700px
-)
-and
-(
-    max-height:450px
-){
-
-    :root{
-
-        --tutorial-panel-height:
-            76px;
-
-    }
-
-
-    #tutorial-panel{
-
-        grid-template-columns:
-            105px
+            110px
             minmax(0, 1fr)
             94px;
 
-        gap:
+        column-gap:
             5px;
 
         padding:
             5px
-            7px;
+            6px;
+
+    }
+
+
+    #tutorial-step-area{
+
+        padding-right:
+            4px;
 
     }
 
@@ -842,6 +969,9 @@ and
 
         font-size:
             12px;
+
+        line-height:
+            1.2;
 
     }
 
@@ -853,6 +983,17 @@ and
 
         line-height:
             1.3;
+
+    }
+
+
+    #tutorial-navigation{
+
+        width:
+            94px;
+
+        min-width:
+            94px;
 
     }
 
@@ -877,23 +1018,251 @@ and
 }
 
 
-
 /* =========================================================
-下部説明バーは固定中でも操作可能
+Very Narrow Width
+
+幅650px以下
 ========================================================= */
 
-#tutorial-panel{
+@media(
+    max-width:
+        650px
+){
 
-    pointer-events:auto;
+    #tutorial-panel{
+
+        grid-template-columns:
+            100px
+            minmax(0, 1fr)
+            90px;
+
+        column-gap:
+            5px;
+
+        padding:
+            5px
+            6px;
+
+    }
+
+
+    #tutorial-step-area{
+
+        padding-right:
+            4px;
+
+    }
+
+
+    #tutorial-step-label{
+
+        font-size:
+            12px;
+
+        line-height:
+            1.2;
+
+    }
+
+
+    #tutorial-message{
+
+        font-size:
+            12px;
+
+        line-height:
+            1.3;
+
+    }
+
+
+    #tutorial-navigation{
+
+        width:
+            90px;
+
+        min-width:
+            90px;
+
+    }
+
+
+    #tutorial-next-button{
+
+        width:
+            86px;
+
+        height:
+            36px;
+
+        padding:
+            0
+            4px;
+
+        font-size:
+            11px;
+
+    }
 
 }
 
+
 /* =========================================================
-STEP1ではプレイボタンを完全非表示
+横画面かつ幅も狭いスマホ
+
+667 × 375 前後
 ========================================================= */
 
-body.tutorial-step1 #use-button{
+@media(
+    max-width:
+        700px
+)
+and
+(
+    max-height:
+        450px
+){
 
-    display:none !important;
+    :root{
+
+        --tutorial-panel-height:
+            76px;
+
+    }
+
+
+    #tutorial-panel{
+
+        grid-template-columns:
+            105px
+            minmax(0, 1fr)
+            92px;
+
+        column-gap:
+            4px;
+
+        padding:
+            5px
+            6px;
+
+    }
+
+
+    #tutorial-step-area{
+
+        min-width:
+            0;
+
+        padding-right:
+            4px;
+
+    }
+
+
+    #tutorial-step-label{
+
+        width:
+            100%;
+
+        min-width:
+            0;
+
+        font-size:
+            12px;
+
+        line-height:
+            1.15;
+
+        white-space:
+            normal;
+
+    }
+
+
+    #tutorial-message-area{
+
+        width:
+            100%;
+
+        min-width:
+            0;
+
+        margin:
+            0;
+
+        padding:
+            0;
+
+    }
+
+
+    #tutorial-message{
+
+        width:
+            100%;
+
+        min-width:
+            0;
+
+        margin:
+            0;
+
+        padding:
+            0;
+
+        font-size:
+            12px;
+
+        line-height:
+            1.28;
+
+        white-space:
+            pre-line;
+
+        overflow-wrap:
+            break-word;
+
+        word-break:
+            normal;
+
+    }
+
+
+    #tutorial-navigation{
+
+        width:
+            92px;
+
+        min-width:
+            92px;
+
+        margin:
+            0;
+
+        padding:
+            0;
+
+    }
+
+
+    #tutorial-next-button{
+
+        width:
+            88px;
+
+        min-width:
+            0;
+
+        height:
+            36px;
+
+        padding:
+            0
+            3px;
+
+        font-size:
+            11px;
+
+    }
 
 }

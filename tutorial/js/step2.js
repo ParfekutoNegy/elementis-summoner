@@ -77,6 +77,11 @@ function initializeTutorialStep2(){
     );
 
 
+    //----------------------------------
+    // バトルログ初期非表示
+    //----------------------------------
+
+    initializeTutorialBattleLog();
 
 
     if(
@@ -703,7 +708,7 @@ function tutorialStep2StartMagiaSelection(){
 
     setTutorialGuide(
         "STEP 2",
-        "マギアを1枚選び、プレイボタンを押してください。対象が選べないマギアはプレイできません。"
+        "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
     );
 
 
@@ -1839,7 +1844,7 @@ function handleTutorialStep2CardClick(
 
 
                 setTutorialMessage(
-                    "マギアを1枚選び、プレイボタンを押してください。"
+                    "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
                 );
 
             }
@@ -1885,7 +1890,7 @@ function handleTutorialStep2CardClick(
 
             setTutorialGuide(
                 "STEP 2",
-                "対象が存在しないマギアはプレイできません。"
+                "対象が選べないマギアはプレイできません。"
             );
 
 
@@ -1905,7 +1910,7 @@ function handleTutorialStep2CardClick(
 
 
         setTutorialMessage(
-            "マギアを1枚選び、プレイボタンを押してください。"
+            "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
         );
 
 
@@ -2269,7 +2274,7 @@ function updateTutorialStep2SummonCostMessage(){
     else{
 
         setTutorialMessage(
-            "必要なコストを選びました。「決定」を押してください。"
+            "必要なコストを選びました。決定ボタンを押してください。"
         );
 
     }
@@ -2310,7 +2315,7 @@ function updateTutorialStep2MagiaCostMessage(){
     else{
 
         setTutorialMessage(
-            "必要なコストを選びました。「決定」を押してください。"
+            "必要なコストを選びました。決定ボタンを押してください。"
         );
 
     }
@@ -2352,7 +2357,7 @@ function updateTutorialStep2ResistCostMessage(){
     else{
 
         setTutorialMessage(
-            "必要なコストを選びました。「決定」を押してください。"
+            "必要なコストを選びました。決定ボタンを押してください。"
         );
 
     }
@@ -2403,7 +2408,7 @@ function tutorialStep2AfterConfirmButton(){
 
             setTutorialGuide(
                 "STEP 2",
-                "サモンを場に出しました。コストにしたカードはコストゾーンへ置かれます。"
+                "サモンを場に出しました。\nコストにしたカードはコストゾーンへ置かれます。"
             );
 
 
@@ -2443,7 +2448,7 @@ function tutorialStep2AfterConfirmButton(){
 
             setTutorialGuide(
                 "STEP 2",
-                "マギアの効果で相手にダメージを与えました。使用したカードはクールゾーンに置かれます。"
+                "マギアの効果で相手にダメージを与えました。\n使用したカードはクールゾーンに置かれます。"
             );
 
 
@@ -3481,7 +3486,7 @@ function completeTutorialStep2(){
 
     setTutorialGuide(
         "STEP 2",
-        "サモン・マギア・レジストのプレイ方法を確認しました。STEP2はこれで完了です。"
+        "サモン・マギア・レジストのプレイ方法を確認しました。\nSTEP2はこれで完了です。"
     );
 
 
@@ -3684,7 +3689,7 @@ function resetTutorialStep2MagiaSelection(){
 
     setTutorialGuide(
         "STEP 2",
-        "マギアを1枚選び、プレイボタンを押してください。"
+        "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
     );
 
 

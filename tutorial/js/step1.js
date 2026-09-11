@@ -78,6 +78,8 @@ function initializeTutorialStep1(){
         "tutorial-step1"
     );
 
+    initializeTutorialBattleLog();
+
 
     //----------------------------------
     // Board確認
@@ -1647,7 +1649,7 @@ function tutorialStep1ShowHandZone(){
 
     setTutorialGuide(
         "手札",
-        "ゲーム開始時、すべてのカードは手札にあります。"
+        "ゲーム開始時、すべてのカードは手札にあります。\n手札のカードはプレイしたり、コストとして伏せたりします。"
     );
 
 
@@ -1679,7 +1681,7 @@ function tutorialStep1ShowFieldZone(){
 
     setTutorialGuide(
         "場",
-        "サモンはプレイすると、タテ向きで場に出ます。"
+        "サモンはプレイすると、タテ向きで場に出ます。\n場に出したサモンはアタックやブロックを行えます。"
     );
 
 
@@ -1711,7 +1713,7 @@ function tutorialStep1ShowCostZone(){
 
     setTutorialGuide(
         "コストゾーン",
-        "カードのプレイ時にコストにしたカードを置く場所です。"
+        "カードのプレイ時にコストにしたカードを伏せて置く場所です。"
     );
 
 
@@ -1743,7 +1745,7 @@ function tutorialStep1ShowCoolZone(){
 
     setTutorialGuide(
         "クールゾーン",
-        "使用したカードや、破壊されたサモンなどを置く場所です。"
+        "プレイしたカードや、倒されたサモンなどを置く場所です。"
     );
 
 
@@ -1837,7 +1839,7 @@ function completeTutorialStep1(){
 
     setTutorialGuide(
         "STEP 1",
-        "カードの種類と、それぞれのカードを置く場所を確認しました。STEP1はこれで完了です。"
+        "カードの種類と、それぞれのカードを置く場所を確認しました。\nSTEP1はこれで完了です。"
     );
 
 

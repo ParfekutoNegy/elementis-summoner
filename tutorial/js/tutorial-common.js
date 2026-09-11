@@ -2196,3 +2196,45 @@ function closeTutorialGameMenu(){
     );
 
 }
+
+
+/* =========================================================
+Tutorial Battle Log
+
+STEP開始時はバトルログを閉じた状態にする。
+ログボタンによる通常の開閉処理はそのまま使用する。
+========================================================= */
+
+function initializeTutorialBattleLog(){
+
+    const logArea =
+        document.getElementById(
+            "log-area"
+        );
+
+
+    if(!logArea){
+
+        console.warn(
+            "log-area が見つかりません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 初期状態ではログを閉じる
+    //----------------------------------
+
+    logArea.classList.add(
+        "log-closed"
+    );
+
+
+    console.log(
+        "★ Tutorial：バトルログ初期非表示"
+    );
+
+}
