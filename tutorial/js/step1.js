@@ -969,7 +969,7 @@ function startTutorialStep1CardTypes(){
 
     setTutorialGuide(
         "STEP 1",
-        "まず3種類のカードを確認します。\nサモンの『ユニコーン』を選んでください。"
+        "3種類のカードを順に確認します。\nまず、サモンの『ユニコーン』を選んでください。"
     );
 
 }
@@ -1562,7 +1562,7 @@ function tutorialStep1ResistExplanation3(){
 
 
     setTutorialMessage(
-        "相手の攻撃やカード効果に対応してプレイします。"
+        "相手の攻撃やカード効果などで条件を満たしたときにプレイできます。"
     );
 
 
@@ -1713,7 +1713,7 @@ function tutorialStep1ShowCostZone(){
 
     setTutorialGuide(
         "コストゾーン",
-        "カードのプレイ時にコストにしたカードを伏せて置く場所です。"
+        "コストゾーンはカードのプレイ時に、手札からコストにしたカードを伏せて置く場所です。"
     );
 
 
@@ -1745,7 +1745,7 @@ function tutorialStep1ShowCoolZone(){
 
     setTutorialGuide(
         "クールゾーン",
-        "プレイしたカードや、倒されたサモンなどを置く場所です。"
+        "クールゾーンはプレイしたカードや、倒されたサモンなどを置く場所です。"
     );
 
 

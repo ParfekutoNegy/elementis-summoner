@@ -681,7 +681,7 @@ function setupTutorialStep2MagiaLesson(){
 
     setTutorialGuide(
         "STEP 2",
-        "次はマギアのプレイ方法です。マギアのプレイは対象を選びます。"
+        "次はマギアのプレイ方法です。マギアはプレイ時に対象を選びます。"
     );
 
 
@@ -1311,7 +1311,7 @@ if(
         //----------------------------------
 
         setTutorialMessage(
-            "選べる対象は発光します。ここでは相手プレイヤーを選んでください。"
+            "選べる対象が発光します。\nここでは相手プレイヤーを選んでください。"
         );
 
 
@@ -2126,7 +2126,7 @@ function tutorialStep2AfterUseButton(){
 
 
             setTutorialMessage(
-                `コストにするカードを${cost}枚選んでください。`
+                `手札からコストにするカードを${cost}枚選んでください。`
             );
 
         }
@@ -2151,7 +2151,7 @@ function tutorialStep2AfterUseButton(){
 
 
         setTutorialMessage(
-            "選べる対象が発光します。相手のアイコンを対象に選んでください。"
+            "選べる対象が発光します。\nここでは相手プレイヤーを選んでください。。"
         );
 
 
@@ -2186,7 +2186,7 @@ function tutorialStep2AfterUseButton(){
 
 
             setTutorialMessage(
-                `コストにするカードを${cost}枚選んでください。`
+                `手札からコストにするカードを${cost}枚選んでください。`
             );
 
         }
@@ -2229,7 +2229,7 @@ function tutorialStep2AfterMagiaTarget(){
 
 
         setTutorialMessage(
-            `コストにするカードを${cost}枚選んでください。`
+            `手札からコストにするカードを${cost}枚選んでください。`
         );
 
     }
