@@ -1282,12 +1282,36 @@ function resetAttackState(){
 
 function skipBlock(){
 
+    //----------------------------------
+    // Tutorial STEP3
+    // ブロック練習中は
+    // 「ブロックしない」を禁止
+    //----------------------------------
+
+    if(
+        document.body.classList.contains(
+            "tutorial-step3"
+        ) &&
+        typeof step3State !== "undefined" &&
+        step3State.blockPracticeActive
+    ){
+
+        console.log(
+            "★ Tutorial STEP3：ブロックしないを禁止"
+        );
+
+        return;
+
+    }
+
+
     hideActionGuide();
 
 
     console.log(
         "ブロックしない"
     );
+
 
 
     //----------------------------------
@@ -1788,20 +1812,43 @@ if(
     // CPUターンなら次の攻撃へ
     //----------------------------------
 
+if(
+    game.currentPlayer === ENEMY
+){
+
+    //----------------------------------
+    // Tutorial STEP3では
+    // ブロック成立時点でゲーム停止
+    //----------------------------------
+
     if(
-        game.currentPlayer === ENEMY
+        document.body.classList.contains(
+            "tutorial-step3"
+        )
     ){
 
         console.log(
-            "CPU：ブロック処理完了、次の攻撃へ"
+            "★ Tutorial STEP3：" +
+            "ブロック終了のためCPU進行停止"
         );
 
-        setTimeout(
-            cpuNextAttack,
-            2000
-        );
+
+        return;
 
     }
+
+
+    console.log(
+        "CPU：ブロック処理完了、次の攻撃へ"
+    );
+
+
+    setTimeout(
+        cpuNextAttack,
+        2000
+    );
+
+}
 
 }
 

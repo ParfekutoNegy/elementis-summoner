@@ -3491,11 +3491,11 @@ function completeTutorialStep2(){
 
 
 showTutorialNextButton(
-    "メニューへ",
+    "STEP3へ",
     () => {
 
         window.location.href =
-            "tutorial.html";
+            "step3.html";
 
     }
 );
