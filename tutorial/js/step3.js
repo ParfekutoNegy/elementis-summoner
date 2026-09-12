@@ -176,7 +176,7 @@ function initializeTutorialStep3(){
 
     showTutorialNextButton(
         "開始",
-        startTutorialStep3DirectAttack
+        showTutorialStep3AttackExplanation
     );
 
 
@@ -854,7 +854,6 @@ function createTutorialStep3Summon(
 LESSON 1
 直接アタック準備
 ========================================================= */
-
 function setupTutorialStep3DirectAttack(){
 
     resetTutorialStep3Board();
@@ -900,6 +899,31 @@ function setupTutorialStep3DirectAttack(){
 
 }
 
+/* =========================================================
+LESSON 1
+アタックの基本説明
+========================================================= */
+
+function showTutorialStep3AttackExplanation(){
+
+    step3State.phase =
+        "attackExplanation";
+
+
+    setTutorialGuide(
+        "アタック",
+        "タテ向きのサモンをヨコ向きにすることでアタックできます。\n" +
+        "ただし、場に出たばかりのターンはアタックできません。"
+    );
+
+
+    showTutorialNextButton(
+        "次へ",
+        startTutorialStep3DirectAttack
+    );
+
+}
+
 
 /* =========================================================
 LESSON 1
@@ -918,7 +942,7 @@ function startTutorialStep3DirectAttack(){
     setTutorialGuide(
         "アタック",
         "まずは相手プレイヤーへアタックします。\n" +
-        "場のクラーケンを選び、アタックボタンを押してください。"
+        "場の『クラーケン』を選び、アタックボタンを押してください。"
     );
 
 
@@ -975,9 +999,7 @@ function completeTutorialStep3DirectAttack(){
 
     setTutorialGuide(
         "アタック",
-        "相手プレイヤーへアタックすると" +
-        "サモンのパワー分のダメージを与えます。\n" +
-        "また、アタックしたサモンはヨコ向きになります。"
+        "相手プレイヤーへアタックすると、サモンのパワー分のダメージを与えます。"
     );
 
 
@@ -1085,7 +1107,7 @@ function setupTutorialStep3SummonBattle(){
 
 
     setTutorialGuide(
-        "サモンにアタック",
+        "アタック",
         "相手のヨコ向きのサモンにもアタックできます。\n" +
         "タテ向きのサモンにはアタックできません。"
     );
@@ -1114,9 +1136,8 @@ function startTutorialStep3SummonBattle(){
 
 
     setTutorialGuide(
-        "サモンにアタック",
-        "クラーケンで相手のヨコ向きの" +
-        "グリフォンにアタックしてみましょう。"
+        "アタック",
+        "『クラーケン』で相手のヨコ向きの『グリフォン』にアタックしてみましょう。"
     );
 
 
@@ -1131,12 +1152,21 @@ function startTutorialStep3SummonBattle(){
 LESSON 2
 サモン戦完了
 ========================================================= */
+/* =========================================================
+LESSON 2
+サモン戦完了
+説明1
+========================================================= */
 
 function completeTutorialStep3SummonBattle(){
 
+    //----------------------------------
+    // 二重実行防止
+    //----------------------------------
+
     if(
         step3State.phase ===
-        "summonBattleExplanation"
+        "summonBattleExplanation1"
     ){
 
         return;
@@ -1145,8 +1175,12 @@ function completeTutorialStep3SummonBattle(){
 
 
     step3State.phase =
-        "summonBattleExplanation";
+        "summonBattleExplanation1";
 
+
+    //----------------------------------
+    // 発光解除
+    //----------------------------------
 
     if(
         typeof clearAllTutorialHighlights ===
@@ -1158,6 +1192,10 @@ function completeTutorialStep3SummonBattle(){
     }
 
 
+    //----------------------------------
+    // 通常案内解除
+    //----------------------------------
+
     if(
         typeof hideActionGuide ===
         "function"
@@ -1168,17 +1206,60 @@ function completeTutorialStep3SummonBattle(){
     }
 
 
+    //----------------------------------
+    // フィールド表示更新
+    //----------------------------------
+
     updateTutorialStep3FieldDisplay();
 
 
+    //----------------------------------
+    // 説明1
+    //----------------------------------
+
     setTutorialGuide(
         "サモンのバトル",
-        "サモン同士がバトルすると、" +
-        "お互いにパワー分のダメージを与えます。\n" +
-        "パワー以上のダメージを受けたサモンは" +
-        "クールゾーンに置かれます。"
+        "サモン同士のバトルでは、お互いにパワー分のダメージを与えます。"
     );
 
+
+    //----------------------------------
+    // 説明2へ
+    //----------------------------------
+
+    showTutorialNextButton(
+        "次へ",
+        showTutorialStep3SummonBattleExplanation2
+    );
+
+}
+
+
+/* =========================================================
+LESSON 2
+サモン戦完了
+説明2
+========================================================= */
+
+function showTutorialStep3SummonBattleExplanation2(){
+
+    step3State.phase =
+        "summonBattleExplanation2";
+
+
+    //----------------------------------
+    // 説明2
+    //----------------------------------
+
+    setTutorialGuide(
+        "サモンのバトル",
+        "パワー以上のダメージを受けたサモンはクールゾーンに置かれます。"
+    );
+
+
+    //----------------------------------
+    // ブロック練習へ
+    //----------------------------------
 
     showTutorialNextButton(
         "次へ",
@@ -1186,7 +1267,6 @@ function completeTutorialStep3SummonBattle(){
     );
 
 }
-
 
 /* =========================================================
 LESSON 3
@@ -1302,11 +1382,34 @@ function setupTutorialStep3BlockLesson(){
 
     showTutorialNextButton(
         "次へ",
-        executeTutorialStep3CpuAttack
+        showTutorialStep3BlockExplanation
     );
 
 }
 
+/* =========================================================
+LESSON 3
+ブロックの基本説明
+========================================================= */
+
+function showTutorialStep3BlockExplanation(){
+
+    step3State.phase =
+        "blockRuleExplanation";
+
+
+    setTutorialGuide(
+        "ブロック",
+        "タテ向きのサモンをヨコ向きにすることでブロックできます。"
+    );
+
+
+    showTutorialNextButton(
+        "次へ",
+        executeTutorialStep3CpuAttack
+    );
+
+}
 
 /* =========================================================
 LESSON 3
@@ -1324,7 +1427,7 @@ function executeTutorialStep3CpuAttack(){
 
     setTutorialGuide(
         "ブロック",
-        "相手のユニコーンが、あなたへアタックしました。\nブロックするサモンを選んでください。"
+        "相手の『ユニコーン』が、あなたにアタックしました。\nブロックするサモンを選んでください。"
     );
 
 
@@ -1383,7 +1486,7 @@ function executeTutorialStep3CpuAttack(){
 
                         setTutorialGuide(
                             "ブロック",
-                            "相手のユニコーンが、あなたへアタックしました。\nブロックするサモンを選んでください。"
+                            "相手の『ユニコーン』が、あなたにアタックしました。\nブロックするサモンを選んでください。"
                         );
 
 
@@ -1420,7 +1523,7 @@ function tutorialStep3BlockerSelected(){
 
     setTutorialGuide(
         "ブロック",
-        "タテ向きのサモンをヨコ向きにしてブロックが可能です。\n『クラーケン』を選択し、ブロックボタンをおしてください。"
+        "タテ向きの『クラーケン』を選択し、ブロックボタンを押してください。"
     );
 
 }
@@ -1966,9 +2069,8 @@ function tutorialStep3CaptureClick(
 
 
             setTutorialGuide(
-                "サモンにアタック",
-                "今回はヨコ向きのサモンに" +
-                "アタックしましょう。"
+                "アタック",
+                "今回はヨコ向きのサモンにアタックしましょう。"
             );
 
 
@@ -1994,7 +2096,7 @@ function tutorialStep3CaptureClick(
 
 
             setTutorialGuide(
-                "サモンにアタック",
+                "アタック",
                 "タテ向きのサモンにはアタックできません。\n" +
                 "ヨコ向きのサモンにアタックしましょう。"
             );
@@ -2022,7 +2124,7 @@ function tutorialStep3CaptureClick(
 
 
             setTutorialGuide(
-                "サモンにアタック",
+                "アタック",
                 "ヨコ向きのサモンにアタックしましょう。"
             );
 
@@ -2085,7 +2187,7 @@ function tutorialStep3CaptureClick(
 
             setTutorialGuide(
                 "ブロック",
-                "タテ向きのサモンをヨコ向きにしてブロックが可能です。\n『クラーケン』を選択し、ブロックボタンをおしてください。"
+                "タテ向きの『クラーケン』を選択し、ブロックボタンを押してください"
             );
 
 
@@ -2210,7 +2312,7 @@ function tutorialStep3AfterAttackButton(){
         setTutorialGuide(
             "アタック",
             "アタックできる対象が発光します。\n" +
-            "アタック対象として相手プレイヤーを選んでください。"
+            "相手プレイヤーを選んでください。"
         );
 
 
@@ -2243,7 +2345,7 @@ function tutorialStep3AfterAttackButton(){
 
 
         setTutorialGuide(
-            "サモンにアタック",
+            "アタック",
             "ヨコ向きの相手サモンを選んでください。"
         );
 
