@@ -1030,43 +1030,57 @@ function tutorialStep1CaptureClick(
    説明が終わるまで閉じない
 ===================================================== */
 
-if(
-    step1State.screenLocked
-){
+//==================================================
+// 説明中は「次へ」ボタン以外
+// すべてのクリックを完全に遮断
+//==================================================
 
-    const tutorialPanel =
+if(step1State.screenLocked){
+
+    const nextButton =
         document.getElementById(
-            "tutorial-panel"
+            "tutorial-next-button"
         );
 
 
     //----------------------------------
-    // 下部説明バー内のクリックだけ許可
+    // 「次へ」ボタンだけ操作可能
     //----------------------------------
 
-    const insideTutorialPanel =
+    const insideNextButton =
+        nextButton &&
         (
-            tutorialPanel &&
-            (
-                event.target ===
-                    tutorialPanel
-                ||
-                tutorialPanel.contains(
-                    event.target
-                )
+            event.target === nextButton ||
+            nextButton.contains(
+                event.target
             )
         );
 
 
-    if(insideTutorialPanel){
+    if(insideNextButton){
 
         //----------------------------------
-        // 「次へ」などは通常通り動かす
+        // 次へボタンは通常処理を許可
         //----------------------------------
 
         return;
 
     }
+
+
+    //----------------------------------
+    // それ以外は完全に停止
+    //----------------------------------
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    event.stopImmediatePropagation();
+
+    return;
+
+
 
 
     //----------------------------------
@@ -1231,7 +1245,7 @@ function tutorialStep1AfterCardClick(
 
         setTutorialGuide(
             "STEP 1",
-            "サモンは場に出してアタックやブロックを行うカードです。"
+            "サモンは場に出してアタックやブロックを行うカードです。\nサモンでのアタックは相手にダメージを与える主な手段となります。"
         );
 
 
@@ -1292,7 +1306,7 @@ function tutorialStep1AfterCardClick(
 
         setTutorialGuide(
             "STEP 1",
-            "マギアは対象にさまざまな効果を与えるカードです。"
+            "マギアは対象にさまざまな効果を与えるカードです\nダメージを与えるカードやサモンの強化などがあります。"
         );
 
 
@@ -1378,7 +1392,7 @@ function tutorialStep1SummonExplanation2(){
 
 
     setTutorialMessage(
-        "サモンはそれぞれ固有の能力を持っています。"
+        "サモンはそれぞれ固有の能力を持っています。\n能力を活かした戦略を立てましょう。"
     );
 
 
@@ -1539,7 +1553,7 @@ function tutorialStep1ResistExplanation2(){
 
 
     setTutorialMessage(
-        "レジストは条件を満たしたときだけプレイできます。"
+        "相手のアタックやマギアの効果などで条件を満たしたときにプレイできます。"
     );
 
 
@@ -1562,7 +1576,7 @@ function tutorialStep1ResistExplanation3(){
 
 
     setTutorialMessage(
-        "相手の攻撃やカード効果などで条件を満たしたときにプレイできます。"
+        "受けるダメージを減らすための守りのカードです。"
     );
 
 
@@ -1681,7 +1695,7 @@ function tutorialStep1ShowFieldZone(){
 
     setTutorialGuide(
         "場",
-        "サモンはプレイすると、タテ向きで場に出ます。\n場に出したサモンはアタックやブロックを行えます。"
+        "サモンはプレイすると、タテ向きで場に出ます。\n場に出したサモンは能力を持ち、アタックやブロックを行えます。"
     );
 
 
@@ -1745,7 +1759,7 @@ function tutorialStep1ShowCoolZone(){
 
     setTutorialGuide(
         "クールゾーン",
-        "クールゾーンはプレイしたカードや、倒されたサモンなどを置く場所です。"
+        "クールゾーンはプレイしたマギア、レジスト、倒されたサモンを置く場所です。"
     );
 
 
