@@ -2238,3 +2238,85 @@ function initializeTutorialBattleLog(){
     );
 
 }
+
+
+/* =========================================================
+Tutorial Common Player Hand
+========================================================= */
+
+/*
+STEP1以降で共通して使用する
+プレイヤー初期手札
+*/
+
+const TUTORIAL_COMMON_HAND_IDS = [
+
+    1,      // ウィルオウィスプ
+
+    11,     // ユニコーン
+
+    20,     // クラーケン
+
+    29,     // ロックスパイク
+
+    5,      // バーニングエナジー
+
+    6,      // ファイアボール
+
+    7,      // パイロフレイム
+
+    16,     // ラピッドムーヴ
+
+    31,     // ストーンガード
+
+    32      // グラウンドウォール
+
+];
+
+
+/* =========================================================
+共通手札カード取得
+========================================================= */
+
+function createTutorialCommonHand(){
+
+    const result = [];
+
+
+    for(
+        const id of
+        TUTORIAL_COMMON_HAND_IDS
+    ){
+
+        const source =
+            CARD_LIST.find(
+                card =>
+                    Number(card.id) ===
+                    Number(id)
+            );
+
+
+        if(!source){
+
+            console.warn(
+                "Tutorial common hand card not found:",
+                id
+            );
+
+            continue;
+
+        }
+
+
+        result.push(
+            new Card(
+                source
+            )
+        );
+
+    }
+
+
+    return result;
+
+}

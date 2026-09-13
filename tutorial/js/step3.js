@@ -1813,7 +1813,7 @@ function completeTutorialStep3(){
         () => {
 
             window.location.href =
-                "tutorial.html";
+                "step4.html";
 
         }
     );
