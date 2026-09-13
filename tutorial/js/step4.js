@@ -330,7 +330,7 @@ function initializeTutorialStep4(){
 
         "STEP 4",
 
-        "実際にターンを進めながら、" +
+        "実際にゲームを進めながら、" +
         "ターンの流れについて学びます。"
 
     );
@@ -964,7 +964,7 @@ function showTutorialStep4TurnIntroduction(){
 
     setTutorialGuide(
 
-        "ターン",
+        "STEP 4",
 
         "このゲームでは、自分と相手が" +
         "交互にターンを行います。"
@@ -1026,10 +1026,9 @@ function startTutorialStep4FirstTurn(){
 
     setTutorialGuide(
 
-        "あなたのターン",
+        "自分のターン",
 
-        "まずは手札の『ユニコーン』を" +
-        "プレイしてください。"
+        "まずは手札の『ユニコーン』をプレイしましょう。"
 
     );
 
@@ -1146,7 +1145,7 @@ function tutorialStep4UnicornSummoned(
 
     setTutorialGuide(
 
-        "マギア",
+        "自分のターン",
 
         "『ユニコーン』が場にでました。\n" +
         "次は『バーニングエナジー』をプレイします。"
@@ -1178,9 +1177,49 @@ function startTutorialStep4BurningEnergy(){
     hideTutorialNextButton();
 
 
+    //----------------------------------
+    // use-buttonの禁止状態を解除
+    //----------------------------------
+
+    const useButton =
+        document.getElementById(
+            "use-button"
+        );
+
+
+    if(useButton){
+
+        useButton.disabled =
+            false;
+
+
+        useButton.style.pointerEvents =
+            "";
+
+    }
+
+
+    //----------------------------------
+    // 通常ボタン状態を再構築
+    //----------------------------------
+
+    if(
+        typeof updateButtons ===
+        "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
+    // 説明
+    //----------------------------------
+
     setTutorialGuide(
 
-        "マギア",
+        "自分のターン",
 
         "『バーニングエナジー』を選び、" +
         "場の『ユニコーン』を対象にしてください。"
@@ -1188,12 +1227,15 @@ function startTutorialStep4BurningEnergy(){
     );
 
 
+    //----------------------------------
+    // 発光
+    //----------------------------------
+
     highlightTutorialStep4HandCard(
         "バーニングエナジー"
     );
 
 }
-
 
 /* =========================================================
 Burning Energy Complete
@@ -1227,7 +1269,7 @@ function tutorialStep4BurningEnergyUsed(){
 
     setTutorialGuide(
 
-        "ユニコーン",
+        "自分のターン",
 
         "通常、場に出たばかりのサモンは" +
         "アタックできません。\n" +
@@ -1263,7 +1305,7 @@ function startTutorialStep4UnicornAttack(){
 
     setTutorialGuide(
 
-        "アタック",
+        "自分のターン",
 
         "『ユニコーン』で相手プレイヤーへ" +
         "アタックしてください。"
@@ -1311,10 +1353,10 @@ function tutorialStep4UnicornAttackCompleted(){
 
     setTutorialGuide(
 
-        "レジスト",
+        "自分のターン",
 
         "相手は『ユニコーン』のアタックに対して" +
-        "『ラピッドムーヴ』をプレイしました。"
+        "『ラピッドムーヴ』をプレイし、ダメージを防ぎました。"
 
     );
 
@@ -1342,10 +1384,10 @@ function showTutorialStep4MultipleMagiaExplanation(){
 
     setTutorialGuide(
 
-        "マギア",
+        "自分のターン",
 
-        "サモンは1ターンに1体までですが、\n" +
-        "マギアはコストを支払える限り、" +
+        "次にもう一度マギアをプレイしてみましょう。\n" +
+        "マギアはコストが支払える限り、" +
         "1ターンに何枚でもプレイできます。"
 
     );
@@ -1375,22 +1417,66 @@ function startTutorialStep4Fireball(){
     hideTutorialNextButton();
 
 
+    //----------------------------------
+    // 前のマギア対象選択時に設定した
+    // use-buttonの禁止状態を解除
+    //----------------------------------
+
+    const useButton =
+        document.getElementById(
+            "use-button"
+        );
+
+
+    if(useButton){
+
+        useButton.disabled =
+            false;
+
+
+        useButton.style.pointerEvents =
+            "";
+
+    }
+
+
+    //----------------------------------
+    // 通常ボタン状態を再構築
+    //----------------------------------
+
+    if(
+        typeof updateButtons ===
+        "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
+    // 説明
+    //----------------------------------
+
     setTutorialGuide(
 
-        "マギア",
+        "自分のターン",
 
-        "次は『ファイアボール』を" +
+        "『ファイアボール』を" +
         "相手プレイヤーを対象にプレイしてください。"
 
     );
 
+
+    //----------------------------------
+    // ファイアボール発光
+    //----------------------------------
 
     highlightTutorialStep4HandCard(
         "ファイアボール"
     );
 
 }
-
 
 /* =========================================================
 Fireball Complete
@@ -1530,7 +1616,7 @@ function tutorialStep4FirstTurnEnded(){
 
         "相手のターン",
 
-        "あなたのターンが終了しました。\n" +
+        "自分のターンが終了しました。\n" +
         "次は相手のターンです。"
 
     );
@@ -1661,7 +1747,10 @@ function startTutorialStep4CpuTurn(){
 
             "相手のターン",
 
-            "相手が『ユニコーン』を召喚します。"
+        "相手も『ユニコーン』をプレイしました。\n" +
+        "『ユニコーン』は能力によって、" +
+        "場に出たターンでもアタックできます。"
+
 
         );
 
@@ -1880,9 +1969,9 @@ if(
 
     setTutorialGuide(
 
-        "ユニコーン",
+        "相手のターン",
 
-        "相手も『ユニコーン』を召喚しました。\n" +
+        "相手も『ユニコーン』をプレイしました。\n" +
         "『ユニコーン』は能力によって、" +
         "場に出たターンでもアタックできます。"
 
@@ -1913,6 +2002,10 @@ function startTutorialStep4CpuUnicornAttack(){
     hideTutorialNextButton();
 
 
+    //----------------------------------
+    // CPUユニコーン取得
+    //----------------------------------
+
     const unicorn =
         step4State.cpuUnicorn;
 
@@ -1928,8 +2021,43 @@ function startTutorialStep4CpuUnicornAttack(){
     }
 
 
+    //==================================================
+    // 攻撃前に
+    // 「プレイしない」だけを隠しておく
+    //
+    // resistModeなどはまだ変更しない
+    //==================================================
+
+    const resistPassButton =
+        document.getElementById(
+            "resist-pass-button"
+        );
+
+
+    if(resistPassButton){
+
+        resistPassButton.disabled =
+            true;
+
+
+        resistPassButton.style.setProperty(
+            "display",
+            "none",
+            "important"
+        );
+
+
+        resistPassButton.style.setProperty(
+            "pointer-events",
+            "none",
+            "important"
+        );
+
+    }
+
+
     //----------------------------------
-    // PLAYERへアタック
+    // 案内
     //----------------------------------
 
     setTutorialGuide(
@@ -1942,7 +2070,16 @@ function startTutorialStep4CpuUnicornAttack(){
     );
 
 
+    //==================================================
+    // 通常攻撃開始
+    //
+    // ここではまだ
+    // startTutorialStep4StoneGuard()
+    // を呼ばない
+    //==================================================
+
     setTimeout(
+
         () => {
 
             executeAttack(
@@ -1969,6 +2106,34 @@ function startTutorialStep4StoneGuard(){
 
     step4State.phase =
         "playStoneGuard";
+
+
+            //----------------------------------
+    // 「レジストなし」を即座に隠す
+    //----------------------------------
+
+    const resistPassButton =
+        document.getElementById(
+            "resist-pass-button"
+        );
+
+
+    if(resistPassButton){
+
+        resistPassButton.disabled =
+            true;
+
+        resistPassButton.style.display =
+            "none";
+
+        resistPassButton.style.pointerEvents =
+            "none";
+
+        resistPassButton.onclick =
+            null;
+
+    }
+
 
 
     //----------------------------------
@@ -2051,10 +2216,10 @@ function startTutorialStep4StoneGuard(){
 
     setTutorialGuide(
 
-        "レジスト",
+        "相手のターン",
 
-        "相手の『ユニコーン』のアタックに対して、" +
-        "手札の『ストーンガード』をプレイしてください。"
+        "相手の『ユニコーン』のアタックに対して" +
+        "手札の『ストーンガード』をプレイして防ぎましょう。"
 
     );
 
@@ -2079,6 +2244,7 @@ function startTutorialStep4StoneGuard(){
         updateButtons();
 
     }
+    updateTutorialStep4ResistPassButton();
 
 }
 
@@ -2159,7 +2325,7 @@ function tutorialStep4StoneGuardUsed(){
 
         "相手のターン",
 
-        "『ストーンガー』で" +
+        "『ストーンガード』で" +
         "『ユニコーン』のアタックによるダメージを防ぎました。\n" +
         "相手のターンはこれで終了です。"
 
@@ -2314,7 +2480,7 @@ function startTutorialStep4SecondPlayerTurn(){
 
         setTutorialGuide(
 
-            "ターン開始",
+            "ターン開始時",
 
             "自分のターン開始時、" +
             "ヨコ向きの自分のサモンは" +
@@ -2373,11 +2539,9 @@ function showTutorialStep4CostRecovery(){
 
     setTutorialGuide(
 
-        "コスト回収",
+        "ターン開始時",
 
-        "ターン開始時、" +
-        "コストゾーンにあるカードを" +
-        "すべて手札に戻します。"
+        "次にコストゾーンにあるカードをすべて手札に戻します。"
 
     );
 
@@ -2466,11 +2630,10 @@ function executeTutorialStep4CostRecovery(){
 
     setTutorialGuide(
 
-        "クール回収",
+        "ターン開始時",
 
         "続いてクールゾーンを確認します。\n" +
-        "クールゾーンにカードがある場合、" +
-        "ターン開始時に1枚を選んで手札に戻します。"
+        "クールゾーンにカードがある場合、1枚を選んで手札に戻します。"
 
     );
 
@@ -2527,10 +2690,10 @@ function startTutorialStep4CoolRecovery(){
 
     setTutorialGuide(
 
-        "クール回収",
+        "ターン開始時",
 
         "クールゾーンから手札に戻すカードを1枚選び、" +
-        "「決定」を押してください。"
+        "「決定」ボタンを押してください。"
 
     );
 
@@ -2614,7 +2777,7 @@ function tutorialStep4CoolRecoveryCompleted(){
 
     setTutorialGuide(
 
-        "ターン中の行動",
+        "ターン中",
 
         "ターン開始時の処理が終わると、" +
         "自由に行動できます。"
@@ -2645,18 +2808,17 @@ function showTutorialStep4FreePlayExplanation(){
 
     setTutorialGuide(
 
-        "ターン中の行動",
+        "ターン中",
 
         "サモンのプレイ、マギアのプレイ、" +
-        "アタックを行う順番は自由です。\n" +
-        "ここからは自由に行動してみましょう。"
+        "アタックを行う等の順番は自由です。"
 
     );
 
 
     showTutorialNextButton(
 
-        "自由に行動する",
+        "ターン中操作へ",
 
         startTutorialStep4FreePlay
 
@@ -2708,7 +2870,7 @@ function startTutorialStep4FreePlay(){
 
     setTutorialGuide(
 
-        "自由行動",
+        "ターン中",
 
         "好きな順番で行動してください。\n終わったら「ターン終了」を押してください。"
 
@@ -2804,7 +2966,7 @@ function completeTutorialStep4(){
 
     setTutorialGuide(
 
-        "STEP 4 完了",
+        "STEP 4",
 
         "ターンの進行について学びました。\nSTEP4は完了です。"
 
@@ -3086,7 +3248,7 @@ function setupTutorialStep4FixedCostHighlights(
 
     setTutorialGuide(
 
-        "コスト",
+        "自分のターン",
 
         namesText+"をコストとして選んでください。"
 
@@ -3528,6 +3690,47 @@ function installTutorialStep4GameHooks(){
         "★ STEP4：通常ゲーム処理フック登録"
     );
 
+//==================================================
+// updateButtons
+//
+// 通常UI更新後に
+// STEP4のキャンセル禁止を反映
+//==================================================
+
+if(
+    typeof updateButtons ===
+    "function"
+){
+
+    const normalUpdateButtons =
+        updateButtons;
+
+
+updateButtons =
+    function(){
+
+        const result =
+            normalUpdateButtons();
+
+
+        if(
+            step4State.active
+        ){
+
+            updateTutorialStep4CancelButton();
+
+            updateTutorialStep4ResistPassButton();
+
+        }
+
+
+        return result;
+
+    };
+
+}
+
+
 
     //==================================================
     // startSummon
@@ -3592,9 +3795,9 @@ function installTutorialStep4GameHooks(){
 
                         setTutorialGuide(
 
-                            "あなたのターン",
+                            "自分のターン",
 
-                            "今回は『ユニコーン』を召喚してください。"
+                            "まずは手札の『ユニコーン』をプレイしましょう。"
 
                         );
 
@@ -3623,6 +3826,8 @@ function installTutorialStep4GameHooks(){
 
 
                         prepareTutorialStep4UnicornCost();
+
+                        updateTutorialStep4CancelButton();
 
                     }
 
@@ -3706,9 +3911,10 @@ function installTutorialStep4GameHooks(){
 
                         setTutorialGuide(
 
-                            "マギア",
+                            "自分のターン",
 
-                            "今回は『バーニングエナジー』をプレイしてください。"
+                            "『バーニングエナジー』を選び、" +
+                            "場の『ユニコーン』を対象にしてください。"
 
                         );
 
@@ -3728,12 +3934,14 @@ function installTutorialStep4GameHooks(){
                     step4State.phase =
                         "burningEnergyTarget";
 
+                    updateTutorialStep4CancelButton();
+
 
                     setTutorialGuide(
 
-                        "マギア",
-
-                        "青く発光している『ユニコーン』を対象にしてください。"
+                        "自分のターン",
+        "『バーニングエナジー』を選び、" +
+        "場の『ユニコーン』を対象にしてください。"
 
                     );
 
@@ -3760,9 +3968,10 @@ function installTutorialStep4GameHooks(){
 
                         setTutorialGuide(
 
-                            "マギア",
+                            "自分のターン",
 
-                            "今回は『ファイアボール』をプレイしてください。"
+        "『ファイアボール』を" +
+        "相手プレイヤーを対象にプレイしてください。"
 
                         );
 
@@ -3783,12 +3992,14 @@ function installTutorialStep4GameHooks(){
                         "fireballTarget";
 
 
+                    updateTutorialStep4CancelButton();
+
+
                     setTutorialGuide(
 
-                        "マギア",
+                "自分のターン",
 
-                        "相手プレイヤーを対象にしてください。"
-
+                "『ファイアボール』を相手プレイヤーを対象にプレイしてください。"
                     );
 
 
@@ -3879,9 +4090,10 @@ function installTutorialStep4GameHooks(){
 
                         setTutorialGuide(
 
-                            "マギア",
+                            "自分のターン",
 
-                            "自分の『ユニコーン』を対象にしてください。"
+                            "『バーニングエナジー』を選び、" +
+                            "場の『ユニコーン』を対象にしてください。"
 
                         );
 
@@ -3901,6 +4113,8 @@ function installTutorialStep4GameHooks(){
 
 
                     prepareTutorialStep4BurningEnergyCost();
+
+                    updateTutorialStep4CancelButton();
 
 
                     return result;
@@ -3961,9 +4175,9 @@ function installTutorialStep4GameHooks(){
 
                         setTutorialGuide(
 
-                            "マギア",
+                "自分のターン",
 
-                            "相手プレイヤーを対象にしてください。"
+                "『ファイアボール』を相手プレイヤーを対象にプレイしてください。"
 
                         );
 
@@ -3983,6 +4197,8 @@ function installTutorialStep4GameHooks(){
 
 
                     prepareTutorialStep4FireballCost();
+
+                    updateTutorialStep4CancelButton();
 
 
                     return result;
@@ -4046,14 +4262,6 @@ function installTutorialStep4GameHooks(){
                         card.name
                     )
                 ){
-
-                    setTutorialGuide(
-
-                        "コスト",
-
-                        "今回は発光しているカードをコストとして選んでください。"
-
-                    );
 
 
                     return;
@@ -4253,135 +4461,134 @@ function installTutorialStep4GameHooks(){
     }
 
 
-    //==================================================
-    // executeAttack
-    //==================================================
+//==================================================
+// executeAttack
+//==================================================
 
-    if(
-        typeof executeAttack ===
-        "function"
-    ){
+if(
+    typeof executeAttack ===
+    "function"
+){
 
-        const normalExecuteAttack =
-            executeAttack;
+    const normalExecuteAttack =
+        executeAttack;
 
 
-        executeAttack =
-            function(
-                attacker,
-                target
+    executeAttack =
+        function(
+            attacker,
+            target
+        ){
+
+            //==================================
+            // PLAYER TURN1
+            // Unicorn → ENEMY限定
+            //==================================
+
+            if(
+                step4State.active &&
+                step4State.phase ===
+                    "unicornAttack"
             ){
 
-                //==================================
-                // PLAYER TURN1
-                // Unicorn → ENEMY限定
-                //==================================
-
                 if(
-                    step4State.active &&
-                    step4State.phase ===
-                        "unicornAttack"
+                    attacker?.card?.name !==
+                        "ユニコーン" ||
+
+                    attacker.owner !==
+                        PLAYER ||
+
+                    !(
+                        target === ENEMY ||
+                        target === "enemy"
+                    )
                 ){
 
-                    if(
-                        attacker?.card?.name !==
-                            "ユニコーン" ||
-                        attacker.owner !==
-                            PLAYER ||
-                        !(
-                            target === ENEMY ||
-                            target === "enemy"
-                        )
-                    ){
+                    setTutorialGuide(
 
-                        setTutorialGuide(
+                        "アタック",
 
-                            "アタック",
+                        "『ユニコーン』で相手プレイヤーへアタックしてください。"
 
-                            "『ユニコーン』で相手プレイヤーへアタックしてください。"
+                    );
 
+
+                    return false;
+
+                }
+
+            }
+
+
+            //==================================
+            // CPU Unicorn attack 判定
+            //==================================
+
+            const cpuTutorialAttack =
+
+                step4State.active &&
+
+                step4State.phase ===
+                    "cpuUnicornAttack" &&
+
+                attacker?.owner ===
+                    ENEMY &&
+
+                attacker?.card?.name ===
+                    "ユニコーン" &&
+
+                (
+                    target === PLAYER ||
+                    target === "player"
+                );
+
+
+            //----------------------------------
+            // 通常攻撃を先に実行
+            //----------------------------------
+
+            const result =
+                normalExecuteAttack(
+
+                    attacker,
+                    target
+
+                );
+
+
+            //==================================
+            // 通常攻撃側が
+            // レジスト受付を開始した直後に
+            // ストーンガード誘導へ変更
+            //==================================
+
+            if(cpuTutorialAttack){
+
+                setTimeout(
+
+                    () => {
+
+                        console.log(
+                            "★ STEP4：CPUユニコーン攻撃 → ストーンガード誘導"
                         );
 
 
-                        return false;
+                        startTutorialStep4StoneGuard();
 
-                    }
+                    },
 
-                }
+                    0
 
+                );
 
-                //==================================
-                // CPU Unicorn attack
-                //==================================
-
-                const cpuTutorialAttack =
-
-                    step4State.active &&
-
-                    step4State.phase ===
-                        "cpuUnicornAttack" &&
-
-                    attacker?.owner ===
-                        ENEMY &&
-
-                    attacker?.card?.name ===
-                        "ユニコーン" &&
-
-                    (
-                        target === PLAYER ||
-                        target === "player"
-                    );
+            }
 
 
-                //----------------------------------
-                // 通常アタック
-                //----------------------------------
+            return result;
 
-                const result =
+        };
 
-                    normalExecuteAttack(
-
-                        attacker,
-
-                        target
-
-                    );
-
-
-                //==================================
-                // CPUユニコーンに対する
-                // Stone Guard誘導
-                //==================================
-
-                if(cpuTutorialAttack){
-
-                    setTimeout(
-
-                        () => {
-
-                            console.log(
-                                "★ STEP4：CPUユニコーンアタック → ストーンガード誘導"
-                            );
-
-
-                            startTutorialStep4StoneGuard();
-
-                        },
-
-                        150
-
-                    );
-
-                }
-
-
-                return result;
-
-            };
-
-    }
-
-
+}
     //==================================================
     // finishAttack
     //==================================================
@@ -4926,9 +5133,10 @@ if(
 
                         setTutorialGuide(
 
-                            "レジスト",
+        "相手のターン",
 
-                            "今回は『ストーンガード』をプレイしてください。"
+        "相手の『ユニコーン』のアタックに対して" +
+        "手札の『ストーンガード』をプレイして防ぎましょう。"
 
                         );
 
@@ -4995,14 +5203,6 @@ if(
                             card.name
                         )
                     ){
-
-                        setTutorialGuide(
-
-                            "コスト",
-
-                            "発光しているカードをコストとして選んでください。"
-
-                        );
 
 
                         return;
@@ -5280,14 +5480,6 @@ function tutorialStep4CardClick(
             )
         ){
 
-            setTutorialGuide(
-
-                "コスト",
-
-                "今回は発光しているカードをコストとして選んでください。"
-
-            );
-
 
             return;
 
@@ -5346,14 +5538,6 @@ function tutorialStep4CardClick(
             )
         ){
 
-            setTutorialGuide(
-
-                "コスト",
-
-                "今回は発光しているカードをコストとして選んでください。"
-
-            );
-
 
             return;
 
@@ -5403,9 +5587,9 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "あなたのターン",
+                "自分のターン",
 
-                "まずは『ユニコーン』を召喚してください。"
+                "まずは手札の『ユニコーン』をプレイしましょう。"
 
             );
 
@@ -5470,9 +5654,10 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "マギア",
+                "自分のターン",
 
-                "今回は『バーニングエナジー』をプレイしてください。"
+        "『バーニングエナジー』を選び、" +
+        "場の『ユニコーン』を対象にしてください。"
 
             );
 
@@ -5515,9 +5700,11 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "マギア",
+                "自分のターン",
 
-                "自分の『ユニコーン』を対象にしてください。"
+                "『バーニングエナジー』を選び、" +
+                "場の『ユニコーン』を対象にしてください。"
+
 
             );
 
@@ -5606,9 +5793,9 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "マギア",
+                "自分のターン",
 
-                "今回は『ファイアボール』をプレイしてください。"
+                "『ファイアボール』を相手プレイヤーを対象にプレイしてください。"
 
             );
 
@@ -5651,9 +5838,9 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "マギア",
+                "自分のターン",
 
-                "相手プレイヤーを対象にしてください。"
+                "『ファイアボール』を相手プレイヤーを対象にプレイしてください。"
 
             );
 
@@ -5706,7 +5893,7 @@ function tutorialStep4CardClick(
 
             setTutorialGuide(
 
-                "レジスト",
+                "相手のターン",
 
                 "今回は『ストーンガード』を使プレイしてください。"
             );
@@ -5787,11 +5974,174 @@ function installTutorialStep4ClickObserver(){
 
             }
 
+            //==================================================
+// STEP4
+// ストーンガード誘導中
+// 「プレイしない」を完全禁止
+//==================================================
+
+const resistPassButton =
+
+    event.target.closest
+        ?
+        event.target.closest(
+            "#resist-pass-button"
+        )
+        :
+        null;
+
+
+if(resistPassButton){
+
+    const locked =
+
+        [
+
+            "playStoneGuard",
+            "stoneGuardCost"
+
+        ].includes(
+            step4State.phase
+        );
+
+
+    if(locked){
+
+        console.log(
+            "★ STEP4：プレイしないクリック遮断",
+            step4State.phase
+        );
+
+
+        event.preventDefault();
+
+        event.stopPropagation();
+
+        event.stopImmediatePropagation();
+
+
+        return;
+
+    }
+
+}
+
+
+            //==================================================
+            // 1.
+            // 通常キャンセルボタン禁止
+            //
+            // サモン・マギアのコスト選択中
+            //==================================================
+
+            const clickedCancelButton =
+
+                event.target.closest
+                    ?
+                    event.target.closest(
+                        "#cancel-button"
+                    )
+                    :
+                    null;
+
+
+            if(clickedCancelButton){
+
+                const locked =
+
+                    [
+
+                        "summonUnicornCost",
+
+                        "burningEnergyCost",
+
+                        "fireballCost"
+
+                    ].includes(
+                        step4State.phase
+                    );
+
+
+                if(locked){
+
+                    console.log(
+                        "★ STEP4：cancel-buttonクリック遮断",
+                        step4State.phase
+                    );
+
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    event.stopImmediatePropagation();
+
+
+                    return;
+
+                }
+
+            }
+
+
+            //==================================================
+            // 2.
+            // マギア対象選択中のキャンセル禁止
+            //
+            // 通常ゲームでは
+            // use-button が「キャンセル」に変わる
+            //==================================================
+
+            const clickedUseButton =
+
+                event.target.closest
+                    ?
+                    event.target.closest(
+                        "#use-button"
+                    )
+                    :
+                    null;
+
+
+            if(clickedUseButton){
+
+                const magiaTargetLocked =
+
+                    [
+
+                        "burningEnergyTarget",
+
+                        "fireballTarget"
+
+                    ].includes(
+                        step4State.phase
+                    );
+
+
+                if(magiaTargetLocked){
+
+                    console.log(
+                        "★ STEP4：マギア対象選択キャンセル遮断",
+                        step4State.phase
+                    );
+
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    event.stopImmediatePropagation();
+
+
+                    return;
+
+                }
+
+            }
+
 
             //==================================================
             // Cool Recovery 決定
-            //
-            // 通常confirmCoolRecovery()の後を検知
             //==================================================
 
             if(
@@ -5803,13 +6153,10 @@ function installTutorialStep4ClickObserver(){
 
                     event.target.closest
                         ?
-
                         event.target.closest(
                             "#confirm-button"
                         )
-
                         :
-
                         null;
 
 
@@ -5821,7 +6168,7 @@ function installTutorialStep4ClickObserver(){
 
 
                     //----------------------------------
-                    // 通常クリックは止めない
+                    // 通常の決定処理は止めない
                     //----------------------------------
 
                     setTimeout(
@@ -5845,16 +6192,13 @@ function installTutorialStep4ClickObserver(){
 
                                 {
                                     recoveryEnded,
+
                                     selectedCoolCard:
                                         typeof selectedCoolCard !==
                                             "undefined"
-
                                             ?
-
                                             selectedCoolCard
-
                                             :
-
                                             "undefined"
                                 }
 
@@ -5889,20 +6233,17 @@ function installTutorialStep4ClickObserver(){
 
                 event.target.closest
                     ?
-
                     event.target.closest(
                         "#endturn-button"
                     )
-
                     :
-
                     null;
 
 
             if(endTurnButton){
 
                 //==================================
-                // TURN1 END
+                // PLAYER TURN 1終了
                 //==================================
 
                 if(
@@ -5911,7 +6252,9 @@ function installTutorialStep4ClickObserver(){
                 ){
 
                     event.preventDefault();
+
                     event.stopPropagation();
+
                     event.stopImmediatePropagation();
 
 
@@ -5924,7 +6267,7 @@ function installTutorialStep4ClickObserver(){
 
 
                 //==================================
-                // FREE PLAY END
+                // 自由行動終了
                 //==================================
 
                 if(
@@ -5933,7 +6276,9 @@ function installTutorialStep4ClickObserver(){
                 ){
 
                     event.preventDefault();
+
                     event.stopPropagation();
+
                     event.stopImmediatePropagation();
 
 
@@ -5945,12 +6290,14 @@ function installTutorialStep4ClickObserver(){
                 }
 
 
-                //----------------------------------
-                // その他禁止
-                //----------------------------------
+                //==================================
+                // その他ではターン終了禁止
+                //==================================
 
                 event.preventDefault();
+
                 event.stopPropagation();
+
                 event.stopImmediatePropagation();
 
 
@@ -6315,5 +6662,268 @@ function logTutorialStep4State(){
     console.log(
         "================================"
     );
+
+}
+
+/* =========================================================
+STEP4 Cancel Button Control
+
+STEP4最初の誘導では、
+
+・サモン/マギアのコスト選択
+    → #cancel-button
+
+・マギアの対象選択
+    → #use-button が「キャンセル」になる
+
+この両方を制御する。
+========================================================= */
+
+/* =========================================================
+STEP4 Cancel Button Control
+========================================================= */
+
+function updateTutorialStep4CancelButton(){
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-button"
+        );
+
+
+    const useButton =
+        document.getElementById(
+            "use-button"
+        );
+
+
+    //==================================================
+    // 通常のキャンセルボタンを禁止するフェーズ
+    //
+    // コスト選択中
+    //==================================================
+
+    const lockCancelButton =
+
+        step4State.active &&
+
+        [
+
+            "summonUnicornCost",
+
+            "burningEnergyCost",
+
+            "fireballCost"
+
+        ].includes(
+            step4State.phase
+        );
+
+
+    //==================================================
+    // use-button が
+    // 「キャンセル」になっている状態を禁止
+    //
+    // マギア対象選択中
+    //==================================================
+
+    const lockMagiaTargetCancel =
+
+        step4State.active &&
+
+        [
+
+            "burningEnergyTarget",
+
+            "fireballTarget"
+
+        ].includes(
+            step4State.phase
+        );
+
+
+    //==================================================
+    // cancel-button
+    //==================================================
+
+    if(cancelButton){
+
+        if(lockCancelButton){
+
+            console.log(
+                "★ STEP4：cancel-button禁止",
+                step4State.phase
+            );
+
+
+            cancelButton.disabled =
+                true;
+
+
+            cancelButton.style.display =
+                "none";
+
+
+            cancelButton.style.pointerEvents =
+                "none";
+
+
+            cancelButton.onclick =
+                null;
+
+        }
+        else{
+
+            //----------------------------------
+            // STEP4側で設定した禁止状態だけ解除
+            //----------------------------------
+
+            cancelButton.disabled =
+                false;
+
+
+            cancelButton.style.pointerEvents =
+                "";
+
+        }
+
+    }
+
+
+    //==================================================
+    // use-button
+    //==================================================
+
+    if(useButton){
+
+        //==================================
+        // マギア対象選択中
+        //
+        // 通常ゲームでは
+        // use-button が「キャンセル」になる
+        //==================================
+
+        if(lockMagiaTargetCancel){
+
+            console.log(
+                "★ STEP4：マギア対象選択キャンセル禁止",
+                step4State.phase
+            );
+
+
+            useButton.disabled =
+                true;
+
+
+            useButton.style.display =
+                "none";
+
+
+            useButton.style.pointerEvents =
+                "none";
+
+
+            useButton.onclick =
+                null;
+
+        }
+
+        //==================================
+        // それ以外
+        //
+        // 前の対象選択時に設定した
+        // disabled / pointerEvents を解除する
+        //
+        // display と onclick は
+        // 通常updateButtons()に任せる
+        //==================================
+
+        else{
+
+            useButton.disabled =
+                false;
+
+
+            useButton.style.pointerEvents =
+                "";
+
+        }
+
+    }
+
+}
+
+/* =========================================================
+STEP4 Resist Pass Control
+========================================================= */
+
+function updateTutorialStep4ResistPassButton(){
+
+    const passButton =
+        document.getElementById(
+            "resist-pass-button"
+        );
+
+
+    if(!passButton){
+
+        return;
+
+    }
+
+
+    const locked =
+
+        step4State.active &&
+
+        [
+
+            "playStoneGuard",
+            "stoneGuardCost"
+
+        ].includes(
+            step4State.phase
+        );
+
+
+    if(locked){
+
+        console.log(
+            "★ STEP4：プレイしない禁止",
+            step4State.phase
+        );
+
+
+        passButton.disabled =
+            true;
+
+
+        passButton.style.display =
+            "none";
+
+
+        passButton.style.pointerEvents =
+            "none";
+
+
+        passButton.onclick =
+            null;
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // STEP4の禁止状態だけ解除
+    //----------------------------------
+
+    passButton.disabled =
+        false;
+
+
+    passButton.style.pointerEvents =
+        "";
 
 }
