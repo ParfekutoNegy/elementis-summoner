@@ -68,7 +68,8 @@ function initializeTutorialStep2(){
         "================================"
     );
 
-   //----------------------------------
+
+    //----------------------------------
     // STEP2専用クラス
     //----------------------------------
 
@@ -83,6 +84,10 @@ function initializeTutorialStep2(){
 
     initializeTutorialBattleLog();
 
+
+    //----------------------------------
+    // board確認
+    //----------------------------------
 
     if(
         typeof board ===
@@ -99,6 +104,10 @@ function initializeTutorialStep2(){
     }
 
 
+    //----------------------------------
+    // CARD_LIST確認
+    //----------------------------------
+
     if(
         typeof CARD_LIST ===
         "undefined"
@@ -113,33 +122,41 @@ function initializeTutorialStep2(){
     }
 
 
-//----------------------------------
-// STEP2ではターン終了禁止
-//----------------------------------
+    //----------------------------------
+    // STEP2ではターン終了禁止
+    //----------------------------------
 
-const endTurnButton =
-    document.getElementById(
-        "endturn-button"
-    );
-
-if(endTurnButton){
-
-    endTurnButton.disabled =
-        true;
-
-    endTurnButton.classList.add(
-        "tutorial-disabled-button"
-    );
-
-}
+    const endTurnButton =
+        document.getElementById(
+            "endturn-button"
+        );
 
 
+    if(endTurnButton){
+
+        endTurnButton.disabled =
+            true;
+
+        endTurnButton.classList.add(
+            "tutorial-disabled-button"
+        );
+
+    }
+
+
+    //----------------------------------
+    // STEP2開始
+    //----------------------------------
 
     beginTutorialStep(
         "STEP 2",
-        "カードのプレイ方法を学びます。\nまずはサモンをプレイしてみましょう。"
+        "カードのプレイ方法を学びます。\n手札にあるカードはコストを支払うことでプレイできます。"
     );
 
+
+    //----------------------------------
+    // ゲーム状態
+    //----------------------------------
 
     game.currentPlayer =
         PLAYER;
@@ -149,11 +166,19 @@ if(endTurnButton){
         TURN_STATE.PLAYING;
 
 
+    //----------------------------------
+    // ライフ
+    //----------------------------------
+
     setTutorialLife(
         5,
         5
     );
 
+
+    //----------------------------------
+    // アイコン
+    //----------------------------------
 
     setTutorialIcons(
         1,
@@ -161,11 +186,78 @@ if(endTurnButton){
     );
 
 
+    //==================================================
+    // STEP2開始時点で手札10枚を生成
+    //==================================================
+
+    const hand =
+        createTutorialStep2FullHand();
+
+
+    board.setHandCards(
+        hand
+    );
+
+
+    //----------------------------------
+    // 場は空
+    //----------------------------------
+
+    playerField.length =
+        0;
+
+
+    enemyField.length =
+        0;
+
+
+    board.setPlayerCards(
+        []
+    );
+
+
+    board.setEnemyCards(
+        []
+    );
+
+
+    //----------------------------------
+    // Observer
+    //----------------------------------
+
     registerTutorialStep2Observer();
 
 
+    //----------------------------------
+    // 最初の説明 → コスト説明
+    //----------------------------------
+
     showTutorialNextButton(
         "開始",
+        showTutorialStep2CostExplanation
+    );
+
+}
+
+/* =========================================================
+STEP2
+コスト説明
+========================================================= */
+
+function showTutorialStep2CostExplanation(){
+
+    step2State.phase =
+        "costExplanation";
+
+
+    setTutorialGuide(
+        "STEP 2",
+        "コストの支払いは、プレイごとに手札からコストの数値の枚数分のカードを選び、コストゾーンに裏向きで伏せて置きます。"
+    );
+
+
+    showTutorialNextButton(
+        "次へ",
         setupTutorialStep2SummonLesson
     );
 
@@ -178,20 +270,20 @@ if(endTurnButton){
 
 function createTutorialStep2FullHand(){
 
-    const ids = [
+const ids = [
 
-        1,   // ウィルオウィスプ
-        6,   // ファイアボール
-        7,   // パイロフレイム
-        11,  // ユニコーン
-        16,  // ラピッドムーヴ
-        17,  // セイレーン
-        20,  // クラーケン
-        29,  // ロックスパイク
-        31,  // ストーンガード
-        32   // グラウンドウォール
+    1,   // ウィルオウィスプ
+    5,   // バーニングエナジー
+    6,   // ファイアボール
+    7,   // パイロフレイム
+    11,  // ユニコーン
+    16,  // ラピッドムーヴ
+    20,  // クラーケン
+    29,  // ロックスパイク
+    31,  // ストーンガード
+    32   // グラウンドウォール
 
-    ];
+];
 
 
     const hand =
@@ -553,7 +645,7 @@ function setupTutorialStep2SummonLesson(){
 
     setTutorialGuide(
         "STEP 2",
-        "サモンを1枚選び、プレイボタンを押してください。"
+        "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
     );
 
 
@@ -1701,7 +1793,7 @@ function handleTutorialStep2CardClick(
 
 
                 setTutorialMessage(
-                    "サモンを1枚選び、プレイボタンを押してください。"
+                    "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
                 );
 
             }
@@ -1745,7 +1837,7 @@ function handleTutorialStep2CardClick(
 
 
         setTutorialMessage(
-            "サモンを1枚選び、プレイボタンを押してください。"
+            "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
         );
 
 
@@ -2550,7 +2642,7 @@ function tutorialStep2AfterCancelButton(){
 
         setTutorialGuide(
             "STEP 2",
-            "サモンを1枚選び、プレイボタンを押してください。"
+            "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
         );
 
 

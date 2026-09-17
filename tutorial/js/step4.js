@@ -966,8 +966,7 @@ function showTutorialStep4TurnIntroduction(){
 
         "STEP 4",
 
-        "このゲームでは、自分と相手が" +
-        "交互にターンを行います。"
+        "このゲームでは、自分と相手が交互にターンを行います。"
 
     );
 
@@ -1512,7 +1511,7 @@ function tutorialStep4FireballUsed(){
 
         "ターン終了",
 
-        "行動を終えたら「ターン終了」ボタンを押します。"
+        "『ファイアボール』で相手に1ダメージを与えました。\n自分のターンの行動を終えたら「ターン終了」ボタンを押します。"
 
     );
 
@@ -2062,7 +2061,7 @@ function startTutorialStep4CpuUnicornAttack(){
 
     setTutorialGuide(
 
-        "レジスト",
+        "相手のターン",
 
         "相手の『ユニコーン』のアタックに対して、" +
         "手札の『ストーンガード』をプレイしてください。"
@@ -2327,7 +2326,7 @@ function tutorialStep4StoneGuardUsed(){
 
         "『ストーンガード』で" +
         "『ユニコーン』のアタックによるダメージを防ぎました。\n" +
-        "相手のターンはこれで終了です。"
+        "相手はターンを終了しました。次は自分のターンです。"
 
     );
 
@@ -2548,7 +2547,7 @@ function showTutorialStep4CostRecovery(){
 
     showTutorialNextButton(
 
-        "回収する",
+        "コスト回収",
 
         executeTutorialStep4CostRecovery
 
@@ -2872,7 +2871,7 @@ function startTutorialStep4FreePlay(){
 
         "ターン中",
 
-        "好きな順番で行動してください。\n終わったら「ターン終了」を押してください。"
+        "好きな順番で行動してください。\n終わったら「ターン終了」ボタンを押してください。"
 
     );
 
@@ -3248,7 +3247,7 @@ function setupTutorialStep4FixedCostHighlights(
 
     setTutorialGuide(
 
-        "自分のターン",
+        "相手のターン",
 
         namesText+"をコストとして選んでください。"
 

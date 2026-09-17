@@ -999,7 +999,7 @@ function completeTutorialStep3DirectAttack(){
 
     setTutorialGuide(
         "アタック",
-        "相手プレイヤーへアタックすると、サモンのパワー分のダメージを与えます。"
+        "相手プレイヤーへアタックすると、パワー分のダメージを与えます。\n『クラーケン』はパワーが４なので4ダメージを与えました。"
     );
 
 
@@ -1253,7 +1253,7 @@ function showTutorialStep3SummonBattleExplanation2(){
 
     setTutorialGuide(
         "サモンのバトル",
-        "パワー以上のダメージを受けたサモンはクールゾーンに置かれます。"
+        "パワー以上のダメージを受けたサモンはクールゾーンに置かれます。\n4ダメージを受けたパワー３の『グリフォン』はクールゾーンに置かれます。"
     );
 
 
@@ -1732,7 +1732,7 @@ function completeTutorialStep3Block(){
 
     setTutorialGuide(
         "ブロック",
-        "ブロックするとサモン同士のバトルになり、お互いパワー分のダメージを与えます。プレイヤーはダメージを受けません。"
+        "ブロックするとサモン同士のバトルになり、お互いパワー分のダメージを与えます。\nプレイヤーはダメージを受けません。"
     );
 
 
@@ -1809,7 +1809,7 @@ function completeTutorialStep3(){
 
 
     showTutorialNextButton(
-        "メニューへ",
+        "STEP4へ",
         () => {
 
             window.location.href =

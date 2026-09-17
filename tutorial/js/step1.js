@@ -1245,7 +1245,7 @@ function tutorialStep1AfterCardClick(
 
         setTutorialGuide(
             "STEP 1",
-            "サモンは場に出してアタックやブロックを行うカードです。\nサモンでのアタックは相手にダメージを与える主な手段となります。"
+            "サモンは自分のターンごとに1枚だけプレイできます。\nプレイされたサモンはタテ向きで自分の場に出します。"
         );
 
 
@@ -1306,7 +1306,7 @@ function tutorialStep1AfterCardClick(
 
         setTutorialGuide(
             "STEP 1",
-            "マギアは対象にさまざまな効果を与えるカードです\nダメージを与えるカードやサモンの強化などがあります。"
+            "マギアは自分のターンに何枚でもプレイできます。\n対象を選び、カードに書かれている効果を与えます。"
         );
 
 
@@ -1392,7 +1392,7 @@ function tutorialStep1SummonExplanation2(){
 
 
     setTutorialMessage(
-        "サモンはそれぞれ固有の能力を持っています。\n能力を活かした戦略を立てましょう。"
+        "場に出たサモンはカードに書かれている能力を得ます。\nまた、アタックやブロックを行えます。"
     );
 
 
@@ -1415,7 +1415,7 @@ function tutorialStep1SummonExplanation3(){
 
 
     setTutorialMessage(
-        "サモンは自分のターンごとに1枚だけプレイできます。"
+        "サモンでのアタックは相手にダメージを与える主な手段となります。"
     );
 
 
@@ -1488,7 +1488,7 @@ function tutorialStep1MagiaExplanation2(){
 
 
     setTutorialMessage(
-        "マギアは自分のターンに何枚でもプレイできます。"
+        "ダメージを与えたりサモンを強化したり、さまざまな効果を与えるカードがあります。"
     );
 
 
@@ -1727,7 +1727,7 @@ function tutorialStep1ShowCostZone(){
 
     setTutorialGuide(
         "コストゾーン",
-        "コストゾーンはカードのプレイ時に、手札からコストにしたカードを伏せて置く場所です。"
+        "コストゾーンはカードをプレイするためのコストとして、手札のカードを裏向きに伏せて置くところです。"
     );
 
 
@@ -1759,7 +1759,7 @@ function tutorialStep1ShowCoolZone(){
 
     setTutorialGuide(
         "クールゾーン",
-        "クールゾーンはプレイしたマギア、レジスト、倒されたサモンを置く場所です。"
+        "クールゾーンは倒されたサモンとプレイしたマギアやレジストを置くところです。"
     );
 
 
@@ -1796,7 +1796,7 @@ function tutorialStep1ShowEnemyZones(){
 
     setTutorialGuide(
         "相手のエリア",
-        "相手にも手札・場・コストゾーン・クールゾーンがあります。"
+        "相手にも手札・場・コストゾーン・クールゾーンがあります。\n相手のクールゾーンのカードは確認することができます。"
     );
 
 
