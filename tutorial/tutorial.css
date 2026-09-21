@@ -1266,3 +1266,89 @@ and
     }
 
 }
+
+/* =========================================================
+Tutorial STEP5
+LIFE / Win Highlight
+========================================================= */
+
+.tutorial-step5-highlight{
+
+    position: relative;
+
+    z-index: 20;
+
+    border-radius: 10px;
+
+    outline:
+        4px solid
+        rgba(
+            255,
+            220,
+            80,
+            0.95
+        );
+
+    box-shadow:
+        0 0 12px
+        rgba(
+            255,
+            220,
+            80,
+            0.95
+        ),
+        0 0 24px
+        rgba(
+            255,
+            180,
+            30,
+            0.75
+        );
+
+    animation:
+        tutorial-step5-pulse
+        1s
+        ease-in-out
+        infinite alternate;
+
+}
+
+
+@keyframes tutorial-step5-pulse{
+
+    from{
+
+        filter:
+            brightness(1);
+
+    }
+
+    to{
+
+        filter:
+            brightness(1.35);
+
+    }
+
+}
+
+
+/* =========================================================
+STEP5 勝利マーク
+========================================================= */
+
+.tutorial-step5-win-star{
+
+    display:
+        inline-block;
+
+    margin:
+        0 2px;
+
+    font-size:
+        22px;
+
+    line-height:
+        1;
+
+}
