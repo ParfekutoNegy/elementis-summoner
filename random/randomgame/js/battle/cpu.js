@@ -887,6 +887,32 @@ function selectCpuAttackTarget(){
     );
 
 
+    //==================================
+    // ★ ブロック不可サモン
+    //==================================
+    //
+    // cannotBeBlocked を持つ場合は
+    // PLAYER側のサモンの状態・パワーを
+    // 一切考慮せず、必ずPLAYERを攻撃する
+    //==================================
+
+    if(
+        attackingSummon.card?.ability?.type ===
+        "cannotBeBlocked"
+    ){
+
+        console.log(
+            "CPU攻撃対象：ブロック不可",
+            attackingSummon.card.name,
+            "→ PLAYERを直接攻撃"
+        );
+
+
+        return PLAYER;
+
+    }
+
+
     //----------------------------------
     // ドラゴン・クラーケン対策
     //----------------------------------
@@ -900,16 +926,22 @@ function selectCpuAttackTarget(){
                 summon => {
 
                     if(summon.destroyed){
+
                         return false;
+
                     }
+
 
                     //----------------------------------
                     // 横向きのみ
                     //----------------------------------
 
                     if(!summon.isRest){
+
                         return false;
+
                     }
+
 
                     //----------------------------------
                     // ドラゴン・クラーケン
@@ -917,6 +949,7 @@ function selectCpuAttackTarget(){
 
                     const name =
                         summon.card.name;
+
 
                     return (
                         name === "ドラゴン" ||
@@ -957,7 +990,6 @@ function selectCpuAttackTarget(){
     }
 
 
-
     //----------------------------------
     // ① 横向きサモン
     //----------------------------------
@@ -975,11 +1007,13 @@ function selectCpuAttackTarget(){
 
                 }
 
+
                 if(!summon.isRest){
 
                     return false;
 
                 }
+
 
                 return (
                     getPower(summon)
@@ -1043,11 +1077,13 @@ function selectCpuAttackTarget(){
 
                 }
 
+
                 if(summon.isRest){
 
                     return false;
 
                 }
+
 
                 return (
                     getPower(summon)
@@ -1080,7 +1116,7 @@ function selectCpuAttackTarget(){
 
 
     //----------------------------------
-    // ③ 攻撃可能な縦向きサモンなし
+    // ③ その他
     // → プレイヤーを攻撃
     //----------------------------------
 
@@ -7281,10 +7317,103 @@ function createCpuActions(){
 
 
     //==================================
+    // ★ ブロック不可サモン確認
+    //==================================
+    //
+    // cannotBeBlocked を持つ
+    // 「現在攻撃可能なサモン」がいる場合は
+    // 相手側のパワーに関係なく
+    // ATTACK候補を必ず作る
+    //==================================
+
+    const hasCannotBeBlockedAttack =
+        enemyField.some(
+            summon => {
+
+                //----------------------------------
+                // 存在確認
+                //----------------------------------
+
+                if(!summon){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 破壊済みは不可
+                //----------------------------------
+
+                if(summon.destroyed){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 横向きは攻撃不可
+                //----------------------------------
+
+                if(summon.isRest){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 召喚ターン攻撃制限
+                //----------------------------------
+
+                if(
+                    !summon.attackReady &&
+                    summon.card?.ability?.type !==
+                    "summonTurnAttack"
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // cannotBeBlocked確認
+                //----------------------------------
+
+                return (
+                    summon.card?.ability?.type ===
+                    "cannotBeBlocked"
+                );
+
+            }
+        );
+
+
+    if(hasCannotBeBlockedAttack){
+
+        console.log(
+            "CPU：攻撃可能なブロック不可サモンあり"
+        );
+
+    }
+
+
+    //==================================
     // 攻撃候補
+    //==================================
+    //
+    // 通常：
+    // cpuHasMeaningfulAttack()
+    //
+    // 例外：
+    // cannotBeBlocked が攻撃可能なら
+    // 必ずATTACK候補を作る
     //==================================
 
     if(
+        hasCannotBeBlockedAttack ||
         cpuHasMeaningfulAttack()
     ){
 
@@ -7301,7 +7430,9 @@ function createCpuActions(){
         addCpuActionPoints(
             attackAction,
             30,
-            "意味のある攻撃"
+            hasCannotBeBlockedAttack
+                ? "ブロック不可サモンの直接攻撃"
+                : "意味のある攻撃"
         );
 
 
