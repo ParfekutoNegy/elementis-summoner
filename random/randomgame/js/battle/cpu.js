@@ -9173,12 +9173,39 @@ function cpuCanUseSummonAbility(summon){
 
 
     //----------------------------------
-    // 対応能力か
+    // 能力取得
     //----------------------------------
 
+    const ability =
+        summon.card.ability;
+
+
+    if(!ability){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // CPUが使用する対象選択型能力
+    //----------------------------------
+
+    const supportedTypes = [
+
+        // ワイバーン
+        "oncePerTurnSummonDamage",
+
+        // ケンタウロス
+        "oncePerTurnSummonPowerUp"
+
+    ];
+
+
     if(
-        summon.card.ability?.type !==
-        "oncePerTurnSummonDamage"
+        !supportedTypes.includes(
+            ability.type
+        )
     ){
 
         return false;
@@ -9242,178 +9269,350 @@ function cpuSelectSummonAbilityTarget(source){
     }
 
 
-//----------------------------------
-// PLAYERの有効なサモン
-//----------------------------------
-
-const candidates =
-    playerField.filter(
-        summon => {
-
-            //----------------------------------
-            // 基本確認
-            //----------------------------------
-
-            if(
-                !summon ||
-                !summon.card
-            ){
-
-                return false;
-
-            }
-
-
-            //----------------------------------
-            // 破壊済み
-            //----------------------------------
-
-            if(summon.destroyed){
-
-                return false;
-
-            }
-
-
-            //----------------------------------
-            // サモン能力対象判定
-            //----------------------------------
-
-            if(
-                !canTargetBySummonAbility(
-                    source,
-                    summon
-                )
-            ){
-
-                return false;
-
-            }
-
-
-            return true;
-
-        }
-    );
-
-
     //----------------------------------
-    // 対象なし
+    // 能力取得
     //----------------------------------
 
-    if(
-        candidates.length === 0
-    ){
+    const ability =
+        source.card.ability;
+
+
+    if(!ability){
 
         return null;
 
     }
 
 
-    //==================================
-    // 最優先
-    // カーススモーク状態
-    //==================================
-
-    const curseSmokeTargets =
-        candidates.filter(
-            summon =>
-                isCurseSmokeTarget(
-                    summon
-                )
-        );
-
+    //==================================================
+    // ケンタウロス系
+    //
+    // 自分のアタック可能なサモンを
+    // このターン中パワーアップ
+    //==================================================
 
     if(
-        curseSmokeTargets.length > 0
+        ability.type ===
+        "oncePerTurnSummonPowerUp"
     ){
 
         //----------------------------------
-        // 複数いる場合は
-        // パワーが高いものを優先
+        // CPU側のサモンのみ
         //----------------------------------
 
-        curseSmokeTargets.sort(
+        const candidates =
+            enemyField.filter(
+                summon => {
+
+                    //----------------------------------
+                    // 基本確認
+                    //----------------------------------
+
+                    if(
+                        !summon ||
+                        !summon.card
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 破壊済み
+                    //----------------------------------
+
+                    if(summon.destroyed){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // ヨコ向き
+                    //
+                    // すでにアタック済みなので対象外
+                    //----------------------------------
+
+                    if(summon.isRest){
+
+                        return false;
+
+                    }
+
+
+//----------------------------------
+// 現在アタック可能か
+//----------------------------------
+
+if(
+    !summon.attackReady &&
+    summon.card.ability?.type !==
+        "summonTurnAttack"
+){
+
+    return false;
+
+}
+
+
+                    //----------------------------------
+                    // サモン能力対象判定
+                    //----------------------------------
+
+                    if(
+                        !canTargetBySummonAbility(
+                            source,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(
+            candidates.length === 0
+        ){
+
+            console.log(
+                "CPU：ケンタウロス系能力",
+                "アタック可能な対象なし"
+            );
+
+            return null;
+
+        }
+
+
+        //----------------------------------
+        // 現在パワーが高い順
+        //----------------------------------
+
+        candidates.sort(
             (a,b) =>
                 getPower(b) -
                 getPower(a)
         );
 
 
+        //----------------------------------
+        // 最もパワーが高いサモン
+        //----------------------------------
+
+        const target =
+            candidates[0];
+
+
         console.log(
-            "CPU：サモン能力",
-            "カーススモーク対象を最優先",
-            curseSmokeTargets[0].card.name
+            "CPU：ケンタウロス系能力対象",
+            target.card.name,
+            "現在パワー=",
+            getPower(target)
         );
 
 
-        return curseSmokeTargets[0];
+        return target;
 
     }
 
 
-    //==================================
-    // 通常
-    // パワー1のみ対象
-    //==================================
-
-    const powerOneTargets =
-        candidates.filter(
-            summon =>
-                getPower(summon) === 1
-        );
-
-
-    //----------------------------------
-    // パワー1なし
-    //----------------------------------
+    //==================================================
+    // ワイバーン系
+    //
+    // PLAYERのサモンにダメージ
+    //==================================================
 
     if(
-        powerOneTargets.length === 0
+        ability.type ===
+        "oncePerTurnSummonDamage"
     ){
 
+        //----------------------------------
+        // PLAYERの有効なサモン
+        //----------------------------------
+
+        const candidates =
+            playerField.filter(
+                summon => {
+
+                    //----------------------------------
+                    // 基本確認
+                    //----------------------------------
+
+                    if(
+                        !summon ||
+                        !summon.card
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 破壊済み
+                    //----------------------------------
+
+                    if(summon.destroyed){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // サモン能力対象判定
+                    //----------------------------------
+
+                    if(
+                        !canTargetBySummonAbility(
+                            source,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(
+            candidates.length === 0
+        ){
+
+            return null;
+
+        }
+
+
+        //==================================
+        // 最優先
+        // カーススモーク状態
+        //==================================
+
+        const curseSmokeTargets =
+            candidates.filter(
+                summon =>
+                    isCurseSmokeTarget(
+                        summon
+                    )
+            );
+
+
+        if(
+            curseSmokeTargets.length > 0
+        ){
+
+            //----------------------------------
+            // 複数いる場合は
+            // パワーが高いものを優先
+            //----------------------------------
+
+            curseSmokeTargets.sort(
+                (a,b) =>
+                    getPower(b) -
+                    getPower(a)
+            );
+
+
+            console.log(
+                "CPU：サモン能力",
+                "カーススモーク対象を最優先",
+                curseSmokeTargets[0].card.name
+            );
+
+
+            return curseSmokeTargets[0];
+
+        }
+
+
+        //==================================
+        // 通常
+        // パワー1のみ対象
+        //==================================
+
+        const powerOneTargets =
+            candidates.filter(
+                summon =>
+                    getPower(summon) === 1
+            );
+
+
+        //----------------------------------
+        // パワー1なし
+        //----------------------------------
+
+        if(
+            powerOneTargets.length === 0
+        ){
+
+            console.log(
+                "CPU：サモン能力",
+                "パワー1の対象なし"
+            );
+
+            return null;
+
+        }
+
+
+        //----------------------------------
+        // 複数いる場合はランダム
+        //----------------------------------
+
+        const target =
+            powerOneTargets[
+                Math.floor(
+                    Math.random() *
+                    powerOneTargets.length
+                )
+            ];
+
+
         console.log(
-            "CPU：サモン能力",
-            "パワー1の対象なし"
+            "CPU：サモン能力対象",
+            target.card.name,
+            "power=",
+            getPower(target)
         );
 
-        return null;
+
+        return target;
 
     }
 
 
-    //----------------------------------
-    // 複数いる場合
-    //
-    // 現段階ではランダム選択
-    //----------------------------------
+    //==================================================
+    // 未対応能力
+    //==================================================
 
-    const target =
-        powerOneTargets[
-            Math.floor(
-                Math.random() *
-                powerOneTargets.length
-            )
-        ];
-
-
-    console.log(
-        "CPU：サモン能力対象",
-        target.card.name,
-        "power=",
-        getPower(target)
-    );
-
-
-    return target;
+    return null;
 
 }
-
-
-//==================================================
-// CPU
-// サモン能力使用
-//==================================================
 
 function cpuUseSummonAbility(
     source,
@@ -9490,12 +9689,21 @@ function cpuUseSummonAbility(
         source.card.ability;
 
 
+    if(!ability){
+
+        return false;
+
+    }
+
+
     //----------------------------------
-    // ダメージ
+    // 効果値
     //----------------------------------
 
-    const damage =
-        ability.value ?? 1;
+    const value =
+        Number(
+            ability.value
+        ) || 1;
 
 
     //==================================================
@@ -9514,9 +9722,6 @@ function cpuUseSummonAbility(
 
     //==================================================
     // CPUカード使用演出
-    //
-    // マギア・レジストと同じ
-    // 右側の大きなカード表示
     //==================================================
 
     showCpuCardAction(
@@ -9528,8 +9733,6 @@ function cpuUseSummonAbility(
 
     //==================================================
     // 対象発光
-    //
-    // CPUマギアと同じ青白い発光
     //==================================================
 
     showCpuMagiaTargetHighlight(
@@ -9555,13 +9758,18 @@ function cpuUseSummonAbility(
     );
 
     console.log(
+        "能力タイプ：",
+        ability.type
+    );
+
+    console.log(
         "対象：",
         target.card.name
     );
 
     console.log(
-        "ダメージ：",
-        damage
+        "効果値：",
+        value
     );
 
     console.log(
@@ -9578,7 +9786,7 @@ function cpuUseSummonAbility(
 
 
     //==================================================
-    // 少し演出を見せてからダメージ
+    // 少し演出を見せてから能力解決
     //==================================================
 
     setTimeout(
@@ -9593,31 +9801,92 @@ function cpuUseSummonAbility(
                 !target.destroyed
             ){
 
-                //----------------------------------
-                // ダメージ
-                //----------------------------------
+                //==================================
+                // ワイバーン系
+                //
+                // サモンへダメージ
+                //==================================
 
-                dealDamage(
-                    target,
-                    damage,
-                    source.card
-                );
+                if(
+                    ability.type ===
+                    "oncePerTurnSummonDamage"
+                ){
+
+                    dealDamage(
+                        target,
+                        value,
+                        source.card
+                    );
+
+
+                    console.log(
+                        "CPU：サモンダメージ能力",
+                        source.card.name,
+                        "→",
+                        target.card.name,
+                        "ダメージ=",
+                        value
+                    );
+
+
+                    //----------------------------------
+                    // 撃破解決
+                    //----------------------------------
+
+                    setTimeout(
+                        ()=>{
+
+                            resolveBattle();
+
+                        },
+                        1000
+                    );
+
+                }
+
+
+                //==================================
+                // ケンタウロス系
+                //
+                // このターン中パワーアップ
+                //==================================
+
+                else if(
+                    ability.type ===
+                    "oncePerTurnSummonPowerUp"
+                ){
+
+                    //----------------------------------
+                    // 既存の一時パワーシステム
+                    //----------------------------------
+
+                    addTemporaryPower(
+                        target,
+                        value
+                    );
+
+
+                    addBattleLog(
+                        `CPU：${target.card.name}のパワー＋${value}`
+                    );
+
+
+                    console.log(
+                        "CPU：サモンパワーアップ能力",
+                        source.card.name,
+                        "→",
+                        target.card.name,
+                        "パワー+",
+                        value,
+                        "現在パワー=",
+                        getPower(
+                            target
+                        )
+                    );
+
+                }
 
             }
-
-
-            //----------------------------------
-            // 撃破解決
-            //----------------------------------
-
-            setTimeout(
-                ()=>{
-
-                    resolveBattle();
-
-                },
-                1000
-            );
 
 
             //----------------------------------
@@ -9626,6 +9895,8 @@ function cpuUseSummonAbility(
 
             updateGameState();
 
+            updateButtons();
+
         },
         800
     );
@@ -9633,8 +9904,6 @@ function cpuUseSummonAbility(
 
     //==================================================
     // 対象発光解除
-    //
-    // CPUマギアと同じ5秒
     //==================================================
 
     setTimeout(
@@ -9652,7 +9921,6 @@ function cpuUseSummonAbility(
     return true;
 
 }
-
 
 //==================================================
 // カーススモーク状態確認

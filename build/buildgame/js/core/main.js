@@ -2820,6 +2820,31 @@ if(blockMode){
 
 }
 
+//==================================================
+// サモン能力 コスト選択中
+//==================================================
+
+if(summonAbilityCostMode){
+
+    //----------------------------------
+    // 手札のみ選択可能
+    //----------------------------------
+
+    if(
+        card.area === "hand"
+    ){
+
+        selectSummonAbilityCostCard(
+            card
+        );
+
+    }
+
+
+    return;
+
+}
+
 
 //======================================
 // レジスト コスト選択中
@@ -4354,7 +4379,8 @@ if(endTurnButton){
         attackMode ||
         coolRecoveryMode ||
         magiaTargetMode ||
-        summonAbilityTargetMode;
+        summonAbilityTargetMode ||
+        summonAbilityCostMode;
 
     endTurnButton.disabled =
 
@@ -4654,6 +4680,53 @@ if(
 
         confirmButton.style.display =
             "none";
+
+    }
+
+
+    return;
+
+}
+
+//==================================================
+// サモン能力
+// コスト選択中
+//==================================================
+
+if(summonAbilityCostMode){
+
+    actionArea.style.display =
+        "flex";
+
+
+    //----------------------------------
+    // キャンセル
+    //----------------------------------
+
+    cancelButton.style.display =
+        "inline-block";
+
+    cancelButton.textContent =
+        "キャンセル";
+
+    cancelButton.onclick =
+        cancelSummonAbilityCost;
+
+
+    //----------------------------------
+    // 必要コスト選択済み
+    //----------------------------------
+
+    if(summonAbilityCostConfirm){
+
+        confirmButton.style.display =
+            "inline-block";
+
+        confirmButton.textContent =
+            "決定";
+
+        confirmButton.onclick =
+            paySummonAbilityCost;
 
     }
 
@@ -6231,9 +6304,9 @@ function updateUsableCardHighlight(){
     );
 
 
-    //----------------------------------
+    //==================================================
     // 全解除
-    //----------------------------------
+    //==================================================
 
     if(board){
 
@@ -6242,6 +6315,23 @@ function updateUsableCardHighlight(){
             card.setHighlight(false);
 
         });
+
+    }
+
+
+    //==================================================
+    // サモン能力コスト選択中
+    //
+    // 通常の使用可能カード発光は行わない
+    //==================================================
+
+    if(summonAbilityCostMode){
+
+        console.log(
+            "サモン能力コスト選択中：通常発光なし"
+        );
+
+        return;
 
     }
 
@@ -6298,7 +6388,9 @@ function updateUsableCardHighlight(){
         attackMode ||
         magiaCard ||
         resistUsingCard ||
-        blockMode
+        blockMode ||
+        summonAbilityTargetMode ||
+        summonAbilityCostMode
 
     ){
 
@@ -6307,9 +6399,9 @@ function updateUsableCardHighlight(){
     }
 
 
-    //----------------------------------
+    //==================================================
     // 通常発光
-    //----------------------------------
+    //==================================================
 
     board.handCards.forEach(card=>{
 
@@ -6451,12 +6543,39 @@ function canUseSummonAbility(summon){
 
 
     //----------------------------------
+    // 能力取得
+    //----------------------------------
+
+    const ability =
+        summon.card.ability;
+
+
+    if(!ability){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
     // 対応能力
     //----------------------------------
 
+    const supportedTypes = [
+
+        "oncePerTurnSummonDamage",
+
+        "oncePerTurnSummonPowerUp",
+
+        "oncePerTurnPlayerDamageWithCost"
+
+    ];
+
+
     if(
-        summon.card.ability?.type !==
-        "oncePerTurnSummonDamage"
+        !supportedTypes.includes(
+            ability.type
+        )
     ){
 
         return false;
@@ -6478,12 +6597,98 @@ function canUseSummonAbility(summon){
 
 
     //==================================================
-    // 対象候補
+    // キマイラ系
+    //
+    // コストを支払い
+    // 相手プレイヤーを対象にする能力
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        //----------------------------------
+        // 必要コスト
+        //----------------------------------
+
+        const cost =
+            Number(
+                ability.cost
+            ) || 0;
+
+
+        //----------------------------------
+        // 手札不足
+        //----------------------------------
+
+        if(
+            !board.handCards ||
+            board.handCards.length < cost
+        ){
+
+            console.log(
+                "サモン能力使用不可：コスト不足",
+                summon.card.name,
+                "必要=",
+                cost,
+                "手札=",
+                board.handCards?.length ?? 0
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 相手プレイヤーを
+        // サモン能力の対象にできるか
+        //
+        // マーフォーク等の保護も
+        // この中で判定される
+        //----------------------------------
+
+        if(
+            !canTargetBySummonAbility(
+                summon,
+                ENEMY
+            )
+        ){
+
+            console.log(
+                "サモン能力使用不可：",
+                "相手プレイヤーを対象にできません",
+                summon.card.name
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 使用可能
+        //----------------------------------
+
+        return true;
+
+    }
+
+
+    //==================================================
+    // サモンを対象にする能力
+    //
+    // ワイバーン
+    // ケンタウロス等
     //==================================================
 
     const allSummons = [
+
         ...playerField,
+
         ...enemyField
+
     ];
 
 
@@ -6495,6 +6700,10 @@ function canUseSummonAbility(summon){
         allSummons.some(
             target => {
 
+                //----------------------------------
+                // 基本確認
+                //----------------------------------
+
                 if(
                     !target ||
                     !target.card ||
@@ -6505,6 +6714,13 @@ function canUseSummonAbility(summon){
 
                 }
 
+
+                //----------------------------------
+                // サモン能力の対象にできるか
+                //
+                // マーフォーク等の
+                // 対象耐性もここで判定
+                //----------------------------------
 
                 return canTargetBySummonAbility(
                     summon,
@@ -6518,7 +6734,6 @@ function canUseSummonAbility(summon){
     return hasValidTarget;
 
 }
-
 //==================================================
 // サモン能力開始
 //==================================================
@@ -6546,12 +6761,39 @@ function startSummonAbility(summon){
 
 
     //----------------------------------
-    // 能力タイプ確認
+    // 能力取得
     //----------------------------------
 
+    const ability =
+        summon.card?.ability;
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 対応能力確認
+    //----------------------------------
+
+    const supportedTypes = [
+
+        "oncePerTurnSummonDamage",
+
+        "oncePerTurnSummonPowerUp",
+
+        "oncePerTurnPlayerDamageWithCost"
+
+    ];
+
+
     if(
-        summon.card.ability?.type !==
-        "oncePerTurnSummonDamage"
+        !supportedTypes.includes(
+            ability.type
+        )
     ){
 
         return;
@@ -6562,7 +6804,7 @@ function startSummonAbility(summon){
     console.log(
         "サモン能力開始",
         summon.card.name,
-        summon.card.ability
+        ability
     );
 
 
@@ -6596,24 +6838,51 @@ function startSummonAbility(summon){
     updateSummonAbilityTargetHighlight();
 
 
-    //----------------------------------
+    //==================================================
     // 操作案内
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        //----------------------------------
+        // キマイラ系
+        // 相手プレイヤー対象
+        //----------------------------------
+
+        showActionGuide(
+            "対象にする相手プレイヤーを選んでください"
+        );
+
+    }
+    else{
+
+        //----------------------------------
+        // ワイバーン
+        // ケンタウロス等
+        //----------------------------------
+
+        showActionGuide(
+            "対象にするサモンを選んでください"
+        );
+
+    }
+
+
+    //----------------------------------
+    // ボタン更新
     //----------------------------------
 
-    showActionGuide(
-        "対象にするサモンを選んでください"
-    );
-
-    //----------------------------------
-// ボタン更新
-//----------------------------------
-
-updateButtons();
+    updateButtons();
 
 
     console.log(
         "サモン能力対象選択開始",
-        summon.card.name
+        summon.card.name,
+        "能力タイプ=",
+        ability.type
     );
 
 }
@@ -6628,7 +6897,10 @@ function updateSummonAbilityTargetHighlight(){
     // 使用サモン確認
     //----------------------------------
 
-    if(!summonAbilitySource){
+    if(
+        !summonAbilitySource ||
+        !summonAbilitySource.card
+    ){
 
         return;
 
@@ -6636,14 +6908,125 @@ function updateSummonAbilityTargetHighlight(){
 
 
     //----------------------------------
-    // 全フィールド
+    // 能力取得
     //----------------------------------
+
+    const ability =
+        summonAbilitySource.card.ability;
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //==================================================
+    // 一度すべての対象発光を解除
+    //==================================================
 
     const allSummons = [
         ...playerField,
         ...enemyField
     ];
 
+
+    allSummons.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                !summon.view
+            ){
+
+                return;
+
+            }
+
+
+            const element =
+                summon.view.getElement();
+
+
+            if(element){
+
+                element.classList.remove(
+                    "magia-target"
+                );
+
+            }
+
+        }
+    );
+
+
+    //----------------------------------
+    // プレイヤーアイコンも解除
+    //----------------------------------
+
+    document
+        .getElementById(
+            "player-icon"
+        )
+        ?.classList.remove(
+            "magia-target"
+        );
+
+
+    document
+        .getElementById(
+            "enemy-player-icon"
+        )
+        ?.classList.remove(
+            "magia-target"
+        );
+
+
+    //==================================================
+    // キマイラ系
+    //
+    // 相手プレイヤーを対象
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        const enemyIcon =
+            document.getElementById(
+                "enemy-player-icon"
+            );
+
+
+        if(enemyIcon){
+
+            enemyIcon.classList.add(
+                "magia-target"
+            );
+
+        }
+
+
+        console.log(
+            "サモン能力対象：",
+            summonAbilitySource.card.name,
+            "→ ENEMY"
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================================
+    // サモンを対象にする能力
+    //
+    // ワイバーン
+    // ケンタウロス
+    //==================================================
 
     allSummons.forEach(
         summon => {
@@ -6677,15 +7060,6 @@ function updateSummonAbilityTargetHighlight(){
                 return;
 
             }
-
-
-            //----------------------------------
-            // 一度対象発光を解除
-            //----------------------------------
-
-            element.classList.remove(
-                "magia-target"
-            );
 
 
             //----------------------------------
@@ -6747,10 +7121,6 @@ function clearSummonAbilityTargetHighlight(){
         );
 
 }
-
-//==================================================
-// サモン能力解決
-//==================================================
 
 function resolveSummonAbility(){
 
@@ -6909,6 +7279,119 @@ function resolveSummonAbility(){
                 resolveBattle();
 
             },1000);
+
+
+            //----------------------------------
+            // UI更新
+            //----------------------------------
+
+            updateGameState();
+
+            updateButtons();
+
+
+            break;
+
+        }
+
+
+        //==================================
+        // ターン1回
+        // サモン1体をこのターン中
+        // パワーアップ
+        //==================================
+
+        case "oncePerTurnSummonPowerUp":{
+
+
+            //----------------------------------
+            // 使用サモン・対象を保存
+            //----------------------------------
+
+            const source =
+                summonAbilitySource;
+
+
+            const target =
+                summonAbilityTarget;
+
+
+            //----------------------------------
+            // パワー上昇値
+            //----------------------------------
+
+            const value =
+                Number(
+                    ability.value
+                ) || 0;
+
+
+            console.log(
+                "================================"
+            );
+
+            console.log(
+                "サモン能力解決"
+            );
+
+            console.log(
+                "使用サモン：",
+                source.card.name
+            );
+
+            console.log(
+                "対象：",
+                target.card.name
+            );
+
+            console.log(
+                "パワー上昇：",
+                "+" + value
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            //----------------------------------
+            // このターン能力使用済み
+            //----------------------------------
+
+            source.abilityUsedThisTurn =
+                true;
+
+
+            //----------------------------------
+            // 既存の一時パワーシステム
+            //----------------------------------
+
+            if(
+                value > 0
+            ){
+
+                addTemporaryPower(
+                    target,
+                    value
+                );
+
+            }
+
+
+            //----------------------------------
+            // バトルログ
+            //----------------------------------
+
+            addBattleLog(
+                `${source.card.name}の能力：${target.card.name}のパワー＋${value}`
+            );
+
+
+            //----------------------------------
+            // 能力状態を解除
+            //----------------------------------
+
+            resetSummonAbilityState();
 
 
             //----------------------------------

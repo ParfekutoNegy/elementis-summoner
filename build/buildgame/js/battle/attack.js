@@ -555,6 +555,7 @@ function canAttack(target){
 //======================================
 // 戦闘実行
 //======================================
+
 function executeAttack(
     attacker,
     target
@@ -670,6 +671,73 @@ function executeAttack(
     );
 
 
+    //==================================
+    // 攻撃時能力
+    //==================================
+
+    if(
+        target instanceof Summon &&
+        target.isRest
+    ){
+
+        const ability =
+            attackingSummon.card?.ability;
+
+
+        //----------------------------------
+        // ヨコ向きサモンにアタックしたとき
+        // このターン中パワーアップ
+        //----------------------------------
+
+        if(
+            ability?.type ===
+            "powerUpWhenAttackRestSummon"
+        ){
+
+            const value =
+                Number(
+                    ability.value
+                ) || 0;
+
+
+            if(
+                value > 0
+            ){
+
+                //----------------------------------
+                // 既存の一時パワーシステム
+                //----------------------------------
+
+                addTemporaryPower(
+                    attackingSummon,
+                    value
+                );
+
+
+                console.log(
+                    "サモン能力発動：",
+                    attackingSummon.card.name,
+                    "ヨコ向きサモンへの攻撃",
+                    "パワー+",
+                    value,
+                    "現在パワー=",
+                    getPower(
+                        attackingSummon
+                    )
+                );
+
+
+                addBattleLog(
+                    `${attackingSummon.card.name}の能力発動：このターン中パワー＋${value}`
+                );
+
+            }
+
+        }
+
+    }
+
+
     //----------------------------------
     // 攻撃済み状態
     //----------------------------------
@@ -701,17 +769,24 @@ function executeAttack(
 
         //----------------------------------
         // ダメージ交換
+        //
+        // 攻撃時能力によるパワー上昇後の
+        // パワーでダメージを与える
         //----------------------------------
 
         dealDamage(
             target,
-            getPower(attackingSummon)
+            getPower(
+                attackingSummon
+            )
         );
 
 
         dealDamage(
             attackingSummon,
-            getPower(target)
+            getPower(
+                target
+            )
         );
 
     }
@@ -759,15 +834,15 @@ function executeAttack(
 
         //----------------------------------
         // ブロックなし
-        //
-        // 必ず damagePlayer() を通す
         //----------------------------------
 
         damagePlayer(
 
             PLAYER,
 
-            getPower(attackingSummon),
+            getPower(
+                attackingSummon
+            ),
 
             false,
 
@@ -864,15 +939,15 @@ function executeAttack(
 
         //----------------------------------
         // CPUへのダメージ
-        //
-        // damagePlayer() に統一
         //----------------------------------
 
         damagePlayer(
 
             ENEMY,
 
-            getPower(attackingSummon),
+            getPower(
+                attackingSummon
+            ),
 
             false,
 
@@ -928,7 +1003,6 @@ function executeAttack(
     },1000);
 
 }
-
 
 //======================================
 // 攻撃終了

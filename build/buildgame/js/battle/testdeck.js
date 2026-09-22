@@ -35,7 +35,7 @@ const CPU_DECK_LIST = [
         strategy: "wind",
 
         cards: [
-            35, 49, 1, 49, 78,
+            68, 68, 75, 49, 78,
             29, 16, 24, 23, 31
         ]
     },

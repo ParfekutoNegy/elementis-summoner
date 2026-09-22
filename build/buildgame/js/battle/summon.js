@@ -544,3 +544,660 @@ function triggerSummonAbilitiesOnMagiaPlay(
 
 }
 
+//==================================================
+// サモン能力 コスト支払い
+//==================================================
+
+let summonAbilityCostMode =
+    false;
+
+let summonAbilityCostCards =
+    [];
+
+let summonAbilityCostConfirm =
+    false;
+
+//==================================================
+// サモン能力
+// コスト選択開始
+//==================================================
+
+function startSummonAbilityCost(){
+
+    //----------------------------------
+    // 使用サモン確認
+    //----------------------------------
+
+    if(
+        !summonAbilitySource ||
+        !summonAbilitySource.card
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 能力確認
+    //----------------------------------
+
+    const ability =
+        summonAbilitySource.card.ability;
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 必要コスト
+    //----------------------------------
+
+    const cost =
+        Number(
+            ability.cost
+        ) || 0;
+
+
+    //----------------------------------
+    // 手札不足
+    //----------------------------------
+
+    if(
+        board.handCards.length <
+        cost
+    ){
+
+        console.log(
+            "サモン能力：コスト不足",
+            "必要=",
+            cost,
+            "手札=",
+            board.handCards.length
+        );
+
+
+        cancelSummonAbilityTarget();
+
+        return;
+
+    }
+
+
+    //==================================================
+    // 通常の使用可能カード発光を解除
+    //==================================================
+
+    document
+        .querySelectorAll(
+            ".usable-card"
+        )
+        .forEach(
+            element => {
+
+                element.classList.remove(
+                    "usable-card"
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 通常選択も解除
+    //----------------------------------
+
+    clearHandSelection();
+
+    clearFieldSelection();
+
+
+    //==================================================
+    // コスト選択開始
+    //==================================================
+
+    summonAbilityCostMode =
+        true;
+
+    summonAbilityCostCards =
+        [];
+
+    summonAbilityCostConfirm =
+        false;
+//----------------------------------
+// 通常の使用可能カード発光を解除
+//----------------------------------
+
+updateUsableCardHighlight();
+
+    //----------------------------------
+    // 選択状態リセット
+    //----------------------------------
+
+    selectedHandCard =
+        null;
+
+
+    //----------------------------------
+    // 操作案内
+    //----------------------------------
+
+    showActionGuide(
+        `${cost}枚のカードをコストとして選択してください`
+    );
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "サモン能力コスト選択開始"
+    );
+
+    console.log(
+        "使用サモン：",
+        summonAbilitySource.card.name
+    );
+
+    console.log(
+        "必要コスト：",
+        cost
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // ボタン更新
+    //----------------------------------
+
+    updateButtons();
+
+}
+
+//==================================================
+// サモン能力
+// コストカード選択
+//==================================================
+
+function selectSummonAbilityCostCard(
+    card
+){
+
+    //----------------------------------
+    // モード確認
+    //----------------------------------
+
+    if(
+        !summonAbilityCostMode ||
+        !summonAbilitySource
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 手札以外不可
+    //----------------------------------
+
+    if(
+        !card ||
+        card.area !== "hand"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 必要コスト
+    //----------------------------------
+
+    const cost =
+        Number(
+            summonAbilitySource
+                .card
+                .ability
+                ?.cost
+        ) || 0;
+
+
+    //----------------------------------
+    // 選択解除
+    //----------------------------------
+
+    if(
+        summonAbilityCostCards.includes(
+            card
+        )
+    ){
+
+        summonAbilityCostCards =
+            summonAbilityCostCards.filter(
+                selected =>
+                    selected !== card
+            );
+
+
+        card.setSelected(
+            false
+        );
+
+        card.setCostSelected(
+            false
+        );
+
+
+        summonAbilityCostConfirm =
+            false;
+
+
+        updateButtons();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 必要枚数以上は選べない
+    //----------------------------------
+
+    if(
+        summonAbilityCostCards.length >=
+        cost
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択
+    //----------------------------------
+
+    summonAbilityCostCards.push(
+        card
+    );
+
+
+    card.setCostSelected(
+        true
+    );
+
+
+    //----------------------------------
+    // 必要枚数選択完了
+    //----------------------------------
+
+    summonAbilityCostConfirm =
+        (
+            summonAbilityCostCards.length ===
+            cost
+        );
+
+
+    console.log(
+        "サモン能力コスト",
+        summonAbilityCostCards.length,
+        "/",
+        cost
+    );
+
+
+    updateButtons();
+
+}
+
+//==================================================
+// サモン能力
+// コスト支払い
+//==================================================
+
+function paySummonAbilityCost(){
+
+    //----------------------------------
+    // 状態確認
+    //----------------------------------
+
+    if(
+        !summonAbilityCostMode ||
+        !summonAbilitySource ||
+        !summonAbilitySource.card
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 能力取得
+    //----------------------------------
+
+    const ability =
+        summonAbilitySource.card.ability;
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 必要コスト
+    //----------------------------------
+
+    const cost =
+        Number(
+            ability.cost
+        ) || 0;
+
+
+    //----------------------------------
+    // 必要枚数確認
+    //----------------------------------
+
+    if(
+        summonAbilityCostCards.length !==
+        cost
+    ){
+
+        console.log(
+            "サモン能力コスト不足",
+            summonAbilityCostCards.length,
+            "/",
+            cost
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 解決に必要な情報を保存
+    //----------------------------------
+
+    const source =
+        summonAbilitySource;
+
+    const target =
+        summonAbilityTarget;
+
+    const damage =
+        Number(
+            ability.value
+        ) || 0;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "サモン能力コスト支払い"
+    );
+
+    console.log(
+        "使用サモン：",
+        source.card.name
+    );
+
+    console.log(
+        "コスト：",
+        cost
+    );
+
+    console.log(
+        "対象：",
+        target
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //==================================================
+    // コストを支払う
+    //==================================================
+
+    const costCards = [
+        ...summonAbilityCostCards
+    ];
+
+
+    costCards.forEach(
+        card => {
+
+            //----------------------------------
+            // 選択表示解除
+            //----------------------------------
+
+            card.setSelected(
+                false
+            );
+
+            card.setCostSelected(
+                false
+            );
+
+
+            //----------------------------------
+            // 既存のコスト移動処理
+            //----------------------------------
+
+            moveToCost(
+                card
+            );
+
+        }
+    );
+
+
+    //==================================================
+    // 能力使用済み
+    //==================================================
+
+    source.abilityUsedThisTurn =
+        true;
+
+
+    //==================================================
+    // コスト選択状態を終了
+    //==================================================
+
+    summonAbilityCostMode =
+        false;
+
+    summonAbilityCostCards =
+        [];
+
+    summonAbilityCostConfirm =
+        false;
+
+
+    //----------------------------------
+    // 操作案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //==================================================
+    // キマイラ能力解決
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        //----------------------------------
+        // 対象確認
+        //----------------------------------
+
+        if(
+            target === ENEMY ||
+            target === "enemy"
+        ){
+
+            console.log(
+                "サモン能力発動：",
+                source.card.name,
+                "→ ENEMY",
+                damage,
+                "ダメージ"
+            );
+
+
+            addBattleLog(
+                `${source.card.name}の能力発動：相手に${damage}ダメージ`
+            );
+
+
+            //----------------------------------
+            // 通常のプレイヤーダメージ処理
+            //
+            // マギア等と同じダメージ処理を通す
+            //----------------------------------
+
+            damagePlayer(
+                ENEMY,
+                damage,
+                false,
+                source.card
+            );
+
+        }
+
+    }
+
+
+    //==================================================
+    // サモン能力状態リセット
+    //==================================================
+
+    summonAbilitySource =
+        null;
+
+    summonAbilityTarget =
+        null;
+
+    summonAbilityTargetMode =
+        false;
+
+
+    clearSummonAbilityTargetHighlight();
+
+    clearFieldSelection();
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+}
+
+//==================================================
+// サモン能力
+// コスト選択キャンセル
+//==================================================
+
+function cancelSummonAbilityCost(){
+
+    //----------------------------------
+    // 選択中カードの表示解除
+    //----------------------------------
+
+    summonAbilityCostCards.forEach(
+        card => {
+
+            if(!card){
+                return;
+            }
+
+
+            card.setSelected(
+                false
+            );
+
+            card.setCostSelected(
+                false
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // コスト状態解除
+    //----------------------------------
+
+    summonAbilityCostMode =
+        false;
+
+    summonAbilityCostCards =
+        [];
+
+    summonAbilityCostConfirm =
+        false;
+
+
+    //----------------------------------
+    // サモン能力状態解除
+    //----------------------------------
+
+    summonAbilityTargetMode =
+        false;
+
+    summonAbilityTarget =
+        null;
+
+    summonAbilitySource =
+        null;
+
+
+    //----------------------------------
+    // 表示解除
+    //----------------------------------
+
+    clearSummonAbilityTargetHighlight();
+
+    clearFieldSelection();
+
+    hideActionGuide();
+
+
+    console.log(
+        "サモン能力コスト選択キャンセル"
+    );
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+}
