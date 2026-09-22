@@ -484,16 +484,22 @@ const CARD_LIST = [
         condi:"自分がダメージを受けるとき",
         text:"受けるダメージを－５する。"
     },
-    {
-        id: 33,
-        name:"オーガ",
-        type: "サモン",
-        element: "火",
-        cost: 1,
-        power: 3,
-        series:"folklore",
-        image: "images/033-オーガ.jpg"
+{
+    id: 33,
+    name: "オーガ",
+    type: "サモン",
+    element: "火",
+    cost: 1,
+    power: 3,
+    series: "folklore",
+    text:"相手の場にパワーがこのカード以上のサモンがあるとき、このカードはアタックとブロックができない。",
+
+    ability: {
+        type: "cannotBattleAgainstStrongEnemy"
     },
+
+    image: "images/033-オーガ.jpg"
+},
     {
         id: 34,
         name:"ファイア・ドレイク",
@@ -502,7 +508,12 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"folklore",
-        image: "images/034-ファイア・ドレイク.jpg"
+        image: "images/034-ファイア・ドレイク.jpg",
+        text:"各ターンの終了時、そのターンのプレイヤーを対象にし、1ダメージを与える。",
+        ability: {
+        type: "turnEndDamageCurrentPlayer",
+        value: 1
+    },
     },
     {
         id: 35,
@@ -512,7 +523,12 @@ const CARD_LIST = [
         cost: 3,
         power: 2,
         series:"folklore",
-        image: "images/035-ワイバーン.jpg"
+        image: "images/035-ワイバーン.jpg",
+        text:"自分のターン毎に1回使える。サモン1体を対象にし、1ダメージを与える。",
+        ability: {
+            type: "oncePerTurnSummonDamage",
+            value: 1
+        },
     },
     {
         id: 36,
@@ -522,7 +538,12 @@ const CARD_LIST = [
         cost: 3,
         power: 2,
         series:"folklore",
-        image: "images/036-ヘルハウンド.jpg"
+        image: "images/036-ヘルハウンド.jpg",
+        text:"自分がマギアをプレイするたび、このターン中、このカードのパワーは＋２される。",
+        ability:{
+            type:"powerUpWhenPlayMagia",
+            value:2
+        }
     },
     {
         id: 37,
@@ -644,7 +665,11 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"folklore",
-        image: "images/049-マーフォーク.jpg"
+        image: "images/049-マーフォーク.jpg",
+        ability: {
+            type: "protectFromEnemySummonAbility"
+        },
+        text:"自分と自分のサモンは相手のサモンの能力の対象に選ばれない。"
     },
     {
         id: 50,
@@ -654,7 +679,12 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"folklore",
-        image: "images/050-ウォーター・リーパー.jpg"
+        image: "images/050-ウォーター・リーパー.jpg",
+        text:"このカードはヨコ向きのサモンにアタックしたとき、このターン中、パワーが＋２される。",
+        ability:{
+            type:"powerUpWhenAttackRestSummon",
+            value:2
+        }
     },
     {
         id: 51,
@@ -826,7 +856,13 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"mythology",
-        image: "images/068-キマイラ.jpg"
+        image: "images/068-キマイラ.jpg",
+        text:"自分のターン毎に1回、３コストを支払い使える。相手を対象にし、１ダメージを与える。",
+        ability:{
+            type:"oncePerTurnPlayerDamageWithCost",
+            cost:3,
+            value:1
+        }
     },
     {
         id: 69,
@@ -892,7 +928,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"mythology",
-        image: "images/075-ケンタウロス.jpg"
+        image: "images/075-ケンタウロス.jpg",
+        text:"自分のターン毎に1回使える。サモン1体を対象にし、このターン中、パワーを＋１する。",
+        ability:{
+            type:"oncePerTurnSummonPowerUp",
+            value:1
+        }
     }, 
     {
         id: 76,
@@ -920,7 +961,15 @@ const CARD_LIST = [
         element: "風",
         cost: 2,
         series:"mythology",
-        image: "images/078-カーススモーク.jpg"
+        image: "images/078-カーススモーク.jpg",
+        text:"このターン中、対象は１以上のダメージを受けたときクールゾーンに置く。",
+        effect: {
+            type: "curseSmoke",
+            target: [
+                "playerSummon",
+                "enemySummon"
+            ]
+        },
     }, 
     {
         id: 79,
