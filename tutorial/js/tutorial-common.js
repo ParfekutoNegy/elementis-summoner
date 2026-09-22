@@ -2320,3 +2320,340 @@ function createTutorialCommonHand(){
     return result;
 
 }
+
+/* =========================================================
+Tutorial Step Complete Overlay
+========================================================= */
+
+function showTutorialStepCompleteOverlay(
+    stepLabel,
+    nextLabel,
+    nextUrl
+){
+
+    //----------------------------------
+    // 二重表示防止
+    //----------------------------------
+
+    const oldOverlay =
+        document.getElementById(
+            "tutorial-step-complete-overlay"
+        );
+
+
+    if(oldOverlay){
+
+        oldOverlay.remove();
+
+    }
+
+
+    //----------------------------------
+    // オーバーレイ
+    //----------------------------------
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+
+    overlay.id =
+        "tutorial-step-complete-overlay";
+
+
+    //----------------------------------
+    // パネル
+    //----------------------------------
+
+    const panel =
+        document.createElement(
+            "div"
+        );
+
+
+    panel.id =
+        "tutorial-step-complete-panel";
+
+
+    //----------------------------------
+    // タイトル
+    //----------------------------------
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+
+    title.className =
+        "tutorial-step-complete-title";
+
+
+    title.textContent =
+        stepLabel + " CLEAR";
+
+
+    //----------------------------------
+    // 次のSTEPボタン
+    //----------------------------------
+
+    const nextButton =
+        document.createElement(
+            "button"
+        );
+
+
+    nextButton.className =
+        "tutorial-step-complete-button";
+
+
+    nextButton.textContent =
+        nextLabel;
+
+
+    nextButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                nextUrl;
+
+        }
+    );
+
+
+    //----------------------------------
+    // メニューボタン
+    //----------------------------------
+
+    const menuButton =
+        document.createElement(
+            "button"
+        );
+
+
+    menuButton.className =
+        "tutorial-step-complete-button tutorial-step-menu-button";
+
+
+    menuButton.textContent =
+        "メニューに戻る";
+
+
+    menuButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "tutorial.html";
+
+        }
+    );
+
+
+    //----------------------------------
+    // 組み立て
+    //----------------------------------
+
+    panel.appendChild(
+        title
+    );
+
+
+    panel.appendChild(
+        nextButton
+    );
+
+
+    panel.appendChild(
+        menuButton
+    );
+
+
+    overlay.appendChild(
+        panel
+    );
+
+
+    //----------------------------------
+    // battle-screen 内に表示
+    //----------------------------------
+
+    const battleScreen =
+        document.getElementById(
+            "battle-screen"
+        );
+
+
+    if(battleScreen){
+
+        battleScreen.appendChild(
+            overlay
+        );
+
+    }
+    else{
+
+        document.body.appendChild(
+            overlay
+        );
+
+    }
+
+
+    console.log(
+        "Tutorial Step Complete:",
+        stepLabel
+    );
+
+}
+
+/* =========================================================
+Tutorial Complete Overlay
+========================================================= */
+
+function showTutorialCompleteOverlay(){
+
+    //----------------------------------
+    // 二重表示防止
+    //----------------------------------
+
+    const oldOverlay =
+        document.getElementById(
+            "tutorial-step-complete-overlay"
+        );
+
+
+    if(oldOverlay){
+
+        oldOverlay.remove();
+
+    }
+
+
+    //----------------------------------
+    // オーバーレイ
+    //----------------------------------
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+
+    overlay.id =
+        "tutorial-step-complete-overlay";
+
+
+    //----------------------------------
+    // パネル
+    //----------------------------------
+
+    const panel =
+        document.createElement(
+            "div"
+        );
+
+
+    panel.id =
+        "tutorial-step-complete-panel";
+
+
+    //----------------------------------
+    // タイトル
+    //----------------------------------
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+
+    title.className =
+        "tutorial-step-complete-title";
+
+
+    title.textContent =
+        "TUTORIAL CLEAR";
+
+
+    //----------------------------------
+    // メニューボタン
+    //----------------------------------
+
+    const menuButton =
+        document.createElement(
+            "button"
+        );
+
+
+    menuButton.className =
+        "tutorial-step-complete-button tutorial-step-menu-button";
+
+
+    menuButton.textContent =
+        "メニューに戻る";
+
+
+    menuButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "tutorial.html";
+
+        }
+    );
+
+
+    //----------------------------------
+    // 組み立て
+    //----------------------------------
+
+    panel.appendChild(
+        title
+    );
+
+
+    panel.appendChild(
+        menuButton
+    );
+
+
+    overlay.appendChild(
+        panel
+    );
+
+
+    //----------------------------------
+    // ゲーム画面中央へ表示
+    //----------------------------------
+
+    const battleScreen =
+        document.getElementById(
+            "battle-screen"
+        );
+
+
+    if(battleScreen){
+
+        battleScreen.appendChild(
+            overlay
+        );
+
+    }
+    else{
+
+        document.body.appendChild(
+            overlay
+        );
+
+    }
+
+
+    console.log(
+        "===== TUTORIAL CLEAR ====="
+    );
+
+}

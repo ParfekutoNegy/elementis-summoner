@@ -2922,6 +2922,10 @@ STEP4 Complete
 
 function completeTutorialStep4(){
 
+    //----------------------------------
+    // 二重実行防止
+    //----------------------------------
+
     if(
         step4State.phase ===
         "complete"
@@ -2931,6 +2935,10 @@ function completeTutorialStep4(){
 
     }
 
+
+    //----------------------------------
+    // STEP4終了状態
+    //----------------------------------
 
     step4State.phase =
         "complete";
@@ -2969,12 +2977,16 @@ function completeTutorialStep4(){
     }
 
 
+    //----------------------------------
+    // ゲーム進行停止
+    //----------------------------------
+
     game.state =
         TURN_STATE.END;
 
 
     //----------------------------------
-    // 完了
+    // 完了メッセージ
     //----------------------------------
 
     setTutorialGuide(
@@ -2986,17 +2998,21 @@ function completeTutorialStep4(){
     );
 
 
-    showTutorialNextButton(
+    //----------------------------------
+    // 下部の「次へ」は表示しない
+    //----------------------------------
 
-        "メニューへ",
+    hideTutorialNextButton();
 
-        () => {
 
-            window.location.href =
-                "tutorial.html";
+    //==================================
+    // STEP4クリア画面
+    //==================================
 
-        }
-
+    showTutorialStepCompleteOverlay(
+        "STEP 4",
+        "STEP 5へ進む",
+        "step5.html"
     );
 
 }

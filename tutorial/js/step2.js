@@ -644,7 +644,7 @@ function setupTutorialStep2SummonLesson(){
 
 
     setTutorialGuide(
-        "STEP 2",
+        "サモン",
         "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
     );
 
@@ -772,7 +772,7 @@ function setupTutorialStep2MagiaLesson(){
 
 
     setTutorialGuide(
-        "STEP 2",
+    "マギア",
         "次はマギアのプレイ方法です。マギアはプレイ時に対象を選びます。"
     );
 
@@ -799,7 +799,7 @@ function tutorialStep2StartMagiaSelection(){
 
 
     setTutorialGuide(
-        "STEP 2",
+        "マギア",
         "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
     );
 
@@ -1008,7 +1008,7 @@ function setupTutorialStep2ResistLesson(){
     //----------------------------------
 
     setTutorialGuide(
-        "STEP 2",
+        "レジスト",
         "最後はレジストです。\n相手ターン中に条件を満たしたときのみプレイできます。"
     );
 
@@ -1988,7 +1988,7 @@ if(
     //----------------------------------
 
     setTutorialGuide(
-        "STEP 2",
+        "マギア",
         "選べる対象がないため、このマギアは現在プレイできません。"
     );
 
@@ -2066,7 +2066,7 @@ if(
             //----------------------------------
 
             setTutorialGuide(
-                "STEP 2",
+                "レジスト",
                 "マギアからのダメージなので、条件がサモンからのダメージである『ラピッドムーヴ』はプレイできません。"
             );
 
@@ -2506,7 +2506,7 @@ function tutorialStep2AfterConfirmButton(){
 
 
             setTutorialGuide(
-                "STEP 2",
+                "サモン",
                 "サモンを場に出しました。\nコストにしたカードはコストゾーンへ置かれます。"
             );
 
@@ -2546,7 +2546,7 @@ function tutorialStep2AfterConfirmButton(){
 
 
             setTutorialGuide(
-                "STEP 2",
+                "マギア",
                 "マギアの効果で相手にダメージを与えました。\n使用したカードはクールゾーンに置かれます。"
             );
 
@@ -2648,7 +2648,7 @@ function tutorialStep2AfterCancelButton(){
 
 
         setTutorialGuide(
-            "STEP 2",
+            "サモン",
             "まずはサモンをプレイしてみましょう。\nサモンを1枚選び、プレイボタンを押してください。"
         );
 
@@ -2722,7 +2722,7 @@ if(
 
 
         setTutorialGuide(
-            "STEP 2",
+            "レジスト",
             "条件を満たしたレジストを1枚選び、プレイボタンを押してください。"
         );
 
@@ -3264,7 +3264,7 @@ function executeTutorialStep2CpuMagia(){
     //----------------------------------
 
     setTutorialGuide(
-        "STEP 2",
+        "レジスト",
         "相手が3ダメージを与える『パイロフレイム』をプレイしました。レジストをプレイしてダメージを防ぎましょう。"
     );
 
@@ -3389,7 +3389,7 @@ function tutorialStep2ExplainRapidMove(){
 
 
     setTutorialGuide(
-        "STEP 2",
+        "レジスト",
         "相手が3ダメージを与える『パイロフレイム』をプレイしました。レジストをプレイしてダメージを防ぎましょう。"
     );
 
@@ -3416,7 +3416,7 @@ function startTutorialStep2ResistSelection(){
 
 
     setTutorialGuide(
-        "STEP 2",
+        "レジスト",
         "条件を満たしたレジストを1枚選び、プレイボタンを押してください。"
     );
 
@@ -3535,7 +3535,7 @@ function tutorialStep2CheckResistComplete(){
 
 
     setTutorialGuide(
-        "STEP 2",
+        "レジスト",
         `レジストをプレイし、ダメージを防げました。`
     );
 
@@ -3588,16 +3588,14 @@ function completeTutorialStep2(){
         "サモン・マギア・レジストのプレイ方法を確認しました。\nSTEP2はこれで完了です。"
     );
 
+hideTutorialNextButton();
 
-showTutorialNextButton(
-    "STEP3へ",
-    () => {
-
-        window.location.href =
-            "step3.html";
-
-    }
+showTutorialStepCompleteOverlay(
+    "STEP 2",
+    "STEP 3へ進む",
+    "step3.html"
 );
+
 
 }
 
@@ -3787,7 +3785,7 @@ function resetTutorialStep2MagiaSelection(){
     //----------------------------------
 
     setTutorialGuide(
-        "STEP 2",
+        "マギア",
         "マギアを1枚選び、プレイボタンを押してください。\n対象が選べないマギアはプレイできません。"
     );
 

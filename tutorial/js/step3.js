@@ -1806,17 +1806,14 @@ function completeTutorialStep3(){
         "STEP 3",
         "サモンのアタックとブロックについて学びました。\nSTEP3はこれで完了です。"
     );
+    
+hideTutorialNextButton();
 
-
-    showTutorialNextButton(
-        "STEP4へ",
-        () => {
-
-            window.location.href =
-                "step4.html";
-
-        }
-    );
+showTutorialStepCompleteOverlay(
+    "STEP 3",
+    "STEP 4へ進む",
+    "step4.html"
+);
 
 }
 

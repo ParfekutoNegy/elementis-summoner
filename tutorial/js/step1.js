@@ -968,7 +968,7 @@ function startTutorialStep1CardTypes(){
 
 
     setTutorialGuide(
-        "STEP 1",
+        "サモン",
         "3種類のカードを順に確認します。\nまず、サモンの『ユニコーン』を選んでください。"
     );
 
@@ -1244,7 +1244,7 @@ function tutorialStep1AfterCardClick(
 
 
         setTutorialGuide(
-            "STEP 1",
+            "サモン",
             "サモンは自分のターンごとに1枚だけプレイできます。\nプレイされたサモンはタテ向きで自分の場に出します。"
         );
 
@@ -1305,7 +1305,7 @@ function tutorialStep1AfterCardClick(
 
 
         setTutorialGuide(
-            "STEP 1",
+            "マギア",
             "マギアは自分のターンに何枚でもプレイできます。\n対象を選び、カードに書かれている効果を与えます。"
         );
 
@@ -1366,7 +1366,7 @@ function tutorialStep1AfterCardClick(
 
 
         setTutorialGuide(
-            "STEP 1",
+            "レジスト",
             "レジストは相手のターンに使うカードです。"
         );
 
@@ -1470,7 +1470,7 @@ function startTutorialStep1Magia(){
 
 
     setTutorialGuide(
-        "STEP 1",
+        "マギア",
         "次はマギアの『ファイアボール』を選んでください。"
     );
 
@@ -1535,7 +1535,7 @@ function startTutorialStep1Resist(){
 
 
     setTutorialGuide(
-        "STEP 1",
+        "レジスト",
         "最後にレジストの『ストーンガード』を選んでください。"
     );
 
@@ -1811,7 +1811,6 @@ function tutorialStep1ShowEnemyZones(){
 /* =========================================================
 STEP1 Complete
 ========================================================= */
-
 function completeTutorialStep1(){
 
     console.log(
@@ -1834,6 +1833,10 @@ function completeTutorialStep1(){
     unlockTutorialStep1Game();
 
 
+    //----------------------------------
+    // STEP1終了
+    //----------------------------------
+
     step1State.active =
         false;
 
@@ -1842,14 +1845,30 @@ function completeTutorialStep1(){
         "complete";
 
 
+    //----------------------------------
+    // ハイライト解除
+    //----------------------------------
+
     clearAllTutorialHighlights();
 
+
+    //----------------------------------
+    // カード詳細を閉じる
+    //----------------------------------
 
     closeTutorialStep1CardDetail();
 
 
+    //----------------------------------
+    // 手札選択解除
+    //----------------------------------
+
     resetTutorialStep1HandSelection();
 
+
+    //----------------------------------
+    // 下部説明
+    //----------------------------------
 
     setTutorialGuide(
         "STEP 1",
@@ -1857,19 +1876,24 @@ function completeTutorialStep1(){
     );
 
 
-    showTutorialNextButton(
-        "STEP 2へ",
-        () => {
+    //----------------------------------
+    // 下部の「次へ」は表示しない
+    //----------------------------------
 
-            moveTutorialStep(
-                2
-            );
+    hideTutorialNextButton();
 
-        }
+
+    //==================================
+    // STEP1クリア画面
+    //==================================
+
+    showTutorialStepCompleteOverlay(
+        "STEP 1",
+        "STEP 2へ進む",
+        "step2.html"
     );
 
 }
-
 
 /* =========================================================
 Close Card Detail
