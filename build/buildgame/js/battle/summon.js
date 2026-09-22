@@ -22,6 +22,8 @@ class Summon{
 
         this.view = card;
 
+        this.abilityUsedThisTurn = false;
+
     }
 
 }
@@ -52,7 +54,6 @@ function dealDamage(
     );
 
 
-
     //----------------------------------
     // レジストイベント
     //----------------------------------
@@ -60,34 +61,27 @@ function dealDamage(
     const event = {
 
         type:
-        GAME_EVENT.BEFORE_SUMMON_DAMAGE,
-
+            GAME_EVENT.BEFORE_SUMMON_DAMAGE,
 
         player:
-        target.owner,
-
+            target.owner,
 
         target:
-        target,
-
+            target,
 
         damage:
-        damage,
-
+            damage,
 
         source:
-        sourceCard,
-
+            sourceCard,
 
         sourceType:
-        sourceCard?.type ?? null,
-
+            sourceCard?.type ?? null,
 
         element:
-        sourceCard?.element ?? null
+            sourceCard?.element ?? null
 
     };
-
 
 
     //----------------------------------
@@ -95,8 +89,7 @@ function dealDamage(
     //----------------------------------
 
     const waitResist =
-    emitGameEvent(event);
-
+        emitGameEvent(event);
 
 
     //----------------------------------
@@ -114,22 +107,23 @@ function dealDamage(
     }
 
 
-
     //----------------------------------
     // レジスト後ダメージ反映
     //----------------------------------
 
     damage =
-    event.damage;
-
+        Math.max(
+            0,
+            event.damage
+        );
 
 
     //----------------------------------
     // ダメージ加算
     //----------------------------------
 
-    target.damage += damage;
-
+    target.damage +=
+        damage;
 
 
     //----------------------------------
@@ -141,6 +135,35 @@ function dealDamage(
         damage
     );
 
+
+    //==================================================
+    // カーススモーク
+    // 1以上のダメージを受けた場合
+    //==================================================
+
+    if(
+        damage >= 1 &&
+        isCurseSmokeTarget(
+            target
+        )
+    ){
+
+        console.log(
+            "カーススモーク発動",
+            target.card.name,
+            "damage=",
+            damage
+        );
+
+
+        //----------------------------------
+        // 通常の破壊と同じ扱い
+        //----------------------------------
+
+        target.destroyed =
+            true;
+
+    }
 
 }
 
@@ -420,3 +443,104 @@ function applySummonAbility(summon){
     }
 
 }
+
+//======================================
+// マギアプレイ時サモン能力
+//======================================
+
+function triggerSummonAbilitiesOnMagiaPlay(
+    owner
+){
+
+    //----------------------------------
+    // マギアをプレイした側のフィールド
+    //----------------------------------
+
+    const field =
+        owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    //----------------------------------
+    // サモン能力確認
+    //----------------------------------
+
+    for(
+        const summon of field
+    ){
+
+        if(
+            !summon ||
+            summon.destroyed
+        ){
+
+            continue;
+
+        }
+
+
+        const ability =
+            summon.card?.ability;
+
+
+        if(!ability){
+
+            continue;
+
+        }
+
+
+        //==================================
+        // マギアをプレイするたび
+        // このターン中パワーアップ
+        //==================================
+
+        if(
+            ability.type ===
+            "powerUpWhenPlayMagia"
+        ){
+
+            const value =
+                Number(
+                    ability.value
+                ) || 0;
+
+
+            if(
+                value <= 0
+            ){
+
+                continue;
+
+            }
+
+
+            //==================================
+            // 既存の一時パワーシステムを使用
+            //==================================
+
+            addTemporaryPower(
+                summon,
+                value
+            );
+
+
+            console.log(
+                "サモン能力発動：",
+                summon.card.name,
+                "マギアプレイにより",
+                "パワー+",
+                value,
+                "現在パワー=",
+                getPower(
+                    summon
+                )
+            );
+
+        }
+
+    }
+
+}
+

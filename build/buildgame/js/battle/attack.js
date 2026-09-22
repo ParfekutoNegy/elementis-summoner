@@ -226,13 +226,225 @@ function clickAttackTarget(target){
 }
 
 
-//======================================
+//==================================================
+// 強敵存在時 アタック・ブロック不可能力
+//
+// ability:
+// cannotBattleAgainstStrongEnemy
+//
+// 相手の場に、このサモン以上の
+// 現在パワーを持つサモンがいる場合
+// アタック・ブロック不可
+//==================================================
+
+function isOgreBattleLocked(summon){
+
+    //----------------------------------
+    // サモン確認
+    //----------------------------------
+
+    if(
+        !summon ||
+        !summon.card
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 対象能力を持っているか
+    //----------------------------------
+
+    if(
+        summon.card.ability?.type !==
+        "cannotBattleAgainstStrongEnemy"
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 相手フィールド取得
+    //----------------------------------
+
+    const opponentField =
+        summon.owner === PLAYER
+            ? enemyField
+            : playerField;
+
+
+    //----------------------------------
+    // 自身の現在パワー
+    //----------------------------------
+
+    const ownPower =
+        getPower(summon);
+
+
+    //----------------------------------
+    // デバッグ
+    //----------------------------------
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "cannotBattleAgainstStrongEnemy 判定"
+    );
+
+    console.log(
+        "使用サモン=",
+        summon.card.name
+    );
+
+    console.log(
+        "owner=",
+        summon.owner
+    );
+
+    console.log(
+        "自身パワー=",
+        ownPower
+    );
+
+
+    //----------------------------------
+    // 相手フィールド確認
+    //----------------------------------
+
+    for(
+        const opponentSummon
+        of opponentField
+    ){
+
+        //----------------------------------
+        // 存在確認
+        //----------------------------------
+
+        if(
+            !opponentSummon ||
+            !opponentSummon.card
+        ){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // 破壊済み除外
+        //----------------------------------
+
+        if(
+            opponentSummon.destroyed
+        ){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // 相手の現在パワー
+        //----------------------------------
+
+        const opponentPower =
+            getPower(
+                opponentSummon
+            );
+
+
+        console.log(
+            "比較:",
+            opponentSummon.card.name,
+            "自身=",
+            ownPower,
+            "相手=",
+            opponentPower
+        );
+
+
+        //----------------------------------
+        // 相手が自身以上
+        //----------------------------------
+
+        if(
+            opponentPower >=
+            ownPower
+        ){
+
+            console.log(
+                "★ ability発動",
+                "cannotBattleAgainstStrongEnemy"
+            );
+
+            console.log(
+                "アタック・ブロック不可"
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            return true;
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // 条件不成立
+    //----------------------------------
+
+    console.log(
+        "条件不成立"
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return false;
+
+}
+
+//==================================================
 // 攻撃可能判定
-//======================================
+//==================================================
 
 function canAttack(target){
 
     if(!attackingSummon){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // オーガ能力
+    //
+    // 相手の場に自身以上のパワーの
+    // サモンがいる場合アタック不可
+    //----------------------------------
+
+    if(
+        isOgreBattleLocked(
+            attackingSummon
+        )
+    ){
+
+        console.log(
+            "オーガ能力によりアタック不可"
+        );
 
         return false;
 
@@ -1536,42 +1748,111 @@ function resumePlayerDamage(){
 }
 
 //======================================
-// 攻撃可能表示更新
+// 場の使用可能表示更新
 //======================================
 
 function updateAttackHighlight(){
 
+    playerField.forEach(
+        summon => {
 
-    playerField.forEach(summon=>{
+            //----------------------------------
+            // 強敵存在時
+            // アタック・ブロック不可能力
+            //----------------------------------
+
+            const battleLocked =
+                typeof isBattleLockedByStrongEnemy ===
+                    "function"
+                    ?
+                    isBattleLockedByStrongEnemy(
+                        summon
+                    )
+                    :
+                    false;
 
 
-        if(
-            game.currentPlayer === PLAYER &&
-            summon.attackReady &&
-            !summon.isRest &&
-            !summonCard &&
-            !magiaCard &&
-            !resistUsingCard &&
-            !attackMode
-        ){
+            //----------------------------------
+            // 召喚ターン攻撃可能能力
+            //----------------------------------
 
-            summon.view.setHighlight(true);
+            const canAttackOnSummonTurn =
+                summon.card.ability?.type ===
+                "summonTurnAttack";
 
-        }else{
 
-            summon.view.setHighlight(false);
+            //----------------------------------
+            // アタック可能判定
+            //----------------------------------
+
+            const canAttackNow =
+
+                game.currentPlayer === PLAYER &&
+
+                (
+                    summon.attackReady ||
+                    canAttackOnSummonTurn
+                ) &&
+
+                !summon.isRest &&
+
+                !summon.destroyed &&
+
+                !battleLocked &&
+
+                !summonCard &&
+
+                !magiaCard &&
+
+                !resistUsingCard &&
+
+                !attackMode;
+
+
+            //----------------------------------
+            // 起動能力使用可能判定
+            //----------------------------------
+
+            const canUseAbilityNow =
+
+                !summonCard &&
+
+                !magiaCard &&
+
+                !resistUsingCard &&
+
+                !attackMode &&
+
+                typeof canUseSummonAbility ===
+                    "function" &&
+
+                canUseSummonAbility(
+                    summon
+                );
+
+
+            //----------------------------------
+            // 発光
+            //
+            // アタック可能
+            // または
+            // 起動能力使用可能
+            //----------------------------------
+
+            const canAct =
+
+                canAttackNow ||
+                canUseAbilityNow;
+
+
+            summon.view.setHighlight(
+                canAct
+            );
 
         }
-
-
-    });
-
+    );
 
 }
-
-//======================================
-// ブロック可能サモン取得
-//======================================
 
 function findBlockSummons(){
 
@@ -1612,6 +1893,10 @@ function findBlockSummons(){
         playerField;
 
 
+    //----------------------------------
+    // ブロック可能サモンを確認
+    //----------------------------------
+
     for(const summon of field){
 
         //----------------------------------
@@ -1636,6 +1921,33 @@ function findBlockSummons(){
         }
 
 
+        //----------------------------------
+        // オーガ能力
+        //
+        // 相手の場に自身以上のパワーの
+        // サモンがいる場合ブロック不可
+        //----------------------------------
+
+        if(
+            isOgreBattleLocked(
+                summon
+            )
+        ){
+
+            console.log(
+                "オーガ能力によりブロック不可",
+                summon.card.name
+            );
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // ブロック可能
+        //----------------------------------
+
         result.push(summon);
 
     }
@@ -1644,7 +1956,6 @@ function findBlockSummons(){
     return result;
 
 }
-
 //======================================
 // ブロック開始
 //======================================

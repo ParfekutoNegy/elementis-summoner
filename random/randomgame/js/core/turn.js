@@ -251,16 +251,19 @@ function beginPlaying(){
 
 function endTurn(){
 
-    if(game.currentPlayer !== PLAYER){
+    if(
+        game.currentPlayer !== PLAYER
+    ){
 
-    return;
+        return;
 
     }
 
 
     resetMagiaState();
 
-        //----------------------------------
+
+    //----------------------------------
     // モーダルを閉じる
     //----------------------------------
 
@@ -272,8 +275,8 @@ function endTurn(){
 
     closeEnemyCoolModal();
 
-    // コストモーダルを開いたままにできるなら
     closeCostView();
+
 
     //----------------------------------
     // クール回収中はターン終了不可
@@ -289,103 +292,130 @@ function endTurn(){
 
     }
 
+
     //----------------------------------
     // 攻撃状態リセット
     //----------------------------------
+
     resetAttackState();
+
 
     //----------------------------------
     // 選択カード解除
     //----------------------------------
 
     selectedHandCard = null;
+
     selectedSummon = null;
 
 
     //----------------------------------
     // 行動ボタン解除
     //----------------------------------
+
     resetActionButtons();
+
     updateButtons();
 
 
-    game.state = TURN_STATE.END;
+    game.state =
+        TURN_STATE.END;
+
 
     console.log(
         "ターン終了：" +
         game.currentPlayer
     );
 
-//----------------------------------
-// 一時効果解除
-// 両プレイヤー分確認
-//----------------------------------
 
-resetTemporaryPower(
-    PLAYER
-);
+    //----------------------------------
+    // 一時効果解除
+    // 両プレイヤー分確認
+    //----------------------------------
 
-
-resetTemporaryPower(
-    ENEMY
-);
+    resetTemporaryPower(
+        PLAYER
+    );
 
 
-    //-------------------------
+    resetTemporaryPower(
+        ENEMY
+    );
+
+
+    //==================================
     // ターン終了効果
-    //-------------------------
+    //==================================
 
     onTurnEnd();
 
-//----------------------------------
-// カード表示状態を全解除
-//----------------------------------
 
-board.handCards.forEach(card=>{
+    //==================================
+    // カーススモーク
+    // ターン終了で効果解除
+    //==================================
 
-    card.clearEffects();
+    clearCurseSmokeStatus();
 
-});
 
-playerField.forEach(summon=>{
+    //----------------------------------
+    // カード表示状態を全解除
+    //----------------------------------
 
-    summon.view.clearEffects();
+    board.handCards.forEach(
+        card => {
 
-});
+            card.clearEffects();
 
-enemyField.forEach(summon=>{
+        }
+    );
 
-    summon.view.clearEffects();
 
-});
+    playerField.forEach(
+        summon => {
 
-    //-------------------------
+            summon.view.clearEffects();
+
+        }
+    );
+
+
+    enemyField.forEach(
+        summon => {
+
+            summon.view.clearEffects();
+
+        }
+    );
+
+
+    //----------------------------------
     // プレイヤー交代
-    //-------------------------
+    //----------------------------------
 
     switchPlayer();
 
-    //-------------------------
-    // 次のターン
-    //-------------------------
 
-    if(game.currentPlayer === PLAYER){
+    //----------------------------------
+    // 次のターン
+    //----------------------------------
+
+    if(
+        game.currentPlayer === PLAYER
+    ){
 
         startTurn();
 
-    }else{
+    }
+    else{
 
         startCpuTurn();
 
     }
 
+}
 
-}    
 
-
-//======================================
-// サモンを起こす
-//======================================
 function readySummons(owner){
 
     const field =
@@ -429,6 +459,14 @@ function readySummons(owner){
 
 
         //----------------------------------
+        // ターン毎の能力使用状態をリセット
+        //----------------------------------
+
+        summon.abilityUsedThisTurn =
+            false;
+
+
+        //----------------------------------
         // サモン能力
         //----------------------------------
 
@@ -439,8 +477,6 @@ function readySummons(owner){
     }
 
 }
-
-
 
 //======================================
 // プレイヤー交代
@@ -594,11 +630,29 @@ function finishTurn(){
     );
 
 
+    //----------------------------------
+    // 現在のプレイヤーを保存
+    //----------------------------------
+    //
+    // switchPlayer() 前のプレイヤーが
+    // 今ターンを終了するプレイヤー
+    //----------------------------------
+
+    const endingPlayer =
+        game.currentPlayer;
+
+
+    //----------------------------------
+    // ターン終了イベント
+    //----------------------------------
+
     emitGameEvent({
 
-        type: GAME_EVENT.TURN_END,
+        type:
+            GAME_EVENT.TURN_END,
 
-        player: game.currentPlayer
+        player:
+            endingPlayer
 
     });
 
@@ -608,7 +662,7 @@ function finishTurn(){
     //----------------------------------
 
     resetTemporaryPower(
-        game.currentPlayer
+        endingPlayer
     );
 
 
@@ -617,6 +671,16 @@ function finishTurn(){
     //----------------------------------
 
     onTurnEnd();
+
+
+    //----------------------------------
+    // カーススモーク解除
+    //
+    // 「このターン中」の効果なので
+    // ターン終了効果の解決後に解除
+    //----------------------------------
+
+    clearCurseSmokeStatus();
 
 
     //----------------------------------

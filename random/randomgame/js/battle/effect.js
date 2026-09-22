@@ -240,6 +240,66 @@ console.log(
   
         break;
 
+//==================================
+// カーススモーク
+//==================================
+
+case "curseSmoke":{
+
+    if(
+        !target ||
+        !(target instanceof Summon)
+    ){
+
+        break;
+
+    }
+
+
+    //----------------------------------
+    // 状態配列確認
+    //----------------------------------
+
+    if(!Array.isArray(target.status)){
+
+        target.status = [];
+
+    }
+
+
+    //----------------------------------
+    // 重複防止
+    //----------------------------------
+
+    target.status =
+        target.status.filter(
+            status =>
+                status.type !==
+                "curseSmoke"
+        );
+
+
+    //----------------------------------
+    // 状態付与
+    //----------------------------------
+
+    target.status.push({
+
+        type:
+            "curseSmoke"
+
+    });
+
+
+    console.log(
+        "カーススモーク付与",
+        target.card.name
+    );
+
+
+    break;
+
+}
     }
 
 }

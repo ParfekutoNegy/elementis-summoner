@@ -439,3 +439,147 @@ addBattleLog(
     basiliskBattleTarget = null;
 
 }
+
+//==================================================
+// カーススモーク
+// ターン終了時解除
+//==================================================
+
+function clearCurseSmokeStatus(){
+
+    const fields = [
+        playerField,
+        enemyField
+    ];
+
+
+    for(const field of fields){
+
+        for(const summon of field){
+
+            if(
+                !summon ||
+                !Array.isArray(
+                    summon.status
+                )
+            ){
+
+                continue;
+
+            }
+
+
+            //----------------------------------
+            // カーススモーク状態確認
+            //----------------------------------
+
+            const hadCurseSmoke =
+                summon.status.some(
+                    status =>
+                        status.type ===
+                        "curseSmoke"
+                );
+
+
+            //----------------------------------
+            // 状態解除
+            //----------------------------------
+
+            summon.status =
+                summon.status.filter(
+                    status =>
+                        status.type !==
+                        "curseSmoke"
+                );
+
+
+            //----------------------------------
+            // ログ
+            //----------------------------------
+
+            if(hadCurseSmoke){
+
+                console.log(
+                    "カーススモーク解除",
+                    summon.card.name
+                );
+
+            }
+
+        }
+
+    }
+
+}
+
+//==================================================
+// カーススモーク
+// ターン終了時解除
+//==================================================
+
+function clearCurseSmokeStatus(){
+
+    const fields = [
+        playerField,
+        enemyField
+    ];
+
+
+    for(const field of fields){
+
+        for(const summon of field){
+
+            if(
+                !summon ||
+                !Array.isArray(
+                    summon.status
+                )
+            ){
+
+                continue;
+
+            }
+
+
+            //----------------------------------
+            // カーススモーク確認
+            //----------------------------------
+
+            const hadCurseSmoke =
+                summon.status.some(
+                    status =>
+                        status.type ===
+                        "curseSmoke"
+                );
+
+
+            //----------------------------------
+            // カーススモーク解除
+            //----------------------------------
+
+            summon.status =
+                summon.status.filter(
+                    status =>
+                        status.type !==
+                        "curseSmoke"
+                );
+
+
+            //----------------------------------
+            // ログ
+            //----------------------------------
+
+            if(hadCurseSmoke){
+
+                console.log(
+                    "カーススモーク解除",
+                    summon.card.name
+                );
+
+            }
+
+        }
+
+    }
+
+}

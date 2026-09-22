@@ -1208,26 +1208,71 @@ if(
         currentResistEvent.damage > 0
     ){
 
-        //----------------------------------
-        // プレイヤーへのダメージ
-        //----------------------------------
+//----------------------------------
+// プレイヤーへのダメージ
+//----------------------------------
 
-        if(
-            currentResistEvent.type ===
-            GAME_EVENT.BEFORE_PLAYER_DAMAGE
-        ){
+if(
+    currentResistEvent.type ===
+    GAME_EVENT.BEFORE_PLAYER_DAMAGE
+){
 
-            damagePlayer(
+    //----------------------------------
+    // ★確定ダメージ
+    //
+    // ガーゴイルによる軽減は
+    // damagePlayer() に入った時点で
+    // すでに適用済み
+    //
+    // そのためここでは
+    // damagePlayer() を再度呼ばない
+    //----------------------------------
 
-                currentResistEvent.player,
+    const finalDamage =
+        Math.max(
+            0,
+            currentResistEvent.damage
+        );
 
-                currentResistEvent.damage,
 
-                true
+    console.log(
+        "レジスト後：確定ダメージ",
+        finalDamage
+    );
 
-            );
 
-        }
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
+    if(finalDamage > 0){
+
+        const damageTarget =
+            currentResistEvent.player === PLAYER
+                ? "PLAYER"
+                : "CPU";
+
+
+        addBattleLog(
+            `${damageTarget}：${finalDamage}ダメージ`
+        );
+
+    }
+
+
+    //----------------------------------
+    // 確定ダメージを直接適用
+    //
+    // damagePlayer() は呼ばない
+    // → ガーゴイルの二重軽減を防止
+    //----------------------------------
+
+    applyPlayerDamage(
+        currentResistEvent.player,
+        finalDamage
+    );
+
+}
 
 
         //----------------------------------

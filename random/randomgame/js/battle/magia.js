@@ -231,10 +231,6 @@ function startMagiaCost(){
 }
 
 
-//==================================================
-// マギア解決
-//==================================================
-
 function resolveMagia(){
 
     //----------------------------------
@@ -266,6 +262,7 @@ function resolveMagia(){
         //----------------------------------
         // CPU手札が0枚なら
         // 何も起こらずそのまま終了
+        //----------------------------------
 
         if(
             magiaCard.owner === PLAYER &&
@@ -291,18 +288,45 @@ function resolveMagia(){
 
 
             const isCpuMagia =
-                resolvedMagia.owner === ENEMY;
+                resolvedMagia.owner ===
+                ENEMY;
+
+
+            //==================================
+            // マギアプレイ時サモン能力
+            //==================================
+
+            triggerSummonAbilitiesOnMagiaPlay(
+                resolvedMagia.owner
+            );
 
 
             //----------------------------------
             // マギアを手札から削除
             //----------------------------------
 
-            board.handCards =
-                board.handCards.filter(
-                    card =>
-                        card !== resolvedMagia
-                );
+            if(
+                resolvedMagia.owner === PLAYER
+            ){
+
+                board.handCards =
+                    board.handCards.filter(
+                        card =>
+                            card !==
+                            resolvedMagia
+                    );
+
+            }
+            else{
+
+                enemyHandCards =
+                    enemyHandCards.filter(
+                        card =>
+                            card !==
+                            resolvedMagia
+                    );
+
+            }
 
 
             //----------------------------------
@@ -388,49 +412,58 @@ function resolveMagia(){
     // 通常マギア
     //==================================
 
-//----------------------------------
-// マギア情報を保存
-//----------------------------------
-
-const resolvedMagia =
-    magiaCard;
-
-const resolvedTarget =
-    magiaTarget;
-
-const isCpuMagia =
-    resolvedMagia.owner === ENEMY;
-
-
-//----------------------------------
-// 効果発動
-//----------------------------------
-
-activateCardEffect(
-    resolvedMagia,
-    resolvedTarget,
-    resolvedMagia.owner
-);
-
-
-//----------------------------------
-// 撃破解決
-//----------------------------------
-
-setTimeout(()=>{
 
     //----------------------------------
-    // CPU対象発光解除
+    // マギア情報を保存
     //----------------------------------
+
+    const resolvedMagia =
+        magiaCard;
+
+    const resolvedTarget =
+        magiaTarget;
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+        ENEMY;
+
+
+    //==================================
+    // マギアプレイ時サモン能力
+    //==================================
+    //
+    // 効果解決の直前に発動
+    //==================================
+
+    triggerSummonAbilitiesOnMagiaPlay(
+        resolvedMagia.owner
+    );
+
+
+    //----------------------------------
+    // 効果発動
+    //----------------------------------
+
+    activateCardEffect(
+        resolvedMagia,
+        resolvedTarget,
+        resolvedMagia.owner
+    );
 
 
     //----------------------------------
     // 撃破解決
     //----------------------------------
 
-    resolveBattle();
+    setTimeout(()=>{
 
-},1000);
+        //----------------------------------
+        // 撃破解決
+        //----------------------------------
+
+        resolveBattle();
+
+    },1000);
 
 
     //----------------------------------
@@ -444,7 +477,8 @@ setTimeout(()=>{
         board.handCards =
             board.handCards.filter(
                 card =>
-                    card !== resolvedMagia
+                    card !==
+                    resolvedMagia
             );
 
     }
@@ -453,7 +487,8 @@ setTimeout(()=>{
         enemyHandCards =
             enemyHandCards.filter(
                 card =>
-                    card !== resolvedMagia
+                    card !==
+                    resolvedMagia
             );
 
     }
@@ -2486,6 +2521,21 @@ function resolveMagiaAfterForceCost(
 
     const resolvedTarget =
         magiaTarget;
+
+
+    //==================================
+    // マギアプレイ時サモン能力
+    //==================================
+    //
+    // ウインドプレッシャーなど
+    // forceCost系マギアは
+    // resolveMagia() の通常処理を通らないため
+    // ここで1回だけ発動させる
+    //==================================
+
+    triggerSummonAbilitiesOnMagiaPlay(
+        resolvedMagia.owner
+    );
 
 
     //----------------------------------

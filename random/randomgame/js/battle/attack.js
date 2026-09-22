@@ -1536,36 +1536,109 @@ function resumePlayerDamage(){
 }
 
 //======================================
-// 攻撃可能表示更新
+// 場の使用可能表示更新
 //======================================
 
 function updateAttackHighlight(){
 
+    playerField.forEach(
+        summon => {
 
-    playerField.forEach(summon=>{
+            //----------------------------------
+            // 強敵存在時
+            // アタック・ブロック不可能力
+            //----------------------------------
+
+            const battleLocked =
+                typeof isBattleLockedByStrongEnemy ===
+                    "function"
+                    ?
+                    isBattleLockedByStrongEnemy(
+                        summon
+                    )
+                    :
+                    false;
 
 
-        if(
-            game.currentPlayer === PLAYER &&
-            summon.attackReady &&
-            !summon.isRest &&
-            !summonCard &&
-            !magiaCard &&
-            !resistUsingCard &&
-            !attackMode
-        ){
+            //----------------------------------
+            // 召喚ターン攻撃可能能力
+            //----------------------------------
 
-            summon.view.setHighlight(true);
+            const canAttackOnSummonTurn =
+                summon.card.ability?.type ===
+                "summonTurnAttack";
 
-        }else{
 
-            summon.view.setHighlight(false);
+            //----------------------------------
+            // アタック可能判定
+            //----------------------------------
+
+            const canAttackNow =
+
+                game.currentPlayer === PLAYER &&
+
+                (
+                    summon.attackReady ||
+                    canAttackOnSummonTurn
+                ) &&
+
+                !summon.isRest &&
+
+                !summon.destroyed &&
+
+                !battleLocked &&
+
+                !summonCard &&
+
+                !magiaCard &&
+
+                !resistUsingCard &&
+
+                !attackMode;
+
+
+            //----------------------------------
+            // 起動能力使用可能判定
+            //----------------------------------
+
+            const canUseAbilityNow =
+
+                !summonCard &&
+
+                !magiaCard &&
+
+                !resistUsingCard &&
+
+                !attackMode &&
+
+                typeof canUseSummonAbility ===
+                    "function" &&
+
+                canUseSummonAbility(
+                    summon
+                );
+
+
+            //----------------------------------
+            // 発光
+            //
+            // アタック可能
+            // または
+            // 起動能力使用可能
+            //----------------------------------
+
+            const canAct =
+
+                canAttackNow ||
+                canUseAbilityNow;
+
+
+            summon.view.setHighlight(
+                canAct
+            );
 
         }
-
-
-    });
-
+    );
 
 }
 
