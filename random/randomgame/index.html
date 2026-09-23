@@ -768,21 +768,16 @@
 
         <div id="summon-action-modal">
 
-
             <div id="summon-action-modal-content">
-
 
                 <div id="summon-info-image">
                     サモン画像
                 </div>
 
-
                 <div id="summon-info-text">
                 </div>
 
-
                 <div id="summon-action-buttons">
-
 
                     <button
                         id="summon-attack-button"
@@ -791,14 +786,12 @@
                         アタック
                     </button>
 
-
                     <button
                         id="summon-ability-button"
                         type="button"
                     >
                         能力使用
                     </button>
-
 
                     <button
                         id="close-summon-modal"
@@ -807,14 +800,57 @@
                         閉じる
                     </button>
 
-
                 </div>
-
 
             </div>
 
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- ラミア 能力選択モーダル -->
+        <!-- ================================================= -->
+
+        <div
+            id="lamia-choice-modal"
+            class="lamia-choice-modal"
+        >
+
+            <div class="lamia-choice-panel">
+
+                <div class="lamia-choice-title">
+                    ラミアの能力
+                </div>
+
+                <div
+                    id="lamia-choice-message"
+                    class="lamia-choice-message"
+                >
+                    対象の移動先を選んでください
+                </div>
+
+                <div class="lamia-choice-buttons">
+
+                    <button
+                        type="button"
+                        onclick="chooseLamiaDestination('hand')"
+                    >
+                        手札に戻す
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="chooseLamiaDestination('cool')"
+                    >
+                        クールゾーンに置く
+                    </button>
+
+                </div>
+
+            </div>
 
         </div>
+
 
     </div>
 

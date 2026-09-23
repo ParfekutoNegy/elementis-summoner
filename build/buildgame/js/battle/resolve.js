@@ -162,6 +162,7 @@ function removeDestroyedSummons(){
     );
 
 }
+
 function removeDestroyedFromField(field){
 
     for(

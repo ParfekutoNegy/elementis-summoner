@@ -1206,3 +1206,1050 @@ function cancelSummonAbilityCost(){
     updateButtons();
 
 }
+
+//======================================
+// ラミア 能力選択
+//======================================
+
+let lamiaChoiceMode = false;
+
+let lamiaAbilitySource = null;
+
+let lamiaAbilityTarget = null;
+
+//======================================
+// ケット・シー能力
+//======================================
+
+// ケット・シー能力で
+// クールゾーン選択中
+let catSithAbilityMode = false;
+
+// 能力を使用したケット・シー
+let catSithAbilitySource = null;
+
+// 選択した風マギア
+let catSithSelectedMagia = null;
+
+//----------------------------------
+// クールから取り出して
+// マギアをプレイしている途中か
+//----------------------------------
+
+let catSithMagiaPlaying = false;
+
+function getUsableCatSithMagias(){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ ケット・シー使用可能マギア判定開始"
+    );
+
+
+    //----------------------------------
+    // クールゾーン確認
+    //----------------------------------
+
+    if(
+        !board ||
+        !Array.isArray(
+            board.playerCoolCards
+        )
+    ){
+
+        console.log(
+            "★ playerCoolCards がありません"
+        );
+
+        return [];
+
+    }
+
+
+    console.log(
+        "★ PLAYERクール枚数=",
+        board.playerCoolCards.length
+    );
+
+
+    //----------------------------------
+    // 使用可能な風マギアを取得
+    //----------------------------------
+
+    const result =
+        board.playerCoolCards.filter(
+            card => {
+
+                console.log(
+                    "--------------------------------"
+                );
+
+                console.log(
+                    "★ クールカード確認",
+                    card?.name
+                );
+
+                console.log(
+                    "type=",
+                    card?.type
+                );
+
+                console.log(
+                    "elementType=",
+                    card?.elementType
+                );
+
+                console.log(
+                    "area=",
+                    card?.area
+                );
+
+                console.log(
+                    "owner=",
+                    card?.owner
+                );
+
+
+                //----------------------------------
+                // 基本確認
+                //----------------------------------
+
+                if(!card){
+
+                    console.log(
+                        "→ NG：cardなし"
+                    );
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // マギアのみ
+                //----------------------------------
+
+                if(
+                    card.type !== "マギア"
+                ){
+
+                    console.log(
+                        "→ NG：マギアではない"
+                    );
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 風属性のみ
+                //----------------------------------
+
+                if(
+                    card.elementType !== "風"
+                ){
+
+                    console.log(
+                        "→ NG：風ではない",
+                        card.elementType
+                    );
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 適正な対象が存在するか
+                //----------------------------------
+
+                const hasTarget =
+                    canUseMagiaTarget(
+                        card
+                    );
+
+
+                console.log(
+                    "適正対象=",
+                    hasTarget
+                );
+
+
+                if(!hasTarget){
+
+                    console.log(
+                        "→ NG：適正対象なし"
+                    );
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // コストを支払えるか
+                //----------------------------------
+
+                const canPay =
+                    canPayCost(
+                        card
+                    );
+
+
+                console.log(
+                    "コスト支払い可能=",
+                    canPay
+                );
+
+
+                if(!canPay){
+
+                    console.log(
+                        "→ NG：コスト不足"
+                    );
+
+                    return false;
+
+                }
+
+
+                console.log(
+                    "→ OK：ケット・シーで使用可能",
+                    card.name
+                );
+
+
+                return true;
+
+            }
+        );
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ ケット・シー使用可能マギア=",
+        result.map(
+            card =>
+                card.name
+        )
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return result;
+
+}
+
+function startCatSithMagiaSelect(source){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !source ||
+        !source.card
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 使用可能カード取得
+    //----------------------------------
+
+    const usableMagias =
+        getUsableCatSithMagias();
+
+
+    //----------------------------------
+    // 使用可能カードなし
+    //----------------------------------
+
+    if(
+        usableMagias.length === 0
+    ){
+
+        console.log(
+            "ケット・シー：",
+            "使用可能な風マギアなし"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 状態保存
+    //----------------------------------
+
+    catSithAbilityMode =
+        true;
+
+    catSithAbilitySource =
+        source;
+
+    catSithSelectedMagia =
+        null;
+
+
+    //----------------------------------
+    // クールモーダル取得
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "cool-modal"
+        );
+
+    const list =
+        document.getElementById(
+            "cool-list"
+        );
+
+    const closeButton =
+        document.getElementById(
+            "close-cool-x-button"
+        );
+
+
+    if(
+        !modal ||
+        !list
+    ){
+
+        console.error(
+            "ケット・シー：",
+            "クールモーダルが見つかりません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // タイトル
+    //----------------------------------
+
+    const title =
+        modal.querySelector(
+            "h2"
+        );
+
+
+    if(title){
+
+        title.textContent =
+            "プレイする風マギアを選択";
+
+    }
+
+
+    //==================================
+    // モーダル右端のボタンは使用しない
+    //==================================
+
+    if(closeButton){
+
+        closeButton.style.display =
+            "none";
+
+        closeButton.onclick =
+            null;
+
+    }
+
+
+    //----------------------------------
+    // リスト初期化
+    //----------------------------------
+
+    list.innerHTML =
+        "";
+
+
+    //----------------------------------
+    // クールゾーンのカードを表示
+    //----------------------------------
+
+    board.playerCoolCards.forEach(
+        card => {
+
+            const img =
+                document.createElement(
+                    "img"
+                );
+
+
+            img.src =
+                card.image;
+
+            img.className =
+                "cool-card";
+
+
+            //----------------------------------
+            // 使用可能判定
+            //----------------------------------
+
+            const usable =
+                usableMagias.includes(
+                    card
+                );
+
+
+            //----------------------------------
+            // 使用可能カード
+            //----------------------------------
+
+            if(usable){
+
+                img.classList.add(
+                    "magia-target"
+                );
+
+                img.style.cursor =
+                    "pointer";
+
+            }
+
+
+            //----------------------------------
+            // 使用不可カード
+            //----------------------------------
+
+            else{
+
+                img.style.opacity =
+                    "0.35";
+
+                img.style.cursor =
+                    "default";
+
+            }
+
+
+            //----------------------------------
+            // クリック
+            //----------------------------------
+
+            img.onclick =
+                ()=>{
+
+                    if(!usable){
+
+                        console.log(
+                            "ケット・シー：",
+                            "このカードは使用できません",
+                            card.name
+                        );
+
+                        return;
+
+                    }
+
+
+                    selectCatSithMagia(
+                        card
+                    );
+
+                };
+
+
+            list.appendChild(
+                img
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // モーダル表示
+    //----------------------------------
+
+    modal.style.display =
+        "block";
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    //==================================
+    // 通常の赤いキャンセルボタンを表示
+    //==================================
+
+    const actionArea =
+        document.getElementById(
+            "cost-action-area"
+        );
+
+    const cancelButton =
+        document.getElementById(
+            "cancel-button"
+        );
+
+
+    if(actionArea){
+
+        actionArea.style.display =
+            "flex";
+
+    }
+
+
+    if(cancelButton){
+
+        cancelButton.style.display =
+            "inline-block";
+
+        cancelButton.textContent =
+            "キャンセル";
+
+        cancelButton.onclick =
+            cancelCatSithAbility;
+
+    }
+
+
+    //----------------------------------
+    // ボタン状態を正式に更新
+    //----------------------------------
+
+    updateButtons();
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "ケット・シー：",
+        "使用可能な風マギア",
+        usableMagias.map(
+            card =>
+                card.name
+        )
+    );
+
+}
+
+function selectCatSithMagia(card){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !catSithAbilitySource
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 使用可能カードか再確認
+    //----------------------------------
+
+    const usableMagias =
+        getUsableCatSithMagias();
+
+
+    if(
+        !usableMagias.includes(card)
+    ){
+
+        console.log(
+            "ケット・シー：",
+            "このマギアは使用できません",
+            card.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 使用サモンを保存
+    //----------------------------------
+
+    const source =
+        catSithAbilitySource;
+
+
+    //----------------------------------
+    // 選択マギアを保存
+    //----------------------------------
+
+    catSithSelectedMagia =
+        card;
+
+
+    //----------------------------------
+    // クール選択モーダルを閉じる
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "cool-modal"
+        );
+
+
+    if(modal){
+
+        modal.style.display =
+            "none";
+
+    }
+
+
+    //----------------------------------
+    // マギア発光解除
+    //----------------------------------
+
+    if(
+        typeof clearMagiaHighlight ===
+        "function"
+    ){
+
+        clearMagiaHighlight();
+
+    }
+
+
+    //----------------------------------
+    // クールゾーンから一時的に外す
+    //----------------------------------
+
+    board.removeCoolCard(
+        card,
+        PLAYER
+    );
+
+
+    //----------------------------------
+    // 通常マギアとして扱うため
+    // 一時的に手札エリア扱い
+    //----------------------------------
+
+    card.owner =
+        PLAYER;
+
+    card.area =
+        "hand";
+
+
+    //----------------------------------
+    // 重要
+    //
+    // この時点では
+    // abilityUsedThisTurn を
+    // trueにしない
+    //----------------------------------
+
+    catSithMagiaPlaying =
+        true;
+
+
+    //----------------------------------
+    // クール選択モード終了
+    //----------------------------------
+
+    catSithAbilityMode =
+        false;
+
+
+    //----------------------------------
+    // 使用サモンはまだ保持する
+    //
+    // マギアが本当にプレイされた時に
+    // 使用済みにするため
+    //----------------------------------
+
+    catSithAbilitySource =
+        source;
+
+
+    //----------------------------------
+    // 通常サモン能力選択状態解除
+    //----------------------------------
+
+    summonAbilityTargetMode =
+        false;
+
+    summonAbilitySource =
+        null;
+
+    summonAbilityTarget =
+        null;
+
+
+    clearSummonAbilityTargetHighlight();
+
+    hideActionGuide();
+
+
+    console.log(
+        "ケット・シー：",
+        card.name,
+        "をクールからプレイ開始"
+    );
+
+
+    //----------------------------------
+    // 通常マギア処理へ
+    //----------------------------------
+
+    startMagia(
+        card
+    );
+
+
+    updateButtons();
+
+}
+
+function closeCatSithCoolModal(){
+
+    const modal =
+        document.getElementById(
+            "cool-modal"
+        );
+
+
+    if(modal){
+
+        modal.style.display =
+            "none";
+
+        modal.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    //----------------------------------
+    // タイトルを戻す
+    //----------------------------------
+
+    const title =
+        modal?.querySelector(
+            "h2"
+        );
+
+
+    if(title){
+
+        title.textContent =
+            "クールゾーン";
+
+    }
+
+
+    //----------------------------------
+    // 閉じるボタンを戻す
+    //----------------------------------
+
+    const closeButton =
+        document.getElementById(
+            "close-cool-x-button"
+        );
+
+
+    if(closeButton){
+
+        closeButton.textContent =
+            "×";
+
+
+        closeButton.onclick =
+            function(){
+
+                closeCoolModal();
+
+            };
+
+    }
+
+
+    //----------------------------------
+    // リスト再描画
+    //----------------------------------
+
+    refreshCoolModal();
+
+}
+
+function cancelCatSithAbility(){
+
+    console.log(
+        "ケット・シー能力キャンセル"
+    );
+
+
+    //----------------------------------
+    // モーダル
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "cool-modal"
+        );
+
+
+    if(modal){
+
+        modal.style.display =
+            "none";
+
+        modal.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    //----------------------------------
+    // 状態解除
+    //----------------------------------
+
+    catSithAbilityMode =
+        false;
+
+    catSithAbilitySource =
+        null;
+
+    catSithSelectedMagia =
+        null;
+
+
+    //----------------------------------
+    // サモン能力状態解除
+    //----------------------------------
+
+    summonAbilityTargetMode =
+        false;
+
+    summonAbilitySource =
+        null;
+
+    summonAbilityTarget =
+        null;
+
+
+    //----------------------------------
+    // 発光解除
+    //----------------------------------
+
+    clearSummonAbilityTargetHighlight();
+
+    clearMagiaHighlight();
+
+    clearFieldSelection();
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 通常のクール表示へ戻す
+    //----------------------------------
+
+    refreshCoolModal();
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+    updateUsableCardHighlight();
+
+}
+
+//==================================================
+// ケット・シー
+// マギアのプレイ成立
+//==================================================
+
+function completeCatSithAbility(){
+
+    //----------------------------------
+    // ケット・シー経由でなければ何もしない
+    //----------------------------------
+
+    if(
+        !catSithMagiaPlaying
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 使用サモンを使用済みにする
+    //----------------------------------
+
+    if(catSithAbilitySource){
+
+        catSithAbilitySource.abilityUsedThisTurn =
+            true;
+
+
+        console.log(
+            "ケット・シー能力使用完了：",
+            catSithAbilitySource.card?.name
+        );
+
+    }
+
+
+    //----------------------------------
+    // 状態解除
+    //----------------------------------
+
+    catSithMagiaPlaying =
+        false;
+
+    catSithAbilityMode =
+        false;
+
+    catSithAbilitySource =
+        null;
+
+    catSithSelectedMagia =
+        null;
+
+}
+
+//==================================================
+// ケット・シー
+// プレイ中マギアのキャンセル
+//==================================================
+
+function cancelCatSithMagiaPlay(){
+
+    //----------------------------------
+    // ケット・シー経由でなければ
+    // 何もしない
+    //----------------------------------
+
+    if(
+        !catSithMagiaPlaying ||
+        !catSithSelectedMagia
+    ){
+
+        return false;
+
+    }
+
+
+    const card =
+        catSithSelectedMagia;
+
+
+    console.log(
+        "ケット・シー：",
+        card.name,
+        "のプレイをキャンセル"
+    );
+
+
+    //----------------------------------
+    // マギア選択表示解除
+    //----------------------------------
+
+    if(
+        typeof clearMagiaHighlight ===
+        "function"
+    ){
+
+        clearMagiaHighlight();
+
+    }
+
+
+    //----------------------------------
+    // クールへ戻す
+    //----------------------------------
+
+    card.owner =
+        PLAYER;
+
+    card.area =
+        "cool";
+
+
+    //----------------------------------
+    // 二重登録防止
+    //----------------------------------
+
+    if(
+        !board.playerCoolCards.includes(
+            card
+        )
+    ){
+
+        board.addCoolCard(
+            card,
+            PLAYER
+        );
+
+    }
+
+
+    //----------------------------------
+    // ケット・シーは未使用のまま
+    //----------------------------------
+
+    if(catSithAbilitySource){
+
+        catSithAbilitySource.abilityUsedThisTurn =
+            false;
+
+    }
+
+
+    //----------------------------------
+    // 状態解除
+    //----------------------------------
+
+    catSithMagiaPlaying =
+        false;
+
+    catSithAbilityMode =
+        false;
+
+    catSithAbilitySource =
+        null;
+
+    catSithSelectedMagia =
+        null;
+
+
+    return true;
+
+}

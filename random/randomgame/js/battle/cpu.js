@@ -8328,12 +8328,6 @@ function createCpuActions(){
     //==================================
     // ★ ブロック不可サモン確認
     //==================================
-    //
-    // cannotBeBlocked を持つ
-    // 「現在攻撃可能なサモン」がいる場合は
-    // 相手側のパワーに関係なく
-    // ATTACK候補を必ず作る
-    //==================================
 
     const hasCannotBeBlockedAttack =
         enemyField.some(
@@ -8408,133 +8402,313 @@ function createCpuActions(){
 
     }
 
+
     //==================================
-// サモン能力候補
-//==================================
+    // サモン能力候補
+    //==================================
 
-for(const summon of enemyField){
+    for(const summon of enemyField){
 
-    //----------------------------------
-    // 使用可能確認
-    //----------------------------------
+        //----------------------------------
+        // 使用可能確認
+        //----------------------------------
 
-    if(
-        !cpuCanUseSummonAbility(
-            summon
-        )
-    ){
+        if(
+            !cpuCanUseSummonAbility(
+                summon
+            )
+        ){
 
-        continue;
+            continue;
 
-    }
+        }
 
 
-    //----------------------------------
-    // 対象取得
-    //----------------------------------
+        //----------------------------------
+        // 能力取得
+        //----------------------------------
 
-    const target =
-        cpuSelectSummonAbilityTarget(
-            summon
+        const ability =
+            summon.card?.ability;
+
+
+        if(!ability){
+
+            continue;
+
+        }
+
+
+        //==================================
+        // 対象取得
+        //==================================
+
+        let target =
+            null;
+
+
+        //----------------------------------
+        // ケット・シー以外
+        //
+        // 通常のサモン能力対象を取得
+        //----------------------------------
+
+        if(
+            ability.type !==
+            "playWindMagiaFromCool"
+        ){
+
+            target =
+                cpuSelectSummonAbilityTarget(
+                    summon
+                );
+
+
+            if(!target){
+
+                continue;
+
+            }
+
+        }
+
+
+        //----------------------------------
+        // ケット・シー
+        //
+        // サモン能力自体には対象なし
+        //----------------------------------
+
+        else{
+
+            console.log(
+                "CPU：ケット・シー能力候補",
+                "クールゾーンの風マギアを使用"
+            );
+
+        }
+
+
+        //----------------------------------
+        // ABILITY候補作成
+        //----------------------------------
+
+        const abilityAction =
+            createCpuAction(
+                "ABILITY"
+            );
+
+
+        //----------------------------------
+        // 使用サモン
+        //----------------------------------
+
+        abilityAction.summon =
+            summon;
+
+
+        //----------------------------------
+        // 対象
+        //
+        // ケット・シーはnull
+        //----------------------------------
+
+        abilityAction.target =
+            target;
+
+
+        //==================================
+        // キマイラ
+        // PLAYERへのダメージ能力
+        //==================================
+
+        if(
+            ability.type ===
+            "oncePerTurnPlayerDamageWithCost"
+        ){
+
+            addCpuActionPoints(
+                abilityAction,
+                80,
+                "サモン能力でPLAYERにダメージ"
+            );
+
+
+            //----------------------------------
+            // LIFEを0にできるなら最優先
+            //----------------------------------
+
+            const damage =
+                Number(
+                    ability.value
+                ) || 0;
+
+
+            if(
+                damage >=
+                game.playerLife
+            ){
+
+                addCpuActionPoints(
+                    abilityAction,
+                    1000,
+                    "サモン能力でPLAYERを倒せる"
+                );
+
+            }
+
+        }
+
+
+        //==================================
+        // ワイバーン
+        // サモンダメージ能力
+        //==================================
+
+        else if(
+            ability.type ===
+            "oncePerTurnSummonDamage"
+        ){
+
+            addCpuActionPoints(
+                abilityAction,
+                80,
+                "サモン能力で相手サモンにダメージ"
+            );
+
+
+            //----------------------------------
+            // カーススモーク対象
+            //----------------------------------
+
+            if(
+                target &&
+                isCurseSmokeTarget(
+                    target
+                )
+            ){
+
+                addCpuActionPoints(
+                    abilityAction,
+                    40,
+                    "カーススモーク対象"
+                );
+
+            }
+
+        }
+
+
+        //==================================
+        // ケンタウロス
+        // パワーアップ能力
+        //==================================
+
+        else if(
+            ability.type ===
+            "oncePerTurnSummonPowerUp"
+        ){
+
+            addCpuActionPoints(
+                abilityAction,
+                80,
+                "アタック可能なサモンを強化"
+            );
+
+        }
+
+
+        //==================================
+        // ケット・シー
+        // クールの風マギアをプレイ
+        //==================================
+
+        else if(
+            ability.type ===
+            "playWindMagiaFromCool"
+        ){
+
+            addCpuActionPoints(
+                abilityAction,
+                80,
+                "クールゾーンの風マギアをプレイ"
+            );
+
+        }
+
+
+        //==================================
+        // その他
+        //==================================
+
+        else{
+
+            addCpuActionPoints(
+                abilityAction,
+                80,
+                "サモン能力"
+            );
+
+        }
+
+
+        //----------------------------------
+        // 候補追加
+        //----------------------------------
+
+        actions.push(
+            abilityAction
         );
 
 
-    if(!target){
+        //==================================
+        // 対象名
+        //==================================
 
-        continue;
-
-    }
-
-
-    //----------------------------------
-    // ABILITY候補作成
-    //----------------------------------
-
-    const abilityAction =
-        createCpuAction(
-            "ABILITY"
-        );
+        let targetName;
 
 
-    //----------------------------------
-    // 使用サモン
-    //----------------------------------
+        if(
+            ability.type ===
+            "playWindMagiaFromCool"
+        ){
 
-    abilityAction.summon =
-        summon;
+            targetName =
+                "クールゾーンの風マギア";
+
+        }
+        else if(
+            target === PLAYER
+        ){
+
+            targetName =
+                "PLAYER";
+
+        }
+        else{
+
+            targetName =
+                target?.card?.name ||
+                "不明";
+
+        }
 
 
-    //----------------------------------
-    // 対象
-    //----------------------------------
-
-    abilityAction.target =
-        target;
-
-
-    //----------------------------------
-    // 基本ポイント
-    //----------------------------------
-
-    addCpuActionPoints(
-        abilityAction,
-        80,
-        "サモン能力で相手サモンを破壊可能"
-    );
-
-
-    //----------------------------------
-    // カーススモーク対象なら
-    // 将来的にさらに優先
-    //----------------------------------
-
-    if(
-        isCurseSmokeTarget(
-            target
-        )
-    ){
-
-        addCpuActionPoints(
-            abilityAction,
-            40,
-            "カーススモーク対象"
+        console.log(
+            "CPU：サモン能力候補追加",
+            "使用=",
+            summon.card.name,
+            "対象=",
+            targetName,
+            "points=",
+            abilityAction.points
         );
 
     }
-
-
-    //----------------------------------
-    // 候補追加
-    //----------------------------------
-
-    actions.push(
-        abilityAction
-    );
-
-
-    console.log(
-        "CPU：サモン能力候補追加",
-        "使用=",
-        summon.card.name,
-        "対象=",
-        target.card.name,
-        "points=",
-        abilityAction.points
-    );
-
-}
 
 
     //==================================
     // 攻撃候補
-    //==================================
-    //
-    // 通常：
-    // cpuHasMeaningfulAttack()
-    //
-    // 例外：
-    // cannotBeBlocked が攻撃可能なら
-    // 必ずATTACK候補を作る
     //==================================
 
     if(
@@ -8852,7 +9026,8 @@ function cpuExecuteBestAction(){
 
         if(result){
 
-            cpuSummonUsedThisTurn = true;
+            cpuSummonUsedThisTurn =
+                true;
 
         }
 
@@ -8962,102 +9137,229 @@ function cpuExecuteBestAction(){
 
     }
 
+
     //==================================
-// ABILITY
-// サモン能力
-//==================================
-
-if(
-    bestAction.type ===
-    "ABILITY"
-){
-
-    const summon =
-        bestAction.summon;
-
-
-    const target =
-        bestAction.target;
-
-
-    //----------------------------------
-    // データ確認
-    //----------------------------------
+    // ABILITY
+    // サモン能力
+    //==================================
 
     if(
-        !summon ||
-        !target
+        bestAction.type ===
+        "ABILITY"
     ){
 
+        const summon =
+            bestAction.summon;
+
+
+        const target =
+            bestAction.target;
+
+
+        //----------------------------------
+        // 使用サモン確認
+        //----------------------------------
+
+        if(!summon){
+
+            console.log(
+                "CPU：サモン能力",
+                "使用サモンなし"
+            );
+
+
+            setTimeout(
+                runCpuTurnStep,
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 能力取得
+        //----------------------------------
+
+        const ability =
+            summon.card?.ability;
+
+
+        if(!ability){
+
+            console.log(
+                "CPU：サモン能力",
+                "能力データなし"
+            );
+
+
+            setTimeout(
+                runCpuTurnStep,
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // ケット・シー
+        //
+        // サモン能力自体には
+        // targetを持たない
+        //==================================
+
+        const isCatSith =
+            ability.type ===
+            "playWindMagiaFromCool";
+
+
+        //----------------------------------
+        // 通常能力は対象必須
+        //----------------------------------
+
+        if(
+            !isCatSith &&
+            !target
+        ){
+
+            console.log(
+                "CPU：サモン能力",
+                "対象なし"
+            );
+
+
+            setTimeout(
+                runCpuTurnStep,
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 実行ログ
+        //----------------------------------
+
         console.log(
-            "CPU：サモン能力データなし"
+            "================================"
+        );
+
+        console.log(
+            "CPU：ポイント方式でサモン能力実行"
+        );
+
+        console.log(
+            "使用サモン=",
+            summon.card?.name
         );
 
 
+        if(isCatSith){
+
+            console.log(
+                "対象=",
+                "クールゾーンの風マギア"
+            );
+
+        }
+        else{
+
+            console.log(
+                "対象=",
+                target?.card?.name ||
+                target
+            );
+
+        }
+
+
+        console.log(
+            "================================"
+        );
+
+
+        //----------------------------------
+        // 能力実行
+        //----------------------------------
+
+        const result =
+            cpuUseSummonAbility(
+                summon,
+                target
+            );
+
+
+        console.log(
+            "CPU：サモン能力使用結果",
+            result
+        );
+
+
+        //----------------------------------
+        // 能力実行失敗
+        //
+        // 同じ能力を選択し続ける
+        // 無限ループを防止
+        //----------------------------------
+
+        if(!result){
+
+            console.log(
+                "CPU：サモン能力実行失敗"
+            );
+
+
+            summon.abilityUsedThisTurn =
+                true;
+
+        }
+
+
+        //==================================
+        // ケット・シーから使用したマギアが
+        // 強制コスト型だった場合
+        //
+        // PLAYER側の選択待ちになるため
+        // CPU行動を再開しない
+        //==================================
+
+        if(
+            isCatSith &&
+            cpuWaiting
+        ){
+
+            console.log(
+                "CPU：ケット・シー",
+                "マギア処理待ち"
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 次の行動を再評価
+        //----------------------------------
+
         setTimeout(
             runCpuTurnStep,
-            500
+            2000
         );
 
 
         return;
 
     }
-
-
-    console.log(
-        "================================"
-    );
-
-    console.log(
-        "CPU：ポイント方式でサモン能力実行"
-    );
-
-    console.log(
-        "使用サモン=",
-        summon.card?.name
-    );
-
-    console.log(
-        "対象=",
-        target.card?.name
-    );
-
-    console.log(
-        "================================"
-    );
-
-
-    //----------------------------------
-    // 能力実行
-    //----------------------------------
-
-    const result =
-        cpuUseSummonAbility(
-            summon,
-            target
-        );
-
-
-    console.log(
-        "CPU：サモン能力使用結果",
-        result
-    );
-
-
-    //----------------------------------
-    // 次の行動を再評価
-    //----------------------------------
-
-    setTimeout(
-        runCpuTurnStep,
-        2000
-    );
-
-
-    return;
-
-}
 
 
     //==================================
@@ -9107,6 +9409,7 @@ if(
             runCpuTurnStep,
             500
         );
+
 
         return;
 
@@ -9188,7 +9491,7 @@ function cpuCanUseSummonAbility(summon){
 
 
     //----------------------------------
-    // CPUが使用する対象選択型能力
+    // CPUが使用する能力
     //----------------------------------
 
     const supportedTypes = [
@@ -9197,7 +9500,16 @@ function cpuCanUseSummonAbility(summon){
         "oncePerTurnSummonDamage",
 
         // ケンタウロス
-        "oncePerTurnSummonPowerUp"
+        "oncePerTurnSummonPowerUp",
+
+        // キマイラ
+        "oncePerTurnPlayerDamageWithCost",
+
+        // ラミア
+        "oncePerTurnPowerOneSummonRemove",
+
+        // ケット・シー
+        "playWindMagiaFromCool"
 
     ];
 
@@ -9226,9 +9538,125 @@ function cpuCanUseSummonAbility(summon){
     }
 
 
-    //----------------------------------
-    // 対象が存在するか
-    //----------------------------------
+    //==================================================
+    // キマイラ
+    // コスト確認
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        const cost =
+            Number(
+                ability.cost
+            ) || 0;
+
+
+        //----------------------------------
+        // CPU手札不足
+        //----------------------------------
+
+        if(
+            enemyHandCards.length <
+            cost
+        ){
+
+            console.log(
+                "CPU：キマイラ能力",
+                "コスト不足",
+                enemyHandCards.length,
+                "/",
+                cost
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // PLAYERを対象にできるか
+        //----------------------------------
+
+        if(
+            !canTargetBySummonAbility(
+                summon,
+                PLAYER
+            )
+        ){
+
+            console.log(
+                "CPU：キマイラ能力",
+                "PLAYERを対象にできない"
+            );
+
+            return false;
+
+        }
+
+
+        return true;
+
+    }
+
+
+    //==================================================
+    // ケット・シー
+    //
+    // CPUクールゾーンに
+    // 使用可能な風マギアがあるか
+    //==================================================
+
+    if(
+        ability.type ===
+        "playWindMagiaFromCool"
+    ){
+
+        const usableMagias =
+            getUsableCpuCatSithMagias();
+
+
+        //----------------------------------
+        // 候補なし
+        //----------------------------------
+
+        if(
+            usableMagias.length === 0
+        ){
+
+            console.log(
+                "CPU：ケット・シー能力使用不可",
+                "使用可能な風マギアなし"
+            );
+
+            return false;
+
+        }
+
+
+        console.log(
+            "CPU：ケット・シー能力使用可能",
+            usableMagias.map(
+                card =>
+                    card.name
+            )
+        );
+
+
+        return true;
+
+    }
+
+
+    //==================================================
+    // 通常の対象選択型能力
+    //
+    // ワイバーン
+    // ケンタウロス
+    // ラミア
+    //==================================================
 
     const target =
         cpuSelectSummonAbilityTarget(
@@ -9246,7 +9674,6 @@ function cpuCanUseSummonAbility(summon){
     return true;
 
 }
-
 
 //==================================================
 // CPU
@@ -9280,6 +9707,162 @@ function cpuSelectSummonAbilityTarget(source){
     if(!ability){
 
         return null;
+
+    }
+
+
+    //==================================================
+    // キマイラ系
+    //
+    // PLAYERを対象にダメージ
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        //----------------------------------
+        // PLAYERを対象にできるか
+        //----------------------------------
+
+        if(
+            !canTargetBySummonAbility(
+                source,
+                PLAYER
+            )
+        ){
+
+            console.log(
+                "CPU：キマイラ能力",
+                "PLAYERを対象にできない"
+            );
+
+            return null;
+
+        }
+
+
+        console.log(
+            "CPU：キマイラ能力対象 → PLAYER"
+        );
+
+
+        return PLAYER;
+
+    }
+
+
+    //==================================================
+    // ラミア
+    //
+    // PLAYER側の
+    // 現在パワー1のサモンを対象
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPowerOneSummonRemove"
+    ){
+
+        //----------------------------------
+        // PLAYER側から候補取得
+        //----------------------------------
+
+        const candidates =
+            playerField.filter(
+                summon => {
+
+                    //----------------------------------
+                    // 基本確認
+                    //----------------------------------
+
+                    if(
+                        !summon ||
+                        !summon.card ||
+                        summon.destroyed
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 現在パワー1のみ
+                    //----------------------------------
+
+                    if(
+                        getPower(summon) !== 1
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // マーフォーク等の対象耐性
+                    //----------------------------------
+
+                    if(
+                        !canTargetBySummonAbility(
+                            source,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(
+            candidates.length === 0
+        ){
+
+            console.log(
+                "CPU：ラミア能力",
+                "パワー1の対象なし"
+            );
+
+            return null;
+
+        }
+
+
+        //----------------------------------
+        // 複数いる場合はランダム
+        //----------------------------------
+
+        const target =
+            candidates[
+                Math.floor(
+                    Math.random() *
+                    candidates.length
+                )
+            ];
+
+
+        console.log(
+            "CPU：ラミア能力対象",
+            target.card.name,
+            "現在パワー=",
+            getPower(target)
+        );
+
+
+        return target;
 
     }
 
@@ -9331,8 +9914,6 @@ function cpuSelectSummonAbilityTarget(source){
 
                     //----------------------------------
                     // ヨコ向き
-                    //
-                    // すでにアタック済みなので対象外
                     //----------------------------------
 
                     if(summon.isRest){
@@ -9342,19 +9923,19 @@ function cpuSelectSummonAbilityTarget(source){
                     }
 
 
-//----------------------------------
-// 現在アタック可能か
-//----------------------------------
+                    //----------------------------------
+                    // 現在アタック可能か
+                    //----------------------------------
 
-if(
-    !summon.attackReady &&
-    summon.card.ability?.type !==
-        "summonTurnAttack"
-){
+                    if(
+                        !summon.attackReady &&
+                        summon.card.ability?.type !==
+                            "summonTurnAttack"
+                    ){
 
-    return false;
+                        return false;
 
-}
+                    }
 
 
                     //----------------------------------
@@ -9526,11 +10107,6 @@ if(
             curseSmokeTargets.length > 0
         ){
 
-            //----------------------------------
-            // 複数いる場合は
-            // パワーが高いものを優先
-            //----------------------------------
-
             curseSmokeTargets.sort(
                 (a,b) =>
                     getPower(b) -
@@ -9625,10 +10201,38 @@ function cpuUseSummonAbility(
 
     if(
         !source ||
-        !source.card ||
-        !target ||
-        !target.card
+        !source.card
     ){
+
+        return false;
+
+    }
+
+
+    //==================================================
+    // ケット・シー
+    //
+    // 通常のサモン能力対象を持たないため
+    // 先に専用処理へ送る
+    //==================================================
+
+    if(
+        source.card.ability?.type ===
+        "playWindMagiaFromCool"
+    ){
+
+        return cpuUseCatSithAbility(
+            source
+        );
+
+    }
+
+
+    //----------------------------------
+    // 通常能力は対象必須
+    //----------------------------------
+
+    if(!target){
 
         return false;
 
@@ -9648,7 +10252,6 @@ function cpuUseSummonAbility(
         return false;
 
     }
-
 
     //----------------------------------
     // 対象を再確認
@@ -9707,6 +10310,91 @@ function cpuUseSummonAbility(
 
 
     //==================================================
+    // 対象名
+    //==================================================
+
+    const targetName =
+
+        target === PLAYER
+
+            ? "PLAYER"
+
+            : target.card?.name || "不明";
+
+
+    //==================================================
+    // キマイラ
+    // コスト支払い
+    //==================================================
+
+    if(
+        ability.type ===
+        "oncePerTurnPlayerDamageWithCost"
+    ){
+
+        const cost =
+            Number(
+                ability.cost
+            ) || 0;
+
+
+        //----------------------------------
+        // 念のため再確認
+        //----------------------------------
+
+        if(
+            enemyHandCards.length <
+            cost
+        ){
+
+            console.log(
+                "CPU：キマイラ能力",
+                "解決直前にコスト不足"
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 支払うカードを確定
+        //----------------------------------
+
+        const costCards =
+            enemyHandCards.slice(
+                0,
+                cost
+            );
+
+
+        console.log(
+            "CPU：キマイラ能力コスト",
+            costCards.map(
+                card =>
+                    card.name
+            )
+        );
+
+
+        //----------------------------------
+        // コストへ移動
+        //----------------------------------
+
+        costCards.forEach(
+            card => {
+
+                moveEnemyToCost(
+                    card
+                );
+
+            }
+        );
+
+    }
+
+
+    //==================================================
     // バトルログ
     //==================================================
 
@@ -9716,7 +10404,7 @@ function cpuUseSummonAbility(
 
 
     addBattleLog(
-        `CPU：対象 → ${target.card.name}`
+        `CPU：対象 → ${targetName}`
     );
 
 
@@ -9726,8 +10414,7 @@ function cpuUseSummonAbility(
 
     showCpuCardAction(
         source.card,
-        "ABILITY",
-        target
+        "ABILITY"
     );
 
 
@@ -9735,9 +10422,32 @@ function cpuUseSummonAbility(
     // 対象発光
     //==================================================
 
-    showCpuMagiaTargetHighlight(
-        target
-    );
+    if(
+        target === PLAYER
+    ){
+
+        const playerIcon =
+            document.getElementById(
+                "player-icon"
+            );
+
+
+        if(playerIcon){
+
+            playerIcon.classList.add(
+                "magia-target"
+            );
+
+        }
+
+    }
+    else{
+
+        showCpuMagiaTargetHighlight(
+            target
+        );
+
+    }
 
 
     //----------------------------------
@@ -9764,7 +10474,7 @@ function cpuUseSummonAbility(
 
     console.log(
         "対象：",
-        target.card.name
+        targetName
     );
 
     console.log(
@@ -9792,24 +10502,129 @@ function cpuUseSummonAbility(
     setTimeout(
         ()=>{
 
-            //----------------------------------
-            // 対象がまだ場に存在するか
-            //----------------------------------
+
+            //==================================
+            // キマイラ系
+            //
+            // PLAYERへダメージ
+            //==================================
 
             if(
-                target &&
-                !target.destroyed
+                ability.type ===
+                "oncePerTurnPlayerDamageWithCost"
             ){
 
-                //==================================
-                // ワイバーン系
-                //
-                // サモンへダメージ
-                //==================================
+                console.log(
+                    "CPU：キマイラ能力",
+                    source.card.name,
+                    "→ PLAYER",
+                    value,
+                    "ダメージ"
+                );
+
+
+                addBattleLog(
+                    `CPU：${source.card.name}の能力でPLAYERに${value}ダメージ`
+                );
+
+
+                damagePlayer(
+                    PLAYER,
+                    value,
+                    false,
+                    source.card
+                );
+
+            }
+
+
+            //==================================
+            // ラミア
+            //
+            // PLAYER側のパワー1サモンを
+            // 必ずクールゾーンへ置く
+            //==================================
+
+            else if(
+                ability.type ===
+                "oncePerTurnPowerOneSummonRemove"
+            ){
+
+                //----------------------------------
+                // 対象再確認
+                //----------------------------------
 
                 if(
-                    ability.type ===
-                    "oncePerTurnSummonDamage"
+                    target &&
+                    target.card &&
+                    !target.destroyed &&
+                    target.owner === PLAYER &&
+                    playerField.includes(target) &&
+                    getPower(target) === 1 &&
+                    canTargetBySummonAbility(
+                        source,
+                        target
+                    )
+                ){
+
+                    const removedCardName =
+                        target.card.name;
+
+
+                    console.log(
+                        "CPU：ラミア能力",
+                        source.card.name,
+                        "→",
+                        removedCardName,
+                        "をクールゾーンへ"
+                    );
+
+
+                    //----------------------------------
+                    // PLAYER側で作った
+                    // ラミア用クール移動処理を共用
+                    //----------------------------------
+
+                    moveLamiaTargetToCool(
+                        target
+                    );
+
+
+                    //----------------------------------
+                    // バトルログ
+                    //----------------------------------
+
+                    addBattleLog(
+                        `CPU：${source.card.name}の能力で${removedCardName}をクールゾーンに置いた`
+                    );
+
+                }
+                else{
+
+                    console.log(
+                        "CPU：ラミア能力",
+                        "解決時に対象が無効"
+                    );
+
+                }
+
+            }
+
+
+            //==================================
+            // ワイバーン系
+            //
+            // サモンへダメージ
+            //==================================
+
+            else if(
+                ability.type ===
+                "oncePerTurnSummonDamage"
+            ){
+
+                if(
+                    target &&
+                    !target.destroyed
                 ){
 
                     dealDamage(
@@ -9844,21 +10659,24 @@ function cpuUseSummonAbility(
 
                 }
 
+            }
 
-                //==================================
-                // ケンタウロス系
-                //
-                // このターン中パワーアップ
-                //==================================
 
-                else if(
-                    ability.type ===
-                    "oncePerTurnSummonPowerUp"
+            //==================================
+            // ケンタウロス系
+            //
+            // このターン中パワーアップ
+            //==================================
+
+            else if(
+                ability.type ===
+                "oncePerTurnSummonPowerUp"
+            ){
+
+                if(
+                    target &&
+                    !target.destroyed
                 ){
-
-                    //----------------------------------
-                    // 既存の一時パワーシステム
-                    //----------------------------------
 
                     addTemporaryPower(
                         target,
@@ -9909,9 +10727,32 @@ function cpuUseSummonAbility(
     setTimeout(
         ()=>{
 
-            clearCpuMagiaTargetHighlight(
-                target
-            );
+            if(
+                target === PLAYER
+            ){
+
+                const playerIcon =
+                    document.getElementById(
+                        "player-icon"
+                    );
+
+
+                if(playerIcon){
+
+                    playerIcon.classList.remove(
+                        "magia-target"
+                    );
+
+                }
+
+            }
+            else{
+
+                clearCpuMagiaTargetHighlight(
+                    target
+                );
+
+            }
 
         },
         5000
@@ -10385,5 +11226,510 @@ function cpuGetCurseSmokePlan(card){
     //----------------------------------
 
     return null;
+
+}
+
+function getUsableCpuCatSithMagias(){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ CPUケット・シー使用可能マギア判定開始"
+    );
+
+
+    //----------------------------------
+    // CPUクールゾーン確認
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            enemyCoolCards
+        )
+    ){
+
+        return [];
+
+    }
+
+
+    //----------------------------------
+    // 使用可能な風マギア
+    //----------------------------------
+
+    const result =
+        enemyCoolCards.filter(
+            card => {
+
+                //----------------------------------
+                // 基本確認
+                //----------------------------------
+
+                if(!card){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // マギア
+                //----------------------------------
+
+                if(
+                    card.type !== "マギア"
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 風属性
+                //----------------------------------
+
+                if(
+                    card.elementType !== "風"
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // CPU所有
+                //----------------------------------
+
+                card.owner =
+                    ENEMY;
+
+
+                //----------------------------------
+                // 現在コスト
+                //----------------------------------
+
+                const cost =
+                    getCurrentCardCost(
+                        card,
+                        ENEMY
+                    );
+
+
+                //----------------------------------
+                // コスト不足
+                //----------------------------------
+
+                if(
+                    enemyHandCards.length <
+                    cost
+                ){
+
+                    console.log(
+                        "CPUケット・シー：",
+                        card.name,
+                        "コスト不足",
+                        enemyHandCards.length,
+                        "/",
+                        cost
+                    );
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 適正対象確認
+                //----------------------------------
+
+                const target =
+                    selectCpuMagiaTarget(
+                        card
+                    );
+
+
+                if(!target){
+
+                    console.log(
+                        "CPUケット・シー：",
+                        card.name,
+                        "適正対象なし"
+                    );
+
+                    return false;
+
+                }
+
+
+                console.log(
+                    "CPUケット・シー使用可能：",
+                    card.name,
+                    "cost=",
+                    cost
+                );
+
+
+                return true;
+
+            }
+        );
+
+
+    console.log(
+        "★ CPUケット・シー使用可能マギア=",
+        result.map(
+            card =>
+                card.name
+        )
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return result;
+
+}
+
+function selectCpuCatSithMagia(){
+
+    //----------------------------------
+    // 使用可能な風マギア取得
+    //----------------------------------
+
+    const candidates =
+        getUsableCpuCatSithMagias();
+
+
+    //----------------------------------
+    // 候補なし
+    //----------------------------------
+
+    if(
+        candidates.length === 0
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 実際に対象を選択できるカードだけ残す
+    //----------------------------------
+
+    const usable =
+        candidates.filter(
+            card => {
+
+                //----------------------------------
+                // CPU所有に設定
+                //----------------------------------
+
+                card.owner =
+                    ENEMY;
+
+
+                //----------------------------------
+                // 通常CPUマギア対象選択
+                //----------------------------------
+
+                const target =
+                    selectCpuMagiaTarget(
+                        card
+                    );
+
+
+                if(!target){
+
+                    console.log(
+                        "CPUケット・シー：",
+                        card.name,
+                        "適正対象なし"
+                    );
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    //----------------------------------
+    // 使用可能カードなし
+    //----------------------------------
+
+    if(
+        usable.length === 0
+    ){
+
+        console.log(
+            "CPUケット・シー：",
+            "対象を取れる風マギアなし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 現段階ではランダム選択
+    //----------------------------------
+
+    const card =
+        usable[
+            Math.floor(
+                Math.random() *
+                usable.length
+            )
+        ];
+
+
+    console.log(
+        "CPUケット・シー：",
+        "使用マギア決定 →",
+        card.name
+    );
+
+
+    return card;
+
+}
+
+function cpuUseCatSithAbility(source){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !source ||
+        !source.card
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // ケット・シー能力確認
+    //----------------------------------
+
+    if(
+        source.card.ability?.type !==
+        "playWindMagiaFromCool"
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 使用可能確認
+    //----------------------------------
+
+    if(
+        !cpuCanUseSummonAbility(
+            source
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 使用する風マギア決定
+    //----------------------------------
+
+    const card =
+        selectCpuCatSithMagia();
+
+
+    if(!card){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 対象決定
+    //----------------------------------
+
+    card.owner =
+        ENEMY;
+
+
+    const target =
+        selectCpuMagiaTarget(
+            card
+        );
+
+
+    if(!target){
+
+        console.log(
+            "CPUケット・シー：",
+            "解決直前に対象なし",
+            card.name
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "CPU：ケット・シー能力使用"
+    );
+
+    console.log(
+        "使用マギア：",
+        card.name
+    );
+
+    console.log(
+        "対象：",
+        target
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    addBattleLog(
+        `CPU：${source.card.name}の能力を使用`
+    );
+
+
+    addBattleLog(
+        `CPU：クールゾーンの${card.name}をプレイ`
+    );
+
+
+    //----------------------------------
+    // 能力使用済み
+    //----------------------------------
+
+    source.abilityUsedThisTurn =
+        true;
+
+
+    //----------------------------------
+    // CPUクールゾーンから除外
+    //----------------------------------
+
+    enemyCoolCards =
+        enemyCoolCards.filter(
+            coolCard =>
+                coolCard !== card
+        );
+
+
+    //----------------------------------
+    // Board側も同期
+    //----------------------------------
+
+    if(
+        board &&
+        Array.isArray(
+            board.enemyCoolCards
+        )
+    ){
+
+        board.enemyCoolCards =
+            board.enemyCoolCards.filter(
+                coolCard =>
+                    coolCard !== card
+            );
+
+    }
+
+
+    //----------------------------------
+    // 一時的に手札扱い
+    //
+    // cpuMagia()は
+    // enemyHandCardsから除外する設計なので
+    // 一度追加して通常処理へ渡す
+    //----------------------------------
+
+    card.area =
+        "hand";
+
+
+    if(
+        !enemyHandCards.includes(
+            card
+        )
+    ){
+
+        enemyHandCards.push(
+            card
+        );
+
+    }
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+
+    //----------------------------------
+    // 通常CPUマギア処理へ
+    //----------------------------------
+
+    const result =
+        cpuMagia(
+            card,
+            target
+        );
+
+
+    //----------------------------------
+    // 万一失敗した場合
+    //----------------------------------
+
+    if(!result){
+
+        console.log(
+            "CPUケット・シー：",
+            "cpuMagia実行失敗"
+        );
+
+        return false;
+
+    }
+
+
+    return true;
 
 }

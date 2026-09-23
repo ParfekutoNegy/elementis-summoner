@@ -589,7 +589,11 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"folklore",
-        image: "images/041-ケット・シー.jpg"
+        image: "images/041-ケット・シー.jpg",
+        text:"自分のターン毎に１回使える。自分のクールゾーンにある【風】マギアを１枚選び、コストを支払いプレイする。",
+        ability:{
+            type:"playWindMagiaFromCool"
+        }
     },
     {
         id: 42,
@@ -1073,7 +1077,12 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"mythology",
-        image: "images/089-ラミア.jpg"
+        image: "images/089-ラミア.jpg",
+        text:"自分のターン毎に１回使える。パワーが１のサモン１体を対象にし、手札に戻すかクールゾーンに置く。",
+        ability:{
+             type:"oncePerTurnPowerOneSummonRemove",
+             power:1
+            }
     },
     {
         id: 90,

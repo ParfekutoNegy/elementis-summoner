@@ -1531,3 +1531,116 @@
         0 0 12px black;
 
 }
+
+/* ======================================
+ラミア 能力選択
+====================================== */
+
+#lamia-choice-modal{
+
+    display:none;
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:10000;
+
+    background:
+        rgba(0,0,0,0.55);
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+
+#lamia-choice-modal.active{
+
+    display:flex;
+
+}
+
+
+.lamia-choice-panel{
+
+    min-width:360px;
+
+    padding:24px 30px;
+
+    border:2px solid #ffffff;
+
+    border-radius:14px;
+
+    background:
+        rgba(30,20,15,0.96);
+
+    color:#ffffff;
+
+    text-align:center;
+
+    box-shadow:
+        0 8px 24px
+        rgba(0,0,0,0.65);
+
+}
+
+
+.lamia-choice-title{
+
+    margin-bottom:14px;
+
+    font-size:24px;
+
+    font-weight:bold;
+
+}
+
+
+.lamia-choice-message{
+
+    margin-bottom:20px;
+
+    font-size:18px;
+
+}
+
+
+.lamia-choice-buttons{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:18px;
+
+}
+
+
+.lamia-choice-buttons button{
+
+    min-width:150px;
+
+    padding:12px 18px;
+
+    border:2px solid #ffffff;
+
+    border-radius:8px;
+
+    background:#38291f;
+
+    color:#ffffff;
+
+    font-size:17px;
+
+    cursor:pointer;
+
+}
+
+
+.lamia-choice-buttons button:hover{
+
+    background:#594231;
+
+}

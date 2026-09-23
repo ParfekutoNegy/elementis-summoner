@@ -2052,6 +2052,33 @@ if(
 
 }
 
+//----------------------------------
+// ラミア
+// パワー1のみ対象可能
+//----------------------------------
+
+if(
+    summonAbilitySource?.card?.ability?.type ===
+    "oncePerTurnPowerOneSummonRemove"
+){
+
+    if(
+        getPower(targetSummon) !== 1
+    ){
+
+        console.log(
+            "ラミア能力対象外：",
+            targetSummon.card.name,
+            "現在パワー=",
+            getPower(targetSummon)
+        );
+
+        return;
+
+    }
+
+}
+
 
 
     //----------------------------------
@@ -3620,13 +3647,14 @@ addBattleLog(
     }
 
 
-    //----------------------------------
-    // マギア
-    //----------------------------------
+//----------------------------------
+// マギア
+//----------------------------------
 
-    if(
-        summonCard.type === "マギア"
-    ){
+if(
+    summonCard.type ===
+    "マギア"
+){
 
     //----------------------------------
     // バトルログ
@@ -3638,15 +3666,37 @@ addBattleLog(
 
     addBattleLog(
         `PLAYER：対象 → ${
-            getMagiaTargetLog(magiaTarget)
+            getMagiaTargetLog(
+                magiaTarget
+            )
         }`
     );
 
 
+    //==================================
+    // ケット・シー
+    //
+    // ここまで来た時点で
+    // コスト支払いまで完了しているため
+    // 能力使用成立
+    //==================================
 
-        resolveMagia();
+    if(
+        catSithMagiaPlaying
+    ){
+
+        completeCatSithAbility();
 
     }
+
+
+    //----------------------------------
+    // マギア解決
+    //----------------------------------
+
+    resolveMagia();
+
+}
 
 
     //----------------------------------
@@ -3837,56 +3887,98 @@ function updateCostZoneView(){
 // 召喚キャンセル
 //=========================
 
+//=========================
+// 召喚・プレイキャンセル
+//=========================
+
 function cancelSummon(){
 
-//----------------------------------
-// 行動案内を消す
-//----------------------------------
+    //----------------------------------
+    // 行動案内を消す
+    //----------------------------------
 
-hideActionGuide();
+    hideActionGuide();
 
 
-//----------------------------------
-// 選択カード解除
-//----------------------------------
+    //==================================
+    // ケット・シーからプレイ中の
+    // マギアだった場合
+    //
+    // 先にクールへ戻す
+    //==================================
 
-if(summonCard){
+    if(
+        catSithMagiaPlaying
+    ){
 
-    summonCard.setSelected(
-        false
+        cancelCatSithMagiaPlay();
+
+    }
+
+
+    //----------------------------------
+    // 選択カード解除
+    //----------------------------------
+
+    if(summonCard){
+
+        summonCard.setSelected(
+            false
+        );
+
+    }
+
+
+    //----------------------------------
+    // コスト選択解除
+    //----------------------------------
+
+    selectedCostCards.forEach(
+        card => {
+
+            card.setSelected(
+                false
+            );
+
+            card.setCostSelected(
+                false
+            );
+
+        }
     );
 
-}
+
+    //----------------------------------
+    // 状態リセット
+    //----------------------------------
+
+    selectedHandCard =
+        null;
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
 
 
-//----------------------------------
-// コスト選択解除
-//----------------------------------
+    //----------------------------------
+    // マギア状態リセット
+    //----------------------------------
 
-selectedCostCards.forEach(card=>{
-
-    card.setSelected(false);
-
-    card.setCostSelected(false);
-
-});
+    resetMagiaState();
 
 
-//----------------------------------
-// 状態リセット
-//----------------------------------
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
 
-selectedHandCard = null;
+    updateGameState();
 
-summonCard = null;
-
-selectedCostCards = [];
-
-costConfirm = false;
-
-resetMagiaState();
-
-updateGameState();
+    updateButtons();
 
 }
 
@@ -4391,6 +4483,37 @@ if(endTurnButton){
 
 resetActionButtons();
 
+//==================================
+// ケット・シー
+// クールゾーンの風マギア選択中
+//==================================
+
+if(
+    catSithAbilityMode &&
+    !catSithMagiaPlaying
+){
+
+    actionArea.style.display =
+        "flex";
+
+
+    cancelButton.style.display =
+        "inline-block";
+
+
+    cancelButton.textContent =
+        "キャンセル";
+
+
+    cancelButton.onclick =
+        cancelCatSithAbility;
+
+
+    return;
+
+}
+
+
     //----------------------------------
     // レジスト待機中
     //----------------------------------
@@ -4766,8 +4889,7 @@ if(summonAbilityTargetMode){
 
 }
 
-
-    //----------------------------------
+//----------------------------------
 // マギア対象選択中
 //----------------------------------
 
@@ -4794,9 +4916,48 @@ if(magiaTargetMode){
             );
 
 
+            //==================================
+            // ケット・シーからプレイ中の
+            // マギアだった場合
+            //
+            // resetMagiaState()より先に
+            // クールゾーンへ戻す
+            //==================================
+
+            if(
+                catSithMagiaPlaying
+            ){
+
+                console.log(
+                    "ケット・シー：",
+                    "マギアをクールへ戻してキャンセル"
+                );
+
+
+                cancelCatSithMagiaPlay();
+
+            }
+
+
+            //----------------------------------
+            // 通常マギア状態リセット
+            //----------------------------------
+
             resetMagiaState();
 
+
+            //----------------------------------
+            // 案内解除
+            //----------------------------------
+
             hideActionGuide();
+
+
+            //----------------------------------
+            // 表示更新
+            //----------------------------------
+
+            updateGameState();
 
             updateButtons();
 
@@ -6563,11 +6724,20 @@ function canUseSummonAbility(summon){
 
     const supportedTypes = [
 
+        // ワイバーン
         "oncePerTurnSummonDamage",
 
+        // ケンタウロス
         "oncePerTurnSummonPowerUp",
 
-        "oncePerTurnPlayerDamageWithCost"
+        // キマイラ
+        "oncePerTurnPlayerDamageWithCost",
+
+        // ラミア
+        "oncePerTurnPowerOneSummonRemove",
+
+        // ケット・シー
+        "playWindMagiaFromCool"
 
     ];
 
@@ -6597,10 +6767,10 @@ function canUseSummonAbility(summon){
 
 
     //==================================================
-    // キマイラ系
+    // キマイラ
     //
     // コストを支払い
-    // 相手プレイヤーを対象にする能力
+    // 相手プレイヤーを対象にする
     //==================================================
 
     if(
@@ -6642,11 +6812,7 @@ function canUseSummonAbility(summon){
 
 
         //----------------------------------
-        // 相手プレイヤーを
-        // サモン能力の対象にできるか
-        //
-        // マーフォーク等の保護も
-        // この中で判定される
+        // 相手プレイヤーを対象にできるか
         //----------------------------------
 
         if(
@@ -6667,9 +6833,54 @@ function canUseSummonAbility(summon){
         }
 
 
+        return true;
+
+    }
+
+
+    //==================================================
+    // ケット・シー
+    //
+    // クールゾーンに
+    // 「現在プレイ可能な風マギア」が
+    // 1枚以上ある場合だけ使用可能
+    //==================================================
+
+    if(
+        ability.type ===
+        "playWindMagiaFromCool"
+    ){
+
+        const usableMagias =
+            getUsableCatSithMagias();
+
+
         //----------------------------------
-        // 使用可能
+        // 使用可能な風マギアなし
         //----------------------------------
+
+        if(
+            usableMagias.length === 0
+        ){
+
+            console.log(
+                "ケット・シー能力使用不可：",
+                "使用可能な風マギアなし"
+            );
+
+            return false;
+
+        }
+
+
+        console.log(
+            "ケット・シー能力使用可能：",
+            usableMagias.map(
+                card =>
+                    card.name
+            )
+        );
+
 
         return true;
 
@@ -6677,10 +6888,8 @@ function canUseSummonAbility(summon){
 
 
     //==================================================
+    // ここから
     // サモンを対象にする能力
-    //
-    // ワイバーン
-    // ケンタウロス等
     //==================================================
 
     const allSummons = [
@@ -6717,15 +6926,46 @@ function canUseSummonAbility(summon){
 
                 //----------------------------------
                 // サモン能力の対象にできるか
-                //
-                // マーフォーク等の
-                // 対象耐性もここで判定
                 //----------------------------------
 
-                return canTargetBySummonAbility(
-                    summon,
-                    target
-                );
+                if(
+                    !canTargetBySummonAbility(
+                        summon,
+                        target
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //==================================
+                // ラミア
+                //
+                // 現在パワー1のみ
+                //==================================
+
+                if(
+                    ability.type ===
+                    "oncePerTurnPowerOneSummonRemove"
+                ){
+
+                    return (
+                        getPower(target) === 1
+                    );
+
+                }
+
+
+                //----------------------------------
+                // その他
+                //
+                // ワイバーン
+                // ケンタウロス等
+                //----------------------------------
+
+                return true;
 
             }
         );
@@ -6734,6 +6974,7 @@ function canUseSummonAbility(summon){
     return hasValidTarget;
 
 }
+
 //==================================================
 // サモン能力開始
 //==================================================
@@ -6781,11 +7022,20 @@ function startSummonAbility(summon){
 
     const supportedTypes = [
 
+        // ワイバーン
         "oncePerTurnSummonDamage",
 
+        // ケンタウロス
         "oncePerTurnSummonPowerUp",
 
-        "oncePerTurnPlayerDamageWithCost"
+        // キマイラ
+        "oncePerTurnPlayerDamageWithCost",
+
+        // ラミア
+        "oncePerTurnPowerOneSummonRemove",
+
+        // ケット・シー
+        "playWindMagiaFromCool"
 
     ];
 
@@ -6817,9 +7067,81 @@ function startSummonAbility(summon){
     clearFieldSelection();
 
 
-    //----------------------------------
-    // 能力対象選択開始
-    //----------------------------------
+    //==================================================
+    // ケット・シー
+    //
+    // 通常のサモン対象選択には入らず
+    // クールゾーンの風マギア選択へ
+    //==================================================
+
+    if(
+        ability.type ===
+        "playWindMagiaFromCool"
+    ){
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "ケット・シー能力開始"
+        );
+
+        console.log(
+            "使用サモン：",
+            summon.card.name
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        //----------------------------------
+        // 念のため通常の対象状態を解除
+        //----------------------------------
+
+        summonAbilityTargetMode =
+            false;
+
+        summonAbilitySource =
+            summon;
+
+        summonAbilityTarget =
+            null;
+
+
+        clearSummonAbilityTargetHighlight();
+
+        hideActionGuide();
+
+
+        //----------------------------------
+        // クールゾーンの
+        // 風マギア選択開始
+        //----------------------------------
+
+        startCatSithMagiaSelect(
+            summon
+        );
+
+
+        updateButtons();
+
+
+        return;
+
+    }
+
+
+    //==================================================
+    // ここから通常の対象選択型サモン能力
+    //
+    // ワイバーン
+    // ケンタウロス
+    // キマイラ
+    // ラミア
+    //==================================================
 
     summonAbilityTargetMode =
         true;
@@ -6848,8 +7170,7 @@ function startSummonAbility(summon){
     ){
 
         //----------------------------------
-        // キマイラ系
-        // 相手プレイヤー対象
+        // キマイラ
         //----------------------------------
 
         showActionGuide(
@@ -6857,6 +7178,22 @@ function startSummonAbility(summon){
         );
 
     }
+
+    else if(
+        ability.type ===
+        "oncePerTurnPowerOneSummonRemove"
+    ){
+
+        //----------------------------------
+        // ラミア
+        //----------------------------------
+
+        showActionGuide(
+            "対象にするパワー1のサモンを選んでください"
+        );
+
+    }
+
     else{
 
         //----------------------------------
@@ -6927,8 +7264,11 @@ function updateSummonAbilityTargetHighlight(){
     //==================================================
 
     const allSummons = [
+
         ...playerField,
+
         ...enemyField
+
     ];
 
 
@@ -7023,9 +7363,6 @@ function updateSummonAbilityTargetHighlight(){
 
     //==================================================
     // サモンを対象にする能力
-    //
-    // ワイバーン
-    // ケンタウロス
     //==================================================
 
     allSummons.forEach(
@@ -7064,6 +7401,8 @@ function updateSummonAbilityTargetHighlight(){
 
             //----------------------------------
             // 対象にできない
+            //
+            // マーフォーク等
             //----------------------------------
 
             if(
@@ -7074,6 +7413,28 @@ function updateSummonAbilityTargetHighlight(){
             ){
 
                 return;
+
+            }
+
+
+            //==================================
+            // ラミア
+            //
+            // 現在パワー1のみ対象
+            //==================================
+
+            if(
+                ability.type ===
+                "oncePerTurnPowerOneSummonRemove"
+            ){
+
+                if(
+                    getPower(summon) !== 1
+                ){
+
+                    return;
+
+                }
 
             }
 
@@ -7407,7 +7768,748 @@ function resolveSummonAbility(){
 
         }
 
+                //==================================
+        // ラミア
+        //
+        // パワー1のサモンを
+        // 手札またはクールゾーンへ
+        //==================================
+
+        case "oncePerTurnPowerOneSummonRemove":{
+
+
+            //----------------------------------
+            // 使用サモン・対象を保存
+            //----------------------------------
+
+            const source =
+                summonAbilitySource;
+
+
+            const target =
+                summonAbilityTarget;
+
+
+            //----------------------------------
+            // 基本確認
+            //----------------------------------
+
+            if(
+                !source ||
+                !target ||
+                !target.card
+            ){
+
+                resetSummonAbilityState();
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // 現在パワー再確認
+            //----------------------------------
+
+            if(
+                getPower(target) !== 1
+            ){
+
+                console.log(
+                    "ラミア能力対象外：",
+                    target.card.name,
+                    "現在パワー=",
+                    getPower(target)
+                );
+
+
+                resetSummonAbilityState();
+
+                updateGameState();
+
+                updateButtons();
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // 対象可能か再確認
+            //----------------------------------
+
+            if(
+                !canTargetBySummonAbility(
+                    source,
+                    target
+                )
+            ){
+
+                console.log(
+                    "ラミア能力対象不可：",
+                    target.card.name
+                );
+
+
+                resetSummonAbilityState();
+
+                updateGameState();
+
+                updateButtons();
+
+                break;
+
+            }
+
+
+            console.log(
+                "================================"
+            );
+
+            console.log(
+                "ラミア能力：移動先選択"
+            );
+
+            console.log(
+                "使用=",
+                source.card.name
+            );
+
+            console.log(
+                "対象=",
+                target.card.name
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            //----------------------------------
+            // ラミア専用選択へ
+            //----------------------------------
+
+            startLamiaDestinationSelection(
+                source,
+                target
+            );
+
+
+            break;
+
+        }
+
+
     }
+
+}
+
+function startLamiaDestinationSelection(
+    source,
+    target
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !source ||
+        !source.card ||
+        !target ||
+        !target.card
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 状態保存
+    //----------------------------------
+
+    lamiaChoiceMode = true;
+
+    lamiaAbilitySource =
+        source;
+
+    lamiaAbilityTarget =
+        target;
+
+
+    //----------------------------------
+    // 通常のサモン能力対象選択は終了
+    //----------------------------------
+
+    summonAbilityTargetMode =
+        false;
+
+
+    clearSummonAbilityTargetHighlight();
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 対象名表示
+    //----------------------------------
+
+    const message =
+        document.getElementById(
+            "lamia-choice-message"
+        );
+
+
+    if(message){
+
+        message.textContent =
+            `『${target.card.name}』の移動先を選んでください`;
+
+    }
+
+
+    //----------------------------------
+    // モーダル表示
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "lamia-choice-modal"
+        );
+
+
+    if(modal){
+
+        modal.classList.add(
+            "active"
+        );
+
+    }
+
+
+    console.log(
+        "ラミア：移動先選択開始",
+        target.card.name
+    );
+
+
+    updateButtons();
+
+}
+
+function chooseLamiaDestination(
+    destination
+){
+
+    //----------------------------------
+    // 選択中確認
+    //----------------------------------
+
+    if(
+        !lamiaChoiceMode ||
+        !lamiaAbilitySource ||
+        !lamiaAbilityTarget
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 不正な選択
+    //----------------------------------
+
+    if(
+        destination !== "hand" &&
+        destination !== "cool"
+    ){
+
+        return;
+
+    }
+
+
+    const source =
+        lamiaAbilitySource;
+
+
+    const target =
+        lamiaAbilityTarget;
+
+
+    //----------------------------------
+    // 対象がまだ場にいるか確認
+    //----------------------------------
+
+    const field =
+
+        target.owner === PLAYER
+
+            ? playerField
+
+            : enemyField;
+
+
+    const index =
+        field.indexOf(
+            target
+        );
+
+
+    if(index === -1){
+
+        console.warn(
+            "ラミア能力：対象が場に存在しません"
+        );
+
+        finishLamiaAbility();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 最終パワー確認
+    //----------------------------------
+
+    if(
+        getPower(target) !== 1
+    ){
+
+        console.warn(
+            "ラミア能力：対象のパワーが1ではありません"
+        );
+
+        finishLamiaAbility();
+
+        return;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "ラミア能力解決"
+    );
+
+    console.log(
+        "対象=",
+        target.card.name
+    );
+
+    console.log(
+        "移動先=",
+        destination
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // 能力使用済み
+    //----------------------------------
+
+    source.abilityUsedThisTurn =
+        true;
+
+
+    //==================================
+    // 手札へ戻す
+    //==================================
+
+    if(
+        destination === "hand"
+    ){
+
+        moveLamiaTargetToHand(
+            target
+        );
+
+
+        addBattleLog(
+            `${source.card.name}の能力：${target.card.name}を手札に戻した`
+        );
+
+    }
+
+
+    //==================================
+    // クールゾーンへ置く
+    //==================================
+
+    else{
+
+        moveLamiaTargetToCool(
+            target
+        );
+
+
+        addBattleLog(
+            `${source.card.name}の能力：${target.card.name}をクールゾーンに置いた`
+        );
+
+    }
+
+
+    //----------------------------------
+    // 終了
+    //----------------------------------
+
+    finishLamiaAbility();
+
+}
+
+function moveLamiaTargetToHand(
+    summon
+){
+
+    if(
+        !summon ||
+        !summon.card
+    ){
+
+        return;
+
+    }
+
+
+    const card =
+        summon.card;
+
+
+    const owner =
+        summon.owner;
+
+
+    const field =
+
+        owner === PLAYER
+
+            ? playerField
+
+            : enemyField;
+
+
+    //----------------------------------
+    // 場データから削除
+    //----------------------------------
+
+    const index =
+        field.indexOf(
+            summon
+        );
+
+
+    if(index !== -1){
+
+        field.splice(
+            index,
+            1
+        );
+
+    }
+
+
+    //----------------------------------
+    // 表示から削除
+    //----------------------------------
+
+    if(owner === PLAYER){
+
+        board.removePlayerCard(
+            summon.view
+        );
+
+    }
+    else{
+
+        board.removeEnemyCard(
+            summon.view
+        );
+
+    }
+
+
+    //----------------------------------
+    // サモン状態リセット
+    //----------------------------------
+
+    resetSummonState(
+        summon
+    );
+
+
+    //----------------------------------
+    // カード状態リセット
+    //----------------------------------
+
+    card.setHorizontal(
+        false
+    );
+
+    card.setSelected(
+        false
+    );
+
+    card.setHighlight(
+        false
+    );
+
+    card.setCostSelected(
+        false
+    );
+
+
+    //==================================
+    // PLAYER手札
+    //==================================
+
+    if(owner === PLAYER){
+
+        card.area =
+            "hand";
+
+
+        card.setFaceDown(
+            false
+        );
+
+
+        board.addHandCard(
+            card
+        );
+
+
+        //----------------------------------
+        // 場が変化したので
+        // コスト表示更新
+        //----------------------------------
+
+        updateHandCostDisplay();
+
+    }
+
+
+    //==================================
+    // CPU手札
+    //==================================
+
+    else{
+
+        card.area =
+            "enemyHand";
+
+
+        card.setFaceDown(
+            false
+        );
+
+
+        enemyHandCards.push(
+            card
+        );
+
+
+        updateEnemyZoneDisplay();
+
+    }
+
+
+    console.log(
+        "ラミア：手札へ戻す",
+        card.name,
+        "owner=",
+        owner
+    );
+
+}
+
+function moveLamiaTargetToCool(
+    summon
+){
+
+    if(
+        !summon ||
+        !summon.card
+    ){
+
+        return;
+
+    }
+
+
+    const card =
+        summon.card;
+
+
+    const owner =
+        summon.owner;
+
+
+    const field =
+
+        owner === PLAYER
+
+            ? playerField
+
+            : enemyField;
+
+
+    //----------------------------------
+    // サモン状態リセット
+    //----------------------------------
+
+    resetSummonState(
+        summon
+    );
+
+
+    //----------------------------------
+    // クールゾーンへ追加
+    //----------------------------------
+
+    board.addCoolCard(
+        card,
+        owner
+    );
+
+
+    refreshCoolModal();
+
+
+    //----------------------------------
+    // 表示から削除
+    //----------------------------------
+
+    if(owner === PLAYER){
+
+        board.removePlayerCard(
+            summon.view
+        );
+
+    }
+    else{
+
+        board.removeEnemyCard(
+            summon.view
+        );
+
+    }
+
+
+    //----------------------------------
+    // 戦闘データから削除
+    //----------------------------------
+
+    const index =
+        field.indexOf(
+            summon
+        );
+
+
+    if(index !== -1){
+
+        field.splice(
+            index,
+            1
+        );
+
+    }
+
+
+    //----------------------------------
+    // PLAYER側の場が変化
+    //----------------------------------
+
+    if(owner === PLAYER){
+
+        updateHandCostDisplay();
+
+    }
+
+
+    console.log(
+        "ラミア：クールゾーンへ",
+        card.name,
+        "owner=",
+        owner
+    );
+
+}
+
+function finishLamiaAbility(){
+
+    //----------------------------------
+    // モーダルを閉じる
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "lamia-choice-modal"
+        );
+
+
+    if(modal){
+
+        modal.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    //----------------------------------
+    // ラミア状態解除
+    //----------------------------------
+
+    lamiaChoiceMode =
+        false;
+
+    lamiaAbilitySource =
+        null;
+
+    lamiaAbilityTarget =
+        null;
+
+
+    //----------------------------------
+    // 通常サモン能力状態解除
+    //----------------------------------
+
+    resetSummonAbilityState();
+
+
+    //----------------------------------
+    // 選択解除
+    //----------------------------------
+
+    clearFieldSelection();
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+    updateUsableCardHighlight();
+
+
+    console.log(
+        "ラミア能力終了"
+    );
 
 }
 
