@@ -1044,7 +1044,7 @@ function setupTutorialStep3SummonBattle(){
 
     const enemyVertical =
         createTutorialStep3Summon(
-            1004,
+            10,
             ENEMY,
             false,
             true
@@ -1253,7 +1253,7 @@ function showTutorialStep3SummonBattleExplanation2(){
 
     setTutorialGuide(
         "サモンのバトル",
-        "パワー以上のダメージを受けたサモンはクールゾーンに置かれます。\n4ダメージを受けたパワー３の『グリフォン』はクールゾーンに置かれます。"
+        "パワー以上のダメージを受けるとサモンは倒れます。\n倒れた『グリフォン』はクールゾーンに置かれました。"
     );
 
 
@@ -1738,11 +1738,46 @@ function completeTutorialStep3Block(){
 
     showTutorialNextButton(
         "次へ",
-        completeTutorialStep3
+        showTutorialStep3RestAttackBlockExplanation
     );
 
 }
 
+/* =========================================================
+LESSON 3
+ヨコ向きサモンへのアタックとブロック
+========================================================= */
+
+function showTutorialStep3RestAttackBlockExplanation(){
+
+    //----------------------------------
+    // フェーズ
+    //----------------------------------
+
+    step3State.phase =
+        "restAttackBlockExplanation";
+
+
+    //----------------------------------
+    // 説明
+    //----------------------------------
+
+    setTutorialGuide(
+        "ブロック",
+        "ただし、ヨコ向きのサモンへのアタックはブロックすることができません。"
+    );
+
+
+    //----------------------------------
+    // STEP3完了へ
+    //----------------------------------
+
+    showTutorialNextButton(
+        "次へ",
+        completeTutorialStep3
+    );
+
+}
 
 /* =========================================================
 STEP3 Complete

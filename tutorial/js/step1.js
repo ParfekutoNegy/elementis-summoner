@@ -373,7 +373,7 @@ function setupTutorialStep1Board(){
     const playerCostIds =
         [
             1,
-            17,
+            5,
             29
         ];
 
@@ -1488,7 +1488,7 @@ function tutorialStep1MagiaExplanation2(){
 
 
     setTutorialMessage(
-        "ダメージを与えたりサモンを強化したり、さまざまな効果を与えるカードがあります。"
+        "ダメージを与えたりサモンを強化したり、さまざまな効果があります。"
     );
 
 
@@ -1695,7 +1695,7 @@ function tutorialStep1ShowFieldZone(){
 
     setTutorialGuide(
         "場",
-        "サモンはプレイすると、タテ向きで場に出ます。\n場に出したサモンは能力を持ち、アタックやブロックを行えます。"
+        "サモンはプレイすると、タテ向きで場に出ます。\n場に出たサモンは能力を持ち、アタックやブロックを行えます。"
     );
 
 

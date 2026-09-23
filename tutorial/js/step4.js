@@ -1161,7 +1161,7 @@ function tutorialStep4UnicornSummoned(
         "自分のターン",
 
         "『ユニコーン』が場にでました。\n" +
-        "次は『バーニングエナジー』をプレイします。"
+        "次はマギアの『バーニングエナジー』をプレイします。"
 
     );
 
@@ -2231,7 +2231,7 @@ function startTutorialStep4StoneGuard(){
 
         "相手のターン",
 
-        "相手の『ユニコーン』のアタックに対して" +
+        "相手の『ユニコーン』のアタックに対して、" +
         "手札の『ストーンガード』をプレイして防ぎましょう。"
 
     );
@@ -2265,7 +2265,6 @@ function startTutorialStep4StoneGuard(){
 /* =========================================================
 PLAYER Stone Guard Complete
 ========================================================= */
-
 function tutorialStep4StoneGuardUsed(){
 
     if(
@@ -2297,7 +2296,7 @@ function tutorialStep4StoneGuardUsed(){
 
 
     step4State.phase =
-        "cpuTurnEnd";
+        "stoneGuardExplanation";
 
 
     game.currentPlayer =
@@ -2334,16 +2333,62 @@ function tutorialStep4StoneGuardUsed(){
     }
 
 
+    //==================================================
+    // 説明1
+    //==================================================
+
     setTutorialGuide(
 
         "相手のターン",
 
         "『ストーンガード』で" +
-        "『ユニコーン』のアタックによるダメージを防ぎました。\n" +
-        "相手はターンを終了しました。次は自分のターンです。"
+        "『ユニコーン』のアタックによるダメージを防ぎました。"
 
     );
 
+
+    showTutorialNextButton(
+
+        "次へ",
+
+        showTutorialStep4CpuTurnEndExplanation
+
+    );
+
+}
+
+/* =========================================================
+STEP4
+CPUターン終了説明
+========================================================= */
+
+function showTutorialStep4CpuTurnEndExplanation(){
+
+    //----------------------------------
+    // フェーズ
+    //----------------------------------
+
+    step4State.phase =
+        "cpuTurnEnd";
+
+
+    //----------------------------------
+    // 説明2
+    //----------------------------------
+
+    setTutorialGuide(
+
+        "相手のターン",
+
+        "相手はターンを終了しました。\n" +
+        "次は自分のターンです。"
+
+    );
+
+
+    //----------------------------------
+    // 次のプレイヤーターンへ
+    //----------------------------------
 
     showTutorialNextButton(
 
@@ -2354,7 +2399,6 @@ function tutorialStep4StoneGuardUsed(){
     );
 
 }
-
 
 /* =========================================================
 PLAYER TURN 2
@@ -3275,11 +3319,26 @@ function setupTutorialStep4FixedCostHighlights(
             );
 
 
+    //==================================================
+    // 現在のターンによって表示を変更
+    //==================================================
+
+    const turnText =
+
+        game.currentPlayer === PLAYER
+
+            ? "自分のターン"
+
+            : "相手のターン";
+
+
     setTutorialGuide(
 
-        "相手のターン",
+        turnText,
 
-        namesText+"をコストとして選んでください。"
+        "発光している" +
+        namesText +
+        "をコストとして選んでください。"
 
     );
 
@@ -3288,12 +3347,17 @@ function setupTutorialStep4FixedCostHighlights(
 
         "★ STEP4 固定コスト",
 
-        cardNames
+        cardNames,
+
+        "現在のターン=",
+        game.currentPlayer,
+
+        "表示=",
+        turnText
 
     );
 
 }
-
 
 /* =========================================================
 CPU Cost Selection
@@ -4537,7 +4601,7 @@ if(
 
                         "アタック",
 
-                        "『ユニコーン』で相手プレイヤーへアタックしてください。"
+                        "『ユニコーン』で相手プレイヤーへアタックしてみましょう。"
 
                     );
 
@@ -5164,7 +5228,7 @@ if(
 
         "相手のターン",
 
-        "相手の『ユニコーン』のアタックに対して" +
+        "相手の『ユニコーン』のアタックに対して、" +
         "手札の『ストーンガード』をプレイして防ぎましょう。"
 
                         );
