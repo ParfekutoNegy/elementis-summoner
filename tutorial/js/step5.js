@@ -1562,7 +1562,7 @@ function completeTutorialStep5(){
 
         "STEP 5",
 
-        "これでElementis Summonerの基本的な遊び方の説明は終了です。"
+        "Elementis Summonerの基本的な遊び方の説明はこれで終了です。"
 
     );
 
