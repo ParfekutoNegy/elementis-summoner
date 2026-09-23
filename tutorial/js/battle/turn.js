@@ -64,85 +64,264 @@ function wakeupSummons(player){
 
 
 //======================================
-// ターン終了時処理
-//======================================
-
-//======================================
 // ターン終了効果
 //======================================
 
 function onTurnEnd(){
 
     //----------------------------------
-    // ターン終了プレイヤーの場
+    // 現在のターンプレイヤー
     //----------------------------------
 
-    const field =
-        game.currentPlayer === PLAYER
+    const turnPlayer =
+        game.currentPlayer;
+
+
+    //----------------------------------
+    // 現在のターンプレイヤーの場
+    //----------------------------------
+
+    const turnPlayerField =
+        turnPlayer === PLAYER
             ? playerField
             : enemyField;
 
 
+    //==================================
+    // フェアリー
+    //==================================
+
     //----------------------------------
-    // フェアリー確認
+    // フェアリー能力確認
+    //
+    // 現在持っている能力を見る
     //----------------------------------
 
     const fairy =
-        field.find(
+        turnPlayerField.find(
             summon =>
                 summon &&
                 summon.card &&
-                summon.card.ability &&
-                summon.card.ability.type ===
-                "fairyTurnEndReady"
+                !summon.destroyed &&
+                summon.ability?.type ===
+                    "fairyTurnEndReady"
         );
 
 
     //----------------------------------
-    // フェアリーがいなければ終了
+    // フェアリー効果
     //----------------------------------
 
-    if(!fairy){
+    if(fairy){
 
-        return;
+        console.log(
+            "フェアリー能力：ターン終了効果発動",
+            "能力保持サモン=",
+            fairy.card.name
+        );
+
+
+        //----------------------------------
+        // すべてのサモンをタテ向きにする
+        //----------------------------------
+
+        for(
+            const summon
+            of turnPlayerField
+        ){
+
+            if(
+                !summon ||
+                summon.destroyed
+            ){
+
+                continue;
+
+            }
+
+
+            summon.isRest =
+                false;
+
+
+            summon.view.setHorizontal(
+                false
+            );
+
+
+            summon.attackReady =
+                true;
+
+        }
 
     }
 
 
-    console.log(
-        "フェアリー：ターン終了効果発動"
-    );
+    //==================================
+    // ファイアドレイク
+    //
+    // ターン終了時
+    // 現在のターンプレイヤーにダメージ
+    //==================================
+
+    //----------------------------------
+    // PLAYER・CPU両方の場を確認
+    //----------------------------------
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
 
 
     //----------------------------------
-    // すべてのサモンをタテ向きにする
+    // ターン終了時ダメージ能力を
+    // 現在持っているサモンを取得
     //----------------------------------
 
-    for(const summon of field){
+    const damageSummons =
+        allSummons.filter(
+            summon => {
 
-        if(!summon){
+                if(
+                    !summon ||
+                    !summon.card
+                ){
+
+                    return false;
+
+                }
+
+
+                if(summon.destroyed){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 現在持っている能力
+                //----------------------------------
+
+                return (
+                    summon.ability?.type ===
+                        "turnEndDamageCurrentPlayer"
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 1体ずつ能力発動
+    //----------------------------------
+
+    for(
+        const summon
+        of damageSummons
+    ){
+
+        //----------------------------------
+        // 現在持っている能力
+        //----------------------------------
+
+        const ability =
+            summon.ability;
+
+
+        //----------------------------------
+        // 念のため確認
+        //----------------------------------
+
+        if(
+            !ability ||
+            ability.type !==
+                "turnEndDamageCurrentPlayer"
+        ){
 
             continue;
 
         }
 
 
-        summon.isRest =
-            false;
+        //----------------------------------
+        // ダメージ値
+        //----------------------------------
+
+        const damage =
+            Number(
+                ability.value
+            ) || 1;
 
 
-        summon.view.setHorizontal(
-            false
+        //----------------------------------
+        // 対象表示
+        //----------------------------------
+
+        const targetName =
+            turnPlayer === PLAYER
+                ? "PLAYER"
+                : "CPU";
+
+
+        console.log(
+            "ターン終了時ダメージ能力発動",
+            "能力保持サモン=",
+            summon.card.name,
+            "対象=",
+            targetName,
+            "ダメージ=",
+            damage
         );
 
 
-        summon.attackReady =
-            true;
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        addBattleLog(
+            `${summon.card.name}：${targetName}に${damage}ダメージ`
+        );
+
+
+        //----------------------------------
+        // 通常のプレイヤーダメージ処理
+        //
+        // ガーゴイル等の軽減
+        // レジスト
+        // も通常処理に任せる
+        //----------------------------------
+
+        damagePlayer(
+            turnPlayer,
+            damage,
+            false,
+            summon.card
+        );
+
+
+        //----------------------------------
+        // ゲーム終了確認
+        //----------------------------------
+
+        if(
+            game.playerLife <= 0 ||
+            game.enemyLife <= 0
+        ){
+
+            console.log(
+                "ターン終了時ダメージによりゲーム終了"
+            );
+
+
+            return;
+
+        }
 
     }
 
 }
-
 
 //======================================
 // 一時パワー補正

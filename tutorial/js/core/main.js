@@ -5503,27 +5503,64 @@ function updateUsableCardHighlight(){
 function updateCardAction(card){
 
     const actionArea =
-    document.getElementById(
-        "cost-action-area"
-    );
+        document.getElementById(
+            "cost-action-area"
+        );
 
 
     const attackButton =
-    document.getElementById(
-        "attack-button"
-    );
+        document.getElementById(
+            "attack-button"
+        );
 
 
     const abilityButton =
-    document.getElementById(
-        "ability-button"
-    );
+        document.getElementById(
+            "ability-button"
+        );
 
 
     const blockButton =
-    document.getElementById(
-        "block-button"
-    );
+        document.getElementById(
+            "block-button"
+        );
+
+
+    //----------------------------------
+    // まずボタンをすべて非表示
+    //----------------------------------
+
+    if(attackButton){
+
+        attackButton.style.display =
+            "none";
+
+        attackButton.onclick =
+            null;
+
+    }
+
+
+    if(abilityButton){
+
+        abilityButton.style.display =
+            "none";
+
+        abilityButton.onclick =
+            null;
+
+    }
+
+
+    if(blockButton){
+
+        blockButton.style.display =
+            "none";
+
+        blockButton.onclick =
+            null;
+
+    }
 
 
     //----------------------------------
@@ -5540,57 +5577,63 @@ function updateCardAction(card){
 
     }
 
+
     //----------------------------------
-    // カード使用中・コスト選択中は禁止
+    // 場カード以外
     //----------------------------------
 
     if(
         card.area !== "field" &&
         card.area !== "enemyField"
     ){
+
         return;
+
     }
 
 
-
-
-    if(attackButton){
-        attackButton.style.display="none";
-    }
-
-    if(abilityButton){
-        abilityButton.style.display="none";
-    }
-
-    if(blockButton){
-        blockButton.style.display="none";
-    }
-
+    //----------------------------------
+    // サモン取得
+    //----------------------------------
 
     const summon =
-    findSummonByView(card);
+        findSummonByView(card);
 
 
     if(!summon){
+
         return;
+
     }
 
+
+    //----------------------------------
+    // ブロック中
+    //----------------------------------
 
     if(
         blockMode &&
-        selectableBlockSummons.includes(summon)
+        selectableBlockSummons.includes(
+            summon
+        )
     ){
 
-        actionArea.style.display="flex";
+        actionArea.style.display =
+            "flex";
+
 
         blockButton.style.display =
-        "inline-block";
+            "inline-block";
+
 
         blockButton.onclick = ()=>{
 
-            executeBlock(summon);
+            executeBlock(
+                summon
+            );
 
         };
+
 
         return;
 
@@ -5598,8 +5641,9 @@ function updateCardAction(card){
 
 
     //----------------------------------
-    // カード使用中は禁止
+    // 他の行動中は禁止
     //----------------------------------
+
     if(
         summonCard ||
         resistUsingCard ||
@@ -5608,43 +5652,133 @@ function updateCardAction(card){
         resistMode ||
         blockMode
     ){
+
         return;
+
     }
 
+
+    //----------------------------------
+    // PLAYERサモンのみ
+    //----------------------------------
+
     if(
-        summon.owner === PLAYER
+        summon.owner !== PLAYER
     ){
 
-        if(
-            summon.attackReady &&
-            !summon.isRest
-        ){
+        return;
 
-            actionArea.style.display="flex";
+    }
 
-            attackButton.style.display =
+
+    //==================================
+    // アタック可能判定
+    //==================================
+
+    const ability =
+        summon.ability;
+
+
+    const summonTurnAttack =
+        ability?.type ===
+        "summonTurnAttack";
+
+
+    const attackReady =
+        summon.attackReady ||
+        summonTurnAttack;
+
+
+    const battleLocked =
+        typeof isBattleLockedByStrongEnemy ===
+            "function"
+            ?
+            isBattleLockedByStrongEnemy(
+                summon
+            )
+            :
+            false;
+
+
+    //----------------------------------
+    // アタック可能
+    //----------------------------------
+
+    if(
+        game.currentPlayer === PLAYER &&
+        attackReady &&
+        !summon.isRest &&
+        !summon.destroyed &&
+        !battleLocked
+    ){
+
+        actionArea.style.display =
+            "flex";
+
+
+        attackButton.style.display =
             "inline-block";
 
-            attackButton.onclick = ()=>{
 
-                startAttack(summon);
+        attackButton.onclick = ()=>{
 
-            };
+            startAttack(
+                summon
+            );
 
-        }
+        };
+
+    }
 
 
-        if(
-            summon.card.effect &&
-            !summon.isRest
-        ){
+    //----------------------------------
+    // アタック不可
+    //----------------------------------
 
-            actionArea.style.display="flex";
+    else if(battleLocked){
 
-            abilityButton.style.display =
+        console.log(
+            "アタックボタン非表示：",
+            summon.card.name,
+            "cannotBattleAgainstStrongEnemy"
+        );
+
+    }
+
+
+    //==================================
+    // 起動能力
+    // アタック可能状態とは独立して判定
+    //==================================
+
+    if(
+        canUseSummonAbility(
+            summon
+        )
+    ){
+
+        actionArea.style.display =
+            "flex";
+
+
+        abilityButton.style.display =
             "inline-block";
 
-        }
+
+        abilityButton.textContent =
+            "能力";
+
+
+        abilityButton.onclick = ()=>{
+
+            startSummonAbility(
+                summon
+            );
+
+
+            closeSummonActionModal();
+
+        };
 
     }
 
@@ -5697,8 +5831,14 @@ function getEffectiveCost(card){
             return;
         }
 
+
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
+
 
         if(!ability){
             return;
@@ -5731,8 +5871,14 @@ function getEffectiveCost(card){
             return;
         }
 
+
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
+
 
         if(!ability){
             return;
@@ -5826,8 +5972,12 @@ function getCurrentCardCost(card, owner = PLAYER){
         }
 
 
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
 
 
         if(!ability){
@@ -5879,8 +6029,12 @@ function getCurrentCardCost(card, owner = PLAYER){
         }
 
 
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
 
 
         if(!ability){

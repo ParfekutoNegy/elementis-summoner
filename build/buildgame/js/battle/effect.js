@@ -3,7 +3,10 @@
 // カード効果発動
 //==================================================
 
-function activateCardEffect(card,target){
+function activateCardEffect(
+    card,
+    target
+){
 
     if(!card.effect){
 
@@ -11,140 +14,165 @@ function activateCardEffect(card,target){
 
     }
 
-    switch(card.effect.type){
 
-case "damage":
-
-
-console.log(
-    "===== マギアダメージ処理 =====",
-    "card=",
-    card.name,
-    "type=",
-    card.type,
-    "element=",
-    card.element,
-    "owner=",
-    card.owner,
-    "baseDamage=",
-    card.effect.value
-);
-
-
-    //----------------------------------
-    // 基本ダメージ
-    //----------------------------------
-
-    let damage =
-        card.effect.value;
-
-
-    //----------------------------------
-    // 火属性マギアか確認
-    //----------------------------------
-
-    if(
-        card.type === "マギア" &&
-        card.elementType === "火"
+    switch(
+        card.effect.type
     ){
 
-        //----------------------------------
-        // 使用者の場を取得
-        //----------------------------------
+        //==================================
+        // ダメージ
+        //==================================
 
-        const field =
-            card.owner === ENEMY
-                ? enemyField
-                : playerField;
+        case "damage":{
 
 
-        //----------------------------------
-        // ウィルオウィスプによる
-        // 火マギアダメージ上昇
-        //----------------------------------
+            console.log(
+                "===== マギアダメージ処理 =====",
+                "card=",
+                card.name,
+                "type=",
+                card.type,
+                "element=",
+                card.element,
+                "owner=",
+                card.owner,
+                "baseDamage=",
+                card.effect.value
+            );
 
-        field.forEach(summon => {
+
+            //----------------------------------
+            // 基本ダメージ
+            //----------------------------------
+
+            let damage =
+                card.effect.value;
+
+
+            //----------------------------------
+            // 火属性マギア
+            //----------------------------------
 
             if(
-                !summon ||
-                !summon.card ||
-                !summon.card.ability
+                card.type === "マギア" &&
+                card.elementType === "火"
             ){
 
-                return;
+                //----------------------------------
+                // 使用者の場
+                //----------------------------------
 
-            }
-
-
-            const ability =
-                summon.card.ability;
-
-
-            if(
-                ability.type ===
-                "fireMagiaDamageUp"
-            ){
-
-                damage +=
-                    ability.value;
+                const field =
+                    card.owner === ENEMY
+                        ? enemyField
+                        : playerField;
 
 
-                console.log(
-                    "火マギアダメージ上昇",
-                    summon.card.name,
-                    "+",
-                    ability.value
+                //----------------------------------
+                // 火マギアダメージ上昇
+                //----------------------------------
+
+                field.forEach(
+                    summon => {
+
+                        if(
+                            !summon ||
+                            summon.destroyed
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // 現在持っている能力
+                        //----------------------------------
+
+                        const ability =
+                            summon.ability;
+
+
+                        if(!ability){
+
+                            return;
+
+                        }
+
+
+                        if(
+                            ability.type ===
+                            "fireMagiaDamageUp"
+                        ){
+
+                            damage +=
+                                ability.value;
+
+
+                            console.log(
+                                "火マギアダメージ上昇",
+                                summon.card.name,
+                                "+",
+                                ability.value
+                            );
+
+                        }
+
+                    }
                 );
 
             }
 
-        });
 
-    }
-
-
-    console.log(
-        "最終マギアダメージ",
-        card.name,
-        damage
-    );
+            console.log(
+                "最終マギアダメージ",
+                card.name,
+                damage
+            );
 
 
-    //----------------------------------
-    // プレイヤーへのダメージ
-    //----------------------------------
+            //----------------------------------
+            // プレイヤーへのダメージ
+            //----------------------------------
 
-    if(
-        target === PLAYER ||
-        target === ENEMY
-    ){
+            if(
+                target === PLAYER ||
+                target === ENEMY
+            ){
 
-        damagePlayer(
-            target,
-            damage,
-            false,
-            card
-        );
+                damagePlayer(
+                    target,
+                    damage,
+                    false,
+                    card
+                );
 
-    }
-
-
-    //----------------------------------
-    // サモンへのダメージ
-    //----------------------------------
-
-    else if(target){
-
-        dealDamage(
-            target,
-            damage,
-            card
-        );
-
-    }
+            }
 
 
-    break;
+            //----------------------------------
+            // サモンへのダメージ
+            //----------------------------------
+
+            else if(target){
+
+                dealDamage(
+                    target,
+                    damage,
+                    card
+                );
+
+            }
+
+
+            break;
+
+        }
+
+
+        //==================================
+        // 手札追加
+        //==================================
 
         case "addHand":
 
@@ -154,6 +182,11 @@ console.log(
 
             break;
 
+
+        //==================================
+        // サモン
+        //==================================
+
         case "summon":
 
             summonCard(
@@ -162,6 +195,11 @@ console.log(
 
             break;
 
+
+        //==================================
+        // カードプレイ
+        //==================================
+
         case "play":
 
             playCard(
@@ -169,6 +207,11 @@ console.log(
             );
 
             break;
+
+
+        //==================================
+        // ダメージ上昇
+        //==================================
 
         case "damageUp":
 
@@ -179,6 +222,11 @@ console.log(
 
             break;
 
+
+        //==================================
+        // パワー上昇
+        //==================================
+
         case "powerUp":
 
             addTemporaryPower(
@@ -188,9 +236,10 @@ console.log(
 
             break;
 
-        //----------------------------------
-        // サモンをヨコ向きにする
-        //----------------------------------
+
+        //==================================
+        // サモンをヨコ向き
+        //==================================
 
         case "horizontal":
 
@@ -199,107 +248,68 @@ console.log(
                 target.view.setHorizontal(
                     true
                 );
-                target.isRest = true;
+
+                target.isRest =
+                    true;
 
             }
 
             break;
 
 
-        case "returnToHand": 
-        board.removeCoolCard(
- 
-            target, 
-            PLAYER 
-        );
- 
-        target.setFaceDown(false);
-        target.area = "hand";  
-        board.addHandCard(  
-            target 
-        );
-  
-        break;
+        //==================================
+        // 手札へ戻す
+        //==================================
 
+        case "returnToHand":
+
+            board.removeCoolCard(
+                target,
+                PLAYER
+            );
+
+            target.setFaceDown(
+                false
+            );
+
+            target.area =
+                "hand";
+
+            board.addHandCard(
+                target
+            );
+
+            break;
+
+
+        //==================================
+        // 攻撃可能
+        //==================================
 
         case "attackReady":
 
-        target.attackReady = true;
+            target.attackReady =
+                true;
 
-        console.log(
-            "このターン攻撃可能",
-            target.card.name
-        );
+            console.log(
+                "このターン攻撃可能",
+                target.card.name
+            );
 
-        break;
+            break;
+
+
+        //==================================
+        // 強制コスト
+        //==================================
 
         case "forceCost":
-        startForceCostSelect(  
-            target  
-        );
-  
-        break;
 
-//==================================
-// カーススモーク
-//==================================
+            startForceCostSelect(
+                target
+            );
 
-case "curseSmoke":{
-
-    if(
-        !target ||
-        !(target instanceof Summon)
-    ){
-
-        break;
-
-    }
-
-
-    //----------------------------------
-    // 状態配列確認
-    //----------------------------------
-
-    if(!Array.isArray(target.status)){
-
-        target.status = [];
-
-    }
-
-
-    //----------------------------------
-    // 重複防止
-    //----------------------------------
-
-    target.status =
-        target.status.filter(
-            status =>
-                status.type !==
-                "curseSmoke"
-        );
-
-
-    //----------------------------------
-    // 状態付与
-    //----------------------------------
-
-    target.status.push({
-
-        type:
-            "curseSmoke"
-
-    });
-
-
-    console.log(
-        "カーススモーク付与",
-        target.card.name
-    );
-
-
-    break;
-
-}
+            break;
 
     }
 
@@ -790,12 +800,11 @@ function canUseResist(card){
 
 function canActionSummon(summon){
 
-
     //----------------------------------
-    // 自分の場のみ
+    // 基本確認
     //----------------------------------
 
-    if(summon.owner !== PLAYER){
+    if(!summon){
 
         return false;
 
@@ -803,11 +812,55 @@ function canActionSummon(summon){
 
 
     //----------------------------------
+    // 自分の場のみ
+    //----------------------------------
+
+    if(
+        summon.owner !== PLAYER
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 破壊済み
+    //----------------------------------
+
+    if(summon.destroyed){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
+    //----------------------------------
+    // 召喚ターン攻撃可能
+    //----------------------------------
+
+    const canAttackOnSummonTurn =
+        ability?.type ===
+        "summonTurnAttack";
+
+
+    //----------------------------------
     // 攻撃可能
     //----------------------------------
 
     if(
-        summon.attackReady &&
+        (
+            summon.attackReady ||
+            canAttackOnSummonTurn
+        ) &&
         !summon.isRest
     ){
 
@@ -815,6 +868,27 @@ function canActionSummon(summon){
 
     }
 
+
+    //----------------------------------
+    // 起動能力使用可能
+    //----------------------------------
+
+    if(
+        typeof canUseSummonAbility ===
+            "function" &&
+        canUseSummonAbility(
+            summon
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 行動不可
+    //----------------------------------
 
     return false;
 

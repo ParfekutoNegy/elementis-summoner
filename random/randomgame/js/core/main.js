@@ -1225,6 +1225,92 @@ function onCardClick(card){
     );
 
 
+//==================================================
+// ドッペルゲンガー
+// 場に出たときのコピー対象選択
+//==================================================
+
+if(doppelgangerTargetMode){
+
+    //----------------------------------
+    // 場のサモン以外は対象外
+    //----------------------------------
+
+    if(
+        card.area !== "field" &&
+        card.area !== "enemyField"
+    ){
+
+        console.log(
+            "ドッペルゲンガー対象外",
+            card.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // サモン取得
+    //----------------------------------
+
+    const targetSummon =
+        findSummonByView(
+            card
+        );
+
+
+    if(!targetSummon){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 破壊済みは対象外
+    //----------------------------------
+
+    if(targetSummon.destroyed){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 自分自身は対象外
+    //----------------------------------
+
+    if(
+        targetSummon ===
+        doppelgangerSource
+    ){
+
+        console.log(
+            "ドッペルゲンガー自身は対象にできません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // コピー対象決定
+    //----------------------------------
+
+    selectDoppelgangerTarget(
+        targetSummon
+    );
+
+
+    return;
+
+}
+
+
 //----------------------------------
 // サモン能力 対象選択中
 //----------------------------------
@@ -1307,7 +1393,7 @@ if(
 //----------------------------------
 
 if(
-    summonAbilitySource?.card?.ability?.type ===
+    summonAbilitySource?.ability?.type ===
     "oncePerTurnPowerOneSummonRemove"
 ){
 
@@ -5949,11 +6035,14 @@ function canUseSummonAbility(summon){
 
 
     //----------------------------------
-    // 能力取得
+    // 現在有効な能力取得
+    //
+    // ドッペルゲンガーの場合は
+    // コピー中の能力を見る
     //----------------------------------
 
     const ability =
-        summon.card.ability;
+        summon.ability;
 
 
     if(!ability){
@@ -6247,11 +6336,11 @@ function startSummonAbility(summon){
 
 
     //----------------------------------
-    // 能力取得
+    // 現在有効な能力取得
     //----------------------------------
 
     const ability =
-        summon.card?.ability;
+        summon.ability;
 
 
     if(!ability){
@@ -6490,11 +6579,11 @@ function updateSummonAbilityTargetHighlight(){
 
 
     //----------------------------------
-    // 能力取得
+    // 現在有効な能力取得
     //----------------------------------
 
     const ability =
-        summonAbilitySource.card.ability;
+        summonAbilitySource.ability;
 
 
     if(!ability){
@@ -6771,20 +6860,40 @@ function resolveSummonAbility(){
 
 
     //----------------------------------
-    // 能力取得
+    // 現在有効な能力取得
+    //
+    // 通常サモン
+    // → 本来の能力
+    //
+    // ドッペルゲンガー
+    // → コピーしている能力
     //----------------------------------
 
     const ability =
-        summonAbilitySource.card.ability;
+        summonAbilitySource.ability;
 
 
     if(!ability){
+
+        console.warn(
+            "サモン能力解決失敗：能力なし",
+            summonAbilitySource.card.name
+        );
 
         resetSummonAbilityState();
 
         return;
 
     }
+
+
+    console.log(
+        "サモン能力解決開始",
+        "使用=",
+        summonAbilitySource.card.name,
+        "現在能力=",
+        ability.type
+    );
 
 
     //----------------------------------
@@ -6795,6 +6904,8 @@ function resolveSummonAbility(){
 
 
         //==================================
+        // ワイバーン
+        //
         // ターン1回
         // サモン1体にダメージ
         //==================================
@@ -6902,6 +7013,8 @@ function resolveSummonAbility(){
 
 
         //==================================
+        // ケンタウロス
+        //
         // ターン1回
         // サモン1体をこのターン中
         // パワーアップ
@@ -7013,7 +7126,8 @@ function resolveSummonAbility(){
 
         }
 
-                //==================================
+
+        //==================================
         // ラミア
         //
         // パワー1のサモンを
@@ -7139,6 +7253,29 @@ function resolveSummonAbility(){
                 target
             );
 
+
+            break;
+
+        }
+
+
+        //==================================
+        // 未対応能力
+        //==================================
+
+        default:{
+
+            console.warn(
+                "resolveSummonAbility：未対応能力",
+                ability.type,
+                summonAbilitySource.card.name
+            );
+
+            resetSummonAbilityState();
+
+            updateGameState();
+
+            updateButtons();
 
             break;
 
@@ -7987,9 +8124,13 @@ function updateCardAction(card){
     // アタック可能判定
     //==================================
 
+    const ability =
+        summon.ability;
+
+
     const summonTurnAttack =
-        summon.card.ability?.type ===
-            "summonTurnAttack";
+        ability?.type ===
+        "summonTurnAttack";
 
 
     const attackReady =
@@ -8139,8 +8280,14 @@ function getEffectiveCost(card){
             return;
         }
 
+
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
+
 
         if(!ability){
             return;
@@ -8173,8 +8320,14 @@ function getEffectiveCost(card){
             return;
         }
 
+
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
+
 
         if(!ability){
             return;
@@ -8268,8 +8421,12 @@ function getCurrentCardCost(card, owner = PLAYER){
         }
 
 
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
 
 
         if(!ability){
@@ -8321,8 +8478,12 @@ function getCurrentCardCost(card, owner = PLAYER){
         }
 
 
+        //----------------------------------
+        // 現在有効な能力
+        //----------------------------------
+
         const ability =
-            summon.card.ability;
+            summon.ability;
 
 
         if(!ability){
@@ -8360,7 +8521,6 @@ function getCurrentCardCost(card, owner = PLAYER){
     );
 
 }
-
 
 //======================================
 // バトルログ
@@ -10179,8 +10339,12 @@ function canTargetBySummonAbility(
                 }
 
 
+                //----------------------------------
+                // 現在有効な能力を見る
+                //----------------------------------
+
                 return (
-                    summon.card.ability?.type ===
+                    summon.ability?.type ===
                     "protectFromEnemySummonAbility"
                 );
 

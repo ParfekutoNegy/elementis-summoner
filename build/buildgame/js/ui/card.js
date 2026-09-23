@@ -601,34 +601,83 @@ updateSelection(){
 
 updateCurrentPower(summon){
 
+    //----------------------------------
+    // 表示要素確認
+    //----------------------------------
+
     if(!this.currentPowerElement){
 
         return;
 
     }
 
+
     //----------------------------------
-    // 変動なし
+    // サモン確認
     //----------------------------------
 
-    if(summon.powerBonus === 0){
+    if(
+        !summon ||
+        !summon.card
+    ){
 
         this.currentPowerElement.style.display =
-        "none";
+            "none";
 
         return;
 
     }
 
+
     //----------------------------------
-    // 表示
+    // 元のパワー
+    //----------------------------------
+
+    const basePower =
+        summon.card.power;
+
+
+    //----------------------------------
+    // 現在のパワー
+    //
+    // powerBonusだけでなく
+    // ワームなどの常時能力も含める
+    //----------------------------------
+
+    const currentPower =
+        getPower(summon);
+
+
+    //----------------------------------
+    // パワー変動なし
+    //----------------------------------
+
+    if(
+        currentPower ===
+        basePower
+    ){
+
+        this.currentPowerElement.style.display =
+            "none";
+
+        this.currentPowerElement.textContent =
+            "";
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // パワー変動あり
     //----------------------------------
 
     this.currentPowerElement.style.display =
-    "flex";
+        "flex";
+
 
     this.currentPowerElement.textContent =
-    getPower(summon);
+        currentPower;
 
 }
 

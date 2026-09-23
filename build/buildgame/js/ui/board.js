@@ -721,7 +721,8 @@ updateCoolCount(){
     // 既存表示を削除
     //----------------------------------
 
-    cardArea.innerHTML = "";
+    cardArea.innerHTML =
+        "";
 
 
     //----------------------------------
@@ -763,6 +764,23 @@ updateCoolCount(){
 
     countArea.textContent =
         `クール×${this.playerCoolCards.length}`;
+
+
+    //==================================
+    // 動的パワーを持つサモンの表示更新
+    //
+    // ワーム：
+    // 相手クール1枚につきパワー＋1
+    //==================================
+
+    if(
+        typeof refreshDynamicPowerSummons ===
+        "function"
+    ){
+
+        refreshDynamicPowerSummons();
+
+    }
 
 }
 }
@@ -849,11 +867,14 @@ function clickEnemyPlayer(){
 
 
         //----------------------------------
-        // 能力取得
+        // 現在持っている能力を取得
+        //
+        // ドッペルゲンガーの
+        // コピー能力もここに入る
         //----------------------------------
 
         const ability =
-            summonAbilitySource.card.ability;
+            summonAbilitySource.ability;
 
 
         if(!ability){

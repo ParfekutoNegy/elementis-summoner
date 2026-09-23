@@ -24,9 +24,27 @@ class Summon{
 
         this.abilityUsedThisTurn = false;
 
+
+        //==================================
+        // 現在このサモンが持っている能力
+        //==================================
+
+        this.ability =
+            card.ability ?? null;
+
+
+        //==================================
+        // ドッペルゲンガー
+        // コピー元
+        //==================================
+
+        this.abilitySource =
+            null;
+
     }
 
 }
+
 
 function dealDamage(
     target,
@@ -169,9 +187,218 @@ function dealDamage(
 
 function getPower(summon){
 
-    return (
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !summon ||
+        !summon.card
+    ){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 基本パワー
+    //----------------------------------
+
+    let power =
         summon.card.power +
-        summon.powerBonus
+        summon.powerBonus;
+
+
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
+    //==================================
+    // ワーム
+    // 相手クール1枚につきパワー＋1
+    //==================================
+
+    if(
+        ability?.type ===
+        "powerUpByEnemyCool"
+    ){
+
+        const opponentCoolCards =
+            summon.owner === PLAYER
+                ? enemyCoolCards
+                : board.playerCoolCards;
+
+
+        const value =
+            ability.value ?? 1;
+
+
+        power +=
+            opponentCoolCards.length *
+            value;
+
+    }
+
+
+    //==================================
+    // ミノタウロス
+    // 自分のクールの【火】1枚につき＋1
+    //==================================
+
+    if(
+        ability?.type ===
+        "powerUpByOwnFireCool"
+    ){
+
+        const ownCoolCards =
+            summon.owner === PLAYER
+                ? board.playerCoolCards
+                : enemyCoolCards;
+
+
+        const fireCardCount =
+            ownCoolCards.filter(
+                card =>
+                    card &&
+                    card.elementType === "火"
+            ).length;
+
+
+        const value =
+            ability.value ?? 1;
+
+
+        power +=
+            fireCardCount *
+            value;
+
+    }
+
+
+    return power;
+
+}
+
+function refreshDynamicPowerSummons(){
+
+    //----------------------------------
+    // フィールド確認
+    //----------------------------------
+
+    if(
+        typeof playerField ===
+            "undefined" ||
+        typeof enemyField ===
+            "undefined"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // コピー能力状態確認
+    //----------------------------------
+
+    validateAllDoppelgangerAbilities();
+
+
+    //----------------------------------
+    // PLAYER・CPU両方の場
+    //----------------------------------
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
+
+
+    //----------------------------------
+    // 各サモンを確認
+    //----------------------------------
+
+    allSummons.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 現在持っている能力
+            //----------------------------------
+
+            const abilityType =
+                summon.ability?.type;
+
+
+            //==================================
+            // 動的パワー能力
+            //==================================
+            //
+            // ワーム
+            // powerUpByEnemyCool
+            //
+            // ミノタウロス
+            // powerUpByOwnFireCool
+            //
+            //==================================
+
+            if(
+                abilityType ===
+                    "powerUpByEnemyCool" ||
+
+                abilityType ===
+                    "powerUpByOwnFireCool"
+            ){
+
+                console.log(
+                    "動的パワー更新",
+                    summon.card.name,
+                    "現在パワー=",
+                    getPower(summon)
+                );
+
+
+                if(
+                    summon.view &&
+                    typeof summon.view.updateCurrentPower ===
+                        "function"
+                ){
+
+                    summon.view.updateCurrentPower(
+                        summon
+                    );
+
+                }
+
+
+                if(
+                    summon.view &&
+                    typeof summon.view.refresh ===
+                        "function"
+                ){
+
+                    summon.view.refresh();
+
+                }
+
+            }
+
+        }
     );
 
 }
@@ -367,6 +594,308 @@ card.refresh();
 
 }
 
+//==================================================
+// ドッペルゲンガー
+// 場に出たとき能力コピー
+//==================================================
+
+let doppelgangerTargetMode = false;
+
+let doppelgangerSource = null;
+
+
+//==================================================
+// ドッペルゲンガー
+// 対象選択開始
+//==================================================
+
+function startDoppelgangerTargetSelect(
+    source
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !source ||
+        !source.card
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // コピー可能なサモン取得
+    //----------------------------------
+
+    const targets = [
+        ...playerField,
+        ...enemyField
+    ].filter(
+        summon =>
+            summon &&
+            summon !== source &&
+            !summon.destroyed
+    );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(targets.length === 0){
+
+        console.log(
+            "ドッペルゲンガー：コピー対象なし"
+        );
+
+        return;
+
+    }
+
+
+    //==================================
+    // PLAYER
+    //==================================
+
+    if(source.owner === PLAYER){
+
+        doppelgangerTargetMode =
+            true;
+
+        doppelgangerSource =
+            source;
+
+
+        //----------------------------------
+        // 対象発光
+        //----------------------------------
+
+        targets.forEach(
+            summon => {
+
+                if(
+                    summon.view &&
+                    typeof summon.view.setTarget ===
+                    "function"
+                ){
+
+                    summon.view.setTarget(
+                        true
+                    );
+
+                }
+
+            }
+        );
+
+
+        //----------------------------------
+        // 操作案内
+        //----------------------------------
+
+        showActionGuide(
+            "能力をコピーするサモンを選んでください"
+        );
+
+
+        console.log(
+            "ドッペルゲンガー：対象選択開始",
+            targets.map(
+                summon =>
+                    summon.card.name
+            )
+        );
+
+
+        updateButtons();
+
+        return;
+
+    }
+
+
+    //==================================
+    // CPU
+    // 後で実装
+    //==================================
+
+    console.log(
+        "CPUドッペルゲンガー：",
+        "コピー対象選択は後で実装"
+    );
+
+}
+
+//==================================================
+// ドッペルゲンガー
+// コピー対象決定
+//==================================================
+
+function selectDoppelgangerTarget(
+    target
+){
+
+    //----------------------------------
+    // 状態確認
+    //----------------------------------
+
+    if(
+        !doppelgangerTargetMode ||
+        !doppelgangerSource ||
+        !target
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 自分自身は不可
+    //----------------------------------
+
+    if(
+        target ===
+        doppelgangerSource
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 対象が現在場にいるか
+    //----------------------------------
+
+    const targetOnField =
+        !target.destroyed &&
+        (
+            playerField.includes(
+                target
+            ) ||
+            enemyField.includes(
+                target
+            )
+        );
+
+
+    if(!targetOnField){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // コピー元保存
+    //----------------------------------
+
+    doppelgangerSource.abilitySource =
+        target;
+
+
+    //----------------------------------
+    // 能力コピー
+    //
+    // ★ target.ability ではなく
+    // target.card.ability
+    //
+    // これにより
+    // ドッペルゲンガーをコピーした場合は
+    // 本来の copySummonAbility のみ得る
+    //----------------------------------
+
+    doppelgangerSource.ability =
+        target.card.ability ?? null;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "ドッペルゲンガー能力コピー"
+    );
+
+    console.log(
+        "対象：",
+        target.card.name
+    );
+
+    console.log(
+        "取得能力：",
+        doppelgangerSource.ability
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // 発光解除
+    //----------------------------------
+
+    [
+        ...playerField,
+        ...enemyField
+    ].forEach(
+        summon => {
+
+            if(
+                summon &&
+                summon.view &&
+                typeof summon.view.setTarget ===
+                    "function"
+            ){
+
+                summon.view.setTarget(
+                    false
+                );
+
+            }
+
+        }
+    );
+
+
+    //----------------------------------
+    // ドッペルゲンガー選択状態終了
+    //----------------------------------
+
+    doppelgangerTargetMode =
+        false;
+
+    doppelgangerSource =
+        null;
+
+
+    //----------------------------------
+    // 操作案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    refreshDynamicPowerSummons();
+
+    updateGameState();
+
+    updateButtons();
+
+
+    return true;
+
+}
 
 //==================================================
 // サモン能力
@@ -375,16 +904,43 @@ card.refresh();
 function applySummonAbility(summon){
 
     if(!summon){
+
         return;
+
     }
 
 
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
     const ability =
-        summon.card.ability;
+        summon.ability;
 
 
     if(!ability){
+
         return;
+
+    }
+
+
+    //==================================
+    // ドッペルゲンガー
+    // 場に出たとき能力コピー
+    //==================================
+
+    if(
+        ability.type ===
+        "copySummonAbility"
+    ){
+
+        startDoppelgangerTargetSelect(
+            summon
+        );
+
+        return;
+
     }
 
 
@@ -393,7 +949,8 @@ function applySummonAbility(summon){
     //----------------------------------
 
     if(
-        ability.type === "turnPowerUp"
+        ability.type ===
+        "turnPowerUp"
     ){
 
         summon.powerBonus =
@@ -430,10 +987,13 @@ function applySummonAbility(summon){
     //----------------------------------
 
     if(
-        ability.type === "summonTurnAttack"
+        ability.type ===
+        "summonTurnAttack"
     ){
 
-        summon.attackReady = true;
+        summon.attackReady =
+            true;
+
 
         console.log(
             "召喚ターン攻撃可能",
@@ -451,6 +1011,13 @@ function applySummonAbility(summon){
 function triggerSummonAbilitiesOnMagiaPlay(
     owner
 ){
+
+    //----------------------------------
+    // コピー能力状態確認
+    //----------------------------------
+
+    validateAllDoppelgangerAbilities();
+
 
     //----------------------------------
     // マギアをプレイした側のフィールド
@@ -480,8 +1047,12 @@ function triggerSummonAbilitiesOnMagiaPlay(
         }
 
 
+        //----------------------------------
+        // 現在持っている能力
+        //----------------------------------
+
         const ability =
-            summon.card?.ability;
+            summon.ability;
 
 
         if(!ability){
@@ -507,18 +1078,12 @@ function triggerSummonAbilitiesOnMagiaPlay(
                 ) || 0;
 
 
-            if(
-                value <= 0
-            ){
+            if(value <= 0){
 
                 continue;
 
             }
 
-
-            //==================================
-            // 既存の一時パワーシステムを使用
-            //==================================
 
             addTemporaryPower(
                 summon,
@@ -580,11 +1145,20 @@ function startSummonAbilityCost(){
 
 
     //----------------------------------
-    // 能力確認
+    // コピー能力状態確認
+    //----------------------------------
+
+    validateDoppelgangerAbility(
+        summonAbilitySource
+    );
+
+
+    //----------------------------------
+    // 現在持っている能力
     //----------------------------------
 
     const ability =
-        summonAbilitySource.card.ability;
+        summonAbilitySource.ability;
 
 
     if(!ability){
@@ -671,12 +1245,11 @@ function startSummonAbilityCost(){
         false;
 
 
-//----------------------------------
-// 通常の使用可能カード発光を解除
-//----------------------------------
+    //----------------------------------
+    // 使用可能カード発光更新
+    //----------------------------------
 
-updateUsableCardHighlight();
-
+    updateUsableCardHighlight();
 
 
     //----------------------------------
@@ -719,14 +1292,9 @@ updateUsableCardHighlight();
     );
 
 
-    //----------------------------------
-    // ボタン更新
-    //----------------------------------
-
     updateButtons();
 
 }
-
 //==================================================
 // サモン能力
 // コストカード選択
@@ -768,13 +1336,12 @@ function selectSummonAbilityCostCard(
     // 必要コスト
     //----------------------------------
 
-    const cost =
-        Number(
-            summonAbilitySource
-                .card
-                .ability
-                ?.cost
-        ) || 0;
+const cost =
+    Number(
+        summonAbilitySource
+            .ability
+            ?.cost
+    ) || 0;
 
 
     //----------------------------------
@@ -888,11 +1455,14 @@ function paySummonAbilityCost(){
 
 
     //----------------------------------
-    // 能力取得
+    // 現在持っている能力を取得
+    //
+    // ドッペルゲンガーの
+    // コピー能力もここに入る
     //----------------------------------
 
     const ability =
-        summonAbilitySource.card.ability;
+        summonAbilitySource.ability;
 
 
     if(!ability){
@@ -960,6 +1530,11 @@ function paySummonAbilityCost(){
     console.log(
         "使用サモン：",
         source.card.name
+    );
+
+    console.log(
+        "能力：",
+        ability.type
     );
 
     console.log(
@@ -1077,8 +1652,6 @@ function paySummonAbilityCost(){
 
             //----------------------------------
             // 通常のプレイヤーダメージ処理
-            //
-            // マギア等と同じダメージ処理を通す
             //----------------------------------
 
             damagePlayer(
@@ -2253,3 +2826,154 @@ function cancelCatSithMagiaPlay(){
     return true;
 
 }
+
+//==================================================
+// ドッペルゲンガー
+// コピー能力有効確認
+//==================================================
+
+function validateDoppelgangerAbility(
+    summon
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(!summon){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // コピー元なし
+    //----------------------------------
+
+    if(!summon.abilitySource){
+
+        return false;
+
+    }
+
+
+    const source =
+        summon.abilitySource;
+
+
+    //----------------------------------
+    // コピー元が場に存在するか
+    //----------------------------------
+
+    const sourceOnField =
+        !source.destroyed &&
+        (
+            playerField.includes(
+                source
+            ) ||
+            enemyField.includes(
+                source
+            )
+        );
+
+
+    //----------------------------------
+    // まだ場にいる
+    //----------------------------------
+
+    if(sourceOnField){
+
+        return false;
+
+    }
+
+
+    console.log(
+        "ドッペルゲンガー：",
+        "コピー元が場を離れたため能力消失",
+        source.card?.name
+    );
+
+
+    //----------------------------------
+    // コピー能力消失
+    //----------------------------------
+
+    summon.ability =
+        null;
+
+    summon.abilitySource =
+        null;
+
+
+    //==================================
+    // パワー表示を即時更新
+    //==================================
+
+    if(
+        summon.view &&
+        typeof summon.view.updateCurrentPower ===
+            "function"
+    ){
+
+        summon.view.updateCurrentPower(
+            summon
+        );
+
+    }
+
+
+    //----------------------------------
+    // カード表示更新
+    //----------------------------------
+
+    if(
+        summon.view &&
+        typeof summon.view.refresh ===
+            "function"
+    ){
+
+        summon.view.refresh();
+
+    }
+
+
+    console.log(
+        "ドッペルゲンガー能力消失後",
+        summon.card.name,
+        "現在パワー=",
+        getPower(summon)
+    );
+
+
+    return true;
+
+}
+
+
+//==================================================
+// ドッペルゲンガー
+// 全コピー能力状態更新
+//==================================================
+
+function validateAllDoppelgangerAbilities(){
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
+
+
+    allSummons.forEach(
+        summon => {
+
+            validateDoppelgangerAbility(
+                summon
+            );
+
+        }
+    );
+
+}
+

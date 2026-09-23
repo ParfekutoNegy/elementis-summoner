@@ -22,6 +22,25 @@ class Summon{
 
         this.view = card;
 
+        this.abilityUsedThisTurn = false;
+
+
+        //==================================
+        // 現在このサモンが持っている能力
+        //==================================
+
+        this.ability =
+            card.ability ?? null;
+
+
+        //==================================
+        // ドッペルゲンガー
+        // コピー元
+        //==================================
+
+        this.abilitySource =
+            null;
+
     }
 
 }
@@ -146,10 +165,100 @@ function dealDamage(
 
 function getPower(summon){
 
-    return (
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !summon ||
+        !summon.card
+    ){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 基本パワー
+    //----------------------------------
+
+    let power =
         summon.card.power +
-        summon.powerBonus
-    );
+        summon.powerBonus;
+
+
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
+    //==================================
+    // ワーム
+    // 相手クール1枚につきパワー＋1
+    //==================================
+
+    if(
+        ability?.type ===
+        "powerUpByEnemyCool"
+    ){
+
+        const opponentCoolCards =
+            summon.owner === PLAYER
+                ? enemyCoolCards
+                : board.playerCoolCards;
+
+
+        const value =
+            ability.value ?? 1;
+
+
+        power +=
+            opponentCoolCards.length *
+            value;
+
+    }
+
+
+    //==================================
+    // ミノタウロス
+    // 自分のクールの【火】1枚につき＋1
+    //==================================
+
+    if(
+        ability?.type ===
+        "powerUpByOwnFireCool"
+    ){
+
+        const ownCoolCards =
+            summon.owner === PLAYER
+                ? board.playerCoolCards
+                : enemyCoolCards;
+
+
+        const fireCardCount =
+            ownCoolCards.filter(
+                card =>
+                    card &&
+                    card.elementType === "火"
+            ).length;
+
+
+        const value =
+            ability.value ?? 1;
+
+
+        power +=
+            fireCardCount *
+            value;
+
+    }
+
+
+    return power;
 
 }
 
@@ -352,16 +461,43 @@ card.refresh();
 function applySummonAbility(summon){
 
     if(!summon){
+
         return;
+
     }
 
 
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
     const ability =
-        summon.card.ability;
+        summon.ability;
 
 
     if(!ability){
+
         return;
+
+    }
+
+
+    //==================================
+    // ドッペルゲンガー
+    // 場に出たとき能力コピー
+    //==================================
+
+    if(
+        ability.type ===
+        "copySummonAbility"
+    ){
+
+        startDoppelgangerTargetSelect(
+            summon
+        );
+
+        return;
+
     }
 
 
@@ -370,7 +506,8 @@ function applySummonAbility(summon){
     //----------------------------------
 
     if(
-        ability.type === "turnPowerUp"
+        ability.type ===
+        "turnPowerUp"
     ){
 
         summon.powerBonus =
@@ -407,10 +544,13 @@ function applySummonAbility(summon){
     //----------------------------------
 
     if(
-        ability.type === "summonTurnAttack"
+        ability.type ===
+        "summonTurnAttack"
     ){
 
-        summon.attackReady = true;
+        summon.attackReady =
+            true;
+
 
         console.log(
             "召喚ターン攻撃可能",

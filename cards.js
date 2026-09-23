@@ -764,7 +764,11 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"folklore",
-        image: "images/058-ドッペルゲンガー.jpg"
+        image: "images/058-ドッペルゲンガー.jpg",
+        text:"このカードが場に出たとき、場のサモン１体を対象に選ぶ。選んだサモンが場にある限り、このカードは同じ能力を持つ。",
+        ability:{
+            type:"copySummonAbility"
+        }
     },
     {
         id: 59,
@@ -774,7 +778,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"folklore",
-        image: "images/059-ワーム.jpg"
+        image: "images/059-ワーム.jpg",
+        text:"このカードのパワーは相手のクールゾーンのカード１枚につき＋１される。",
+        ability:{
+            type:"powerUpByEnemyCool",
+            value:1
+        }
     },
     {
         id: 60,
@@ -830,7 +839,12 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"mythology",
-        image: "images/065-ミノタウロス.jpg"
+        image: "images/065-ミノタウロス.jpg",
+        text:"このカードは自分のクールゾーンの【火】カード１枚につきパワーが＋１される。",
+        ability:{
+            type:"powerUpByOwnFireCool",
+            value:1
+        }
     },
     {
         id: 66,

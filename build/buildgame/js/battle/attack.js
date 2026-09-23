@@ -48,6 +48,10 @@ function startAttack(summon){
     }
 
 
+    //----------------------------------
+    // サモン確認
+    //----------------------------------
+
     if(!summon){
 
         return;
@@ -74,10 +78,33 @@ function startAttack(summon){
 
 
     //----------------------------------
-    // 召喚したターンは攻撃不可
+    // 現在持っている能力
     //----------------------------------
 
-    if(!summon.attackReady){
+    const ability =
+        summon.ability;
+
+
+    //----------------------------------
+    // 召喚ターン攻撃可能能力
+    //----------------------------------
+
+    const canAttackOnSummonTurn =
+        ability?.type ===
+        "summonTurnAttack";
+
+
+    //----------------------------------
+    // 召喚したターンは通常攻撃不可
+    //
+    // summonTurnAttack を現在持っている場合は
+    // 召喚ターンでも攻撃可能
+    //----------------------------------
+
+    if(
+        !summon.attackReady &&
+        !canAttackOnSummonTurn
+    ){
 
         console.log(
             "召喚したターンなので攻撃できません"
@@ -104,12 +131,38 @@ function startAttack(summon){
 
 
     //----------------------------------
+    // 強敵存在時
+    // アタック不可能力
+    //----------------------------------
+
+    if(
+        typeof isOgreBattleLocked ===
+            "function" &&
+        isOgreBattleLocked(
+            summon
+        )
+    ){
+
+        console.log(
+            "能力により攻撃できません",
+            summon.card.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
     // 攻撃開始
     //----------------------------------
 
-    attackingSummon = summon;
+    attackingSummon =
+        summon;
 
-    attackMode = true;
+
+    attackMode =
+        true;
 
 
     //----------------------------------
@@ -121,15 +174,25 @@ function startAttack(summon){
     );
 
 
+    //----------------------------------
+    // 攻撃対象発光
+    //----------------------------------
+
     highlightAttackTargets();
 
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
 
     updateGameState();
 
 
     console.log(
         "攻撃開始",
-        summon.card.name
+        summon.card.name,
+        "現在能力=",
+        ability?.type ?? "なし"
     );
 
 }
@@ -254,11 +317,19 @@ function isOgreBattleLocked(summon){
 
 
     //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
+    //----------------------------------
     // 対象能力を持っているか
     //----------------------------------
 
     if(
-        summon.card.ability?.type !==
+        ability?.type !==
         "cannotBattleAgainstStrongEnemy"
     ){
 
@@ -416,9 +487,9 @@ function isOgreBattleLocked(summon){
 
 }
 
-//==================================================
+//======================================
 // 攻撃可能判定
-//==================================================
+//======================================
 
 function canAttack(target){
 
@@ -430,25 +501,11 @@ function canAttack(target){
 
 
     //----------------------------------
-    // オーガ能力
-    //
-    // 相手の場に自身以上のパワーの
-    // サモンがいる場合アタック不可
+    // 現在持っている能力
     //----------------------------------
 
-    if(
-        isOgreBattleLocked(
-            attackingSummon
-        )
-    ){
-
-        console.log(
-            "オーガ能力によりアタック不可"
-        );
-
-        return false;
-
-    }
+    const ability =
+        attackingSummon.ability;
 
 
     //----------------------------------
@@ -457,7 +514,7 @@ function canAttack(target){
 
     if(
         !attackingSummon.attackReady &&
-        attackingSummon.card.ability?.type !==
+        ability?.type !==
         "summonTurnAttack"
     ){
 
@@ -521,7 +578,7 @@ function canAttack(target){
             //----------------------------------
 
             if(
-                attackingSummon.card.ability?.type !==
+                ability?.type !==
                 "attackVerticalSummon"
             ){
 
@@ -533,10 +590,6 @@ function canAttack(target){
 
             }
 
-
-            //----------------------------------
-            // タテ向き攻撃可能
-            //----------------------------------
 
             console.log(
                 "タテ向きサモンへの攻撃可能",
@@ -680,8 +733,12 @@ function executeAttack(
         target.isRest
     ){
 
+        //----------------------------------
+        // 現在持っている能力
+        //----------------------------------
+
         const ability =
-            attackingSummon.card?.ability;
+            attackingSummon.ability;
 
 
         //----------------------------------
@@ -700,13 +757,7 @@ function executeAttack(
                 ) || 0;
 
 
-            if(
-                value > 0
-            ){
-
-                //----------------------------------
-                // 既存の一時パワーシステム
-                //----------------------------------
+            if(value > 0){
 
                 addTemporaryPower(
                     attackingSummon,
@@ -769,9 +820,6 @@ function executeAttack(
 
         //----------------------------------
         // ダメージ交換
-        //
-        // 攻撃時能力によるパワー上昇後の
-        // パワーでダメージを与える
         //----------------------------------
 
         dealDamage(
@@ -1009,12 +1057,23 @@ function executeAttack(
 //======================================
 function finishAttack(){
 
+    //----------------------------------
+    // 攻撃対象発光解除
+    //----------------------------------
 
     clearAttackHighlight();
 
 
+    //----------------------------------
+    // 攻撃モード終了
+    //----------------------------------
+
     attackMode = false;
 
+
+    //----------------------------------
+    // 攻撃終了ログ
+    //----------------------------------
 
     if(attackingSummon){
 
@@ -1026,60 +1085,66 @@ function finishAttack(){
     }
 
 
+    //----------------------------------
+    // 攻撃状態解除
+    //----------------------------------
+
     attackingSummon = null;
 
     attackTarget = null;
 
 
+    //==================================
+    // 重要
+    //==================================
+    //
+    // ここではレジスト状態を解除しない。
+    //
+    // currentResistEvent
+    // resistMode
+    // selectableResistCards
+    // resistUsingCard
+    // selectedResistCostCards
+    // resistCostConfirm
+    //
+    // は finishResist() 側で終了させる。
+    //
+    // レジスト解決前にここで消すと、
+    // ストーンガード等で軽減した後の
+    // 残りダメージが適用されなくなる。
+    //==================================
+
 
     //----------------------------------
-    // レジスト状態終了
+    // ブロック発光解除
     //----------------------------------
 
-    for(const card of selectableResistCards){
-        card.setSelected(false);
+    for(
+        const summon of
+        selectableBlockSummons
+    ){
+
+        summon.view.setHighlight(
+            false
+        );
+
     }
 
-    resistMode = false;
 
-    selectableResistCards = [];
+    //----------------------------------
+    // ブロック状態終了
+    //----------------------------------
 
-    resistUsingCard = null;
+    blockMode = false;
 
-    selectedResistCostCards = [];
+    selectableBlockSummons = [];
 
-    resistCostConfirm = false;
-
+    blockingSummon = null;
 
 
     //----------------------------------
-    // イベント終了
+    // ゲーム状態更新
     //----------------------------------
-
-    currentResistEvent = null;
-
-//----------------------------------
-// ブロック発光解除
-//----------------------------------
-
-for(const summon of selectableBlockSummons){
-
-    summon.view.setHighlight(
-        false
-    );
-
-}
-
-    //----------------------------------
-// ブロック状態終了
-//----------------------------------
-
-blockMode = false;
-
-selectableBlockSummons = [];
-
-blockingSummon = null;
-
 
     updateGameState();
 
@@ -1096,9 +1161,14 @@ function highlightAttackTargets(){
     // 攻撃者の能力確認
     //----------------------------------
 
+    const ability =
+        attackingSummon
+            ? attackingSummon.ability
+            : null;
+
+
     const canAttackVertical =
-        attackingSummon &&
-        attackingSummon.card.ability?.type ===
+        ability?.type ===
         "attackVerticalSummon";
 
 
@@ -1106,38 +1176,43 @@ function highlightAttackTargets(){
     // 相手サモン
     //----------------------------------
 
-    enemyField.forEach(summon=>{
+    enemyField.forEach(
+        summon => {
 
-        //----------------------------------
-        // 通常
-        // ヨコ向きサモンのみ
-        //----------------------------------
+            //----------------------------------
+            // 通常
+            // ヨコ向きサモンのみ
+            //----------------------------------
 
-        if(summon.isRest){
+            if(summon.isRest){
 
-            summon.view.setTarget(true);
+                summon.view.setTarget(
+                    true
+                );
 
-            return;
+                return;
+
+            }
+
+
+            //----------------------------------
+            // タテ向きサモンも攻撃可能
+            //----------------------------------
+
+            if(canAttackVertical){
+
+                summon.view.setTarget(
+                    true
+                );
+
+            }
 
         }
-
-
-        //----------------------------------
-        // ケルピー
-        // タテ向きサモンも対象
-        //----------------------------------
-
-        if(canAttackVertical){
-
-            summon.view.setTarget(true);
-
-        }
-
-    });
+    );
 
 
     //----------------------------------
-    // プレイヤー
+    // CPUプレイヤー
     //----------------------------------
 
     const icon =
@@ -1194,6 +1269,7 @@ function clearAttackHighlight(){
 //======================================
 // プレイヤーダメージ
 //======================================
+
 function damagePlayer(
     player,
     damage,
@@ -1222,17 +1298,15 @@ function damagePlayer(
 
     const field =
         player === PLAYER
-        ?
-        playerField
-        :
-        enemyField;
+            ? playerField
+            : enemyField;
 
 
     const gargoyle =
         field.find(
             summon =>
                 !summon.destroyed &&
-                summon.card.ability?.type ===
+                summon.ability?.type ===
                 "reducePlayerDamage"
         );
 
@@ -1240,7 +1314,7 @@ function damagePlayer(
     if(gargoyle){
 
         const reduction =
-            gargoyle.card.ability.value ?? 1;
+            gargoyle.ability?.value ?? 1;
 
 
         damage =
@@ -1252,6 +1326,8 @@ function damagePlayer(
 
         console.log(
             "ガーゴイル：ダメージ軽減",
+            "能力保持サモン=",
+            gargoyle.card.name,
             "元ダメージ=",
             originalDamage,
             "軽減=",
@@ -1283,10 +1359,8 @@ function damagePlayer(
 
             const damageTarget =
                 player === PLAYER
-                ?
-                "PLAYER"
-                :
-                "CPU";
+                    ? "PLAYER"
+                    : "CPU";
 
 
             addBattleLog(
@@ -1394,10 +1468,8 @@ function damagePlayer(
 
         const damageTarget =
             player === PLAYER
-            ?
-            "PLAYER"
-            :
-            "CPU";
+                ? "PLAYER"
+                : "CPU";
 
 
         addBattleLog(
@@ -1847,11 +1919,19 @@ function updateAttackHighlight(){
 
 
             //----------------------------------
+            // 現在持っている能力
+            //----------------------------------
+
+            const ability =
+                summon.ability;
+
+
+            //----------------------------------
             // 召喚ターン攻撃可能能力
             //----------------------------------
 
             const canAttackOnSummonTurn =
-                summon.card.ability?.type ===
+                ability?.type ===
                 "summonTurnAttack";
 
 
@@ -1931,14 +2011,30 @@ function updateAttackHighlight(){
 function findBlockSummons(){
 
     //----------------------------------
+    // 攻撃者確認
+    //----------------------------------
+
+    if(!attackingSummon){
+
+        return [];
+
+    }
+
+
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const attackerAbility =
+        attackingSummon.ability;
+
+
+    //----------------------------------
     // 攻撃者のブロック不可能力
     //----------------------------------
 
     if(
-        attackingSummon &&
-        attackingSummon.card &&
-        attackingSummon.card.ability &&
-        attackingSummon.card.ability.type ===
+        attackerAbility?.type ===
         "cannotBeBlocked"
     ){
 
@@ -1946,6 +2042,7 @@ function findBlockSummons(){
             "ブロック不可",
             attackingSummon.card.name
         );
+
 
         return [];
 
@@ -1961,10 +2058,8 @@ function findBlockSummons(){
 
     const field =
         attackingSummon.owner === PLAYER
-        ?
-        enemyField
-        :
-        playerField;
+            ? enemyField
+            : playerField;
 
 
     //----------------------------------
@@ -2013,6 +2108,7 @@ function findBlockSummons(){
                 summon.card.name
             );
 
+
             continue;
 
         }
@@ -2022,7 +2118,9 @@ function findBlockSummons(){
         // ブロック可能
         //----------------------------------
 
-        result.push(summon);
+        result.push(
+            summon
+        );
 
     }
 
@@ -2083,17 +2181,20 @@ function executeBlock(blocker){
 
     hideActionGuide();
 
-console.log(
-    "executeBlock ゴーレム確認",
-    blocker?.card?.name,
-    blocker?.card?.ability
-);
+
+    console.log(
+        "executeBlock ゴーレム確認",
+        blocker?.card?.name,
+        blocker?.ability
+    );
+
 
     //----------------------------------
     // ブロッカー保存
     //----------------------------------
 
-    blockingSummon = blocker;
+    blockingSummon =
+        blocker;
 
 
     //----------------------------------
@@ -2104,28 +2205,32 @@ console.log(
         `PLAYER：${blocker.card.name}が${attackingSummon.card.name}をブロック`
     );
 
+
     //----------------------------------
     // 横向きにする
     //----------------------------------
 
-    blocker.isRest = true;
+    blocker.isRest =
+        true;
+
 
     blocker.view.setHorizontal(
         true
     );
 
 
-//----------------------------------
-// バジリスク：バトル相手を記録
-//----------------------------------
+    //----------------------------------
+    // バジリスク：バトル相手を記録
+    //----------------------------------
 
-setBasiliskBattleTarget(
-    attackingSummon,
-    blocker
-);
+    setBasiliskBattleTarget(
+        attackingSummon,
+        blocker
+    );
+
 
     //----------------------------------
-    // ダメージ交換
+    // ブロッカーから攻撃者へのダメージ
     //----------------------------------
 
     dealDamage(
@@ -2133,28 +2238,35 @@ setBasiliskBattleTarget(
         getPower(blocker)
     );
 
+
     //----------------------------------
-// ゴーレム：ブロック時はダメージを受けない
-//----------------------------------
+    // ゴーレム
+    // ブロック時はダメージを受けない
+    //----------------------------------
 
-if(
-    blocker.card.ability?.type ===
-    "noDamageWhenBlocking"
-){
+    if(
+        blocker.ability?.type ===
+        "noDamageWhenBlocking"
+    ){
 
-    console.log(
-        "ゴーレム：ブロック時のダメージ無効",
-        blocker.card.name
-    );
+        console.log(
+            "ゴーレム：ブロック時のダメージ無効",
+            blocker.card.name
+        );
 
-}else{
+    }
 
-    dealDamage(
-        blocker,
-        getPower(attackingSummon)
-    );
+    else{
 
-}
+        dealDamage(
+            blocker,
+            getPower(
+                attackingSummon
+            )
+        );
+
+    }
+
 
     //----------------------------------
     // 戦闘解決
@@ -2162,12 +2274,15 @@ if(
 
     resolveBattle();
 
+
     //----------------------------------
     // 攻撃終了
     //----------------------------------
 
     finishAttack();
+
     hideActionGuide();
+
 
     //----------------------------------
     // CPUターンなら次の攻撃へ
@@ -2180,6 +2295,7 @@ if(
         console.log(
             "CPU：ブロック処理完了、次の攻撃へ"
         );
+
 
         setTimeout(
             cpuNextAttack,
@@ -2200,13 +2316,13 @@ function executeCpuBlock(
         "=== CPUブロック実行 ===",
         {
             attacker:
-            attacker.card.name,
+                attacker.card.name,
 
             blockers:
-            blockers.map(
-                summon =>
-                    summon.card.name
-            )
+                blockers.map(
+                    summon =>
+                        summon.card.name
+                )
         }
     );
 
@@ -2216,8 +2332,8 @@ function executeCpuBlock(
     //----------------------------------
 
     const blocker =
-    cpuSelectedBlocker ||
-    blockers[0];
+        cpuSelectedBlocker ||
+        blockers[0];
 
 
     if(!blocker){
@@ -2226,15 +2342,17 @@ function executeCpuBlock(
             "CPUブロッカーなし"
         );
 
+
         return false;
 
     }
 
-        console.log(
-    "executeCpuBlock ゴーレム確認",
-    blocker?.card?.name,
-    blocker?.card?.ability
-);
+
+    console.log(
+        "executeCpuBlock ゴーレム確認",
+        blocker?.card?.name,
+        blocker?.ability
+    );
 
 
     //----------------------------------
@@ -2246,61 +2364,70 @@ function executeCpuBlock(
         blocker.card.name
     );
 
+
     //----------------------------------
-// バトルログ
-//----------------------------------
+    // バトルログ
+    //----------------------------------
 
-addBattleLog(
-    `CPU：${blocker.card.name}が${attacker.card.name}をブロック`
-);
-
-//----------------------------------
-// バジリスク：バトル相手を記録
-//----------------------------------
-
-setBasiliskBattleTarget(
-    attacker,
-    blocker
-);
-
-
- //----------------------------------
-// ブロッカーから攻撃者へのダメージ
-//----------------------------------
-
-dealDamage(
-    attacker,
-    getPower(blocker)
-);
-
-
-//----------------------------------
-// ゴーレム：ブロック時はダメージを受けない
-//----------------------------------
-
-if(
-    blocker.card.ability?.type ===
-    "noDamageWhenBlocking"
-){
-
-    console.log(
-        "ゴーレム：ブロック時のダメージ無効",
-        blocker.card.name
+    addBattleLog(
+        `CPU：${blocker.card.name}が${attacker.card.name}をブロック`
     );
 
-}else{
+
+    //----------------------------------
+    // バジリスク：バトル相手を記録
+    //----------------------------------
+
+    setBasiliskBattleTarget(
+        attacker,
+        blocker
+    );
+
+
+    //----------------------------------
+    // ブロッカーから攻撃者へのダメージ
+    //----------------------------------
 
     dealDamage(
-        blocker,
-        getPower(attacker)
+        attacker,
+        getPower(blocker)
     );
 
-}
+
+    //----------------------------------
+    // ゴーレム
+    // ブロック時はダメージを受けない
+    //----------------------------------
+
+    if(
+        blocker.ability?.type ===
+        "noDamageWhenBlocking"
+    ){
+
+        console.log(
+            "ゴーレム：ブロック時のダメージ無効",
+            blocker.card.name
+        );
+
+    }
+
+    else{
+
+        dealDamage(
+            blocker,
+            getPower(attacker)
+        );
+
+    }
+
+
     //----------------------------------
     // ブロッカーも攻撃済みにする
     //----------------------------------
 
-    blocker.isRest = true;
+    blocker.isRest =
+        true;
+
 
     blocker.view.setHorizontal(
         true
@@ -2315,11 +2442,13 @@ if(
 
         resolveBattle();
 
+
         //----------------------------------
         // CPUブロッカー選択をリセット
         //----------------------------------
 
-        cpuSelectedBlocker = null;
+        cpuSelectedBlocker =
+            null;
 
 
         //----------------------------------

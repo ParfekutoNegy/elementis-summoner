@@ -1003,61 +1003,157 @@ function finishResist(){
 
     }
 
-    //----------------------------------
-    // CPUレジスト判定
-    //----------------------------------
+
+    console.log(
+        "========== finishResist =========="
+    );
+
+    console.log(
+        "イベント=",
+        currentResistEvent.type,
+        "対象=",
+        currentResistEvent.player,
+        "残りダメージ=",
+        currentResistEvent.damage
+    );
+
+
+    //==================================
+    // 残りダメージがある場合
+    //==================================
 
     if(
-        shouldCpuUseResist(
-            currentResistEvent
-        )
+        currentResistEvent.damage > 0
     ){
 
-        const cpuResistCards =
-            findCpuResistCards(
-                currentResistEvent
-            );
-
-
-        //----------------------------------
-        // 使用可能レジストあり
-        //----------------------------------
+        //==================================
+        // CPUがダメージを受ける場合
+        //==================================
 
         if(
-            cpuResistCards.length > 0
+            currentResistEvent.player === ENEMY
         ){
 
             //----------------------------------
-            // とりあえず先頭を使用
+            // 使用可能CPUレジスト取得
             //----------------------------------
 
-            const cpuResist =
-                cpuResistCards[0];
-
-
-            console.log(
-                "CPUレジスト選択",
-                cpuResist.name
-            );
-
-
-            const result =
-                useCpuResist(
-                    cpuResist
+            const cpuResistCards =
+                findCpuResistCards(
+                    currentResistEvent
+                ).filter(
+                    card =>
+                        !card.usedThisEvent
                 );
 
 
             //----------------------------------
-            // 使用成功
+            // 使用可能カードあり
             //----------------------------------
 
-            if(result){
+            if(
+                cpuResistCards.length > 0
+            ){
 
-                setTimeout(()=>{
+                const cpuResist =
+                    selectBestCpuResist(
+                        cpuResistCards,
+                        currentResistEvent.damage,
+                        currentResistEvent
+                    );
 
-                    finishResist();
 
-                },2000);
+                //----------------------------------
+                // CPUが使用すると判断
+                //----------------------------------
+
+                if(cpuResist){
+
+                    console.log(
+                        "CPU追加レジスト",
+                        cpuResist.name,
+                        "使用前ダメージ=",
+                        currentResistEvent.damage
+                    );
+
+
+                    const result =
+                        useCpuResist(
+                            cpuResist
+                        );
+
+
+                    //----------------------------------
+                    // 使用成功
+                    //----------------------------------
+
+                    if(result){
+
+                        console.log(
+                            "CPUレジスト使用後ダメージ=",
+                            currentResistEvent.damage
+                        );
+
+
+                        //----------------------------------
+                        // 追加レジスト判定へ
+                        //----------------------------------
+
+                        setTimeout(()=>{
+
+                            finishResist();
+
+                        },2000);
+
+
+                        return;
+
+                    }
+
+                }
+
+            }
+
+        }
+
+
+        //==================================
+        // PLAYERがダメージを受ける場合
+        //==================================
+
+        if(
+            currentResistEvent.player === PLAYER
+        ){
+
+            const resistCards =
+                findResistCards(
+                    currentResistEvent
+                ).filter(
+                    card =>
+                        !card.usedThisEvent
+                );
+
+
+            //----------------------------------
+            // 追加レジスト選択
+            //----------------------------------
+
+            if(
+                resistCards.length > 0
+            ){
+
+                console.log(
+                    "追加プレイヤーレジスト選択",
+                    resistCards.map(
+                        card => card.name
+                    )
+                );
+
+
+                showResistSelection(
+                    resistCards,
+                    currentResistEvent
+                );
 
 
                 return;
@@ -1069,201 +1165,104 @@ function finishResist(){
     }
 
 
-//----------------------------------
-// 残りダメージがある場合
-//----------------------------------
+    //==================================
+    // ここから最終ダメージ解決
+    //==================================
 
-if(
-    currentResistEvent.damage > 0
-){
-
-    //----------------------------------
-    // CPUがダメージを受ける場合
-    //----------------------------------
-
-    if(
-        currentResistEvent.player === ENEMY
-    ){
-
-        console.log(
-            "CPUへのダメージ：追加レジスト判定"
+    const finalDamage =
+        Math.max(
+            0,
+            currentResistEvent.damage
         );
 
 
-        const cpuResistCards =
-            findCpuResistCards(
-                currentResistEvent
+    console.log(
+        "レジスト処理終了",
+        "最終ダメージ=",
+        finalDamage
+    );
+
+
+    //==================================
+    // プレイヤーへのダメージ
+    //==================================
+
+    if(
+        currentResistEvent.type ===
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        if(finalDamage > 0){
+
+            const damageTarget =
+                currentResistEvent.player === PLAYER
+                    ? "PLAYER"
+                    : "CPU";
+
+
+            addBattleLog(
+                `${damageTarget}：${finalDamage}ダメージ`
             );
 
-
-        //----------------------------------
-        // CPUレジスト使用可能
-        //----------------------------------
-
-        if(
-            cpuResistCards.length > 0
-        ){
-
-            const cpuResist =
-                selectBestCpuResist(
-                    cpuResistCards,
-                    currentResistEvent.damage,
-                    currentResistEvent
-                );
-
-
-            //----------------------------------
-            // 使用するレジストあり
-            //----------------------------------
-
-            if(cpuResist){
-
-                console.log(
-                    "追加CPUレジスト",
-                    cpuResist.name
-                );
-
-
-                const result =
-                    useCpuResist(
-                        cpuResist
-                    );
-
-
-                //----------------------------------
-                // 使用成功
-                //----------------------------------
-
-                if(result){
-
-                    setTimeout(()=>{
-
-                        finishResist();
-
-                    },2000);
-
-
-                    return;
-
-                }
-
-            }
-
         }
+
+
+        //----------------------------------
+        // 確定ダメージを直接適用
+        //
+        // damagePlayer() は呼ばない
+        // ガーゴイル等の再処理を防ぐ
+        //----------------------------------
+
+        applyPlayerDamage(
+            currentResistEvent.player,
+            finalDamage
+        );
 
     }
 
 
-    //----------------------------------
-    // プレイヤーがダメージを受ける場合
-    //----------------------------------
+    //==================================
+    // サモンへのダメージ
+    //==================================
 
-    if(
-        currentResistEvent.player === PLAYER
+    else if(
+        currentResistEvent.type ===
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE
     ){
 
-        const resistCards =
-            findResistCards(
-                currentResistEvent
-            ).filter(
-                card =>
-                !card.usedThisEvent
-            );
-
-
-        //----------------------------------
-        // 追加レジスト選択
-        //----------------------------------
-
-        if(
-            resistCards.length > 0
-        ){
-
-            console.log(
-                "追加プレイヤーレジスト選択",
-                resistCards.map(
-                    card => card.name
-                )
-            );
-
-
-            showResistSelection(
-                resistCards,
-                currentResistEvent
-            );
-
-
-            return;
-
-        }
-
-    }
-
-}
-    //----------------------------------
-    // ダメージ解決
-    //----------------------------------
-
-    if(
-        currentResistEvent.damage > 0
-    ){
-
-        //----------------------------------
-        // プレイヤーへのダメージ
-        //----------------------------------
-
-        if(
-            currentResistEvent.type ===
-            GAME_EVENT.BEFORE_PLAYER_DAMAGE
-        ){
-
-            damagePlayer(
-
-                currentResistEvent.player,
-
-                currentResistEvent.damage,
-
-                true
-
-            );
-
-        }
-
-
-        //----------------------------------
-        // サモンへのダメージ
-        //----------------------------------
-
-        if(
-            currentResistEvent.type ===
-            GAME_EVENT.BEFORE_SUMMON_DAMAGE
-        ){
-
-            const summon =
+        const summon =
             currentResistEvent.target;
 
 
-            summon.damage +=
-            currentResistEvent.damage;
+        if(summon){
 
+            //----------------------------------
+            // 最終ダメージ適用
+            //----------------------------------
+
+            summon.damage +=
+                finalDamage;
+
+
+            //----------------------------------
+            // ダメージ表示
+            //----------------------------------
 
             showDamageNumber(
-
                 summon,
-
-                currentResistEvent.damage
-
+                finalDamage
             );
 
 
             console.log(
-
                 "サモンダメージ解決",
-
                 summon.card.name,
-
-                currentResistEvent.damage
-
+                finalDamage
             );
 
         }
@@ -1271,10 +1270,9 @@ if(
     }
 
 
-
-    //----------------------------------
+    //==================================
     // 使用済みフラグ解除
-    //----------------------------------
+    //==================================
 
     for(
         const card of selectableResistCards
@@ -1285,32 +1283,37 @@ if(
         card.usedThisEvent = false;
 
     }
-    //----------------------------------
-// CPUレジストの使用済み解除
-//----------------------------------
-
-for(
-    const card of enemyHandCards
-){
-
-    card.usedThisEvent = false;
-
-}
-
-
-for(
-    const card of enemyCoolCards
-){
-
-    card.usedThisEvent = false;
-
-}
-
 
 
     //----------------------------------
+    // CPU手札
+    //----------------------------------
+
+    for(
+        const card of enemyHandCards
+    ){
+
+        card.usedThisEvent = false;
+
+    }
+
+
+    //----------------------------------
+    // CPUクール
+    //----------------------------------
+
+    for(
+        const card of enemyCoolCards
+    ){
+
+        card.usedThisEvent = false;
+
+    }
+
+
+    //==================================
     // レジスト表示解除
-    //----------------------------------
+    //==================================
 
     for(
         const card of selectableResistCards
@@ -1323,10 +1326,9 @@ for(
     }
 
 
-
-    //----------------------------------
-    // レジスト状態保存
-    //----------------------------------
+    //==================================
+    // 状態保存
+    //==================================
 
     const wasPlayerDamage =
         currentResistEvent.type ===
@@ -1337,10 +1339,9 @@ for(
         currentResistEvent.attacker;
 
 
-
-    //----------------------------------
+    //==================================
     // レジスト状態解除
-    //----------------------------------
+    //==================================
 
     currentResistEvent = null;
 
@@ -1358,50 +1359,50 @@ for(
     updateButtons();
 
 
+    //==================================
+    // 戦闘解決
+    //==================================
 
-    //----------------------------------
-// 戦闘解決
-//----------------------------------
-
-resolveBattle();
-
-
-//==================================
-// CPUターン中のレジスト終了
-//==================================
-
-if(
-    game.currentPlayer === ENEMY &&
-    cpuWaiting
-){
-
-    console.log(
-        "レジスト終了：CPU行動を再開"
-    );
+    resolveBattle();
 
 
-    setTimeout(()=>{
+    //==================================
+    // CPUターン中のレジスト終了
+    //==================================
 
-        continueCpuTurn();
+    if(
+        game.currentPlayer === ENEMY &&
+        cpuWaiting
+    ){
 
-    },500);
+        console.log(
+            "レジスト終了：CPU行動を再開"
+        );
 
 
-    return;
+        setTimeout(()=>{
 
-}
+            continueCpuTurn();
 
-//==================================
-// 通常の攻撃終了
-//==================================
+        },500);
 
-if(
-    isAttacking()
-){
 
-    finishAttack();
+        return;
 
-}
+    }
+
+
+    //==================================
+    // 通常の攻撃終了
+    //==================================
+
+    if(
+        isAttacking()
+    ){
+
+        finishAttack();
+
+    }
 
 }
 
@@ -1522,47 +1523,67 @@ function getCurrentEnemyCardCost(card){
     // CPU場のコスト軽減能力
     //----------------------------------
 
-    enemyField.forEach(summon => {
+    enemyField.forEach(
+        summon => {
 
-        if(
-            !summon ||
-            !summon.card
-        ){
-
-            return;
-
-        }
-
-
-        const ability =
-            summon.card.ability;
-
-
-        if(!ability){
-
-            return;
-
-        }
-
-
-        if(
-            ability.type ===
-            "elementCostDown"
-        ){
+            //----------------------------------
+            // サモン確認
+            //----------------------------------
 
             if(
-                ability.element ===
-                card.element
+                !summon ||
+                !summon.card ||
+                summon.destroyed
             ){
 
-                cost -=
-                    ability.value;
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 現在持っている能力を取得
+            //
+            // ドッペルゲンガーの
+            // コピー能力も含む
+            //----------------------------------
+
+            const ability =
+                summon.ability;
+
+
+            if(!ability){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 属性コスト軽減
+            //----------------------------------
+
+            if(
+                ability.type ===
+                "elementCostDown"
+            ){
+
+                if(
+                    ability.element ===
+                    card.element
+                ){
+
+                    cost -=
+                        Number(
+                            ability.value
+                        ) || 0;
+
+                }
 
             }
 
         }
-
-    });
+    );
 
 
     //----------------------------------
