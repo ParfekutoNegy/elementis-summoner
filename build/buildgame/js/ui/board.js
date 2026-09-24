@@ -429,7 +429,11 @@ updateCostCount(){
 
 }
 
-addCoolCard(card, owner, summonAbility = null){
+addCoolCard(
+    card,
+    owner,
+    summonAbility = null
+){
 
     console.log(
         "★ addCoolCard",
@@ -456,80 +460,12 @@ addCoolCard(card, owner, summonAbility = null){
         card.ability;
 
 
-    //----------------------------------
-    // フェニックス能力
-    //----------------------------------
+    //==================================
+    // まずクールゾーンに置く
+    //==================================
 
-    if(
-        ability?.type ===
-        "returnToHandOnCool"
-    ){
-
-        console.log(
-            "★フェニックス手札戻し前",
-            "CPU手札=",
-            enemyHandCards.length,
-            enemyHandCards.map(c => c.name)
-        );
-
-
-        card.area = "hand";
-
-
-        if(owner === PLAYER){
-
-            this.addHandCard(card);
-
-        }
-        else{
-
-            enemyHandCards.push(card);
-
-            updateEnemyZoneDisplay();
-
-
-            console.log(
-                "★ CPU手札実数",
-                enemyHandCards.length,
-                enemyHandCards.map(c => c.name)
-            );
-
-        }
-
-
-        console.log(
-            "★フェニックス手札戻し後",
-            "CPU手札=",
-            enemyHandCards.length,
-            enemyHandCards.map(c => c.name)
-        );
-
-
-        console.log(
-            "★フェニックス追加カード",
-            card.name,
-            "area=",
-            card.area
-        );
-
-
-        console.log(
-            "★フェニックス系能力発動",
-            card.name,
-            "クールゾーンに入らず手札へ"
-        );
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // クールゾーン設定
-    //----------------------------------
-
-    card.area = "cool";
+    card.area =
+        "cool";
 
 
     //----------------------------------
@@ -538,30 +474,48 @@ addCoolCard(card, owner, summonAbility = null){
 
     if(owner === PLAYER){
 
-        card.owner = PLAYER;
+        card.owner =
+            PLAYER;
 
 
         //----------------------------------
-        // Board側
+        // PLAYERクール
         //----------------------------------
 
-        this.playerCoolCards.push(
-            card
-        );
+        if(
+            !this.playerCoolCards.includes(
+                card
+            )
+        ){
+
+            this.playerCoolCards.push(
+                card
+            );
+
+        }
 
     }
     else{
 
-        card.owner = ENEMY;
+        card.owner =
+            ENEMY;
 
 
         //----------------------------------
-        // Board側
+        // Board側CPUクール
         //----------------------------------
 
-        this.enemyCoolCards.push(
-            card
-        );
+        if(
+            !this.enemyCoolCards.includes(
+                card
+            )
+        ){
+
+            this.enemyCoolCards.push(
+                card
+            );
+
+        }
 
 
         //----------------------------------
@@ -569,7 +523,9 @@ addCoolCard(card, owner, summonAbility = null){
         //----------------------------------
 
         if(
-            !enemyCoolCards.includes(card)
+            !enemyCoolCards.includes(
+                card
+            )
         ){
 
             enemyCoolCards.push(
@@ -584,7 +540,210 @@ addCoolCard(card, owner, summonAbility = null){
     }
 
 
+    //----------------------------------
+    // クール表示更新
+    //----------------------------------
+
     this.updateCoolCount();
+
+
+    //==================================
+    // ヴァンパイア系能力
+    //
+    // 相手のサモンがクールゾーンに
+    // 置かれたときタテ向きになる
+    //==================================
+
+    if(
+        card.type ===
+            "サモン" &&
+        typeof triggerReadyWhenEnemySummonCooled ===
+            "function"
+    ){
+
+        triggerReadyWhenEnemySummonCooled(
+            card,
+            owner
+        );
+
+    }
+
+
+    //==================================
+    // クールへ送られた時点の
+    // 能力一覧を取得
+    //
+    // 通常サモン
+    // → カード本来の能力
+    //
+    // ドッペルゲンガー
+    // → 場を離れる直前のコピー能力
+    //==================================
+
+    const abilities =
+        Array.isArray(
+            ability
+        )
+            ? ability
+            : ability
+                ? [ability]
+                : [];
+
+
+    //==================================
+    // マンドラゴラ系能力
+    //
+    // クールゾーンに置かれたとき
+    // サモン1体を対象にして
+    // ヨコ向きにする
+    //==================================
+
+    const horizontalSummonAbility =
+        abilities.find(
+            currentAbility =>
+                currentAbility &&
+                currentAbility.type ===
+                    "horizontalSummonOnCool"
+        );
+
+
+    if(
+        horizontalSummonAbility &&
+        typeof triggerHorizontalSummonOnCool ===
+            "function"
+    ){
+
+        triggerHorizontalSummonOnCool(
+            card,
+            owner,
+            horizontalSummonAbility
+        );
+
+    }
+
+
+    //==================================
+    // フェニックス系能力
+    //
+    // クールゾーンに置かれたあと
+    // 手札へ戻す
+    //==================================
+
+    const returnToHandAbility =
+        abilities.find(
+            currentAbility =>
+                currentAbility &&
+                currentAbility.type ===
+                    "returnToHandOnCool"
+        );
+
+
+    if(
+        returnToHandAbility
+    ){
+
+        console.log(
+            "★フェニックス手札戻し前",
+            "CPU手札=",
+            enemyHandCards.length,
+            enemyHandCards.map(
+                c => c.name
+            )
+        );
+
+
+        //----------------------------------
+        // 一度入ったクールゾーンから外す
+        //----------------------------------
+
+        if(owner === PLAYER){
+
+            this.playerCoolCards =
+                this.playerCoolCards.filter(
+                    coolCard =>
+                        coolCard !== card
+                );
+
+        }
+        else{
+
+            this.enemyCoolCards =
+                this.enemyCoolCards.filter(
+                    coolCard =>
+                        coolCard !== card
+                );
+
+
+            enemyCoolCards =
+                enemyCoolCards.filter(
+                    coolCard =>
+                        coolCard !== card
+                );
+
+        }
+
+
+        //----------------------------------
+        // 手札へ移動
+        //----------------------------------
+
+        card.area =
+            "hand";
+
+
+        if(owner === PLAYER){
+
+            this.addHandCard(
+                card
+            );
+
+        }
+        else{
+
+            enemyHandCards.push(
+                card
+            );
+
+            updateEnemyZoneDisplay();
+
+        }
+
+
+        //----------------------------------
+        // クール表示を再更新
+        //----------------------------------
+
+        this.updateCoolCount();
+
+
+        console.log(
+            "★フェニックス手札戻し後",
+            "CPU手札=",
+            enemyHandCards.length,
+            enemyHandCards.map(
+                c => c.name
+            )
+        );
+
+
+        console.log(
+            "★フェニックス追加カード",
+            card.name,
+            "area=",
+            card.area
+        );
+
+
+        console.log(
+            "★フェニックス系能力発動",
+            card.name,
+            "クールゾーンに置かれた後、手札へ"
+        );
+
+
+        return;
+
+    }
 
 }
 

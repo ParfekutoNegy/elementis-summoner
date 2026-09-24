@@ -613,7 +613,11 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"folklore",
-        image: "images/043-ヴァンパイア.jpg"
+        image: "images/043-ヴァンパイア.jpg",
+        text:"相手のサモンがクールゾーンに置かれたとき、このカードをタテ向きにする。",
+        ability:{
+            type:"readyWhenEnemySummonCooled"
+        }
     },
     {
         id: 44,
@@ -763,7 +767,11 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"folklore",
-        image: "images/057-マンドラゴラ.jpg"
+        image: "images/057-マンドラゴラ.jpg",
+        text:"このカードがクールゾーンに置かれたとき、サモン１体を対象にし、ヨコ向きにする。",
+        ability:{
+            type:"horizontalSummonOnCool"
+        }
     },
     {
         id: 58,

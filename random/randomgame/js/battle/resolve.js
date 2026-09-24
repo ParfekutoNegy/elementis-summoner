@@ -73,6 +73,13 @@ function setBasiliskBattleTarget(
 function resolveBattle(){
 
     //----------------------------------
+    // 今回の同時タイミング用
+    //----------------------------------
+
+    coolTriggerQueue = [];
+
+
+    //----------------------------------
     // バトルによる破壊判定
     //----------------------------------
 
@@ -84,6 +91,13 @@ function resolveBattle(){
     //----------------------------------
 
     removeDestroyedSummons();
+
+
+    //----------------------------------
+    // ターンプレイヤー優先に並べる
+    //----------------------------------
+
+    sortCoolTriggerQueue();
 
 
     //----------------------------------
@@ -99,9 +113,14 @@ function resolveBattle(){
 
     clearDamage();
 
+
+    //----------------------------------
+    // クール時誘発能力解決開始
+    //----------------------------------
+
+    startCoolTriggerResolution();
+
 }
-
-
 function resolveDestroy(){
 
     const fields = [

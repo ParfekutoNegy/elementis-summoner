@@ -3146,3 +3146,1021 @@ function validateAllDoppelgangerAbilities(){
     );
 
 }
+
+//==================================================
+// 相手サモンがクールゾーンに置かれたとき
+// タテ向きになる能力
+//==================================================
+
+function triggerReadyWhenEnemySummonCooled(
+    cooledCard,
+    cooledOwner
+){
+
+    //----------------------------------
+    // カード確認
+    //----------------------------------
+
+    if(!cooledCard){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // サモン以外では発動しない
+    //----------------------------------
+
+    if(
+        cooledCard.type !==
+        "サモン"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールに置かれた側から見て
+    // 相手側のフィールドを取得
+    //----------------------------------
+
+    const opponentField =
+        cooledOwner === PLAYER
+            ? enemyField
+            : playerField;
+
+
+    //----------------------------------
+    // 能力保持サモンを確認
+    //----------------------------------
+
+    opponentField.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // ヴァンパイア能力確認
+            //----------------------------------
+
+            if(
+                !hasSummonAbility(
+                    summon,
+                    "readyWhenEnemySummonCooled"
+                )
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // クール時誘発キューへ登録
+            //----------------------------------
+
+            coolTriggerQueue.push({
+
+                type:
+                    "readyWhenEnemySummonCooled",
+
+                owner:
+                    summon.owner,
+
+                sourceSummon:
+                    summon,
+
+                sourceCard:
+                    summon.card,
+
+                cooledCard:
+                    cooledCard,
+
+                cooledOwner:
+                    cooledOwner
+
+            });
+
+
+            console.log(
+                "★ クール時誘発登録",
+                summon.card.name,
+                "type=",
+                "readyWhenEnemySummonCooled",
+                "owner=",
+                summon.owner
+            );
+
+        }
+    );
+
+}
+
+//==================================================
+// マンドラゴラ系能力
+//
+// クールゾーンに置かれたとき
+// サモン1体を対象にしてヨコ向きにする
+//
+// 現段階では発動確認のみ
+//==================================================
+
+function triggerHorizontalSummonOnCool(
+    card,
+    owner,
+    ability
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !ability
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 能力タイプ確認
+    //----------------------------------
+
+    if(
+        ability.type !==
+        "horizontalSummonOnCool"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クール時誘発キューへ登録
+    //----------------------------------
+
+    coolTriggerQueue.push({
+
+        type:
+            "horizontalSummonOnCool",
+
+        owner:
+            owner,
+
+        sourceCard:
+            card,
+
+        ability:
+            ability
+
+    });
+
+
+    console.log(
+        "★ クール時誘発登録",
+        card.name,
+        "type=",
+        ability.type,
+        "owner=",
+        owner
+    );
+
+}
+
+//==================================================
+// クール時誘発能力
+// ターンプレイヤー優先並び替え
+//==================================================
+
+function sortCoolTriggerQueue(){
+
+    //----------------------------------
+    // キューなし
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            coolTriggerQueue
+        ) ||
+        coolTriggerQueue.length === 0
+    ){
+
+        console.log(
+            "クール時誘発キューなし"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "クール時誘発能力 並び替え開始"
+    );
+
+    console.log(
+        "現在のターンプレイヤー：",
+        game.currentPlayer
+    );
+
+
+    //----------------------------------
+    // 登録順を保持するため
+    // 一時番号を付ける
+    //----------------------------------
+
+    coolTriggerQueue.forEach(
+        (trigger, index) => {
+
+            trigger.queueOrder =
+                index;
+
+        }
+    );
+
+
+    //----------------------------------
+    // ターンプレイヤー側を優先
+    //----------------------------------
+
+    coolTriggerQueue.sort(
+        (a, b) => {
+
+            const aPriority =
+                a.owner ===
+                    game.currentPlayer
+                    ? 0
+                    : 1;
+
+
+            const bPriority =
+                b.owner ===
+                    game.currentPlayer
+                    ? 0
+                    : 1;
+
+
+            //----------------------------------
+            // 優先度が違う
+            //----------------------------------
+
+            if(
+                aPriority !==
+                bPriority
+            ){
+
+                return (
+                    aPriority -
+                    bPriority
+                );
+
+            }
+
+
+            //----------------------------------
+            // 同じ側なら登録順を維持
+            //----------------------------------
+
+            return (
+                a.queueOrder -
+                b.queueOrder
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // 確認ログ
+    //----------------------------------
+
+    console.log(
+        "★ クール時誘発キュー"
+    );
+
+
+    coolTriggerQueue.forEach(
+        (trigger, index) => {
+
+            console.log(
+                `${index + 1}.`,
+                trigger.sourceCard?.name,
+                "owner=",
+                trigger.owner,
+                "type=",
+                trigger.type
+            );
+
+        }
+    );
+
+
+    console.log(
+        "================================"
+    );
+
+}
+
+//==================================================
+// ヴァンパイア系
+// クール時誘発能力の解決
+//==================================================
+
+function resolveReadyWhenEnemySummonCooledTrigger(
+    trigger
+){
+
+    //----------------------------------
+    // 確認
+    //----------------------------------
+
+    if(
+        !trigger ||
+        !trigger.sourceSummon
+    ){
+
+        resolveNextCoolTrigger();
+
+        return;
+
+    }
+
+
+    const summon =
+        trigger.sourceSummon;
+
+
+    //----------------------------------
+    // すでに場を離れている場合
+    // 能力は解決しない
+    //----------------------------------
+
+    const field =
+        summon.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    if(
+        !field.includes(summon) ||
+        summon.destroyed
+    ){
+
+        console.log(
+            "ヴァンパイア系能力：能力保持サモンが場にいないため不発",
+            summon.card?.name
+        );
+
+
+        resolveNextCoolTrigger();
+
+        return;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "クール時誘発能力解決"
+    );
+
+    console.log(
+        "能力保持サモン：",
+        summon.card.name
+    );
+
+    console.log(
+        "能力：",
+        "readyWhenEnemySummonCooled"
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // タテ向きにする
+    //----------------------------------
+
+    summon.isRest =
+        false;
+
+
+    if(
+        summon.view &&
+        typeof summon.view.setHorizontal ===
+            "function"
+    ){
+
+        summon.view.setHorizontal(
+            false
+        );
+
+    }
+
+
+    //----------------------------------
+    // 再びアタック可能
+    //----------------------------------
+
+    summon.attackReady =
+        true;
+
+
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
+    if(
+        typeof addBattleLog ===
+            "function"
+    ){
+
+        addBattleLog(
+            `${summon.card.name}の能力発動：タテ向きになる`
+        );
+
+    }
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    if(
+        typeof updateGameState ===
+            "function"
+    ){
+
+        updateGameState();
+
+    }
+
+
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
+    // 次の誘発能力へ
+    //----------------------------------
+
+    resolveNextCoolTrigger();
+
+}
+
+//==================================================
+// マンドラゴラ系
+// 対象選択開始
+//==================================================
+
+function startHorizontalSummonOnCoolTargetSelection(
+    trigger
+){
+
+    //----------------------------------
+    // 確認
+    //----------------------------------
+
+    if(!trigger){
+
+        resolveNextCoolTrigger();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 対象候補
+    //----------------------------------
+
+    const candidates =
+        [
+            ...playerField,
+            ...enemyField
+        ]
+        .filter(
+            summon => {
+
+                if(
+                    !summon ||
+                    !summon.card ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // サモン能力の対象制限確認
+                //
+                // クールへ行ったカードそのものは
+                // もうSummonではないため
+                // 必要な情報だけ持った仮のsourceを使用
+                //----------------------------------
+
+                const source = {
+
+                    card:
+                        trigger.sourceCard,
+
+                    owner:
+                        trigger.owner
+
+                };
+
+
+                return canTargetBySummonAbility(
+                    source,
+                    summon
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(
+        candidates.length === 0
+    ){
+
+        console.log(
+            "マンドラゴラ系能力：対象なし"
+        );
+
+
+        resolveNextCoolTrigger();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // CPU所有カード
+    //
+    // CPU処理は次段階で実装
+    //----------------------------------
+
+    if(
+        trigger.owner === ENEMY
+    ){
+
+        console.log(
+            "マンドラゴラ系能力：CPU対象選択は次段階で実装"
+        );
+
+
+        resolveNextCoolTrigger();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // PLAYER対象選択開始
+    //----------------------------------
+
+    coolTriggerCurrent =
+        trigger;
+
+
+    coolTriggerTargetMode =
+        true;
+
+
+    //----------------------------------
+    // 発光
+    //----------------------------------
+
+    candidates.forEach(
+        summon => {
+
+            if(
+                summon.view &&
+                summon.view.element
+            ){
+
+                summon.view.element.classList.add(
+                    "magia-target"
+                );
+
+            }
+
+        }
+    );
+
+
+    //----------------------------------
+    // 案内
+    //----------------------------------
+
+    showActionGuide(
+        "ヨコ向きにするサモンを選んでください"
+    );
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "マンドラゴラ系能力：対象選択開始"
+    );
+
+    console.log(
+        "対象候補：",
+        candidates.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+    console.log(
+        "================================"
+    );
+
+}
+
+//==================================================
+// マンドラゴラ系
+// 対象クリック処理
+//==================================================
+
+function selectHorizontalSummonOnCoolTarget(
+    card
+){
+
+    //----------------------------------
+    // 対象選択中でなければ処理しない
+    //----------------------------------
+
+    if(
+        !coolTriggerTargetMode ||
+        !coolTriggerCurrent
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 場のサモン以外は対象外
+    //----------------------------------
+
+    if(
+        card.area !== "field" &&
+        card.area !== "enemyField"
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // Summon取得
+    //----------------------------------
+
+    const targetSummon =
+        findSummonByView(
+            card
+        );
+
+
+    if(
+        !targetSummon ||
+        targetSummon.destroyed
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 仮の能力使用元
+    //----------------------------------
+
+    const source = {
+
+        card:
+            coolTriggerCurrent.sourceCard,
+
+        owner:
+            coolTriggerCurrent.owner
+
+    };
+
+
+    //----------------------------------
+    // 対象可能確認
+    //----------------------------------
+
+    if(
+        !canTargetBySummonAbility(
+            source,
+            targetSummon
+        )
+    ){
+
+        console.log(
+            "マンドラゴラ系能力対象不可",
+            targetSummon.card.name
+        );
+
+        return true;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "マンドラゴラ系能力対象決定"
+    );
+
+    console.log(
+        "対象：",
+        targetSummon.card.name
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // ヨコ向きにする
+    //----------------------------------
+
+    targetSummon.isRest =
+        true;
+
+
+    if(
+        targetSummon.view &&
+        typeof targetSummon.view.setHorizontal ===
+            "function"
+    ){
+
+        targetSummon.view.setHorizontal(
+            true
+        );
+
+    }
+
+
+    //----------------------------------
+    // 発光解除
+    //----------------------------------
+
+    clearSummonAbilityTargetHighlight();
+
+
+    //----------------------------------
+    // 案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 対象選択終了
+    //----------------------------------
+
+    coolTriggerTargetMode =
+        false;
+
+
+    coolTriggerCurrent =
+        null;
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    if(
+        typeof updateGameState ===
+            "function"
+    ){
+
+        updateGameState();
+
+    }
+
+
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
+    // 次の誘発能力へ
+    //----------------------------------
+
+    resolveNextCoolTrigger();
+
+
+    return true;
+
+}
+
+//==================================================
+// クール時誘発能力
+// 解決開始
+//==================================================
+
+function startCoolTriggerResolution(){
+
+    //----------------------------------
+    // キューなし
+    //----------------------------------
+
+    if(
+        !coolTriggerQueue ||
+        coolTriggerQueue.length === 0
+    ){
+
+        coolTriggerResolving =
+            false;
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 解決開始
+    //----------------------------------
+
+    coolTriggerResolving =
+        true;
+
+
+    console.log(
+        "★ クール時誘発能力 解決開始"
+    );
+
+
+    resolveNextCoolTrigger();
+
+}
+
+
+//==================================================
+// クール時誘発能力
+// 次の能力を解決
+//==================================================
+
+function resolveNextCoolTrigger(){
+
+    //----------------------------------
+    // キュー終了
+    //----------------------------------
+
+    if(
+        !coolTriggerQueue ||
+        coolTriggerQueue.length === 0
+    ){
+
+        console.log(
+            "★ クール時誘発能力 全解決完了"
+        );
+
+
+        coolTriggerResolving =
+            false;
+
+
+        coolTriggerTargetMode =
+            false;
+
+
+        coolTriggerCurrent =
+            null;
+
+
+        clearSummonAbilityTargetHighlight();
+
+        hideActionGuide();
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 次の能力
+    //----------------------------------
+
+    const trigger =
+        coolTriggerQueue.shift();
+
+
+    console.log(
+        "★ クール時誘発能力 解決",
+        trigger.sourceCard?.name,
+        "owner=",
+        trigger.owner,
+        "type=",
+        trigger.type
+    );
+
+
+    //----------------------------------
+    // ヴァンパイア系
+    //----------------------------------
+
+    if(
+        trigger.type ===
+        "readyWhenEnemySummonCooled"
+    ){
+
+        resolveReadyWhenEnemySummonCooledTrigger(
+            trigger
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // マンドラゴラ系
+    //----------------------------------
+
+    if(
+        trigger.type ===
+        "horizontalSummonOnCool"
+    ){
+
+        startHorizontalSummonOnCoolTargetSelection(
+            trigger
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 未対応能力
+    //----------------------------------
+
+    console.warn(
+        "未対応のクール時誘発能力",
+        trigger.type
+    );
+
+
+    resolveNextCoolTrigger();
+
+}
