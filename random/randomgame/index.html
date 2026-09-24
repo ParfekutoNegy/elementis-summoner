@@ -145,7 +145,10 @@
 
 
                 <!-- ========================================= -->
-                <!-- メニュー
+                <!-- メニューボタン
+                     
+                     ゲームメニュー本体は
+                     #battle-ui の外側へ配置
                 -->
                 <!-- ========================================= -->
 
@@ -155,42 +158,6 @@
                 >
                     ☰
                 </button>
-                <!-- ========================================= -->
-<!-- ゲームメニュー -->
-<!-- ========================================= -->
-
-<div id="game-menu">
-
-    <button
-        id="concede-button"
-        type="button"
-    >
-        投了
-    </button>
-
-    <button
-        id="reset-game-button"
-        type="button"
-    >
-        ゲーム初期化
-    </button>
-
-    <button id="menu-home-button"
-        type="button"
-    >
-        ホームに戻る
-    </button>
-
-
-
-    <button
-        id="close-menu-button"
-        type="button"
-    >
-        閉じる
-    </button>
-
-</div>
 
 
             </header>
@@ -257,14 +224,15 @@
                 <aside id="endturn-area">
 
 
-<button id="endturn-button" type="button">
+                    <button id="endturn-button" type="button">
 
-    <img
-        src="../../images/ui/turn-end-button.png"
-        alt="ターン終了"
-    >
+                        <img
+                            src="../../images/ui/turn-end-button.png"
+                            alt="ターン終了"
+                        >
 
-</button>
+                    </button>
+
 
                 </aside>
 
@@ -396,6 +364,52 @@
 
 
         <!-- ================================================= -->
+        <!-- ゲームメニュー
+             
+             #battle-ui の外側に配置
+             
+             action-guide と同じ
+             #battle-screen 直下に配置する
+        -->
+        <!-- ================================================= -->
+
+        <div id="game-menu">
+
+            <button
+                id="concede-button"
+                type="button"
+            >
+                投了
+            </button>
+
+
+            <button
+                id="reset-game-button"
+                type="button"
+            >
+                ゲーム初期化
+            </button>
+
+
+            <button
+                id="menu-home-button"
+                type="button"
+            >
+                ホームに戻る
+            </button>
+
+
+            <button
+                id="close-menu-button"
+                type="button"
+            >
+                閉じる
+            </button>
+
+        </div>
+
+
+        <!-- ================================================= -->
         <!-- ゲーム画面内オーバーレイ
         -->
         <!-- ================================================= -->
@@ -445,17 +459,20 @@
                 1 - 0
             </div>
 
-<button 
-    id="retry-game-button"
-    type="button"
-    onclick="restartGame();"
->
-    もう一度遊ぶ
-</button>
 
-    <button id="home-button">
-        ホームに戻る
-    </button>
+            <button 
+                id="retry-game-button"
+                type="button"
+                onclick="restartGame();"
+            >
+                もう一度遊ぶ
+            </button>
+
+
+            <button id="home-button">
+                ホームに戻る
+            </button>
+
 
         </div>
 
@@ -768,16 +785,21 @@
 
         <div id="summon-action-modal">
 
+
             <div id="summon-action-modal-content">
+
 
                 <div id="summon-info-image">
                     サモン画像
                 </div>
 
+
                 <div id="summon-info-text">
                 </div>
 
+
                 <div id="summon-action-buttons">
+
 
                     <button
                         id="summon-attack-button"
@@ -786,12 +808,14 @@
                         アタック
                     </button>
 
+
                     <button
                         id="summon-ability-button"
                         type="button"
                     >
                         能力使用
                     </button>
+
 
                     <button
                         id="close-summon-modal"
@@ -800,9 +824,12 @@
                         閉じる
                     </button>
 
+
                 </div>
 
+
             </div>
+
 
         </div>
 
@@ -816,11 +843,14 @@
             class="lamia-choice-modal"
         >
 
+
             <div class="lamia-choice-panel">
+
 
                 <div class="lamia-choice-title">
                     ラミアの能力
                 </div>
+
 
                 <div
                     id="lamia-choice-message"
@@ -829,7 +859,9 @@
                     対象の移動先を選んでください
                 </div>
 
+
                 <div class="lamia-choice-buttons">
+
 
                     <button
                         type="button"
@@ -838,6 +870,7 @@
                         手札に戻す
                     </button>
 
+
                     <button
                         type="button"
                         onclick="chooseLamiaDestination('cool')"
@@ -845,14 +878,18 @@
                         クールゾーンに置く
                     </button>
 
+
                 </div>
 
+
             </div>
+
 
         </div>
 
 
     </div>
+
 
 </div>
 <!-- #game-container 終了 -->

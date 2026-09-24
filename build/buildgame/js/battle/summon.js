@@ -698,7 +698,7 @@ function startDoppelgangerTargetSelect(
         //----------------------------------
 
         showActionGuide(
-            "能力をコピーするサモンを選んでください"
+            "能力の対象を選んでください"
         );
 
 

@@ -14,11 +14,12 @@ function setBasiliskBattleTarget(
 ){
 
     //----------------------------------
-    // 攻撃側がバジリスク
+    // 攻撃側が
+    // coolAfterBattle能力を持つ
     //----------------------------------
 
     if(
-        attacker?.card?.ability?.type ===
+        attacker?.ability?.type ===
         "coolAfterBattle"
     ){
 
@@ -26,20 +27,24 @@ function setBasiliskBattleTarget(
             defender;
 
         console.log(
-            "バジリスク：攻撃側として戦闘相手を記録",
+            "バジリスク系能力：攻撃側として戦闘相手を記録",
+            attacker?.card?.name,
+            "→",
             defender?.card?.name
         );
 
         return;
+
     }
 
 
     //----------------------------------
-    // 防御側がバジリスク
+    // 防御側が
+    // coolAfterBattle能力を持つ
     //----------------------------------
 
     if(
-        defender?.card?.ability?.type ===
+        defender?.ability?.type ===
         "coolAfterBattle"
     ){
 
@@ -47,11 +52,14 @@ function setBasiliskBattleTarget(
             attacker;
 
         console.log(
-            "バジリスク：防御側として戦闘相手を記録",
+            "バジリスク系能力：防御側として戦闘相手を記録",
+            defender?.card?.name,
+            "→",
             attacker?.card?.name
         );
 
         return;
+
     }
 
 }
@@ -181,6 +189,17 @@ function removeDestroyedFromField(field){
         if(summon.destroyed){
 
             //----------------------------------
+            // 場を離れる直前の能力を保存
+            //----------------------------------
+            // ドッペルゲンガーの場合も
+            // 現在コピーしている能力を保持する
+            //----------------------------------
+
+            const abilityBeforeLeaving =
+                summon.ability;
+
+
+            //----------------------------------
             // クールゾーンへ送る前に状態リセット
             //----------------------------------
 
@@ -197,7 +216,8 @@ function removeDestroyedFromField(field){
 
                 board.addCoolCard(
                     summon.card,
-                    summon.owner
+                    summon.owner,
+                    abilityBeforeLeaving
                 );
 
                 refreshCoolModal();
@@ -240,6 +260,23 @@ function removeDestroyedFromField(field){
 
 
             //----------------------------------
+            // ドッペルゲンガー能力の再確認
+            //----------------------------------
+            // 今離れたサモンをコピー元にしている
+            // ドッペルゲンガーがいれば能力を失わせる
+            //----------------------------------
+
+            if(
+                typeof validateAllDoppelgangerAbilities ===
+                "function"
+            ){
+
+                validateAllDoppelgangerAbilities();
+
+            }
+
+
+            //----------------------------------
             // プレイヤー側の場が変化したので
             // 手札コスト表示を更新
             //----------------------------------
@@ -257,7 +294,6 @@ function removeDestroyedFromField(field){
     }
 
 }
-
 function clearDamage(){
 
     const fields = [
@@ -338,6 +374,14 @@ function resolveBasiliskBattle(){
 
 
     //----------------------------------
+    // 場を離れる直前の能力を保存
+    //----------------------------------
+
+    const abilityBeforeLeaving =
+        target.ability;
+
+
+    //----------------------------------
     // クールゾーンへ
     //----------------------------------
 
@@ -347,31 +391,41 @@ function resolveBasiliskBattle(){
         "→ クールゾーン"
     );
 
+
     //----------------------------------
-// バトルログ
-//----------------------------------
+    // バトルログ
+    //----------------------------------
 
-const owner =
-    target.owner === PLAYER
-    ?
-    "PLAYER"
-    :
-    "CPU";
+    const owner =
+        target.owner === PLAYER
+        ?
+        "PLAYER"
+        :
+        "CPU";
 
 
-addBattleLog(
-    `${owner}：${target.card.name}が破壊された`
-);
+    addBattleLog(
+        `${owner}：${target.card.name}が破壊された`
+    );
 
+
+    //----------------------------------
+    // サモン状態リセット
+    //----------------------------------
 
     resetSummonState(
         target
     );
 
 
+    //----------------------------------
+    // クールゾーンへ追加
+    //----------------------------------
+
     board.addCoolCard(
         target.card,
-        target.owner
+        target.owner,
+        abilityBeforeLeaving
     );
 
 
@@ -416,6 +470,20 @@ addBattleLog(
             index,
             1
         );
+
+    }
+
+
+    //----------------------------------
+    // ドッペルゲンガー能力を即時確認
+    //----------------------------------
+
+    if(
+        typeof validateAllDoppelgangerAbilities ===
+        "function"
+    ){
+
+        validateAllDoppelgangerAbilities();
 
     }
 

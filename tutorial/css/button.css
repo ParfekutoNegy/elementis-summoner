@@ -321,7 +321,11 @@ button:hover{
         0 4px 14px
         rgba(0,0,0,0.5);
 
-    z-index:5000;
+    /*
+        行動案内より前面に表示
+        action-guide = 999999
+    */
+    z-index:1000001;
 
     box-sizing:border-box;
 

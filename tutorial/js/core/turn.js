@@ -251,16 +251,19 @@ function beginPlaying(){
 
 function endTurn(){
 
-    if(game.currentPlayer !== PLAYER){
+    if(
+        game.currentPlayer !== PLAYER
+    ){
 
-    return;
+        return;
 
     }
 
 
     resetMagiaState();
 
-        //----------------------------------
+
+    //----------------------------------
     // モーダルを閉じる
     //----------------------------------
 
@@ -272,8 +275,8 @@ function endTurn(){
 
     closeEnemyCoolModal();
 
-    // コストモーダルを開いたままにできるなら
     closeCostView();
+
 
     //----------------------------------
     // クール回収中はターン終了不可
@@ -289,99 +292,160 @@ function endTurn(){
 
     }
 
+
     //----------------------------------
     // 攻撃状態リセット
     //----------------------------------
+
     resetAttackState();
+
 
     //----------------------------------
     // 選択カード解除
     //----------------------------------
 
     selectedHandCard = null;
+
     selectedSummon = null;
 
 
     //----------------------------------
     // 行動ボタン解除
     //----------------------------------
+
     resetActionButtons();
+
     updateButtons();
 
 
-    game.state = TURN_STATE.END;
+    game.state =
+        TURN_STATE.END;
+
 
     console.log(
         "ターン終了：" +
         game.currentPlayer
     );
 
-//----------------------------------
-// 一時効果解除
-// 両プレイヤー分確認
-//----------------------------------
 
-resetTemporaryPower(
-    PLAYER
-);
+    //----------------------------------
+    // 一時効果解除
+    // 両プレイヤー分確認
+    //----------------------------------
 
-
-resetTemporaryPower(
-    ENEMY
-);
+    resetTemporaryPower(
+        PLAYER
+    );
 
 
-    //-------------------------
+    resetTemporaryPower(
+        ENEMY
+    );
+
+
+    //==================================
     // ターン終了効果
-    //-------------------------
+    //
+    // ここから先は
+    // onTurnEnd() の完了後に進む
+    //==================================
 
-    onTurnEnd();
+    onTurnEnd(
+        finishTurnEnd
+    );
 
-//----------------------------------
-// カード表示状態を全解除
-//----------------------------------
+}
 
-board.handCards.forEach(card=>{
+function finishTurnEnd(){
 
-    card.clearEffects();
+    console.log(
+        "すべてのターン終了時能力の解決完了"
+    );
 
-});
 
-playerField.forEach(summon=>{
+    //==================================
+    // カーススモーク
+    // ターン終了で効果解除
+    //==================================
 
-    summon.view.clearEffects();
+    clearCurseSmokeStatus();
 
-});
 
-enemyField.forEach(summon=>{
+    //----------------------------------
+    // カード表示状態を全解除
+    //----------------------------------
 
-    summon.view.clearEffects();
+    board.handCards.forEach(
+        card => {
 
-});
+            card.clearEffects();
 
-    //-------------------------
+        }
+    );
+
+
+    playerField.forEach(
+        summon => {
+
+            summon.view.clearEffects();
+
+        }
+    );
+
+
+    enemyField.forEach(
+        summon => {
+
+            summon.view.clearEffects();
+
+        }
+    );
+
+
+    //----------------------------------
+    // ゲーム終了している場合
+    // 次のターンへ進まない
+    //----------------------------------
+
+    if(
+        game.playerLife <= 0 ||
+        game.enemyLife <= 0
+    ){
+
+        console.log(
+            "ゲーム終了のため次のターンへ進まない"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
     // プレイヤー交代
-    //-------------------------
+    //----------------------------------
 
     switchPlayer();
 
-    //-------------------------
-    // 次のターン
-    //-------------------------
 
-    if(game.currentPlayer === PLAYER){
+    //----------------------------------
+    // 次のターン
+    //----------------------------------
+
+    if(
+        game.currentPlayer === PLAYER
+    ){
 
         startTurn();
 
-    }else{
+    }
+    else{
 
         startCpuTurn();
 
     }
 
-
-}    
-
+}
 
 //======================================
 // サモンを起こす
@@ -429,17 +493,43 @@ function readySummons(owner){
 
 
         //----------------------------------
-        // サモン能力
+        // ターン毎の能力使用状態をリセット
         //----------------------------------
 
-        applySummonAbility(
-            summon
-        );
+        summon.abilityUsedThisTurn =
+            false;
+
+
+        //----------------------------------
+        // 現在持っている能力
+        //----------------------------------
+
+        const ability =
+            summon.ability;
+
+
+        //----------------------------------
+        // サモン能力
+        //
+        // copySummonAbility は
+        // 「場に出たとき」だけ発動するため
+        // ターン開始時には再発動させない
+        //----------------------------------
+
+        if(
+            ability?.type !==
+            "copySummonAbility"
+        ){
+
+            applySummonAbility(
+                summon
+            );
+
+        }
 
     }
 
 }
-
 
 
 //======================================

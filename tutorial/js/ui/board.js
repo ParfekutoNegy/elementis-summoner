@@ -432,8 +432,7 @@ updateCostCount(){
 //=========================
 // クールゾーン
 //=========================
-
-addCoolCard(card, owner){
+addCoolCard(card, owner, summonAbility = null){
 
     console.log(
         "★ addCoolCard",
@@ -446,11 +445,26 @@ addCoolCard(card, owner){
 
 
     //----------------------------------
+    // クールへ送られる時点での能力
+    //----------------------------------
+    // 場のサモンから送られた場合は
+    // 現在持っている能力を優先
+    //
+    // 通常のカードの場合は
+    // カード本来の能力を使用
+    //----------------------------------
+
+    const ability =
+        summonAbility ??
+        card.ability;
+
+
+    //----------------------------------
     // フェニックス能力
     //----------------------------------
 
     if(
-        card.ability?.type ===
+        ability?.type ===
         "returnToHandOnCool"
     ){
 
@@ -503,7 +517,7 @@ addCoolCard(card, owner){
 
 
         console.log(
-            "★フェニックス能力発動",
+            "★フェニックス系能力発動",
             card.name,
             "クールゾーンに入らず手札へ"
         );

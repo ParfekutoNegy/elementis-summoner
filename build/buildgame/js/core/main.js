@@ -1957,10 +1957,12 @@ function onCardClick(card){
         card
     );
 
-        console.log(
+
+    console.log(
         "クリックカード",
         card
     );
+
 
     console.log(
         "=== カード情報確認 ===",
@@ -1976,26 +1978,87 @@ function onCardClick(card){
         }
     );
 
-//==================================================
-// ドッペルゲンガー
-// 場に出たときのコピー対象選択
-//==================================================
 
-if(doppelgangerTargetMode){
+    //==================================================
+    // ドッペルゲンガー
+    // 場に出たときのコピー対象選択
+    //==================================================
 
-    //----------------------------------
-    // 場のサモン以外は対象外
-    //----------------------------------
+    if(doppelgangerTargetMode){
 
-    if(
-        card.area !== "field" &&
-        card.area !== "enemyField"
-    ){
+        //----------------------------------
+        // 場のサモン以外は対象外
+        //----------------------------------
 
-        console.log(
-            "ドッペルゲンガー対象外",
-            card.name
+        if(
+            card.area !== "field" &&
+            card.area !== "enemyField"
+        ){
+
+            console.log(
+                "ドッペルゲンガー対象外",
+                card.name
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // サモン取得
+        //----------------------------------
+
+        const targetSummon =
+            findSummonByView(
+                card
+            );
+
+
+        if(!targetSummon){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 破壊済みは対象外
+        //----------------------------------
+
+        if(targetSummon.destroyed){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 自分自身は対象外
+        //----------------------------------
+
+        if(
+            targetSummon ===
+            doppelgangerSource
+        ){
+
+            console.log(
+                "ドッペルゲンガー自身は対象にできません"
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // コピー対象決定
+        //----------------------------------
+
+        selectDoppelgangerTarget(
+            targetSummon
         );
+
 
         return;
 
@@ -2003,349 +2066,359 @@ if(doppelgangerTargetMode){
 
 
     //----------------------------------
-    // サモン取得
+    // サモン能力 対象選択中
     //----------------------------------
 
-    const targetSummon =
-        findSummonByView(
+    if(summonAbilityTargetMode){
+
+        //----------------------------------
+        // 場のサモン以外は対象外
+        //----------------------------------
+
+        if(
+            card.area !== "field" &&
+            card.area !== "enemyField"
+        ){
+
+            console.log(
+                "サモン能力対象外",
+                card.name
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // サモン取得
+        //----------------------------------
+
+        const targetSummon =
+            findSummonByView(
+                card
+            );
+
+
+        if(!targetSummon){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 破壊済みは対象外
+        //----------------------------------
+
+        if(targetSummon.destroyed){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // マーフォーク等による
+        // サモン能力対象禁止
+        //----------------------------------
+
+        if(
+            !canTargetBySummonAbility(
+                summonAbilitySource,
+                targetSummon
+            )
+        ){
+
+            console.log(
+                "サモン能力対象不可",
+                "使用=",
+                summonAbilitySource?.card?.name,
+                "対象=",
+                targetSummon.card.name
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // ラミア
+        // パワー1のみ対象可能
+        //----------------------------------
+
+        if(
+            summonAbilitySource?.ability?.type ===
+            "oncePerTurnPowerOneSummonRemove"
+        ){
+
+            if(
+                getPower(targetSummon) !== 1
+            ){
+
+                console.log(
+                    "ラミア能力対象外：",
+                    targetSummon.card.name,
+                    "現在パワー=",
+                    getPower(targetSummon)
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        //----------------------------------
+        // 対象決定
+        //----------------------------------
+
+        summonAbilityTarget =
+            targetSummon;
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "サモン能力対象決定"
+        );
+
+        console.log(
+            "能力使用サモン：",
+            summonAbilitySource?.card?.name
+        );
+
+        console.log(
+            "対象サモン：",
+            summonAbilityTarget.card.name
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        //----------------------------------
+        // 対象選択終了
+        //----------------------------------
+
+        summonAbilityTargetMode =
+            false;
+
+
+        //----------------------------------
+        // 発光解除
+        //----------------------------------
+
+        clearSummonAbilityTargetHighlight();
+
+
+        //----------------------------------
+        // 操作案内を消す
+        //----------------------------------
+
+        hideActionGuide();
+
+
+        //----------------------------------
+        // 対象カードを選択表示
+        //----------------------------------
+
+        clearFieldSelection();
+
+
+        selectedSummon =
+            targetSummon;
+
+
+        card.setSelected(
+            true
+        );
+
+
+        showCardInfo(
             card
         );
 
 
-    if(!targetSummon){
+        //----------------------------------
+        // 能力解決
+        //----------------------------------
+
+        resolveSummonAbility();
+
 
         return;
 
     }
 
 
-    //----------------------------------
-    // 破壊済みは対象外
-    //----------------------------------
-
-    if(targetSummon.destroyed){
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 自分自身は対象外
-    //----------------------------------
-
-    if(
-        targetSummon ===
-        doppelgangerSource
-    ){
-
-        console.log(
-            "ドッペルゲンガー自身は対象にできません"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // コピー対象決定
-    //----------------------------------
-
-    selectDoppelgangerTarget(
-        targetSummon
-    );
-
-
-    return;
-
-}
-
-
-//----------------------------------
-// サモン能力 対象選択中
-//----------------------------------
-
-if(summonAbilityTargetMode){
-
-    //----------------------------------
-    // 場のサモン以外は対象外
-    //----------------------------------
-
-    if(
-        card.area !== "field" &&
-        card.area !== "enemyField"
-    ){
-
-        console.log(
-            "サモン能力対象外",
-            card.name
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // サモン取得
-    //----------------------------------
-
-    const targetSummon =
-        findSummonByView(
-            card
-        );
-
-
-    if(!targetSummon){
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 破壊済みは対象外
-    //----------------------------------
-
-    if(targetSummon.destroyed){
-
-        return;
-
-    }
-
-    //----------------------------------
-// マーフォーク等による
-// サモン能力対象禁止
-//----------------------------------
-
-if(
-    !canTargetBySummonAbility(
-        summonAbilitySource,
-        targetSummon
-    )
-){
-
-    console.log(
-        "サモン能力対象不可",
-        "使用=",
-        summonAbilitySource?.card?.name,
-        "対象=",
-        targetSummon.card.name
-    );
-
-    return;
-
-}
-
-//----------------------------------
-// ラミア
-// パワー1のみ対象可能
-//----------------------------------
-
-if(
-    summonAbilitySource?.ability?.type ===
-    "oncePerTurnPowerOneSummonRemove"
-){
-
-    if(
-        getPower(targetSummon) !== 1
-    ){
-
-        console.log(
-            "ラミア能力対象外：",
-            targetSummon.card.name,
-            "現在パワー=",
-            getPower(targetSummon)
-        );
-
-        return;
-
-    }
-
-}
-
-
-
-    //----------------------------------
-    // 対象決定
-    //----------------------------------
-
-    summonAbilityTarget =
-        targetSummon;
-
-
-    console.log(
-        "================================"
-    );
-
-    console.log(
-        "サモン能力対象決定"
-    );
-
-    console.log(
-        "能力使用サモン：",
-        summonAbilitySource?.card?.name
-    );
-
-    console.log(
-        "対象サモン：",
-        summonAbilityTarget.card.name
-    );
-
-    console.log(
-        "================================"
-    );
-
-
-    //----------------------------------
-    // 対象選択終了
-    //----------------------------------
-
-    summonAbilityTargetMode =
-        false;
-
-
-    //----------------------------------
-    // 発光解除
-    //----------------------------------
-
-    clearSummonAbilityTargetHighlight();
-
-
-    //----------------------------------
-    // 操作案内を消す
-    //----------------------------------
-
-    hideActionGuide();
-
-
-    //----------------------------------
-    // 対象カードを選択表示
-    //----------------------------------
-
-    clearFieldSelection();
-
-
-    selectedSummon =
-        targetSummon;
-
-
-    card.setSelected(
-        true
-    );
-
-
-    showCardInfo(
-        card
-    );
-
-
-//----------------------------------
-// 能力解決
-//----------------------------------
-
-resolveSummonAbility();
-
-
-return;
-
-}
-
-
-//----------------------------------
-// クール回収モード
-//----------------------------------
-
-if(coolRecoveryMode){
-
-    //----------------------------------
-    // クールモーダルの〇を解除
-    //----------------------------------
-
-    document
-        .querySelectorAll(
-            "#cool-list .card-marker"
-        )
-        .forEach(marker => {
-
-            marker.style.display =
-                "none";
-
-        });
-
-
-    //----------------------------------
-    // 手札の選択をすべて解除
-    //----------------------------------
-
-    if(board.handCards){
-
-        board.handCards.forEach(handCard => {
-
-            handCard.setSelected(false);
-
-        });
-
-    }
-
-
-    //----------------------------------
-    // クールゾーンのカード選択を解除
-    //----------------------------------
-
-    if(board.playerCoolCards){
-
-        board.playerCoolCards.forEach(coolCard => {
-
-            coolCard.setSelected(false);
-
-        });
-
-    }
-
-
-    //----------------------------------
-    // 選択情報をリセット
-    //----------------------------------
-
-    selectedInfoCard =
-        null;
-
-    selectedHandCard =
-        null;
-
-    selectedCoolCard =
-        null;
-
-
-    //----------------------------------
-    // クールゾーン以外をクリック
-    //----------------------------------
-
-    if(card.area !== "cool"){
+    //==================================================
+    // クール回収モード
+    //==================================================
+
+    if(coolRecoveryMode){
 
         //----------------------------------
-        // 今回のカードを選択
+        // クールモーダルの〇を解除
         //----------------------------------
+
+        document
+            .querySelectorAll(
+                "#cool-list .card-marker"
+            )
+            .forEach(marker => {
+
+                marker.style.display =
+                    "none";
+
+            });
+
+
+        //----------------------------------
+        // 手札の選択をすべて解除
+        //----------------------------------
+
+        if(board.handCards){
+
+            board.handCards.forEach(
+                handCard => {
+
+                    handCard.setSelected(
+                        false
+                    );
+
+                }
+            );
+
+        }
+
+
+        //----------------------------------
+        // クールゾーンのカード選択を解除
+        //----------------------------------
+
+        if(board.playerCoolCards){
+
+            board.playerCoolCards.forEach(
+                coolCard => {
+
+                    coolCard.setSelected(
+                        false
+                    );
+
+                }
+            );
+
+        }
+
+
+        //----------------------------------
+        // 場の選択も解除
+        //
+        // クール回収中に場カードをクリックして
+        // 〇マーカーが残らないようにする
+        //----------------------------------
+
+        clearFieldSelection();
+
+
+        //----------------------------------
+        // 選択情報をリセット
+        //----------------------------------
+
+        selectedInfoCard =
+            null;
+
+        selectedHandCard =
+            null;
+
+        selectedCoolCard =
+            null;
+
+
+        //==================================
+        // クールゾーン以外をクリック
+        //==================================
+
+        if(card.area !== "cool"){
+
+            //----------------------------------
+            // 情報表示用としてのみ保存
+            //----------------------------------
+
+            selectedInfoCard =
+                card;
+
+
+            //----------------------------------
+            // 手札の場合
+            //----------------------------------
+
+            if(card.area === "hand"){
+
+                selectedHandCard =
+                    card;
+
+                card.setSelected(
+                    true
+                );
+
+            }
+
+
+            //----------------------------------
+            // 場カードの場合は
+            // setSelected(true) を行わない
+            //
+            // これにより〇マーカーを付けない
+            //----------------------------------
+
+
+            //----------------------------------
+            // カード詳細表示
+            //----------------------------------
+
+            showCardInfo(
+                card
+            );
+
+
+            //----------------------------------
+            // ボタン更新
+            //----------------------------------
+
+            updateButtons();
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // クールゾーンをクリック
+        //==================================
 
         selectedInfoCard =
             card;
 
 
-        card.setSelected(true);
+        selectedCoolCard =
+            card;
 
 
         //----------------------------------
-        // 手札なら手札選択として保存
+        // クールカードを選択
         //----------------------------------
 
-        if(card.area === "hand"){
-
-            selectedHandCard =
-                card;
-
-        }
+        card.setSelected(
+            true
+        );
 
 
         //----------------------------------
@@ -2370,26 +2443,939 @@ if(coolRecoveryMode){
 
 
     //----------------------------------
-    // クールゾーンをクリック
+    // マギア対象選択中
     //----------------------------------
 
-    selectedInfoCard =
+    if(magiaTargetMode){
+
+        hideActionGuide();
+
+    }
+
+
+    //----------------------------------
+    // 強制コスト選択中
+    //----------------------------------
+
+    if(forceCostMode){
+
+        if(
+            card.area === "hand" &&
+            forceCostPlayer === PLAYER
+        ){
+
+            selectForceCostCard(
+                card
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    //==================================================
+    // レジスト コスト選択中
+    //
+    // 通常の resistMode より先に判定する
+    //==================================================
+
+    if(resistUsingCard){
+
+        console.log(
+            "レジストコスト選択中",
+            card.name
+        );
+
+
+        //----------------------------------
+        // 使用中のレジスト自身
+        //----------------------------------
+
+        if(card === resistUsingCard){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 手札のみコストとして選択可能
+        //----------------------------------
+
+        if(card.area === "hand"){
+
+            selectResistCostCard(
+                card
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 場カードの場合
+        //
+        // 情報は表示するが
+        // setSelected(true) は行わない
+        //----------------------------------
+
+        if(
+            card.area === "field" ||
+            card.area === "enemyField"
+        ){
+
+            //----------------------------------
+            // 以前の場選択を解除
+            //----------------------------------
+
+            clearFieldSelection();
+
+
+            //----------------------------------
+            // 情報表示用
+            //----------------------------------
+
+            selectedInfoCard =
+                card;
+
+
+            //----------------------------------
+            // カード情報表示
+            //----------------------------------
+
+            showCardInfo(
+                card
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // その他は何もしない
+        //----------------------------------
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // レジスト処理中
+    //----------------------------------
+
+    if(
+        resistMode &&
+        card.area === "field"
+    ){
+
+        console.log(
+            "レジスト中：場カード選択"
+        );
+
+
+        //----------------------------------
+        // 前回の選択解除
+        //----------------------------------
+
+        if(selectedInfoCard){
+
+            selectedInfoCard.setSelected(
+                false
+            );
+
+        }
+
+
+        if(selectedHandCard){
+
+            selectedHandCard.setSelected(
+                false
+            );
+
+        }
+
+
+        //----------------------------------
+        // 今回のカードを選択
+        //----------------------------------
+
+        selectedInfoCard =
+            card;
+
+        card.setSelected(
+            true
+        );
+
+
+        //----------------------------------
+        // カード情報表示
+        //----------------------------------
+
+        showCardInfo(
+            card
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ターン演出中
+    //----------------------------------
+
+    if(turnAnimation){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃中は手札操作禁止
+    //----------------------------------
+
+    if(
+        summonCard &&
+        !resistMode &&
+        (
+            card.area === "field" ||
+            card.area === "enemyField"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // コスト選択中は場操作禁止
+    //----------------------------------
+
+    if(
+        summonCard &&
+        (
+            card.area === "field" ||
+            card.area === "enemyField"
+        )
+    ){
+
+        return;
+
+    }
+
+
+    console.log(
+        "クリックカード",
+        card,
+        "area=",
+        card.area
+    );
+
+
+    //----------------------------------
+    // マギア対象選択中
+    //----------------------------------
+
+    if(magiaTargetMode){
+
+        //----------------------------------
+        // クールゾーン
+        //----------------------------------
+
+        if(
+            card.area === "cool"
+        ){
+
+            //----------------------------------
+            // マギア対象として有効か確認
+            //----------------------------------
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    card
+                )
+            ){
+
+                //----------------------------------
+                // 対象決定
+                //----------------------------------
+
+                magiaTarget =
+                    card;
+
+
+                magiaTargetMode =
+                    false;
+
+
+                clearMagiaHighlight();
+
+
+                console.log(
+                    "マギア対象決定：クールゾーン",
+                    card.name
+                );
+
+
+                startMagiaCost();
+
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 対象外なら何もしない
+            //----------------------------------
+
+            console.log(
+                "マギア対象外：クールゾーン",
+                card.name
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // サモン
+        //----------------------------------
+
+        if(
+            card.area === "field" ||
+            card.area === "enemyField"
+        ){
+
+            const summon =
+                findSummonByView(
+                    card
+                );
+
+
+            if(!summon){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 対象として有効か確認
+            //----------------------------------
+
+            if(
+                !isValidMagiaTarget(
+                    magiaCard,
+                    summon
+                )
+            ){
+
+                console.log(
+                    "マギア対象外",
+                    summon.card.name
+                );
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 対象決定
+            //----------------------------------
+
+            magiaTarget =
+                summon;
+
+
+            magiaTargetMode =
+                false;
+
+
+            clearMagiaHighlight();
+
+
+            console.log(
+                "マギア対象決定",
+                summon.card.name
+            );
+
+
+            startMagiaCost();
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // プレイヤー対象
+        //----------------------------------
+
+        if(
+            card.area === "player" ||
+            card === PLAYER ||
+            card === "player"
+        ){
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    PLAYER
+                )
+            ){
+
+                magiaTarget =
+                    PLAYER;
+
+
+                magiaTargetMode =
+                    false;
+
+
+                clearMagiaHighlight();
+
+
+                console.log(
+                    "マギア対象決定：自分"
+                );
+
+
+                startMagiaCost();
+
+            }
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 自分クールゾーン
+        //----------------------------------
+
+        if(
+            card.area === "cool"
+        ){
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    card
+                )
+            ){
+
+                magiaTarget =
+                    card;
+
+
+                magiaTargetMode =
+                    false;
+
+
+                clearMagiaHighlight();
+
+
+                console.log(
+                    "マギア対象決定：クールゾーン",
+                    card.name
+                );
+
+
+                startMagiaCost();
+
+            }
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 相手プレイヤー
+        //----------------------------------
+
+        if(
+            card.area === "enemy" ||
+            card === ENEMY ||
+            card === "enemy"
+        ){
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    ENEMY
+                )
+            ){
+
+                magiaTarget =
+                    ENEMY;
+
+
+                magiaTargetMode =
+                    false;
+
+
+                clearMagiaHighlight();
+
+
+                console.log(
+                    "マギア対象決定：相手"
+                );
+
+
+                startMagiaCost();
+
+            }
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 対象外クリック
+        //----------------------------------
+
+        resetMagiaState();
+
+
+        return;
+
+    }
+
+
+    //======================================
+    // ブロック中
+    //======================================
+
+    if(blockMode){
+
+        //----------------------------------
+        // 前回の選択解除
+        //----------------------------------
+
+        if(selectedInfoCard){
+
+            selectedInfoCard.setSelected(
+                false
+            );
+
+        }
+
+
+        if(selectedHandCard){
+
+            selectedHandCard.setSelected(
+                false
+            );
+
+        }
+
+
+        //----------------------------------
+        // 今回クリックしたカードを選択
+        //----------------------------------
+
+        selectedInfoCard =
+            card;
+
+
+        card.setSelected(
+            true
+        );
+
+
+        //----------------------------------
+        // 手札
+        //----------------------------------
+
+        if(card.area === "hand"){
+
+            showCardInfo(
+                card
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 場カード
+        //----------------------------------
+
+        if(
+            card.area === "field" ||
+            card.area === "enemyField"
+        ){
+
+            const summon =
+                findSummonByView(
+                    card
+                );
+
+
+            if(!summon){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // カード情報表示
+            //----------------------------------
+
+            showCardInfo(
+                summon.card
+            );
+
+
+            //----------------------------------
+            // ブロック可能ならボタン表示
+            //----------------------------------
+
+            if(
+                selectableBlockSummons.includes(
+                    summon
+                )
+            ){
+
+                updateCardAction(
+                    card
+                );
+
+            }
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // その他のカード
+        //----------------------------------
+
+        showCardInfo(
+            card
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================================
+    // サモン能力 コスト選択中
+    //==================================================
+
+    if(summonAbilityCostMode){
+
+        //----------------------------------
+        // 手札のみ選択可能
+        //----------------------------------
+
+        if(
+            card.area === "hand"
+        ){
+
+            selectSummonAbilityCostCard(
+                card
+            );
+
+        }
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // レジスト選択中
+    //----------------------------------
+
+    if(resistMode){
+
+        //----------------------------------
+        // 前回選択解除
+        //----------------------------------
+
+        if(selectedInfoCard){
+
+            selectedInfoCard.setSelected(
+                false
+            );
+
+        }
+
+
+        if(selectedHandCard){
+
+            selectedHandCard.setSelected(
+                false
+            );
+
+        }
+
+
+        //----------------------------------
+        // 今回クリックしたカードを保存
+        //----------------------------------
+
+        selectedInfoCard =
+            card;
+
+
+        card.setSelected(
+            true
+        );
+
+
+        //----------------------------------
+        // 使用可能レジスト
+        //----------------------------------
+
+        if(
+            selectableResistCards.includes(
+                card
+            )
+        ){
+
+            selectedHandCard =
+                card;
+
+
+            showCardInfo(
+                card
+            );
+
+
+            updateButtons();
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 使用不可カード
+        //----------------------------------
+
+        selectedHandCard =
+            null;
+
+
+        updateButtons();
+
+
+        showCardInfo(
+            card
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 場サモン
+    //----------------------------------
+
+    if(
+        card.area === "field" ||
+        card.area === "enemyField"
+    ){
+
+        const summon =
+            findSummonByView(
+                card
+            );
+
+
+        if(!summon){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 攻撃中
+        //----------------------------------
+
+        if(isAttacking()){
+
+            executeAttack(
+                attackingSummon,
+                summon
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 通常表示
+        //----------------------------------
+
+        clearHandSelection();
+
+        clearFieldSelection();
+
+
+        selectedSummon =
+            summon;
+
+
+        card.setSelected(
+            true
+        );
+
+
+        showCardInfo(
+            card
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // サモン・マギア コスト選択中
+    //----------------------------------
+
+    if(summonCard){
+
+        if(card === summonCard){
+
+            return;
+
+        }
+
+
+        if(card.area === "hand"){
+
+            selectCostCard(
+                card
+            );
+
+        }
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃中に別カードをクリック
+    // → 攻撃キャンセル
+    //----------------------------------
+
+    if(isAttacking()){
+
+        console.log(
+            "攻撃キャンセル：別カードをクリック"
+        );
+
+
+        hideActionGuide();
+
+
+        resetAttackState();
+
+
+        updateUsableCardHighlight();
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 手札以外
+    //----------------------------------
+
+    if(card.area !== "hand"){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 場モーダル閉じる
+    //----------------------------------
+
+    closeSummonActionModal();
+
+
+    //----------------------------------
+    // 前の選択解除
+    //----------------------------------
+
+    if(
+        selectedHandCard &&
+        selectedHandCard !== card
+    ){
+
+        selectedHandCard.setSelected(
+            false
+        );
+
+    }
+
+
+    //----------------------------------
+    // 場選択解除
+    //----------------------------------
+
+    clearFieldSelection();
+
+
+    //----------------------------------
+    // 手札選択
+    //----------------------------------
+
+    selectedHandCard =
         card;
 
 
-    selectedCoolCard =
-        card;
+    card.setSelected(
+        true
+    );
 
 
     //----------------------------------
-    // クールカードを選択
-    //----------------------------------
-
-    card.setSelected(true);
-
-
-    //----------------------------------
-    // カード詳細表示
+    // カード情報表示
     //----------------------------------
 
     showCardInfo(
@@ -2402,836 +3388,6 @@ if(coolRecoveryMode){
     //----------------------------------
 
     updateButtons();
-
-
-    return;
-
-}
-
-
-//----------------------------------
-// マギア対象選択中
-//----------------------------------
-
-if(magiaTargetMode){
-
-    hideActionGuide();
-
-}
-
-
-//----------------------------------
-// 強制コスト選択中
-//----------------------------------
-
-if(forceCostMode){
-
-    if(
-        card.area === "hand" &&
-        forceCostPlayer === PLAYER
-    ){
-
-        selectForceCostCard(card);
-
-    }
-
-    return;
-
-}
-
-
-//----------------------------------
-// レジスト処理中
-//----------------------------------
-
-if(
-    resistMode &&
-    card.area === "field"
-){
-
-    console.log(
-        "レジスト中：場カード選択"
-    );
-
-
-    //----------------------------------
-    // 前回の選択解除
-    //----------------------------------
-
-    if(selectedInfoCard){
-
-        selectedInfoCard.setSelected(false);
-
-    }
-
-
-    if(selectedHandCard){
-
-        selectedHandCard.setSelected(false);
-
-    }
-
-
-    //----------------------------------
-    // 今回のカードを選択
-    //----------------------------------
-
-    selectedInfoCard =
-        card;
-
-    card.setSelected(true);
-
-
-    //----------------------------------
-    // カード情報表示
-    //----------------------------------
-
-    showCardInfo(card);
-
-
-    return;
-
-}
-
-
-//----------------------------------
-// ターン演出中
-//----------------------------------
-
-if(turnAnimation){
-
-    return;
-
-}
-
-
-//----------------------------------
-// 攻撃中は手札操作禁止
-//----------------------------------
-
-if(
-    summonCard &&
-    !resistMode &&
-    (
-        card.area === "field" ||
-        card.area === "enemyField"
-    )
-){
-
-    return;
-
-}
-
-
-//----------------------------------
-// コスト選択中は場操作禁止
-//----------------------------------
-
-if(
-    summonCard &&
-    (
-        card.area === "field" ||
-        card.area === "enemyField"
-    )
-){
-
-    return;
-
-}
-
-
-console.log(
-    "クリックカード",
-    card,
-    "area=",
-    card.area
-);
-
-
-//----------------------------------
-// マギア対象選択中
-//----------------------------------
-
-if(magiaTargetMode){
-
-    //----------------------------------
-    // クールゾーン
-    //----------------------------------
-
-    if(
-        card.area === "cool"
-    ){
-
-        //----------------------------------
-        // マギア対象として有効か確認
-        //----------------------------------
-
-        if(
-            isValidMagiaTarget(
-                magiaCard,
-                card
-            )
-        ){
-
-            //----------------------------------
-            // 対象決定
-            //----------------------------------
-
-            magiaTarget =
-                card;
-
-
-            magiaTargetMode =
-                false;
-
-
-            clearMagiaHighlight();
-
-
-            console.log(
-                "マギア対象決定：クールゾーン",
-                card.name
-            );
-
-
-            startMagiaCost();
-
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // 対象外なら何もしない
-        //----------------------------------
-
-        console.log(
-            "マギア対象外：クールゾーン",
-            card.name
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // サモン
-    //----------------------------------
-
-    if(
-        card.area === "field" ||
-        card.area === "enemyField"
-    ){
-
-        const summon =
-            findSummonByView(card);
-
-
-        if(!summon){
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // 対象として有効か確認
-        //----------------------------------
-
-        if(
-            !isValidMagiaTarget(
-                magiaCard,
-                summon
-            )
-        ){
-
-            console.log(
-                "マギア対象外",
-                summon.card.name
-            );
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // 対象決定
-        //----------------------------------
-
-        magiaTarget =
-            summon;
-
-
-        magiaTargetMode =
-            false;
-
-
-        clearMagiaHighlight();
-
-
-        console.log(
-            "マギア対象決定",
-            summon.card.name
-        );
-
-
-        startMagiaCost();
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // プレイヤー対象
-    //----------------------------------
-
-    if(
-        card.area === "player" ||
-        card === PLAYER ||
-        card === "player"
-    ){
-
-        if(
-            isValidMagiaTarget(
-                magiaCard,
-                PLAYER
-            )
-        ){
-
-            magiaTarget =
-                PLAYER;
-
-
-            magiaTargetMode =
-                false;
-
-
-            clearMagiaHighlight();
-
-
-            console.log(
-                "マギア対象決定：自分"
-            );
-
-
-            startMagiaCost();
-
-        }
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 自分クールゾーン
-    //----------------------------------
-
-    if(
-        card.area === "cool"
-    ){
-
-        if(
-            isValidMagiaTarget(
-                magiaCard,
-                card
-            )
-        ){
-
-            magiaTarget =
-                card;
-
-
-            magiaTargetMode =
-                false;
-
-
-            clearMagiaHighlight();
-
-
-            console.log(
-                "マギア対象決定：クールゾーン",
-                card.name
-            );
-
-
-            startMagiaCost();
-
-        }
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 相手プレイヤー
-    //----------------------------------
-
-    if(
-        card.area === "enemy" ||
-        card === ENEMY ||
-        card === "enemy"
-    ){
-
-        if(
-            isValidMagiaTarget(
-                magiaCard,
-                ENEMY
-            )
-        ){
-
-            magiaTarget =
-                ENEMY;
-
-
-            magiaTargetMode =
-                false;
-
-
-            clearMagiaHighlight();
-
-
-            console.log(
-                "マギア対象決定：相手"
-            );
-
-
-            startMagiaCost();
-
-        }
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 対象外クリック
-    //----------------------------------
-
-    resetMagiaState();
-
-    return;
-
-}
-
-
-//======================================
-// ブロック中
-//======================================
-
-if(blockMode){
-
-    //----------------------------------
-    // 前回の選択解除
-    //----------------------------------
-
-    if(selectedInfoCard){
-
-        selectedInfoCard.setSelected(false);
-
-    }
-
-
-    if(selectedHandCard){
-
-        selectedHandCard.setSelected(false);
-
-    }
-
-
-    //----------------------------------
-    // 今回クリックしたカードを選択
-    //----------------------------------
-
-    selectedInfoCard =
-        card;
-
-    card.setSelected(true);
-
-
-    //----------------------------------
-    // 手札
-    //----------------------------------
-
-    if(card.area === "hand"){
-
-        showCardInfo(card);
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 場カード
-    //----------------------------------
-
-    if(
-        card.area === "field" ||
-        card.area === "enemyField"
-    ){
-
-        const summon =
-            findSummonByView(card);
-
-
-        if(!summon){
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // カード情報表示
-        //----------------------------------
-
-        showCardInfo(
-            summon.card
-        );
-
-
-        //----------------------------------
-        // ブロック可能ならボタン表示
-        //----------------------------------
-
-        if(
-            selectableBlockSummons.includes(
-                summon
-            )
-        ){
-
-            updateCardAction(
-                card
-            );
-
-        }
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // その他のカード
-    //----------------------------------
-
-    showCardInfo(card);
-
-    return;
-
-}
-
-//==================================================
-// サモン能力 コスト選択中
-//==================================================
-
-if(summonAbilityCostMode){
-
-    //----------------------------------
-    // 手札のみ選択可能
-    //----------------------------------
-
-    if(
-        card.area === "hand"
-    ){
-
-        selectSummonAbilityCostCard(
-            card
-        );
-
-    }
-
-
-    return;
-
-}
-
-
-//======================================
-// レジスト コスト選択中
-//======================================
-
-if(resistUsingCard){
-
-    console.log(
-        "レジストコスト選択中",
-        card.name
-    );
-
-
-    if(card === resistUsingCard){
-
-        return;
-
-    }
-
-
-    if(card.area === "hand"){
-
-        selectResistCostCard(card);
-
-    }
-
-
-    return;
-
-}
-
-
-//----------------------------------
-// レジスト選択中
-//----------------------------------
-
-if(resistMode){
-
-    //----------------------------------
-    // 前回選択解除
-    //----------------------------------
-
-    if(selectedInfoCard){
-
-        selectedInfoCard.setSelected(false);
-
-    }
-
-
-    if(selectedHandCard){
-
-        selectedHandCard.setSelected(false);
-
-    }
-
-
-    //----------------------------------
-    // 今回クリックしたカードを保存
-    //----------------------------------
-
-    selectedInfoCard =
-        card;
-
-
-    card.setSelected(true);
-
-
-    //----------------------------------
-    // 使用可能レジスト
-    //----------------------------------
-
-    if(
-        selectableResistCards.includes(card)
-    ){
-
-        selectedHandCard =
-            card;
-
-
-        showCardInfo(card);
-
-
-        updateButtons();
-
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 使用不可カード
-    //----------------------------------
-
-    selectedHandCard =
-        null;
-
-
-    updateButtons();
-
-    showCardInfo(card);
-
-    return;
-
-}
-
-
-//----------------------------------
-// 場サモン
-//----------------------------------
-
-if(
-    card.area === "field" ||
-    card.area === "enemyField"
-){
-
-    const summon =
-        findSummonByView(card);
-
-
-    if(!summon){
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 攻撃中
-    //----------------------------------
-
-    if(isAttacking()){
-
-        executeAttack(
-            attackingSummon,
-            summon
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 通常表示
-    //----------------------------------
-
-    clearHandSelection();
-
-    clearFieldSelection();
-
-    selectedSummon =
-        summon;
-
-    card.setSelected(true);
-
-    showCardInfo(
-        card
-    );
-
-    return;
-
-}
-
-
-//----------------------------------
-// サモン・マギア コスト選択中
-//----------------------------------
-
-if(summonCard){
-
-    if(card === summonCard){
-
-        return;
-
-    }
-
-
-    if(card.area === "hand"){
-
-        selectCostCard(card);
-
-    }
-
-    return;
-
-}
-
-
-//----------------------------------
-// 攻撃中に別カードをクリック
-// → 攻撃キャンセル
-//----------------------------------
-
-if(isAttacking()){
-
-    console.log(
-        "攻撃キャンセル：別カードをクリック"
-    );
-
-    hideActionGuide();
-
-    resetAttackState();
-
-    updateUsableCardHighlight();
-
-    return;
-
-}
-
-
-//----------------------------------
-// 手札以外
-//----------------------------------
-
-if(card.area !== "hand"){
-
-    return;
-
-}
-
-
-//----------------------------------
-// 場モーダル閉じる
-//----------------------------------
-
-closeSummonActionModal();
-
-
-//----------------------------------
-// 前の選択解除
-//----------------------------------
-
-if(
-    selectedHandCard &&
-    selectedHandCard !== card
-){
-
-    selectedHandCard.setSelected(
-        false
-    );
-
-}
-
-
-//----------------------------------
-// 場選択解除
-//----------------------------------
-
-clearFieldSelection();
-
-
-//----------------------------------
-// 手札選択
-//----------------------------------
-
-selectedHandCard =
-    card;
-
-card.setSelected(true);
-
-
-//----------------------------------
-// カード情報表示
-//----------------------------------
-
-showCardInfo(card);
-
-
-//----------------------------------
-// ボタン更新
-//----------------------------------
-
-updateButtons();
 
 }
 
@@ -3676,8 +3832,6 @@ function payCost(){
         );
 
 
-
-
         //----------------------------------
         // 召喚したターンは攻撃不可
         //----------------------------------
@@ -3698,13 +3852,14 @@ function payCost(){
             summon
         );
 
-        //----------------------------------
-// バトルログ
-//----------------------------------
 
-addBattleLog(
-    `PLAYER：${summonCard.name}を召喚`
-);
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        addBattleLog(
+            `PLAYER：${summonCard.name}を召喚`
+        );
 
 
         //----------------------------------
@@ -3730,59 +3885,59 @@ addBattleLog(
         //----------------------------------
 
         updateHandCostDisplay();
+
     }
 
 
-//----------------------------------
-// マギア
-//----------------------------------
-
-if(
-    summonCard.type ===
-    "マギア"
-){
-
     //----------------------------------
-    // バトルログ
+    // マギア
     //----------------------------------
-
-    addBattleLog(
-        `PLAYER：${summonCard.name}を使用`
-    );
-
-    addBattleLog(
-        `PLAYER：対象 → ${
-            getMagiaTargetLog(
-                magiaTarget
-            )
-        }`
-    );
-
-
-    //==================================
-    // ケット・シー
-    //
-    // ここまで来た時点で
-    // コスト支払いまで完了しているため
-    // 能力使用成立
-    //==================================
 
     if(
-        catSithMagiaPlaying
+        summonCard.type === "マギア"
     ){
 
-        completeCatSithAbility();
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        addBattleLog(
+            `PLAYER：${summonCard.name}を使用`
+        );
+
+        addBattleLog(
+            `PLAYER：対象 → ${
+                getMagiaTargetLog(
+                    magiaTarget
+                )
+            }`
+        );
+
+
+        //==================================
+        // ケット・シー
+        //
+        // ここまで来た時点で
+        // コスト支払いまで完了しているため
+        // 能力使用成立
+        //==================================
+
+        if(
+            catSithMagiaPlaying
+        ){
+
+            completeCatSithAbility();
+
+        }
+
+
+        //----------------------------------
+        // マギア解決
+        //----------------------------------
+
+        resolveMagia();
 
     }
-
-
-    //----------------------------------
-    // マギア解決
-    //----------------------------------
-
-    resolveMagia();
-
-}
 
 
     //----------------------------------
@@ -3794,6 +3949,7 @@ if(
         selectedHandCard.setSelected(false);
 
     }
+
 
     selectedCostCards = [];
 
@@ -3813,8 +3969,26 @@ if(
 
     costConfirm = false;
 
-    hideActionGuide();
 
+    //----------------------------------
+    // 行動案内を消す
+    //----------------------------------
+    // ドッペルゲンガーの対象選択中は
+    // 対象選択案内を残す
+    //----------------------------------
+
+    if(
+        !doppelgangerTargetMode
+    ){
+
+        hideActionGuide();
+
+    }
+
+
+    //----------------------------------
+    // ゲーム状態更新
+    //----------------------------------
 
     updateGameState();
 
@@ -8326,11 +8500,8 @@ function moveLamiaTargetToHand(
 
 
     const field =
-
         owner === PLAYER
-
             ? playerField
-
             : enemyField;
 
 
@@ -8350,6 +8521,20 @@ function moveLamiaTargetToHand(
             index,
             1
         );
+
+    }
+
+
+    //----------------------------------
+    // ドッペルゲンガー能力を即時確認
+    //----------------------------------
+
+    if(
+        typeof validateAllDoppelgangerAbilities ===
+        "function"
+    ){
+
+        validateAllDoppelgangerAbilities();
 
     }
 
@@ -8467,7 +8652,6 @@ function moveLamiaTargetToHand(
     );
 
 }
-
 function moveLamiaTargetToCool(
     summon
 ){
@@ -8491,12 +8675,17 @@ function moveLamiaTargetToCool(
 
 
     const field =
-
         owner === PLAYER
-
             ? playerField
-
             : enemyField;
+
+
+    //----------------------------------
+    // 場を離れる直前の能力を保存
+    //----------------------------------
+
+    const abilityBeforeLeaving =
+        summon.ability;
 
 
     //----------------------------------
@@ -8514,7 +8703,8 @@ function moveLamiaTargetToCool(
 
     board.addCoolCard(
         card,
-        owner
+        owner,
+        abilityBeforeLeaving
     );
 
 
@@ -8562,6 +8752,20 @@ function moveLamiaTargetToCool(
 
 
     //----------------------------------
+    // ドッペルゲンガー能力を即時確認
+    //----------------------------------
+
+    if(
+        typeof validateAllDoppelgangerAbilities ===
+        "function"
+    ){
+
+        validateAllDoppelgangerAbilities();
+
+    }
+
+
+    //----------------------------------
     // PLAYER側の場が変化
     //----------------------------------
 
@@ -8580,7 +8784,6 @@ function moveLamiaTargetToCool(
     );
 
 }
-
 function finishLamiaAbility(){
 
     //----------------------------------
