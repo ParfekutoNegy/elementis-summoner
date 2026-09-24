@@ -78,20 +78,14 @@ function startAttack(summon){
 
 
     //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const ability =
-        summon.ability;
-
-
-    //----------------------------------
     // 召喚ターン攻撃可能能力
     //----------------------------------
 
     const canAttackOnSummonTurn =
-        ability?.type ===
-        "summonTurnAttack";
+        hasSummonAbility(
+            summon,
+            "summonTurnAttack"
+        );
 
 
     //----------------------------------
@@ -191,8 +185,8 @@ function startAttack(summon){
     console.log(
         "攻撃開始",
         summon.card.name,
-        "現在能力=",
-        ability?.type ?? "なし"
+        "summonTurnAttack=",
+        canAttackOnSummonTurn
     );
 
 }
@@ -303,11 +297,14 @@ function canAttack(target){
 
 
     //----------------------------------
-    // 現在持っている能力
+    // 召喚ターン攻撃可能能力
     //----------------------------------
 
-    const ability =
-        attackingSummon.ability;
+    const canAttackOnSummonTurn =
+        hasSummonAbility(
+            attackingSummon,
+            "summonTurnAttack"
+        );
 
 
     //----------------------------------
@@ -316,8 +313,7 @@ function canAttack(target){
 
     if(
         !attackingSummon.attackReady &&
-        ability?.type !==
-        "summonTurnAttack"
+        !canAttackOnSummonTurn
     ){
 
         console.log(
@@ -376,12 +372,22 @@ function canAttack(target){
         if(!target.isRest){
 
             //----------------------------------
+            // タテ向き攻撃可能能力
+            //----------------------------------
+
+            const canAttackVertical =
+                hasSummonAbility(
+                    attackingSummon,
+                    "attackVerticalSummon"
+                );
+
+
+            //----------------------------------
             // タテ向き攻撃可能能力がない
             //----------------------------------
 
             if(
-                ability?.type !==
-                "attackVerticalSummon"
+                !canAttackVertical
             ){
 
                 console.log(
@@ -536,26 +542,26 @@ function executeAttack(
     ){
 
         //----------------------------------
-        // 現在持っている能力
-        //----------------------------------
-
-        const ability =
-            attackingSummon.ability;
-
-
-        //----------------------------------
         // ヨコ向きサモンにアタックしたとき
         // このターン中パワーアップ
+        //
+        // 複数能力対応
         //----------------------------------
 
+        const powerUpAbility =
+            getSummonAbility(
+                attackingSummon,
+                "powerUpWhenAttackRestSummon"
+            );
+
+
         if(
-            ability?.type ===
-            "powerUpWhenAttackRestSummon"
+            powerUpAbility
         ){
 
             const value =
                 Number(
-                    ability.value
+                    powerUpAbility.value
                 ) || 0;
 
 
@@ -960,18 +966,18 @@ function finishAttack(){
 function highlightAttackTargets(){
 
     //----------------------------------
-    // 攻撃者の能力確認
+    // タテ向きサモン攻撃可能能力
+    //
+    // 複数能力対応
     //----------------------------------
 
-    const ability =
-        attackingSummon
-            ? attackingSummon.ability
-            : null;
-
-
     const canAttackVertical =
-        ability?.type ===
-        "attackVerticalSummon";
+        attackingSummon
+            ? hasSummonAbility(
+                attackingSummon,
+                "attackVerticalSummon"
+            )
+            : false;
 
 
     //----------------------------------
@@ -1095,6 +1101,8 @@ function damagePlayer(
 
     //----------------------------------
     // ガーゴイルによるダメージ軽減
+    //
+    // 複数能力対応
     //----------------------------------
 
     const field =
@@ -1107,15 +1115,28 @@ function damagePlayer(
         field.find(
             summon =>
                 !summon.destroyed &&
-                summon.ability?.type ===
-                "reducePlayerDamage"
+                hasSummonAbility(
+                    summon,
+                    "reducePlayerDamage"
+                )
         );
 
 
     if(gargoyle){
 
+        //----------------------------------
+        // ダメージ軽減能力取得
+        //----------------------------------
+
+        const reduceAbility =
+            getSummonAbility(
+                gargoyle,
+                "reducePlayerDamage"
+            );
+
+
         const reduction =
-            gargoyle.ability?.value ?? 1;
+            reduceAbility?.value ?? 1;
 
 
         damage =
@@ -1728,15 +1749,15 @@ function updateAttackHighlight(){
         summon => {
 
             //----------------------------------
-            // 強敵存在時
-            // アタック・ブロック不可能力
+            // オーガ等
+            // 強敵存在時の戦闘不可確認
             //----------------------------------
 
             const battleLocked =
-                typeof isBattleLockedByStrongEnemy ===
+                typeof isOgreBattleLocked ===
                     "function"
                     ?
-                    isBattleLockedByStrongEnemy(
+                    isOgreBattleLocked(
                         summon
                     )
                     :
@@ -1744,20 +1765,14 @@ function updateAttackHighlight(){
 
 
             //----------------------------------
-            // 現在持っている能力
-            //----------------------------------
-
-            const ability =
-                summon.ability;
-
-
-            //----------------------------------
             // 召喚ターン攻撃可能能力
             //----------------------------------
 
             const canAttackOnSummonTurn =
-                ability?.type ===
-                "summonTurnAttack";
+                hasSummonAbility(
+                    summon,
+                    "summonTurnAttack"
+                );
 
 
             //----------------------------------
@@ -1850,20 +1865,16 @@ function findBlockSummons(){
 
 
     //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const attackerAbility =
-        attackingSummon.ability;
-
-
-    //----------------------------------
     // 攻撃者のブロック不可能力
+    //
+    // 複数能力対応
     //----------------------------------
 
     if(
-        attackerAbility?.type ===
-        "cannotBeBlocked"
+        hasSummonAbility(
+            attackingSummon,
+            "cannotBeBlocked"
+        )
     ){
 
         console.log(
@@ -2071,11 +2082,15 @@ function executeBlock(blocker){
     //----------------------------------
     // ゴーレム
     // ブロック時はダメージを受けない
+    //
+    // 複数能力対応
     //----------------------------------
 
     if(
-        blocker.ability?.type ===
-        "noDamageWhenBlocking"
+        hasSummonAbility(
+            blocker,
+            "noDamageWhenBlocking"
+        )
     ){
 
         console.log(
@@ -2226,11 +2241,15 @@ function executeCpuBlock(
     //----------------------------------
     // ゴーレム
     // ブロック時はダメージを受けない
+    //
+    // 複数能力対応
     //----------------------------------
 
     if(
-        blocker.ability?.type ===
-        "noDamageWhenBlocking"
+        hasSummonAbility(
+            blocker,
+            "noDamageWhenBlocking"
+        )
     ){
 
         console.log(

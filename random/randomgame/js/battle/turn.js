@@ -129,29 +129,18 @@ function onTurnEnd(
                 }
 
 
-                //----------------------------------
-                // 現在持っている能力
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                if(!ability){
-
-                    continue;
-
-                }
-
-
-                //----------------------------------
+                //==================================
                 // フェアリー
-                //----------------------------------
+                //==================================
 
-                if(
-                    ability.type ===
-                    "fairyTurnEndReady"
-                ){
+                const fairyAbility =
+                    getSummonAbility(
+                        summon,
+                        "fairyTurnEndReady"
+                    );
+
+
+                if(fairyAbility){
 
                     abilityQueue.push({
 
@@ -159,7 +148,7 @@ function onTurnEnd(
                             summon,
 
                         ability:
-                            ability,
+                            fairyAbility,
 
                         type:
                             "fairyTurnEndReady"
@@ -169,13 +158,52 @@ function onTurnEnd(
                 }
 
 
-                //----------------------------------
+                //==================================
                 // ファイアドレイク
-                //----------------------------------
+                //==================================
+
+                const fireDrakeAbility =
+                    getSummonAbility(
+                        summon,
+                        "turnEndDamageCurrentPlayer"
+                    );
+
+
+                if(fireDrakeAbility){
+
+                    abilityQueue.push({
+
+                        summon:
+                            summon,
+
+                        ability:
+                            fireDrakeAbility,
+
+                        type:
+                            "turnEndDamageCurrentPlayer"
+
+                    });
+
+                }
+
+
+                //==================================
+                // ヒッポグリフ
+                //
+                // 自分のターン終了時のみ
+                // 場から手札へ戻る
+                //==================================
+
+                const returnAbility =
+                    getSummonAbility(
+                        summon,
+                        "returnToHandOnOwnTurnEnd"
+                    );
+
 
                 if(
-                    ability.type ===
-                    "turnEndDamageCurrentPlayer"
+                    returnAbility &&
+                    summon.owner === turnPlayer
                 ){
 
                     abilityQueue.push({
@@ -184,10 +212,10 @@ function onTurnEnd(
                             summon,
 
                         ability:
-                            ability,
+                            returnAbility,
 
                         type:
-                            "turnEndDamageCurrentPlayer"
+                            "returnToHandOnOwnTurnEnd"
 
                     });
 
@@ -334,6 +362,40 @@ function onTurnEnd(
             }
 
 
+            //----------------------------------
+            // 解決時点でも
+            // その能力を持っているか確認
+            //
+            // ドッペルゲンガーのコピー元が
+            // 場を離れた場合などに対応
+            //----------------------------------
+
+            const currentAbility =
+                getSummonAbility(
+                    summon,
+                    item.type
+                );
+
+
+            if(!currentAbility){
+
+                console.log(
+                    "ターン終了時能力消失：",
+                    summon.card.name,
+                    item.type
+                );
+
+
+                setTimeout(
+                    resolveNextAbility,
+                    1500
+                );
+
+                return;
+
+            }
+
+
             //==================================
             // フェアリー
             //==================================
@@ -419,20 +481,12 @@ function onTurnEnd(
             ){
 
                 //----------------------------------
-                // 現在の能力
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                //----------------------------------
                 // ダメージ値
                 //----------------------------------
 
                 const damage =
                     Number(
-                        ability?.value
+                        currentAbility.value
                     ) || 1;
 
 
@@ -507,6 +561,89 @@ function onTurnEnd(
                     return;
 
                 }
+
+
+                //----------------------------------
+                // 次の能力へ
+                //----------------------------------
+
+                setTimeout(
+                    resolveNextAbility,
+                    1500
+                );
+
+                return;
+
+            }
+
+
+            //==================================
+            // ヒッポグリフ
+            //
+            // 自分のターン終了時
+            // 場から手札へ戻る
+            //==================================
+
+            if(
+                item.type ===
+                "returnToHandOnOwnTurnEnd"
+            ){
+
+                //----------------------------------
+                // 念のため
+                // 自分のターン終了時か再確認
+                //----------------------------------
+
+                if(
+                    summon.owner !== turnPlayer
+                ){
+
+                    setTimeout(
+                        resolveNextAbility,
+                        1500
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "ターン終了時手札戻し能力発動",
+                    "能力保持サモン=",
+                    summon.card.name
+                );
+
+
+                //----------------------------------
+                // バトルログ
+                //----------------------------------
+
+                addBattleLog(
+                    `${summon.card.name}の能力：手札に戻る`
+                );
+
+
+                //----------------------------------
+                // 場から手札へ戻す
+                //
+                // PLAYER / CPUの両方に対応
+                // ドッペルゲンガー再判定も
+                // 既存処理内で行われる
+                //----------------------------------
+
+                moveLamiaTargetToHand(
+                    summon
+                );
+
+
+                //----------------------------------
+                // UI更新
+                //----------------------------------
+
+                updateGameState();
+
+                updateButtons();
 
 
                 //----------------------------------

@@ -1394,21 +1394,24 @@ function onCardClick(card){
         }
 
 
-        //----------------------------------
-        // ラミア
-        // パワー1のみ対象可能
-        //----------------------------------
+//----------------------------------
+// ラミア
+// パワー1のみ対象可能
+//----------------------------------
 
-        if(
-            summonAbilitySource?.ability?.type ===
-            "oncePerTurnPowerOneSummonRemove"
-        ){
+if(
+    summonAbilitySource &&
+    hasSummonAbility(
+        summonAbilitySource,
+        "oncePerTurnPowerOneSummonRemove"
+    )
+){
 
-            if(
-                getPower(targetSummon) !== 1
-            ){
+    if(
+        getPower(targetSummon) !== 1
+    ){
 
-                console.log(
+        console.log(
                     "ラミア能力対象外：",
                     targetSummon.card.name,
                     "現在パワー=",
@@ -6191,13 +6194,11 @@ function updateCardAction(card){
     // アタック可能判定
     //==================================
 
-    const ability =
-        summon.ability;
-
-
     const summonTurnAttack =
-        ability?.type ===
-        "summonTurnAttack";
+        hasSummonAbility(
+            summon,
+            "summonTurnAttack"
+        );
 
 
     const attackReady =
@@ -6205,11 +6206,16 @@ function updateCardAction(card){
         summonTurnAttack;
 
 
+    //----------------------------------
+    // オーガ等
+    // 強敵存在時の戦闘不可確認
+    //----------------------------------
+
     const battleLocked =
-        typeof isBattleLockedByStrongEnemy ===
+        typeof isOgreBattleLocked ===
             "function"
             ?
-            isBattleLockedByStrongEnemy(
+            isOgreBattleLocked(
                 summon
             )
             :
@@ -6341,81 +6347,76 @@ function getEffectiveCost(card){
     // 自分の場のサモンを確認
     //----------------------------------
 
-    playerField.forEach(summon=>{
+    playerField.forEach(
+        summon => {
 
-        if(!summon){
-            return;
+            if(!summon){
+                return;
+            }
+
+
+            //----------------------------------
+            // 属性コスト軽減
+            //----------------------------------
+
+            const costDownAbility =
+                getSummonAbility(
+                    summon,
+                    "elementCostDown"
+                );
+
+
+            if(
+                costDownAbility &&
+                card.elementType ===
+                    costDownAbility.element
+            ){
+
+                cost -=
+                    costDownAbility.value;
+
+            }
+
         }
-
-
-        //----------------------------------
-        // 現在有効な能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
-
-
-        if(!ability){
-            return;
-        }
-
-
-        //----------------------------------
-        // 属性コスト軽減
-        //----------------------------------
-
-        if(
-            ability.type === "elementCostDown" &&
-            card.elementType === ability.element
-        ){
-
-            cost -= ability.value;
-
-        }
-
-    });
+    );
 
 
     //----------------------------------
     // 相手の場のサモンを確認
     //----------------------------------
 
-    enemyField.forEach(summon=>{
+    enemyField.forEach(
+        summon => {
 
-        if(!summon){
-            return;
-        }
-
-
-        //----------------------------------
-        // 現在有効な能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
+            if(!summon){
+                return;
+            }
 
 
-        if(!ability){
-            return;
-        }
+            //----------------------------------
+            // セイレーン
+            // 相手のマギアコスト +1
+            //----------------------------------
+
+            const costUpAbility =
+                getSummonAbility(
+                    summon,
+                    "enemyMagiaCostUp"
+                );
 
 
-        //----------------------------------
-        // セイレーン
-        // 相手のマギアコスト +1
-        //----------------------------------
+            if(
+                costUpAbility &&
+                card.type === "マギア"
+            ){
 
-        if(
-            ability.type === "enemyMagiaCostUp" &&
-            card.type === "マギア"
-        ){
+                cost +=
+                    costUpAbility.value;
 
-            cost += ability.value;
+            }
 
         }
-
-    });
+    );
 
 
     //----------------------------------
@@ -6449,7 +6450,10 @@ function updateHandCostDisplay(){
 // 現在のカードコスト取得
 //======================================
 
-function getCurrentCardCost(card, owner = PLAYER){
+function getCurrentCardCost(
+    card,
+    owner = PLAYER
+){
 
     if(!card){
         return 0;
@@ -6478,51 +6482,41 @@ function getCurrentCardCost(card, owner = PLAYER){
     // コスト能力確認
     //----------------------------------
 
-    field.forEach(summon => {
-
-        if(
-            !summon ||
-            !summon.card
-        ){
-            return;
-        }
-
-
-        //----------------------------------
-        // 現在有効な能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
-
-
-        if(!ability){
-            return;
-        }
-
-
-        //----------------------------------
-        // 属性コスト軽減
-        //----------------------------------
-
-        if(
-            ability.type ===
-            "elementCostDown"
-        ){
+    field.forEach(
+        summon => {
 
             if(
-                ability.element ===
-                card.elementType
+                !summon ||
+                !summon.card
+            ){
+                return;
+            }
+
+
+            //----------------------------------
+            // 属性コスト軽減
+            //----------------------------------
+
+            const costDownAbility =
+                getSummonAbility(
+                    summon,
+                    "elementCostDown"
+                );
+
+
+            if(
+                costDownAbility &&
+                costDownAbility.element ===
+                    card.elementType
             ){
 
                 cost -=
-                    ability.value;
+                    costDownAbility.value;
 
             }
 
         }
-
-    });
+    );
 
 
     //----------------------------------
@@ -6535,47 +6529,42 @@ function getCurrentCardCost(card, owner = PLAYER){
             : playerField;
 
 
-    enemyFieldToCheck.forEach(summon => {
+    enemyFieldToCheck.forEach(
+        summon => {
 
-        if(
-            !summon ||
-            !summon.card
-        ){
-            return;
-        }
-
-
-        //----------------------------------
-        // 現在有効な能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
+            if(
+                !summon ||
+                !summon.card
+            ){
+                return;
+            }
 
 
-        if(!ability){
-            return;
-        }
+            //----------------------------------
+            // セイレーン
+            // 相手のマギアコスト +1
+            //----------------------------------
+
+            const costUpAbility =
+                getSummonAbility(
+                    summon,
+                    "enemyMagiaCostUp"
+                );
 
 
-        //----------------------------------
-        // セイレーン
-        // 相手のマギアコスト +1
-        //----------------------------------
+            if(
+                costUpAbility &&
+                card.type ===
+                    "マギア"
+            ){
 
-        if(
-            ability.type ===
-            "enemyMagiaCostUp" &&
-            card.type ===
-            "マギア"
-        ){
+                cost +=
+                    costUpAbility.value;
 
-            cost +=
-                ability.value;
+            }
 
         }
-
-    });
+    );
 
 
     //----------------------------------
@@ -6588,7 +6577,6 @@ function getCurrentCardCost(card, owner = PLAYER){
     );
 
 }
-
 
 //======================================
 // バトルログ

@@ -623,7 +623,16 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"folklore",
-        image: "images/044-ヒッポグリフ.jpg"
+        image: "images/044-ヒッポグリフ.jpg",
+        text:"このカードは場に出たターンでもアタックできる。自分のターン終了時、場からこのカードを手札に戻す。",
+        ability:[
+            {
+                type:"summonTurnAttack"
+            },
+            {
+                type:"returnToHandOnOwnTurnEnd"
+            }
+        ]
     },
     {
         id: 45,
@@ -926,7 +935,16 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"mythology",
-        image: "images/073-ペガサス.jpg"
+        image: "images/073-ペガサス.jpg",
+        text:"このカードはブロックされず、場に出たターンでもアタックできる。",
+            ability:[
+                {
+                    type:"cannotBeBlocked"
+                },
+                {
+                    type:"summonTurnAttack"
+                }
+            ]
     },
     {
         id: 74,

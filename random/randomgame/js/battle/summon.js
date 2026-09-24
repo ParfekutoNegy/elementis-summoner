@@ -45,6 +45,131 @@ class Summon{
 
 }
 
+//==================================================
+// サモン能力一覧取得
+//
+// ability が
+// ・単一オブジェクト
+// ・配列
+//
+// どちらの場合でも配列として返す
+//==================================================
+
+function getSummonAbilities(
+    summon
+){
+
+    //----------------------------------
+    // サモンなし
+    //----------------------------------
+
+    if(!summon){
+
+        return [];
+
+    }
+
+
+    //----------------------------------
+    // 能力なし
+    //----------------------------------
+
+    if(!summon.ability){
+
+        return [];
+
+    }
+
+
+    //----------------------------------
+    // 複数能力
+    //----------------------------------
+
+    if(
+        Array.isArray(
+            summon.ability
+        )
+    ){
+
+        return summon.ability;
+
+    }
+
+
+    //----------------------------------
+    // 単一能力
+    //----------------------------------
+
+    return [
+        summon.ability
+    ];
+
+}
+
+
+
+//==================================================
+// 指定したサモン能力を取得
+//
+// 見つからない場合は null
+//==================================================
+
+function getSummonAbility(
+    summon,
+    abilityType
+){
+
+    //----------------------------------
+    // 能力一覧取得
+    //----------------------------------
+
+    const abilities =
+        getSummonAbilities(
+            summon
+        );
+
+
+    //----------------------------------
+    // 指定能力を検索
+    //----------------------------------
+
+    const ability =
+        abilities.find(
+            ability =>
+                ability &&
+                ability.type ===
+                    abilityType
+        );
+
+
+    //----------------------------------
+    // 結果
+    //----------------------------------
+
+    return ability ?? null;
+
+}
+
+
+
+//==================================================
+// 指定したサモン能力を持っているか
+//==================================================
+
+function hasSummonAbility(
+    summon,
+    abilityType
+){
+
+    return (
+        getSummonAbility(
+            summon,
+            abilityType
+        ) !== null
+    );
+
+}
+
 
 function dealDamage(
     target,
@@ -210,22 +335,20 @@ function getPower(summon){
         summon.powerBonus;
 
 
-    //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const ability =
-        summon.ability;
-
-
     //==================================
     // ワーム
     // 相手クール1枚につきパワー＋1
     //==================================
 
+    const enemyCoolPowerAbility =
+        getSummonAbility(
+            summon,
+            "powerUpByEnemyCool"
+        );
+
+
     if(
-        ability?.type ===
-        "powerUpByEnemyCool"
+        enemyCoolPowerAbility
     ){
 
         const opponentCoolCards =
@@ -235,7 +358,7 @@ function getPower(summon){
 
 
         const value =
-            ability.value ?? 1;
+            enemyCoolPowerAbility.value ?? 1;
 
 
         power +=
@@ -250,9 +373,15 @@ function getPower(summon){
     // 自分のクールの【火】1枚につき＋1
     //==================================
 
+    const ownFireCoolPowerAbility =
+        getSummonAbility(
+            summon,
+            "powerUpByOwnFireCool"
+        );
+
+
     if(
-        ability?.type ===
-        "powerUpByOwnFireCool"
+        ownFireCoolPowerAbility
     ){
 
         const ownCoolCards =
@@ -270,7 +399,7 @@ function getPower(summon){
 
 
         const value =
-            ability.value ?? 1;
+            ownFireCoolPowerAbility.value ?? 1;
 
 
         power +=
@@ -338,11 +467,18 @@ function refreshDynamicPowerSummons(){
 
 
             //----------------------------------
-            // 現在持っている能力
+            // 動的パワー能力確認
             //----------------------------------
 
-            const abilityType =
-                summon.ability?.type;
+            const hasDynamicPowerAbility =
+                hasSummonAbility(
+                    summon,
+                    "powerUpByEnemyCool"
+                ) ||
+                hasSummonAbility(
+                    summon,
+                    "powerUpByOwnFireCool"
+                );
 
 
             //==================================
@@ -358,11 +494,7 @@ function refreshDynamicPowerSummons(){
             //==================================
 
             if(
-                abilityType ===
-                    "powerUpByEnemyCool" ||
-
-                abilityType ===
-                    "powerUpByOwnFireCool"
+                hasDynamicPowerAbility
             ){
 
                 console.log(
@@ -882,18 +1014,33 @@ function selectDoppelgangerTarget(
     hideActionGuide();
 
 
-    //----------------------------------
-    // 表示更新
-    //----------------------------------
+//----------------------------------
+// 表示更新
+//----------------------------------
 
-    refreshDynamicPowerSummons();
-
-    updateGameState();
-
-    updateButtons();
+refreshDynamicPowerSummons();
 
 
-    return true;
+//----------------------------------
+// 手札コスト表示更新
+//----------------------------------
+
+if(
+    typeof updateHandCostDisplay ===
+    "function"
+){
+
+    updateHandCostDisplay();
+
+}
+
+
+updateGameState();
+
+updateButtons();
+
+
+return true;
 
 }
 
@@ -910,30 +1057,19 @@ function applySummonAbility(summon){
     }
 
 
-    //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const ability =
-        summon.ability;
-
-
-    if(!ability){
-
-        return;
-
-    }
-
-
     //==================================
     // ドッペルゲンガー
     // 場に出たとき能力コピー
     //==================================
 
-    if(
-        ability.type ===
-        "copySummonAbility"
-    ){
+    const copyAbility =
+        getSummonAbility(
+            summon,
+            "copySummonAbility"
+        );
+
+
+    if(copyAbility){
 
         startDoppelgangerTargetSelect(
             summon
@@ -944,17 +1080,21 @@ function applySummonAbility(summon){
     }
 
 
-    //----------------------------------
+    //==================================
     // ターン中パワーアップ
-    //----------------------------------
+    //==================================
 
-    if(
-        ability.type ===
-        "turnPowerUp"
-    ){
+    const turnPowerUpAbility =
+        getSummonAbility(
+            summon,
+            "turnPowerUp"
+        );
+
+
+    if(turnPowerUpAbility){
 
         summon.powerBonus =
-            ability.value;
+            turnPowerUpAbility.value;
 
 
         console.log(
@@ -982,13 +1122,15 @@ function applySummonAbility(summon){
     }
 
 
-    //----------------------------------
+    //==================================
     // 召喚ターン攻撃可能
-    //----------------------------------
+    //==================================
 
     if(
-        ability.type ===
-        "summonTurnAttack"
+        hasSummonAbility(
+            summon,
+            "summonTurnAttack"
+        )
     ){
 
         summon.attackReady =
@@ -1048,11 +1190,14 @@ function triggerSummonAbilitiesOnMagiaPlay(
 
 
         //----------------------------------
-        // 現在持っている能力
+        // マギアプレイ時パワーアップ能力取得
         //----------------------------------
 
         const ability =
-            summon.ability;
+            getSummonAbility(
+                summon,
+                "powerUpWhenPlayMagia"
+            );
 
 
         if(!ability){
@@ -1067,43 +1212,36 @@ function triggerSummonAbilitiesOnMagiaPlay(
         // このターン中パワーアップ
         //==================================
 
-        if(
-            ability.type ===
-            "powerUpWhenPlayMagia"
-        ){
-
-            const value =
-                Number(
-                    ability.value
-                ) || 0;
+        const value =
+            Number(
+                ability.value
+            ) || 0;
 
 
-            if(value <= 0){
+        if(value <= 0){
 
-                continue;
-
-            }
-
-
-            addTemporaryPower(
-                summon,
-                value
-            );
-
-
-            console.log(
-                "サモン能力発動：",
-                summon.card.name,
-                "マギアプレイにより",
-                "パワー+",
-                value,
-                "現在パワー=",
-                getPower(
-                    summon
-                )
-            );
+            continue;
 
         }
+
+
+        addTemporaryPower(
+            summon,
+            value
+        );
+
+
+        console.log(
+            "サモン能力発動：",
+            summon.card.name,
+            "マギアプレイにより",
+            "パワー+",
+            value,
+            "現在パワー=",
+            getPower(
+                summon
+            )
+        );
 
     }
 
@@ -1154,11 +1292,14 @@ function startSummonAbilityCost(){
 
 
     //----------------------------------
-    // 現在持っている能力
+    // コストを必要とする起動能力を取得
     //----------------------------------
 
     const ability =
-        summonAbilitySource.ability;
+        getSummonAbility(
+            summonAbilitySource,
+            "oncePerTurnPlayerDamageWithCost"
+        );
 
 
     if(!ability){
@@ -1333,15 +1474,31 @@ function selectSummonAbilityCostCard(
 
 
     //----------------------------------
+    // コスト能力取得
+    //----------------------------------
+
+    const ability =
+        getSummonAbility(
+            summonAbilitySource,
+            "oncePerTurnPlayerDamageWithCost"
+        );
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //----------------------------------
     // 必要コスト
     //----------------------------------
 
-const cost =
-    Number(
-        summonAbilitySource
-            .ability
-            ?.cost
-    ) || 0;
+    const cost =
+        Number(
+            ability.cost
+        ) || 0;
 
 
     //----------------------------------
@@ -1455,14 +1612,26 @@ function paySummonAbilityCost(){
 
 
     //----------------------------------
-    // 現在持っている能力を取得
+    // コピー能力状態確認
+    //----------------------------------
+
+    validateDoppelgangerAbility(
+        summonAbilitySource
+    );
+
+
+    //----------------------------------
+    // コストを必要とする起動能力を取得
     //
     // ドッペルゲンガーの
     // コピー能力もここに入る
     //----------------------------------
 
     const ability =
-        summonAbilitySource.ability;
+        getSummonAbility(
+            summonAbilitySource,
+            "oncePerTurnPlayerDamageWithCost"
+        );
 
 
     if(!ability){

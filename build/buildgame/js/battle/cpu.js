@@ -712,23 +712,19 @@ function createCpuAttackQueue(){
 
 
                 //----------------------------------
-                // 現在持っている能力
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                //----------------------------------
                 // 召喚したターンは攻撃不可
                 //
                 // summonTurnAttackなら例外
+                //
+                // 複数能力対応
                 //----------------------------------
 
                 if(
                     !summon.attackReady &&
-                    ability?.type !==
+                    !hasSummonAbility(
+                        summon,
                         "summonTurnAttack"
+                    )
                 ){
 
                     return false;
@@ -748,11 +744,15 @@ function createCpuAttackQueue(){
 
                 //==================================
                 // ブロックされないサモン
+                //
+                // 複数能力対応
                 //==================================
 
                 if(
-                    ability?.type ===
+                    hasSummonAbility(
+                        summon,
                         "cannotBeBlocked"
+                    )
                 ){
 
                     console.log(
@@ -935,13 +935,24 @@ function createCpuAttackQueue(){
                 power:
                     getPower(
                         summon
+                    ),
+
+                summonTurnAttack:
+                    hasSummonAbility(
+                        summon,
+                        "summonTurnAttack"
+                    ),
+
+                cannotBeBlocked:
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeBlocked"
                     )
             })
         )
     );
 
 }
-
 
 //======================================
 // CPU次の攻撃
@@ -1196,14 +1207,6 @@ function selectCpuAttackTarget(
 
 
     //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const ability =
-        attacker.ability;
-
-
-    //----------------------------------
     // CPUの攻撃力
     //----------------------------------
 
@@ -1223,11 +1226,15 @@ function selectCpuAttackTarget(
 
     //==================================
     // ブロック不可サモン
+    //
+    // 複数能力対応
     //==================================
 
     if(
-        ability?.type ===
+        hasSummonAbility(
+            attacker,
             "cannotBeBlocked"
+        )
     ){
 
         console.log(
@@ -2130,23 +2137,17 @@ function selectCpuMagiaTarget(card){
 
 
                     //----------------------------------
-                    // 現在持っている能力
-                    //----------------------------------
-
-                    const ability =
-                        summon.ability;
-
-
-                    //----------------------------------
                     // summonTurnAttack持ちは対象外
                     //
-                    // ドッペルゲンガーによる
-                    // コピー能力も含む
+                    // 複数能力・ドッペルゲンガーの
+                    // コピー能力にも対応
                     //----------------------------------
 
                     if(
-                        ability?.type ===
-                        "summonTurnAttack"
+                        hasSummonAbility(
+                            summon,
+                            "summonTurnAttack"
+                        )
                     ){
 
                         return false;
@@ -2254,25 +2255,27 @@ function selectCpuMagiaTarget(card){
 
 
                     //----------------------------------
-                    // 現在持っている能力
+                    // 召喚ターン攻撃可能能力
                     //----------------------------------
 
-                    const ability =
-                        summon.ability;
+                    const canAttackOnSummonTurn =
+                        hasSummonAbility(
+                            summon,
+                            "summonTurnAttack"
+                        );
 
 
                     //----------------------------------
                     // 召喚ターンは攻撃不可
                     // summonTurnAttackなら例外
                     //
-                    // ドッペルゲンガーによる
-                    // コピー能力も含む
+                    // 複数能力・ドッペルゲンガーの
+                    // コピー能力にも対応
                     //----------------------------------
 
                     if(
                         !summon.attackReady &&
-                        ability?.type !==
-                        "summonTurnAttack"
+                        !canAttackOnSummonTurn
                     ){
 
                         return false;
@@ -4589,11 +4592,14 @@ function cpuShouldUseAquaStream(){
 
 
                 //----------------------------------
-                // 現在持っている能力
+                // 召喚ターン攻撃可能能力
                 //----------------------------------
 
-                const ability =
-                    summon.ability;
+                const canAttackOnSummonTurn =
+                    hasSummonAbility(
+                        summon,
+                        "summonTurnAttack"
+                    );
 
 
                 //----------------------------------
@@ -4603,8 +4609,7 @@ function cpuShouldUseAquaStream(){
 
                 if(
                     !summon.attackReady &&
-                    ability?.type !==
-                        "summonTurnAttack"
+                    !canAttackOnSummonTurn
                 ){
 
                     return false;
@@ -4836,14 +4841,6 @@ function getCpuFollowWindTarget(){
 
 
                 //----------------------------------
-                // 現在持っている能力
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                //----------------------------------
                 // 召喚ターン攻撃可能能力持ち
                 //
                 // すでに攻撃できるので
@@ -4851,8 +4848,10 @@ function getCpuFollowWindTarget(){
                 //----------------------------------
 
                 if(
-                    ability?.type ===
+                    hasSummonAbility(
+                        summon,
                         "summonTurnAttack"
+                    )
                 ){
 
                     return false;
@@ -5266,14 +5265,6 @@ function cpuHasMeaningfulAttack(){
 
 
                 //----------------------------------
-                // 現在持っている能力
-                //----------------------------------
-
-                const ability =
-                    attacker.ability;
-
-
-                //----------------------------------
                 // 攻撃者のパワー
                 //----------------------------------
 
@@ -5285,6 +5276,8 @@ function cpuHasMeaningfulAttack(){
 
                 //==================================
                 // ブロック不可
+                //
+                // 複数能力対応
                 //==================================
                 //
                 // PLAYERへ直接攻撃できるので
@@ -5292,8 +5285,10 @@ function cpuHasMeaningfulAttack(){
                 //==================================
 
                 if(
-                    ability?.type ===
+                    hasSummonAbility(
+                        attacker,
                         "cannotBeBlocked"
+                    )
                 ){
 
                     console.log(
@@ -7392,14 +7387,6 @@ function createCpuMagiaAction(card){
 
 
                     //----------------------------------
-                    // 現在持っている能力
-                    //----------------------------------
-
-                    const ability =
-                        summon.ability;
-
-
-                    //----------------------------------
                     // オーガ系の戦闘制限
                     //----------------------------------
 
@@ -7431,11 +7418,15 @@ function createCpuMagiaAction(card){
 
                     //----------------------------------
                     // 召喚ターン攻撃可能
+                    //
+                    // 複数能力対応
                     //----------------------------------
 
                     if(
-                        ability?.type ===
+                        hasSummonAbility(
+                            summon,
                             "summonTurnAttack"
+                        )
                     ){
 
                         return true;
@@ -7873,26 +7864,19 @@ function evaluateCpuAttackAction(
 
 
     //----------------------------------
-    // 現在持っている能力
-    //
-    // ドッペルゲンガーの
-    // コピー能力もここに入る
-    //----------------------------------
-
-    const ability =
-        attacker.ability;
-
-
-    //----------------------------------
     // 召喚ターン攻撃制限
     //
     // summonTurnAttackなら例外
+    //
+    // 複数能力対応
     //----------------------------------
 
     if(
         !attacker.attackReady &&
-        ability?.type !==
+        !hasSummonAbility(
+            attacker,
             "summonTurnAttack"
+        )
     ){
 
         return null;
@@ -8001,11 +7985,15 @@ function evaluateCpuAttackAction(
     // ブロック不可
     //
     // ブロッカーがいてもPLAYERを攻撃可能
+    //
+    // 複数能力対応
     //==================================================
 
     if(
-        ability?.type ===
+        hasSummonAbility(
+            attacker,
             "cannotBeBlocked"
+        )
     ){
 
         target =
@@ -8108,11 +8096,15 @@ function evaluateCpuAttackAction(
 
         //----------------------------------
         // ブロック不可
+        //
+        // 複数能力対応
         //----------------------------------
 
         if(
-            ability?.type ===
+            hasSummonAbility(
+                attacker,
                 "cannotBeBlocked"
+            )
         ){
 
             addCpuActionPoints(
@@ -8193,8 +8185,16 @@ function evaluateCpuAttackAction(
     console.log(
         "CPU攻撃ポイント評価",
         attacker.card?.name,
-        "ability=",
-        ability?.type,
+        "summonTurnAttack=",
+        hasSummonAbility(
+            attacker,
+            "summonTurnAttack"
+        ),
+        "cannotBeBlocked=",
+        hasSummonAbility(
+            attacker,
+            "cannotBeBlocked"
+        ),
         "target=",
         target === PLAYER
             ? "PLAYER"
@@ -8336,14 +8336,6 @@ function createCpuActions(){
 
 
                 //----------------------------------
-                // 現在持っている能力
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                //----------------------------------
                 // 召喚ターン攻撃制限
                 //
                 // summonTurnAttackなら例外
@@ -8351,8 +8343,10 @@ function createCpuActions(){
 
                 if(
                     !summon.attackReady &&
-                    ability?.type !==
+                    !hasSummonAbility(
+                        summon,
                         "summonTurnAttack"
+                    )
                 ){
 
                     return false;
@@ -8362,11 +8356,15 @@ function createCpuActions(){
 
                 //----------------------------------
                 // cannotBeBlocked確認
+                //
+                // 複数能力対応
                 //----------------------------------
 
                 return (
-                    ability?.type ===
-                    "cannotBeBlocked"
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeBlocked"
+                    )
                 );
 
             }
@@ -8404,14 +8402,56 @@ function createCpuActions(){
 
 
         //----------------------------------
-        // 現在持っている能力
+        // CPUが使用する起動能力
+        //----------------------------------
+
+        const supportedTypes = [
+
+            // ワイバーン
+            "oncePerTurnSummonDamage",
+
+            // ケンタウロス
+            "oncePerTurnSummonPowerUp",
+
+            // キマイラ
+            "oncePerTurnPlayerDamageWithCost",
+
+            // ラミア
+            "oncePerTurnPowerOneSummonRemove",
+
+            // ケット・シー
+            "playWindMagiaFromCool"
+
+        ];
+
+
+        //----------------------------------
+        // 現在持っている能力一覧取得
         //
-        // ドッペルゲンガーの
-        // コピー能力もここに入る
+        // ドッペルゲンガーによる
+        // コピー能力も含む
+        //
+        // 複数能力対応
+        //----------------------------------
+
+        const abilities =
+            getSummonAbilities(
+                summon
+            );
+
+
+        //----------------------------------
+        // CPUが使用する起動能力を取得
         //----------------------------------
 
         const ability =
-            summon.ability;
+            abilities.find(
+                ability =>
+                    ability &&
+                    supportedTypes.includes(
+                        ability.type
+                    )
+            );
 
 
         if(!ability){
@@ -9166,21 +9206,67 @@ function cpuExecuteBestAction(){
 
 
         //----------------------------------
-        // 現在持っている能力
+        // CPUが使用する起動能力
+        //----------------------------------
+
+        const supportedTypes = [
+
+            // ワイバーン
+            "oncePerTurnSummonDamage",
+
+            // ケンタウロス
+            "oncePerTurnSummonPowerUp",
+
+            // キマイラ
+            "oncePerTurnPlayerDamageWithCost",
+
+            // ラミア
+            "oncePerTurnPowerOneSummonRemove",
+
+            // ケット・シー
+            "playWindMagiaFromCool"
+
+        ];
+
+
+        //----------------------------------
+        // 現在持っている能力一覧
         //
-        // ドッペルゲンガーの
-        // コピー能力もここに入る
+        // 複数能力対応
+        //
+        // ドッペルゲンガーによる
+        // コピー能力も含む
+        //----------------------------------
+
+        const abilities =
+            getSummonAbilities(
+                summon
+            );
+
+
+        //----------------------------------
+        // 今回実行する起動能力
         //----------------------------------
 
         const ability =
-            summon.ability;
+            abilities.find(
+                ability =>
+                    ability &&
+                    supportedTypes.includes(
+                        ability.type
+                    )
+            );
 
+
+        //----------------------------------
+        // 起動能力がなくなっている
+        //----------------------------------
 
         if(!ability){
 
             console.log(
                 "CPU：サモン能力",
-                "現在能力データなし"
+                "現在使用可能な起動能力なし"
             );
 
 
@@ -9470,24 +9556,6 @@ function cpuCanUseSummonAbility(summon){
 
 
     //----------------------------------
-    // 現在持っている能力
-    //
-    // ドッペルゲンガーの
-    // コピー能力もここに入る
-    //----------------------------------
-
-    const ability =
-        summon.ability;
-
-
-    if(!ability){
-
-        return false;
-
-    }
-
-
-    //----------------------------------
     // CPUが使用する起動能力
     //----------------------------------
 
@@ -9512,14 +9580,39 @@ function cpuCanUseSummonAbility(summon){
 
 
     //----------------------------------
+    // 現在持っている能力一覧取得
+    //
+    // ドッペルゲンガーの
+    // コピー能力もここに入る
+    //
+    // 複数能力対応
+    //----------------------------------
+
+    const abilities =
+        getSummonAbilities(
+            summon
+        );
+
+
+    //----------------------------------
+    // CPUが使用できる起動能力を取得
+    //----------------------------------
+
+    const ability =
+        abilities.find(
+            ability =>
+                ability &&
+                supportedTypes.includes(
+                    ability.type
+                )
+        );
+
+
+    //----------------------------------
     // CPUが起動する能力ではない
     //----------------------------------
 
-    if(
-        !supportedTypes.includes(
-            ability.type
-        )
-    ){
+    if(!ability){
 
         return false;
 
@@ -9678,7 +9771,6 @@ function cpuCanUseSummonAbility(summon){
 
 }
 
-
 //==================================================
 // CPU
 // サモン能力対象選択
@@ -9701,14 +9793,56 @@ function cpuSelectSummonAbilityTarget(source){
 
 
     //----------------------------------
-    // 現在持っている能力
+    // CPUが使用する起動能力
+    //----------------------------------
+
+    const supportedTypes = [
+
+        // ワイバーン
+        "oncePerTurnSummonDamage",
+
+        // ケンタウロス
+        "oncePerTurnSummonPowerUp",
+
+        // キマイラ
+        "oncePerTurnPlayerDamageWithCost",
+
+        // ラミア
+        "oncePerTurnPowerOneSummonRemove",
+
+        // ケット・シー
+        "playWindMagiaFromCool"
+
+    ];
+
+
+    //----------------------------------
+    // 現在持っている能力一覧取得
     //
     // ドッペルゲンガーの
     // コピー能力もここに入る
+    //
+    // 複数能力対応
+    //----------------------------------
+
+    const abilities =
+        getSummonAbilities(
+            source
+        );
+
+
+    //----------------------------------
+    // CPUが使用する起動能力取得
     //----------------------------------
 
     const ability =
-        source.ability;
+        abilities.find(
+            ability =>
+                ability &&
+                supportedTypes.includes(
+                    ability.type
+                )
+        );
 
 
     if(!ability){
@@ -9933,22 +10067,18 @@ function cpuSelectSummonAbilityTarget(source){
 
 
                     //----------------------------------
-                    // 対象サモン自身が
-                    // 現在持っている能力
-                    //----------------------------------
-
-                    const targetAbility =
-                        summon.ability;
-
-
-                    //----------------------------------
                     // 現在アタック可能か
+                    //
+                    // summonTurnAttackも
+                    // 複数能力対応
                     //----------------------------------
 
                     if(
                         !summon.attackReady &&
-                        targetAbility?.type !==
+                        !hasSummonAbility(
+                            summon,
                             "summonTurnAttack"
+                        )
                     ){
 
                         return false;
@@ -10229,12 +10359,58 @@ function cpuUseSummonAbility(
 
 
     //----------------------------------
-    // 現在持っている能力
+    // CPUが使用する起動能力
+    //----------------------------------
+
+    const supportedTypes = [
+
+        // ワイバーン
+        "oncePerTurnSummonDamage",
+
+        // ケンタウロス
+        "oncePerTurnSummonPowerUp",
+
+        // キマイラ
+        "oncePerTurnPlayerDamageWithCost",
+
+        // ラミア
+        "oncePerTurnPowerOneSummonRemove",
+
+        // ケット・シー
+        "playWindMagiaFromCool"
+
+    ];
+
+
+    //----------------------------------
+    // 現在持っている能力一覧取得
+    //
+    // 複数能力対応
+    //----------------------------------
+
+    const abilities =
+        getSummonAbilities(
+            source
+        );
+
+
+    //----------------------------------
+    // 今回使用する起動能力を取得
     //----------------------------------
 
     const ability =
-        source.ability;
+        abilities.find(
+            ability =>
+                ability &&
+                supportedTypes.includes(
+                    ability.type
+                )
+        );
 
+
+    //----------------------------------
+    // 使用可能な起動能力なし
+    //----------------------------------
 
     if(!ability){
 
@@ -10927,23 +11103,16 @@ function cpuGetCurseSmokePlan(card){
 
 
                 //----------------------------------
-                // 現在持っている能力
-                //
-                // ドッペルゲンガーの
-                // コピー能力も含む
-                //----------------------------------
-
-                const ability =
-                    summon.ability;
-
-
-                //----------------------------------
                 // 1ターン1回ダメージ能力
+                //
+                // 複数能力対応
                 //----------------------------------
 
                 if(
-                    ability?.type !==
+                    !hasSummonAbility(
+                        summon,
                         "oncePerTurnSummonDamage"
+                    )
                 ){
 
                     return false;
@@ -11101,21 +11270,17 @@ function cpuGetCurseSmokePlan(card){
 
 
                     //----------------------------------
-                    // 現在持っている能力
-                    //----------------------------------
-
-                    const ability =
-                        summon.ability;
-
-
-                    //----------------------------------
                     // 召喚ターン攻撃制限
+                    //
+                    // summonTurnAttackなら例外
                     //----------------------------------
 
                     if(
                         !summon.attackReady &&
-                        ability?.type !==
+                        !hasSummonAbility(
+                            summon,
                             "summonTurnAttack"
+                        )
                     ){
 
                         return false;
@@ -11221,21 +11386,17 @@ function cpuGetCurseSmokePlan(card){
 
 
                     //----------------------------------
-                    // 現在持っている能力
-                    //----------------------------------
-
-                    const ability =
-                        summon.ability;
-
-
-                    //----------------------------------
                     // 召喚ターン攻撃制限
+                    //
+                    // summonTurnAttackなら例外
                     //----------------------------------
 
                     if(
                         !summon.attackReady &&
-                        ability?.type !==
+                        !hasSummonAbility(
+                            summon,
                             "summonTurnAttack"
+                        )
                     ){
 
                         return false;
@@ -11579,24 +11740,26 @@ function cpuUseCatSithAbility(source){
 
 
     //----------------------------------
-    // 現在持っている能力
-    //----------------------------------
-
-    const ability =
-        source.ability;
-
-
-    //----------------------------------
-    // ケット・シー系能力確認
+    // ケット・シー系能力取得
+    //
+    // 複数能力対応
     //
     // ドッペルゲンガーによる
     // コピー能力も含む
     //----------------------------------
 
-    if(
-        ability?.type !==
-        "playWindMagiaFromCool"
-    ){
+    const ability =
+        getSummonAbility(
+            source,
+            "playWindMagiaFromCool"
+        );
+
+
+    //----------------------------------
+    // ケット・シー系能力なし
+    //----------------------------------
+
+    if(!ability){
 
         return false;
 
