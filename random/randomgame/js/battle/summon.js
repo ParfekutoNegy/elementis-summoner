@@ -812,7 +812,7 @@ function startDoppelgangerTargetSelect(
                 if(
                     summon.view &&
                     typeof summon.view.setTarget ===
-                    "function"
+                        "function"
                 ){
 
                     summon.view.setTarget(
@@ -852,12 +852,93 @@ function startDoppelgangerTargetSelect(
 
     //==================================
     // CPU
-    // 後で実装
+    //
+    // 場にいる自分以外のサモンから
+    // ランダムで1体を選択
     //==================================
+
+    const randomIndex =
+        Math.floor(
+            Math.random() *
+            targets.length
+        );
+
+
+    const target =
+        targets[
+            randomIndex
+        ];
+
+
+    //----------------------------------
+    // 念のため
+    //----------------------------------
+
+    if(!target){
+
+        console.log(
+            "CPUドッペルゲンガー：",
+            "コピー対象決定失敗"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
 
     console.log(
         "CPUドッペルゲンガー：",
-        "コピー対象選択は後で実装"
+        "コピー対象をランダム決定"
+    );
+
+    console.log(
+        "対象候補：",
+        targets.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+    console.log(
+        "選択対象：",
+        target.card.name
+    );
+
+    console.log(
+        "コピー能力：",
+        target.card.ability
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //==================================
+    // PLAYER版と同じコピー処理を使用
+    //
+    // selectDoppelgangerTarget()は
+    // doppelgangerSourceを参照するため、
+    // CPUでも一時的に設定する
+    //==================================
+
+    doppelgangerTargetMode =
+        true;
+
+    doppelgangerSource =
+        source;
+
+
+    //----------------------------------
+    // コピー実行
+    //----------------------------------
+
+    selectDoppelgangerTarget(
+        target
     );
 
 }
@@ -924,25 +1005,29 @@ function selectDoppelgangerTarget(
 
 
     //----------------------------------
+    // コピーを行うドッペルゲンガーを保存
+    //----------------------------------
+
+    const source =
+        doppelgangerSource;
+
+
+    //----------------------------------
     // コピー元保存
     //----------------------------------
 
-    doppelgangerSource.abilitySource =
+    source.abilitySource =
         target;
 
 
     //----------------------------------
     // 能力コピー
     //
-    // ★ target.ability ではなく
-    // target.card.ability
-    //
-    // これにより
-    // ドッペルゲンガーをコピーした場合は
-    // 本来の copySummonAbility のみ得る
+    // target.ability ではなく
+    // target.card.ability をコピー
     //----------------------------------
 
-    doppelgangerSource.ability =
+    source.ability =
         target.card.ability ?? null;
 
 
@@ -961,12 +1046,83 @@ function selectDoppelgangerTarget(
 
     console.log(
         "取得能力：",
-        doppelgangerSource.ability
+        source.ability
     );
 
     console.log(
         "================================"
     );
+
+
+    //==================================
+    // バトルログ
+    //
+    // PLAYER・CPUどちらの
+    // ドッペルゲンガーでも表示
+    //==================================
+
+    if(
+        typeof addBattleLog ===
+            "function"
+    ){
+
+        addBattleLog(
+            `${source.card.name}は${target.card.name}の能力をコピーした`
+        );
+
+    }
+
+
+    //==================================
+    // コピーした能力の
+    // 常在・即時反映
+    //==================================
+
+
+    //----------------------------------
+    // ドラゴン
+    // ターン中パワーアップ
+    //----------------------------------
+
+    const turnPowerUpAbility =
+        getSummonAbility(
+            source,
+            "turnPowerUp"
+        );
+
+
+    if(turnPowerUpAbility){
+
+        source.powerBonus =
+            turnPowerUpAbility.value;
+
+
+        console.log(
+            "ドッペルゲンガー：turnPowerUp適用",
+            "value=",
+            turnPowerUpAbility.value,
+            "power=",
+            getPower(source)
+        );
+
+    }
+
+
+    //----------------------------------
+    // 召喚ターン攻撃可能
+    //----------------------------------
+
+    if(
+        hasSummonAbility(
+            source,
+            "summonTurnAttack"
+        )
+    ){
+
+        source.attackReady =
+            true;
+
+    }
 
 
     //----------------------------------
@@ -1014,33 +1170,56 @@ function selectDoppelgangerTarget(
     hideActionGuide();
 
 
-//----------------------------------
-// 表示更新
-//----------------------------------
+    //----------------------------------
+    // 現在パワー表示更新
+    //----------------------------------
 
-refreshDynamicPowerSummons();
+    if(
+        source.view &&
+        typeof source.view.updateCurrentPower ===
+            "function"
+    ){
 
+        source.view.updateCurrentPower(
+            source
+        );
 
-//----------------------------------
-// 手札コスト表示更新
-//----------------------------------
-
-if(
-    typeof updateHandCostDisplay ===
-    "function"
-){
-
-    updateHandCostDisplay();
-
-}
+    }
 
 
-updateGameState();
+    //----------------------------------
+    // 動的パワー表示更新
+    //----------------------------------
 
-updateButtons();
+    refreshDynamicPowerSummons();
 
 
-return true;
+    //----------------------------------
+    // 手札コスト表示更新
+    //
+    // サラマンダー・セイレーン等
+    //----------------------------------
+
+    if(
+        typeof updateHandCostDisplay ===
+            "function"
+    ){
+
+        updateHandCostDisplay();
+
+    }
+
+
+    //----------------------------------
+    // ゲーム状態更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+
+    return true;
 
 }
 
@@ -3557,13 +3736,27 @@ function resolveReadyWhenEnemySummonCooledTrigger(
     );
 
     console.log(
+        "発動前 attackReady=",
+        summon.attackReady
+    );
+
+    console.log(
         "================================"
     );
 
 
-    //----------------------------------
+    //==================================
     // タテ向きにする
-    //----------------------------------
+    //
+    // ★ attackReady は変更しない
+    //
+    // この能力は
+    // 「タテ向きにする」だけであり、
+    // 「アタック可能にする」能力ではない
+    //
+    // 召喚ターンで attackReady=false なら
+    // false のまま維持する
+    //==================================
 
     summon.isRest =
         false;
@@ -3583,14 +3776,6 @@ function resolveReadyWhenEnemySummonCooledTrigger(
 
 
     //----------------------------------
-    // 再びアタック可能
-    //----------------------------------
-
-    summon.attackReady =
-        true;
-
-
-    //----------------------------------
     // バトルログ
     //----------------------------------
 
@@ -3604,6 +3789,15 @@ function resolveReadyWhenEnemySummonCooledTrigger(
         );
 
     }
+
+
+    console.log(
+        "ヴァンパイア能力解決後",
+        "isRest=",
+        summon.isRest,
+        "attackReady=",
+        summon.attackReady
+    );
 
 
     //----------------------------------
@@ -3731,20 +3925,236 @@ function startHorizontalSummonOnCoolTargetSelection(
     }
 
 
-    //----------------------------------
+    //==================================
     // CPU所有カード
-    //
-    // CPU処理は次段階で実装
-    //----------------------------------
+    //==================================
 
     if(
         trigger.owner === ENEMY
     ){
 
         console.log(
-            "マンドラゴラ系能力：CPU対象選択は次段階で実装"
+            "================================"
         );
 
+        console.log(
+            "マンドラゴラ系能力：CPU対象選択"
+        );
+
+        console.log(
+            "対象候補：",
+            candidates.map(
+                summon => ({
+                    name:
+                        summon.card.name,
+
+                    owner:
+                        summon.owner,
+
+                    isRest:
+                        summon.isRest,
+
+                    power:
+                        getPower(summon)
+                })
+            )
+        );
+
+
+        //----------------------------------
+        // ① PLAYERのタテ向きサモン
+        //----------------------------------
+
+        let targetCandidates =
+            candidates.filter(
+                summon =>
+                    summon.owner === PLAYER &&
+                    !summon.isRest
+            );
+
+
+        //----------------------------------
+        // ② PLAYERのヨコ向きサモン
+        //----------------------------------
+
+        if(
+            targetCandidates.length === 0
+        ){
+
+            targetCandidates =
+                candidates.filter(
+                    summon =>
+                        summon.owner === PLAYER
+                );
+
+        }
+
+
+        //----------------------------------
+        // ③ CPU自身のヨコ向きサモン
+        //
+        // PLAYER側を対象にできない場合
+        //----------------------------------
+
+        if(
+            targetCandidates.length === 0
+        ){
+
+            targetCandidates =
+                candidates.filter(
+                    summon =>
+                        summon.owner === ENEMY &&
+                        summon.isRest
+                );
+
+        }
+
+
+        //----------------------------------
+        // ④ 最後は残っている対象すべて
+        //----------------------------------
+
+        if(
+            targetCandidates.length === 0
+        ){
+
+            targetCandidates =
+                [...candidates];
+
+        }
+
+
+        //==================================
+        // 同条件ならパワーが高いものを優先
+        //
+        // PLAYERの場合：
+        // 強い相手サモンをヨコ向きにする
+        //
+        // CPU自身の場合：
+        // ここまで来るのは対象不足時のみ
+        //==================================
+
+        targetCandidates.sort(
+            (a, b) =>
+                getPower(b) -
+                getPower(a)
+        );
+
+
+        //----------------------------------
+        // 最優先対象
+        //----------------------------------
+
+        const target =
+            targetCandidates[0];
+
+
+        //----------------------------------
+        // 念のため
+        //----------------------------------
+
+        if(!target){
+
+            console.log(
+                "マンドラゴラ系能力：CPU対象決定失敗"
+            );
+
+
+            resolveNextCoolTrigger();
+
+            return;
+
+        }
+
+
+        console.log(
+            "CPUマンドラゴラ対象決定：",
+            target.card.name,
+            "owner=",
+            target.owner,
+            "power=",
+            getPower(target),
+            "変更前isRest=",
+            target.isRest
+        );
+
+
+        //==================================
+        // ヨコ向きにする
+        //==================================
+
+        target.isRest =
+            true;
+
+
+        if(
+            target.view &&
+            typeof target.view.setHorizontal ===
+                "function"
+        ){
+
+            target.view.setHorizontal(
+                true
+            );
+
+        }
+
+
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        if(
+            typeof addBattleLog ===
+                "function"
+        ){
+
+            addBattleLog(
+                `${trigger.sourceCard.name}の能力発動：${target.card.name}をヨコ向きにする`
+            );
+
+        }
+
+
+        console.log(
+            "CPUマンドラゴラ能力解決：",
+            target.card.name,
+            "isRest=",
+            target.isRest
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        //----------------------------------
+        // 表示更新
+        //----------------------------------
+
+        if(
+            typeof updateGameState ===
+                "function"
+        ){
+
+            updateGameState();
+
+        }
+
+
+        if(
+            typeof updateButtons ===
+                "function"
+        ){
+
+            updateButtons();
+
+        }
+
+
+        //----------------------------------
+        // 次の誘発能力へ
+        //----------------------------------
 
         resolveNextCoolTrigger();
 
@@ -3753,9 +4163,9 @@ function startHorizontalSummonOnCoolTargetSelection(
     }
 
 
-    //----------------------------------
+    //==================================
     // PLAYER対象選択開始
-    //----------------------------------
+    //==================================
 
     coolTriggerCurrent =
         trigger;
@@ -4074,6 +4484,10 @@ function resolveNextCoolTrigger(){
         );
 
 
+        //==================================
+        // 誘発能力解決状態を終了
+        //==================================
+
         coolTriggerResolving =
             false;
 
@@ -4089,6 +4503,77 @@ function resolveNextCoolTrigger(){
         clearSummonAbilityTargetHighlight();
 
         hideActionGuide();
+
+
+        //==================================
+        // CPUターン再開
+        //
+        // クール時誘発能力の解決中に
+        // CPUが停止していた場合、
+        // すべての能力解決が終わってから
+        // CPU行動を再開する
+        //==================================
+
+        if(
+            typeof game !==
+                "undefined" &&
+            game.currentPlayer === ENEMY &&
+            !battleGameEnding &&
+            !battleGameConceded
+        ){
+
+            console.log(
+                "CPU再開：クール時誘発能力の全解決完了"
+            );
+
+
+            cpuWaiting =
+                false;
+
+
+            setTimeout(
+                () => {
+
+                    //----------------------------------
+                    // 再開時にも状態を再確認
+                    //----------------------------------
+
+                    if(
+                        battleGameEnding ||
+                        battleGameConceded
+                    ){
+
+                        return;
+
+                    }
+
+
+                    if(
+                        game.currentPlayer !==
+                            ENEMY
+                    ){
+
+                        return;
+
+                    }
+
+
+                    if(
+                        coolTriggerResolving
+                    ){
+
+                        return;
+
+                    }
+
+
+                    runCpuTurnStep();
+
+                },
+                300
+            );
+
+        }
 
 
         return;

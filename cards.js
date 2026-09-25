@@ -603,7 +603,11 @@ const CARD_LIST = [
         cost: 1,
         power: 3,
         series:"folklore",
-        image: "images/042-ワーウルフ.jpg"
+        image: "images/042-ワーウルフ.jpg",
+        text:"このカードはアタックできる状態になるたび、ただちにアタックを行う。",
+        ability:{
+            type:"forceAttackWhenReady"
+        }
     },
     {
         id: 43,

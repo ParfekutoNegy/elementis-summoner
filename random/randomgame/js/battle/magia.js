@@ -1579,11 +1579,18 @@ function isMagiaTargetBlocked(
 
     //----------------------------------
     // 相手のマギア対象にならない
+    //
+    // card.ability ではなく
+    // 現在Summonが持っている能力を確認
+    //
+    // ドッペルゲンガーのコピーにも対応
     //----------------------------------
 
     if(
-        target.card?.ability?.type ===
-        "cannotBeMagiaTarget"
+        hasSummonAbility(
+            target,
+            "cannotBeMagiaTarget"
+        )
     ){
 
         //----------------------------------
@@ -1591,7 +1598,8 @@ function isMagiaTargetBlocked(
         //----------------------------------
 
         if(
-            target.owner !== card.owner
+            target.owner !==
+            card.owner
         ){
 
             console.log(
@@ -1600,8 +1608,11 @@ function isMagiaTargetBlocked(
                 "cardOwner=",
                 card.owner,
                 "targetOwner=",
-                target.owner
+                target.owner,
+                "ability=",
+                "cannotBeMagiaTarget"
             );
+
 
             return true;
 

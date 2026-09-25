@@ -7446,144 +7446,175 @@ function finishBattleGame(winner){
 
 function concedeGame(){
 
-console.log(
-    "================================"
-);
-
-console.log(
-    "===== PLAYER 投了 ====="
-);
-
-
-//----------------------------------
-// すでにゲーム終了なら無視
-//----------------------------------
-
-if(
-    battleGameConceded ||
-    game.state === TURN_STATE.END
-){
+    console.log(
+        "================================"
+    );
 
     console.log(
-        "投了処理：すでにゲーム終了"
+        "===== PLAYER 投了 ====="
     );
 
-    return;
 
-}
+    //----------------------------------
+    // すでにゲーム終了なら無視
+    //----------------------------------
 
+    if(
+        battleGameConceded ||
+        game.state === TURN_STATE.END
+    ){
 
-//----------------------------------
-// 投了状態にする
-//----------------------------------
+        console.log(
+            "投了処理：すでにゲーム終了"
+        );
 
-battleGameConceded = true;
+        return;
 
-battleGameEnding = true;
-
-
-//----------------------------------
-// ゲーム状態を終了
-//----------------------------------
-
-game.state =
-    TURN_STATE.END;
+    }
 
 
-//----------------------------------
-// CPU行動を停止
-//----------------------------------
+    //----------------------------------
+    // 投了状態にする
+    //----------------------------------
 
-cpuWaiting = false;
+    battleGameConceded = true;
 
-cpuTurnStep = 4;
-
-cpuAttackQueue = [];
-
-cpuAttackIndex = 0;
+    battleGameEnding = true;
 
 
-//----------------------------------
-// 選択状態を解除
-//----------------------------------
+    //----------------------------------
+    // ゲーム状態を終了
+    //----------------------------------
 
-selectedHandCard = null;
-
-selectedSummon = null;
-
-selectedFieldCard = null;
-
-selectedEnemySummon = null;
-
-selectedCoolCard = null;
-
-summonCard = null;
-
-selectedCostCards = [];
-
-selectedResistCostCards = [];
-
-resistUsingCard = null;
-
-resistEvent = null;
-
-resistMode = false;
-
-coolRecoveryMode = false;
-
-coolViewMode = false;
+    game.state =
+        TURN_STATE.END;
 
 
-//----------------------------------
-// 各種モーダルを閉じる
-//----------------------------------
+    //----------------------------------
+    // CPU行動を停止
+    //----------------------------------
 
-closeEnemyCoolModal();
+    cpuWaiting = false;
 
-closeCoolModal();
+    cpuTurnStep = 4;
 
-closeHandModal();
+    cpuAttackQueue = [];
 
-closeSummonActionModal();
-
-closeCostView();
+    cpuAttackIndex = 0;
 
 
-//----------------------------------
-// 攻撃状態を解除
-//----------------------------------
+    //----------------------------------
+    // 選択状態を解除
+    //----------------------------------
 
-resetAttackState();
+    selectedHandCard = null;
+
+    selectedSummon = null;
+
+    selectedFieldCard = null;
+
+    selectedEnemySummon = null;
+
+    selectedCoolCard = null;
+
+    summonCard = null;
+
+    selectedCostCards = [];
+
+    selectedResistCostCards = [];
+
+    resistUsingCard = null;
+
+    resistEvent = null;
+
+    resistMode = false;
+
+    coolRecoveryMode = false;
+
+    coolViewMode = false;
 
 
-//----------------------------------
-// ボタンを停止
-//----------------------------------
+    //----------------------------------
+    // 各種モーダルを閉じる
+    //----------------------------------
 
-const endTurnButton =
-    document.getElementById(
-        "endturn-button"
+    closeEnemyCoolModal();
+
+    closeCoolModal();
+
+    closeHandModal();
+
+    closeSummonActionModal();
+
+    closeCostView();
+
+
+    //----------------------------------
+    // 攻撃状態を解除
+    //----------------------------------
+
+    resetAttackState();
+
+
+    //==================================
+    // 右下操作ボタンを完全にリセット
+    //
+    // 投了時に表示されていた
+    // キャンセル・決定・プレイ等を
+    // 次ゲームへ持ち越さない
+    //==================================
+
+    if(
+        typeof resetActionButtons ===
+            "function"
+    ){
+
+        resetActionButtons();
+
+    }
+
+
+    //----------------------------------
+    // 操作案内も解除
+    //----------------------------------
+
+    if(
+        typeof hideActionGuide ===
+            "function"
+    ){
+
+        hideActionGuide();
+
+    }
+
+
+    //----------------------------------
+    // ボタンを停止
+    //----------------------------------
+
+    const endTurnButton =
+        document.getElementById(
+            "endturn-button"
+        );
+
+
+    if(endTurnButton){
+
+        endTurnButton.disabled =
+            true;
+
+    }
+
+
+    //----------------------------------
+    // CPU勝利として終了
+    //----------------------------------
+
+    finishBattleGame(
+        ENEMY
     );
 
-if(endTurnButton){
-
-    endTurnButton.disabled = true;
-
 }
-
-
-//----------------------------------
-// CPU勝利として終了
-//----------------------------------
-
-finishBattleGame(
-    ENEMY
-);
-
-}
-
-
-
 
 //======================================
 // 次のゲーム開始

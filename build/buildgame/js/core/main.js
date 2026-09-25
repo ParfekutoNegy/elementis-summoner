@@ -3331,30 +3331,60 @@ if(
     }
 
 
-    //----------------------------------
-    // 攻撃中に別カードをクリック
-    // → 攻撃キャンセル
-    //----------------------------------
+//----------------------------------
+// 攻撃中に別カードをクリック
+//----------------------------------
 
-    if(isAttacking()){
+if(isAttacking()){
+
+
+    //==================================
+    // ワーウルフ強制アタック中
+    //==================================
+
+    if(
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode
+    ){
 
         console.log(
-            "攻撃キャンセル：別カードをクリック"
+            "ワーウルフ：",
+            "強制アタック中のためキャンセル不可"
         );
 
 
-        hideActionGuide();
-
-
-        resetAttackState();
-
-
-        updateUsableCardHighlight();
-
+        //----------------------------------
+        // 攻撃状態は維持する
+        //----------------------------------
 
         return;
 
     }
+
+
+    //==================================
+    // 通常アタック
+    // → 別カードクリックでキャンセル
+    //==================================
+
+    console.log(
+        "攻撃キャンセル：別カードをクリック"
+    );
+
+
+    hideActionGuide();
+
+
+    resetAttackState();
+
+
+    updateUsableCardHighlight();
+
+
+    return;
+
+}
 
 
     //----------------------------------
@@ -3435,14 +3465,14 @@ if(
 function showCardInfo(card){
 
     const image =
-    document.getElementById(
-        "info-image"
-    );
+        document.getElementById(
+            "info-image"
+        );
 
     const text =
-    document.getElementById(
-        "info-text"
-    );
+        document.getElementById(
+            "info-text"
+        );
 
 
     //----------------------------------
@@ -3452,7 +3482,7 @@ function showCardInfo(card){
     image.innerHTML = "";
 
     const img =
-    document.createElement("img");
+        document.createElement("img");
 
     img.src = card.image;
 
@@ -3470,9 +3500,9 @@ function showCardInfo(card){
     let specialInfo = "";
 
 
-    //----------------------------------
+    //==================================
     // サモン
-    //----------------------------------
+    //==================================
 
     if(card.type === "サモン"){
 
@@ -3486,12 +3516,54 @@ function showCardInfo(card){
             </p>
         `;
 
+
+        //==================================
+        // ドッペルゲンガー
+        // 現在コピーしているサモンを確認
+        //==================================
+
+        const fieldSummon =
+            [
+                ...playerField,
+                ...enemyField
+            ].find(
+                summon =>
+                    summon &&
+                    summon.card === card &&
+                    !summon.destroyed
+            );
+
+
+        //----------------------------------
+        // コピー元がある場合
+        //----------------------------------
+
+        if(
+            fieldSummon &&
+            fieldSummon.abilitySource &&
+            fieldSummon.abilitySource.card
+        ){
+
+            const sourceCard =
+                fieldSummon.abilitySource.card;
+
+
+            specialInfo += `
+                <p>
+                    <strong>
+                        コピー中：${sourceCard.name}
+                    </strong>
+                </p>
+            `;
+
+        }
+
     }
 
 
-    //----------------------------------
+    //==================================
     // マギア
-    //----------------------------------
+    //==================================
 
     else if(card.type === "マギア"){
 
@@ -3508,9 +3580,9 @@ function showCardInfo(card){
     }
 
 
-    //----------------------------------
+    //==================================
     // レジスト
-    //----------------------------------
+    //==================================
 
     else if(card.type === "レジスト"){
 
@@ -3527,9 +3599,9 @@ function showCardInfo(card){
     }
 
 
-    //----------------------------------
+    //==================================
     // その他
-    //----------------------------------
+    //==================================
 
     else{
 
@@ -3570,7 +3642,7 @@ function showCardInfo(card){
     document.getElementById(
         "hand-card-modal"
     ).style.display =
-    "flex";
+        "flex";
 
 
     updateButtons();
@@ -3578,8 +3650,6 @@ function showCardInfo(card){
     updateCardAction(card);
 
 }
-
-
 //=========================
 // 召喚開始
 //=========================
@@ -4946,6 +5016,40 @@ if(
     !resistUsingCard &&
     !blockMode
 ){
+
+    //==================================
+    // ワーウルフ強制アタック
+    //==================================
+
+    if(
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode
+    ){
+
+        //----------------------------------
+        // 強制アタックなので
+        // キャンセル不可
+        //----------------------------------
+
+        cancelButton.style.display =
+            "none";
+
+
+        console.log(
+            "ワーウルフ：",
+            "強制アタック中のためキャンセル不可"
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // 通常アタック
+    //==================================
 
     actionArea.style.display =
         "flex";
@@ -10523,139 +10627,173 @@ console.log(
 
 function concedeGame(){
 
-console.log(
-    "================================"
-);
-
-console.log(
-    "===== PLAYER 投了 ====="
-);
-
-
-//----------------------------------
-// すでにゲーム終了なら無視
-//----------------------------------
-
-if(
-    battleGameConceded ||
-    game.state === TURN_STATE.END
-){
+    console.log(
+        "================================"
+    );
 
     console.log(
-        "投了処理：すでにゲーム終了"
+        "===== PLAYER 投了 ====="
     );
 
-    return;
 
-}
+    //----------------------------------
+    // すでにゲーム終了なら無視
+    //----------------------------------
 
+    if(
+        battleGameConceded ||
+        game.state === TURN_STATE.END
+    ){
 
-//----------------------------------
-// 投了状態にする
-//----------------------------------
+        console.log(
+            "投了処理：すでにゲーム終了"
+        );
 
-battleGameConceded = true;
+        return;
 
-battleGameEnding = true;
-
-
-//----------------------------------
-// ゲーム状態を終了
-//----------------------------------
-
-game.state =
-    TURN_STATE.END;
+    }
 
 
-//----------------------------------
-// CPU行動を停止
-//----------------------------------
+    //----------------------------------
+    // 投了状態にする
+    //----------------------------------
 
-cpuWaiting = false;
+    battleGameConceded = true;
 
-cpuTurnStep = 4;
-
-cpuAttackQueue = [];
-
-cpuAttackIndex = 0;
+    battleGameEnding = true;
 
 
-//----------------------------------
-// 選択状態を解除
-//----------------------------------
+    //----------------------------------
+    // ゲーム状態を終了
+    //----------------------------------
 
-selectedHandCard = null;
-
-selectedSummon = null;
-
-selectedFieldCard = null;
-
-selectedEnemySummon = null;
-
-selectedCoolCard = null;
-
-summonCard = null;
-
-selectedCostCards = [];
-
-selectedResistCostCards = [];
-
-resistUsingCard = null;
-
-resistEvent = null;
-
-resistMode = false;
-
-coolRecoveryMode = false;
-
-coolViewMode = false;
+    game.state =
+        TURN_STATE.END;
 
 
-//----------------------------------
-// 各種モーダルを閉じる
-//----------------------------------
+    //----------------------------------
+    // CPU行動を停止
+    //----------------------------------
 
-closeEnemyCoolModal();
+    cpuWaiting = false;
 
-closeCoolModal();
+    cpuTurnStep = 4;
 
-closeHandModal();
+    cpuAttackQueue = [];
 
-closeSummonActionModal();
-
-closeCostView();
+    cpuAttackIndex = 0;
 
 
-//----------------------------------
-// 攻撃状態を解除
-//----------------------------------
+    //----------------------------------
+    // 選択状態を解除
+    //----------------------------------
 
-resetAttackState();
+    selectedHandCard = null;
+
+    selectedSummon = null;
+
+    selectedFieldCard = null;
+
+    selectedEnemySummon = null;
+
+    selectedCoolCard = null;
+
+    summonCard = null;
+
+    selectedCostCards = [];
+
+    selectedResistCostCards = [];
+
+    resistUsingCard = null;
+
+    resistEvent = null;
+
+    resistMode = false;
+
+    coolRecoveryMode = false;
+
+    coolViewMode = false;
 
 
-//----------------------------------
-// ボタンを停止
-//----------------------------------
+    //----------------------------------
+    // 各種モーダルを閉じる
+    //----------------------------------
 
-const endTurnButton =
-    document.getElementById(
-        "endturn-button"
+    closeEnemyCoolModal();
+
+    closeCoolModal();
+
+    closeHandModal();
+
+    closeSummonActionModal();
+
+    closeCostView();
+
+
+    //----------------------------------
+    // 攻撃状態を解除
+    //----------------------------------
+
+    resetAttackState();
+
+
+    //==================================
+    // 右下操作ボタンを完全にリセット
+    //
+    // 投了時に表示されていた
+    // キャンセル・決定・プレイ等を
+    // 次ゲームへ持ち越さない
+    //==================================
+
+    if(
+        typeof resetActionButtons ===
+            "function"
+    ){
+
+        resetActionButtons();
+
+    }
+
+
+    //----------------------------------
+    // 操作案内も解除
+    //----------------------------------
+
+    if(
+        typeof hideActionGuide ===
+            "function"
+    ){
+
+        hideActionGuide();
+
+    }
+
+
+    //----------------------------------
+    // ボタンを停止
+    //----------------------------------
+
+    const endTurnButton =
+        document.getElementById(
+            "endturn-button"
+        );
+
+
+    if(endTurnButton){
+
+        endTurnButton.disabled =
+            true;
+
+    }
+
+
+    //----------------------------------
+    // CPU勝利として終了
+    //----------------------------------
+
+    finishBattleGame(
+        ENEMY
     );
-
-if(endTurnButton){
-
-    endTurnButton.disabled = true;
-
-}
-
-
-//----------------------------------
-// CPU勝利として終了
-//----------------------------------
-
-finishBattleGame(
-    ENEMY
-);
 
 }
 

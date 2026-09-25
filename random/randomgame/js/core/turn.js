@@ -1,11 +1,13 @@
 //======================================
 // ターン開始
 //======================================
+
 function startTurn(){
 
     game.turn++;
 
-    game.state = TURN_STATE.START;
+    game.state =
+        TURN_STATE.START;
 
 
     console.log(
@@ -22,7 +24,6 @@ function startTurn(){
 
     clearFieldSelection();
 
-
     closeHandModal();
 
     closeSummonActionModal();
@@ -30,90 +31,183 @@ function startTurn(){
     resetAttackState();
 
 
+    //----------------------------------
     // 状態リセット
+    //----------------------------------
 
-    summonUsedThisTurn = false;
+    summonUsedThisTurn =
+        false;
 
-    summonCard = null;
+    summonCard =
+        null;
 
-    selectedCostCards = [];
+    selectedCostCards =
+        [];
 
-    costConfirm = false;
+    costConfirm =
+        false;
 
     closeCostView();
 
 
     //----------------------------------
-// ターン開始表示
-//----------------------------------
+    // ターン開始表示
+    //----------------------------------
 
-showTurnMessage(
+    showTurnMessage(
 
-    game.currentPlayer,
+        game.currentPlayer,
 
-    ()=>{
+        ()=>{
 
-        //----------------------------------
-        // ターン開始時 一時効果解除
-        //----------------------------------
+            //----------------------------------
+            // 一時効果解除
+            //----------------------------------
 
-        resetTemporaryPower(
-            game.currentPlayer
-        );
-
-        //----------------------------------
-        // ① サモンを起こす
-        //----------------------------------
-
-        readySummons(
-            game.currentPlayer
-        );
+            resetTemporaryPower(
+                game.currentPlayer
+            );
 
 
-        //----------------------------------
-        // ② コスト回収
-        //----------------------------------
+            //----------------------------------
+            // ① サモンをタテ向き
+            //
+            // ワーウルフはここでは
+            // アタックせず予約のみ
+            //----------------------------------
 
-        recoverCostCards();
+            readySummons(
+                game.currentPlayer
+            );
 
-        updateCostZoneView();
+
+            //----------------------------------
+            // ② コスト回収
+            //----------------------------------
+
+            recoverCostCards();
+
+            updateCostZoneView();
 
 
-//----------------------------------
-// ③ クール回収
-//----------------------------------
+            //----------------------------------
+            // ③ クール回収
+            //----------------------------------
 
-const coolCards =
-    getCoolCards(
-        game.currentPlayer
+            const coolCards =
+                getCoolCards(
+                    game.currentPlayer
+                );
+
+
+            if(
+                coolCards.length > 0
+            ){
+
+                startCoolRecovery();
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // クールなし
+            //----------------------------------
+
+            finishCoolRecovery();
+
+        }
+
     );
-
-
-//----------------------------------
-// クールゾーンにカードがある場合
-//----------------------------------
-
-if(coolCards.length > 0){
-
-    startCoolRecovery();
-
-    return;
 
 }
 
+function continuePlayerTurnStart(){
 
-//----------------------------------
-// クールが空
-//----------------------------------
+    //----------------------------------
+    // ゲーム終了確認
+    //----------------------------------
 
-finishCoolRecovery();
+    if(
+        battleGameEnding ||
+        battleGameConceded
+    ){
+
+        playerTurnStartWaitingForForcedAttack =
+            false;
+
+        return;
 
     }
 
-);
+
+    //----------------------------------
+    // PLAYERターン確認
+    //----------------------------------
+
+    if(
+        game.currentPlayer !== PLAYER
+    ){
+
+        playerTurnStartWaitingForForcedAttack =
+            false;
+
+        return;
+
+    }
+
+
+    console.log(
+        "PLAYERターン開始処理を継続"
+    );
+
+
+    playerTurnStartWaitingForForcedAttack =
+        false;
+
+
+    //----------------------------------
+    // ② コスト回収
+    //----------------------------------
+
+    recoverCostCards();
+
+    updateCostZoneView();
+
+
+    //----------------------------------
+    // ③ クール回収
+    //----------------------------------
+
+    const coolCards =
+        getCoolCards(
+            game.currentPlayer
+        );
+
+
+    //----------------------------------
+    // クールゾーンにカードあり
+    //----------------------------------
+
+    if(
+        coolCards.length > 0
+    ){
+
+        startCoolRecovery();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールゾーンが空
+    //----------------------------------
+
+    finishCoolRecovery();
 
 }
-
 
 //======================================
 // クール回収完了
@@ -125,13 +219,15 @@ function finishCoolRecovery(){
     // 回収モード終了
     //----------------------------------
 
-    coolRecoveryMode = false;
+    coolRecoveryMode =
+        false;
 
-    selectedCoolCard = null;
+    selectedCoolCard =
+        null;
 
 
     //----------------------------------
-    // クール回収用CSSクラスを解除
+    // クール回収用CSS解除
     //----------------------------------
 
     const modal =
@@ -157,7 +253,7 @@ function finishCoolRecovery(){
 
 
     //----------------------------------
-    // クールカードの選択・発光を解除
+    // クールカード表示解除
     //----------------------------------
 
     document
@@ -180,7 +276,7 @@ function finishCoolRecovery(){
 
 
     //----------------------------------
-    // 〇を解除
+    // カードマーカー解除
     //----------------------------------
 
     document
@@ -212,7 +308,7 @@ function finishCoolRecovery(){
 
 
     //----------------------------------
-    // ターン開始
+    // ターン開始効果
     //----------------------------------
 
     onTurnStart(
@@ -221,10 +317,21 @@ function finishCoolRecovery(){
 
 
     //----------------------------------
-    // プレイ開始
+    // ターン中の行動開始
     //----------------------------------
 
     beginPlaying();
+
+
+    //==================================
+    // ターン開始時に予約された
+    // 強制アタックをここで開始
+    //
+    // コスト回収・クール回収が
+    // すべて終了した後
+    //==================================
+
+    startTurnForcedAttacks();
 
 }
 
@@ -457,7 +564,29 @@ function readySummons(owner){
         enemyField;
 
 
+    //----------------------------------
+    // 今回のターン開始時
+    // 強制アタック予約をリセット
+    //----------------------------------
+
+    turnStartForcedAttackSummons = [];
+
+
     for(const summon of field){
+
+        //----------------------------------
+        // 破壊済みは除外
+        //----------------------------------
+
+        if(
+            !summon ||
+            summon.destroyed
+        ){
+
+            continue;
+
+        }
+
 
         //----------------------------------
         // 一時パワーをリセット
@@ -467,15 +596,10 @@ function readySummons(owner){
 
 
         //----------------------------------
-        // 行動可能
+        // タテ向き
         //----------------------------------
 
         summon.isRest = false;
-
-
-        //----------------------------------
-        // 縦向き
-        //----------------------------------
 
         summon.view.setHorizontal(
             false
@@ -483,14 +607,14 @@ function readySummons(owner){
 
 
         //----------------------------------
-        // 攻撃可能
+        // アタック可能
         //----------------------------------
 
         summon.attackReady = true;
 
 
         //----------------------------------
-        // ターン毎の能力使用状態をリセット
+        // ターン毎能力リセット
         //----------------------------------
 
         summon.abilityUsedThisTurn =
@@ -498,24 +622,17 @@ function readySummons(owner){
 
 
         //----------------------------------
-        // 現在持っている能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
-
-
-        //----------------------------------
         // サモン能力
         //
         // copySummonAbility は
-        // 「場に出たとき」だけ発動するため
-        // ターン開始時には再発動させない
+        // 場に出たときのみ処理する
         //----------------------------------
 
         if(
-            ability?.type !==
-            "copySummonAbility"
+            !hasSummonAbility(
+                summon,
+                "copySummonAbility"
+            )
         ){
 
             applySummonAbility(
@@ -524,9 +641,221 @@ function readySummons(owner){
 
         }
 
+
+        //==================================
+        // ワーウルフ系能力
+        //
+        // ここではアタックを開始しない。
+        //
+        // ターン開始処理がすべて
+        // 終わったあとに実行するため
+        // 予約だけしておく。
+        //==================================
+
+        if(
+            summon.attackReady &&
+            !summon.isRest &&
+            hasSummonAbility(
+                summon,
+                "forceAttackWhenReady"
+            )
+        ){
+
+            turnStartForcedAttackSummons.push(
+                summon
+            );
+
+
+            console.log(
+                "ターン開始時強制アタック予約",
+                summon.card.name,
+                "owner=",
+                summon.owner
+            );
+
+        }
+
     }
 
+
+    console.log(
+        "ターン開始時強制アタック予約完了",
+        turnStartForcedAttackSummons.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
 }
+
+//======================================
+// ターン開始時 強制アタック開始
+//======================================
+
+function startTurnForcedAttacks(){
+
+    //----------------------------------
+    // 予約なし
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            turnStartForcedAttackSummons
+        ) ||
+        turnStartForcedAttackSummons.length === 0
+    ){
+
+        console.log(
+            "ターン開始時強制アタックなし"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 現在のターンプレイヤーだけ取得
+    //----------------------------------
+
+    const summons =
+        turnStartForcedAttackSummons.filter(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 場にいるか
+                //----------------------------------
+
+                const onField =
+                    playerField.includes(
+                        summon
+                    ) ||
+                    enemyField.includes(
+                        summon
+                    );
+
+
+                if(!onField){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 現在のターンプレイヤーか
+                //----------------------------------
+
+                if(
+                    summon.owner !==
+                    game.currentPlayer
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 現在も能力を持っているか
+                //----------------------------------
+
+                if(
+                    !hasSummonAbility(
+                        summon,
+                        "forceAttackWhenReady"
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 現在もアタック可能か
+                //----------------------------------
+
+                if(
+                    !summon.attackReady ||
+                    summon.isRest
+                ){
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    //----------------------------------
+    // 予約を消す
+    //
+    // 二重実行防止
+    //----------------------------------
+
+    turnStartForcedAttackSummons = [];
+
+
+    //----------------------------------
+    // 有効な対象なし
+    //----------------------------------
+
+    if(summons.length === 0){
+
+        console.log(
+            "ターン開始時強制アタック対象なし"
+        );
+
+        return false;
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "ターン開始処理完了 → 強制アタック開始",
+        summons.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // 既存キューへ渡す
+    //----------------------------------
+
+    queueForcedAttacks(
+        summons
+    );
+
+
+    return true;
+
+}
+
 //======================================
 // プレイヤー交代
 //======================================
@@ -553,12 +882,14 @@ function switchPlayer(){
 
 function startCpuTurn(){
 
-
     //----------------------------------
-    // ゲーム終了後はCPUターン開始禁止
+    // ゲーム終了確認
     //----------------------------------
 
-    if(battleGameEnding){
+    if(
+        battleGameEnding ||
+        battleGameConceded
+    ){
 
         console.log(
             "CPUターン開始中止：ゲーム終了"
@@ -570,10 +901,11 @@ function startCpuTurn(){
 
 
     //----------------------------------
-    // ターン数を進める
+    // ターン数
     //----------------------------------
 
     game.turn++;
+
 
     console.log(
         "CPUターン開始"
@@ -581,11 +913,11 @@ function startCpuTurn(){
 
 
     game.state =
-    TURN_STATE.START;
+        TURN_STATE.START;
 
 
     //----------------------------------
-    // CPUターン状態初期化
+    // CPU状態初期化
     //----------------------------------
 
     resetCpuTurnState();
@@ -601,9 +933,10 @@ function startCpuTurn(){
 
         ()=>{
 
-
             //----------------------------------
-            // CPUサモン起こし
+            // サモンをタテ向き
+            //
+            // 強制アタックは予約のみ
             //----------------------------------
 
             readySummons(
@@ -612,44 +945,10 @@ function startCpuTurn(){
 
 
             //----------------------------------
-            // CPUコスト回復
+            // CPUターン開始処理へ
             //----------------------------------
 
-            recoverEnemyCostCards();
-
-
-            //----------------------------------
-            // CPUクール回収
-            //----------------------------------
-
-            recoverEnemyCoolCard();
-
-
-            //----------------------------------
-            // ターン開始効果
-            //----------------------------------
-
-            onTurnStart(
-                ENEMY
-            );
-
-
-            //----------------------------------
-            // プレイ開始
-            //----------------------------------
-
-            beginPlaying();
-
-
-            //----------------------------------
-            // CPU行動開始
-            //----------------------------------
-
-            setTimeout(()=>{
-
-                startCpuAction();
-
-            },1000);
+            continueCpuTurnStart();
 
         }
 
@@ -657,6 +956,113 @@ function startCpuTurn(){
 
 }
 
+function continueCpuTurnStart(){
+
+    //----------------------------------
+    // ゲーム終了確認
+    //----------------------------------
+
+    if(
+        battleGameEnding ||
+        battleGameConceded
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // CPUターン確認
+    //----------------------------------
+
+    if(
+        game.currentPlayer !== ENEMY
+    ){
+
+        return;
+
+    }
+
+
+    console.log(
+        "CPUターン開始処理を継続"
+    );
+
+
+    //----------------------------------
+    // CPUコスト回収
+    //----------------------------------
+
+    recoverEnemyCostCards();
+
+
+    //----------------------------------
+    // CPUクール回収
+    //----------------------------------
+
+    recoverEnemyCoolCard();
+
+
+    //----------------------------------
+    // ターン開始効果
+    //----------------------------------
+
+    onTurnStart(
+        ENEMY
+    );
+
+
+    //----------------------------------
+    // ターン中の行動開始
+    //----------------------------------
+
+    beginPlaying();
+
+
+    //==================================
+    // ターン開始処理完了後
+    // ワーウルフ強制アタック開始
+    //==================================
+
+    const forcedAttackStarted =
+        startTurnForcedAttacks();
+
+
+    //----------------------------------
+    // 強制アタックあり
+    //
+    // 通常CPU行動は
+    // 強制アタック完了後に開始する
+    //----------------------------------
+
+    if(forcedAttackStarted){
+
+        console.log(
+            "CPU通常行動待機：",
+            "強制アタック解決中"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 強制アタックなし
+    // 通常CPU行動開始
+    //----------------------------------
+
+    setTimeout(
+        ()=>{
+
+            startCpuAction();
+
+        },
+        1000
+    );
+
+}
 function finishTurn(){
 
     if(

@@ -548,6 +548,29 @@ addCoolCard(
 
 
     //==================================
+    // 動的パワー表示更新
+    //
+    // ワーム
+    // powerUpByEnemyCool
+    //
+    // ミノタウロス
+    // powerUpByOwnFireCool
+    //
+    // クールゾーンへカードが追加された
+    // 直後の枚数を画面表示へ反映する
+    //==================================
+
+    if(
+        typeof refreshDynamicPowerSummons ===
+            "function"
+    ){
+
+        refreshDynamicPowerSummons();
+
+    }
+
+
+    //==================================
     // ヴァンパイア系能力
     //
     // 相手のサモンがクールゾーンに
@@ -714,6 +737,25 @@ addCoolCard(
         //----------------------------------
 
         this.updateCoolCount();
+
+
+        //==================================
+        // 動的パワー表示を再更新
+        //
+        // フェニックスは一度クールに入り、
+        // その後すぐ手札へ戻るため、
+        // 最終的なクール枚数でもう一度
+        // ワーム・ミノタウロス等を更新する
+        //==================================
+
+        if(
+            typeof refreshDynamicPowerSummons ===
+                "function"
+        ){
+
+            refreshDynamicPowerSummons();
+
+        }
 
 
         console.log(

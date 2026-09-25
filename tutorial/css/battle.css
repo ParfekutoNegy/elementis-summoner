@@ -614,11 +614,13 @@
 
 #cpu-card-action-panel{
 
-    width:380px;
+    width:340px;
 
-    height:550px;
+    /* 490px → 460px */
+    height:460px;
 
-    padding:20px;
+    /* 16px → 上下6px、左右16px */
+    padding:6px 16px;
 
     box-sizing:border-box;
 
@@ -629,11 +631,9 @@
         2px solid white;
 
     border-top-left-radius:14px;
-
     border-bottom-left-radius:14px;
 
     border-top-right-radius:0;
-
     border-bottom-right-radius:0;
 
     box-shadow:
@@ -672,15 +672,16 @@
 
 #cpu-card-action-type{
 
-    font-size:24px;
+    font-size:20px;
 
     font-weight:bold;
 
     letter-spacing:2px;
 
-    margin-bottom:12px;
+    margin-bottom:8px;
 
 }
+
 
 
 /*======================================
@@ -689,19 +690,20 @@
 
 #cpu-card-action-image{
 
-    width:300px;
+    width:260px;
 
     height:auto;
 
     max-width:100%;
 
-    max-height:400px;
+    max-height:350px;
 
     object-fit:contain;
 
     display:block;
 
-    margin:0 auto 12px;
+    /* 下の余白を10px → 4px */
+    margin:0 auto 4px;
 
     border-radius:8px;
 
@@ -711,18 +713,13 @@
 
 }
 
-
 /*======================================
   CPUカード名
 ======================================*/
 
 #cpu-card-action-name{
 
-    font-size:22px;
-
-    font-weight:bold;
-
-    margin-bottom:8px;
+    display:none;
 
 }
 
@@ -733,7 +730,7 @@
 
 #cpu-card-action-target{
 
-    font-size:23px;
+    font-size:18px;
 
 }
 

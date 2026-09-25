@@ -123,18 +123,19 @@ function startCpuAction(){
 
 function runCpuTurnStep(){
 
-if(
-    battleGameEnding ||
-    battleGameConceded
-){
+    if(
+        battleGameEnding ||
+        battleGameConceded
+    ){
 
-    console.log(
-        "CPUターンステップ中止：ゲーム終了・投了"
-    );
+        console.log(
+            "CPUターンステップ中止：ゲーム終了・投了"
+        );
 
-    return;
+        return;
 
-}
+    }
+
 
     //----------------------------------
     // ゲーム終了後はCPU行動禁止
@@ -147,6 +148,63 @@ if(
         );
 
         cpuWaiting = false;
+
+        return;
+
+    }
+
+
+    //==================================
+    // クール時誘発能力の解決待ち
+    //
+    // マンドラゴラ・ヴァンパイア等の
+    // 能力解決がすべて終わるまで
+    // CPUターンを進めない
+    //==================================
+
+    if(
+        typeof coolTriggerResolving !==
+            "undefined" &&
+        coolTriggerResolving
+    ){
+
+        console.log(
+            "CPU停止：クール時誘発能力の解決待ち"
+        );
+
+        cpuWaiting = true;
+
+        return;
+
+    }
+
+
+    //==================================
+    // 強制アタックの解決待ち
+    //
+    // ワーウルフ等の強制アタックが
+    // 完全に終了するまで
+    // 通常CPU行動を進めない
+    //==================================
+
+    if(
+        (
+            typeof forcedAttackMode !==
+                "undefined" &&
+            forcedAttackMode
+        ) ||
+        (
+            typeof forcedAttackQueue !==
+                "undefined" &&
+            forcedAttackQueue.length > 0
+        )
+    ){
+
+        console.log(
+            "CPU停止：強制アタックの解決待ち"
+        );
+
+        cpuWaiting = true;
 
         return;
 

@@ -1099,11 +1099,16 @@ function damagePlayer(
         damage;
 
 
-    //----------------------------------
-    // ガーゴイルによるダメージ軽減
+    //==================================
+    // プレイヤーダメージ軽減能力
     //
-    // 複数能力対応
-    //----------------------------------
+    // reducePlayerDamage を持つ
+    // すべてのサモンの軽減値を合計する
+    //
+    // ガーゴイル複数体
+    // ドッペルゲンガーによるコピー
+    // の両方に対応
+    //==================================
 
     const field =
         player === PLAYER
@@ -1111,51 +1116,139 @@ function damagePlayer(
             : enemyField;
 
 
-    const gargoyle =
-        field.find(
-            summon =>
-                !summon.destroyed &&
-                hasSummonAbility(
+    //----------------------------------
+    // 軽減値合計
+    //----------------------------------
+
+    let totalReduction = 0;
+
+
+    //----------------------------------
+    // 能力保持サモン
+    //----------------------------------
+
+    const reducingSummons = [];
+
+
+    field.forEach(
+        summon => {
+
+            //----------------------------------
+            // 無効なサモン
+            //----------------------------------
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // ダメージ軽減能力取得
+            //----------------------------------
+
+            const reduceAbility =
+                getSummonAbility(
                     summon,
                     "reducePlayerDamage"
-                )
-        );
+                );
 
 
-    if(gargoyle){
+            if(!reduceAbility){
 
-        //----------------------------------
-        // ダメージ軽減能力取得
-        //----------------------------------
+                return;
 
-        const reduceAbility =
-            getSummonAbility(
-                gargoyle,
-                "reducePlayerDamage"
-            );
+            }
 
 
-        const reduction =
-            reduceAbility?.value ?? 1;
+            //----------------------------------
+            // 軽減値
+            //----------------------------------
 
+            const reduction =
+                reduceAbility.value ?? 1;
+
+
+            //----------------------------------
+            // 合計
+            //----------------------------------
+
+            totalReduction +=
+                reduction;
+
+
+            reducingSummons.push({
+
+                summon:
+                    summon,
+
+                reduction:
+                    reduction
+
+            });
+
+        }
+    );
+
+
+    //----------------------------------
+    // ダメージ軽減
+    //----------------------------------
+
+    if(totalReduction > 0){
 
         damage =
             Math.max(
                 0,
-                damage - reduction
+                damage - totalReduction
             );
 
 
         console.log(
-            "ガーゴイル：ダメージ軽減",
-            "能力保持サモン=",
-            gargoyle.card.name,
+            "================================"
+        );
+
+        console.log(
+            "プレイヤーダメージ軽減"
+        );
+
+        console.log(
             "元ダメージ=",
-            originalDamage,
-            "軽減=",
-            reduction,
+            originalDamage
+        );
+
+
+        reducingSummons.forEach(
+            data => {
+
+                console.log(
+                    "能力保持サモン=",
+                    data.summon.card.name,
+                    "軽減=",
+                    data.reduction
+                );
+
+            }
+        );
+
+
+        console.log(
+            "合計軽減=",
+            totalReduction
+        );
+
+        console.log(
             "軽減後=",
             damage
+        );
+
+        console.log(
+            "================================"
         );
 
     }
@@ -1250,7 +1343,7 @@ function damagePlayer(
 
         console.log(
             "レジスト待機",
-            "ガーゴイル軽減後ダメージ=",
+            "軽減後ダメージ=",
             event.damage
         );
 

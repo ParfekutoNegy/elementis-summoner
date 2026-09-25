@@ -16,6 +16,26 @@ let attackTarget = null;
 
 let waitingAttackAfterResist = false;
 
+//----------------------------------
+// 強制アタック
+//----------------------------------
+
+let forcedAttackMode = false;
+
+let forcedAttackQueue = [];
+
+let cpuTurnStartWaitingForForcedAttack =
+    false;
+
+let playerTurnStartWaitingForForcedAttack =
+    false;
+
+//======================================
+// ターン開始時 強制アタック予約
+//======================================
+
+let turnStartForcedAttackSummons = [];
+
 //======================================
 // ブロック状態管理
 //======================================
@@ -159,13 +179,28 @@ function startAttack(summon){
         true;
 
 
-    //----------------------------------
-    // 攻撃対象選択案内
-    //----------------------------------
+//----------------------------------
+// 攻撃対象選択案内
+//----------------------------------
+
+if(
+    typeof forcedAttackMode !==
+        "undefined" &&
+    forcedAttackMode
+){
+
+    showActionGuide(
+        `${summon.card.name}の強制アタック！<br>アタック対象を選んでください`
+    );
+
+}
+else{
 
     showActionGuide(
         "アタック対象を選んでください"
     );
+
+}
 
 
     //----------------------------------
@@ -188,6 +223,602 @@ function startAttack(summon){
         "summonTurnAttack=",
         canAttackOnSummonTurn
     );
+
+}
+
+function queueForcedAttacks(
+    summons
+){
+
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
+    if(
+        !Array.isArray(summons) ||
+        summons.length === 0
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // キューへ追加
+    //----------------------------------
+
+    for(const summon of summons){
+
+        if(
+            !summon ||
+            summon.destroyed
+        ){
+
+            continue;
+
+        }
+
+
+        if(
+            !hasSummonAbility(
+                summon,
+                "forceAttackWhenReady"
+            )
+        ){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // 重複登録防止
+        //----------------------------------
+
+        if(
+            forcedAttackQueue.includes(
+                summon
+            )
+        ){
+
+            continue;
+
+        }
+
+
+        forcedAttackQueue.push(
+            summon
+        );
+
+    }
+
+
+    console.log(
+        "強制アタックキュー",
+        forcedAttackQueue.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+
+    //----------------------------------
+    // 解決開始
+    //----------------------------------
+
+    startNextForcedAttack();
+
+}
+
+function startNextForcedAttack(){
+
+    //----------------------------------
+    // すでに強制アタック中
+    //----------------------------------
+
+    if(forcedAttackMode){
+
+        return;
+
+    }
+
+
+//----------------------------------
+// キューなし
+//----------------------------------
+
+if(
+    forcedAttackQueue.length === 0
+){
+
+    console.log(
+        "強制アタック全解決完了"
+    );
+
+
+    //==================================
+    // CPUターンの場合
+    //
+    // ターン開始処理はすでに完了している。
+    // ここから通常CPU行動へ進む。
+    //==================================
+
+    if(
+        game.currentPlayer === ENEMY
+    ){
+
+        console.log(
+            "CPU強制アタック完了 → 通常行動開始"
+        );
+
+
+        setTimeout(
+            ()=>{
+
+                //----------------------------------
+                // ゲーム終了確認
+                //----------------------------------
+
+                if(
+                    battleGameEnding ||
+                    battleGameConceded
+                ){
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // CPUターン確認
+                //----------------------------------
+
+                if(
+                    game.currentPlayer !== ENEMY
+                ){
+
+                    return;
+
+                }
+
+
+                startCpuAction();
+
+            },
+            500
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // PLAYER
+    //
+    // 強制アタック終了後は
+    // そのまま通常行動へ戻る
+    //==================================
+
+    if(
+        game.currentPlayer === PLAYER
+    ){
+
+        console.log(
+            "PLAYER強制アタック完了 → 通常行動へ"
+        );
+
+
+        updateGameState();
+
+        updateButtons();
+
+
+        return;
+
+    }
+
+
+    return;
+
+}
+
+
+    //----------------------------------
+    // 次のサモン
+    //----------------------------------
+
+    const summon =
+        forcedAttackQueue.shift();
+
+
+    //----------------------------------
+    // サモン確認
+    //----------------------------------
+
+    if(!summon){
+
+        startNextForcedAttack();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 現在も場にいるか
+    //----------------------------------
+
+    const onField =
+        playerField.includes(
+            summon
+        ) ||
+        enemyField.includes(
+            summon
+        );
+
+
+    if(
+        summon.destroyed ||
+        !onField
+    ){
+
+        console.log(
+            "強制アタック対象が場にいないためスキップ",
+            summon.card?.name
+        );
+
+
+        startNextForcedAttack();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 現在も能力を持っているか
+    //----------------------------------
+
+    if(
+        !hasSummonAbility(
+            summon,
+            "forceAttackWhenReady"
+        )
+    ){
+
+        console.log(
+            "強制アタック能力を失っているためスキップ",
+            summon.card.name
+        );
+
+
+        startNextForcedAttack();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 現在も攻撃可能状態か
+    //----------------------------------
+
+    if(
+        !summon.attackReady ||
+        summon.isRest
+    ){
+
+        console.log(
+            "現在アタックできないためスキップ",
+            summon.card.name
+        );
+
+
+        startNextForcedAttack();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // オーガ等による攻撃禁止
+    //----------------------------------
+
+    if(
+        typeof isOgreBattleLocked ===
+            "function" &&
+        isOgreBattleLocked(
+            summon
+        )
+    ){
+
+        console.log(
+            "能力によりアタックできないためスキップ",
+            summon.card.name
+        );
+
+
+        startNextForcedAttack();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 強制アタック開始
+    //----------------------------------
+
+    forcedAttackMode =
+        true;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "強制アタック開始",
+        summon.card.name,
+        "owner=",
+        summon.owner
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //==================================
+    // PLAYER
+    //==================================
+
+    if(
+        summon.owner === PLAYER
+    ){
+
+        //----------------------------------
+        // PLAYERは攻撃対象を
+        // 手動で選択する
+        //----------------------------------
+
+        startAttack(
+            summon
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // CPU
+    //==================================
+
+    if(
+        summon.owner === ENEMY
+    ){
+
+        //----------------------------------
+        // 攻撃サモン設定
+        //----------------------------------
+
+        attackingSummon =
+            summon;
+
+
+        //----------------------------------
+        // CPUの攻撃対象決定
+        //----------------------------------
+
+        const target =
+            selectCpuAttackTarget(
+                summon
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(!target){
+
+            console.log(
+                "CPUワーウルフ：",
+                "攻撃対象なし"
+            );
+
+
+            forcedAttackMode =
+                false;
+
+
+            attackingSummon =
+                null;
+
+
+            startNextForcedAttack();
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // ログ
+        //----------------------------------
+
+        console.log(
+            "CPUワーウルフ強制アタック",
+            summon.card.name,
+            "→",
+            target instanceof Summon
+                ? target.card.name
+                : target
+        );
+
+
+        //----------------------------------
+        // 少し間を置いてアタック
+        //----------------------------------
+
+        setTimeout(
+            () => {
+
+                //----------------------------------
+                // ゲーム終了確認
+                //----------------------------------
+
+                if(
+                    battleGameEnding ||
+                    battleGameConceded
+                ){
+
+                    forcedAttackMode =
+                        false;
+
+                    attackingSummon =
+                        null;
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // サモンがまだ場にいるか
+                //----------------------------------
+
+                if(
+                    summon.destroyed ||
+                    !enemyField.includes(
+                        summon
+                    )
+                ){
+
+                    forcedAttackMode =
+                        false;
+
+                    attackingSummon =
+                        null;
+
+
+                    startNextForcedAttack();
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 現在も能力を持っているか
+                //----------------------------------
+
+                if(
+                    !hasSummonAbility(
+                        summon,
+                        "forceAttackWhenReady"
+                    )
+                ){
+
+                    console.log(
+                        "CPU強制アタック：",
+                        "能力を失ったため中止",
+                        summon.card.name
+                    );
+
+
+                    forcedAttackMode =
+                        false;
+
+                    attackingSummon =
+                        null;
+
+
+                    startNextForcedAttack();
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 現在も攻撃可能か
+                //----------------------------------
+
+                if(
+                    !summon.attackReady ||
+                    summon.isRest
+                ){
+
+                    console.log(
+                        "CPU強制アタック：",
+                        "アタックできないため中止",
+                        summon.card.name
+                    );
+
+
+                    forcedAttackMode =
+                        false;
+
+                    attackingSummon =
+                        null;
+
+
+                    startNextForcedAttack();
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 強制アタック実行
+                //----------------------------------
+
+                executeAttack(
+                    summon,
+                    target
+                );
+
+            },
+            500
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 所有者不明
+    //----------------------------------
+
+    console.warn(
+        "強制アタック：所有者不明",
+        summon.card?.name
+    );
+
+
+    forcedAttackMode =
+        false;
+
+    attackingSummon =
+        null;
+
+
+    startNextForcedAttack();
 
 }
 
@@ -694,23 +1325,68 @@ function executeAttack(
     }
 
 
-    //----------------------------------
-    // 攻撃可能確認
-    //----------------------------------
+//----------------------------------
+// 攻撃可能確認
+//----------------------------------
 
-    if(!canAttack(target)){
+if(!canAttack(target)){
+
+    console.log(
+        "攻撃対象外",
+        target?.card?.name ??
+        target
+    );
+
+
+    //==================================
+    // ワーウルフ強制アタック中
+    //==================================
+
+    if(
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode
+    ){
 
         console.log(
-            "攻撃不可"
+            "ワーウルフ：",
+            "攻撃できない対象のため",
+            "強制アタックを継続"
         );
 
 
-        finishAttack();
+        //----------------------------------
+        // 攻撃状態は終了させない
+        //----------------------------------
+
+        showActionGuide(
+            `${attacker.card.name}の強制アタック！<br>アタック対象を選んでください`
+        );
+
+
+        highlightAttackTargets();
+
+
+        updateGameState();
+
+        updateButtons();
 
 
         return false;
 
     }
+
+
+    //==================================
+    // 通常アタック
+    //==================================
+
+    finishAttack();
+
+
+    return false;
+
+}
 
 
     //----------------------------------
@@ -1056,6 +1732,16 @@ function executeAttack(
 function finishAttack(){
 
     //----------------------------------
+    // 今回が強制アタックだったか保存
+    //----------------------------------
+
+    const wasForcedAttack =
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode;
+
+
+    //----------------------------------
     // 攻撃対象発光解除
     //----------------------------------
 
@@ -1077,7 +1763,9 @@ function finishAttack(){
 
         console.log(
             "攻撃終了",
-            attackingSummon.card.name
+            attackingSummon.card.name,
+            "forced=",
+            wasForcedAttack
         );
 
     }
@@ -1106,10 +1794,6 @@ function finishAttack(){
     // resistCostConfirm
     //
     // は finishResist() 側で終了させる。
-    //
-    // レジスト解決前にここで消すと、
-    // ストーンガード等で軽減した後の
-    // 残りダメージが適用されなくなる。
     //==================================
 
 
@@ -1141,10 +1825,76 @@ function finishAttack(){
 
 
     //----------------------------------
+    // 強制アタック終了
+    //----------------------------------
+
+    if(wasForcedAttack){
+
+        forcedAttackMode =
+            false;
+
+        console.log(
+            "ワーウルフ：強制アタック終了"
+        );
+
+    }
+
+
+    //----------------------------------
     // ゲーム状態更新
     //----------------------------------
 
     updateGameState();
+
+
+    //==================================
+    // 次の強制アタック
+    //==================================
+
+    if(wasForcedAttack){
+
+        //----------------------------------
+        // クール時誘発能力の解決中なら
+        // ここでは開始しない
+        //----------------------------------
+
+        if(
+            typeof coolTriggerResolving !==
+                "undefined" &&
+            coolTriggerResolving
+        ){
+
+            console.log(
+                "ワーウルフ：",
+                "クール時誘発能力の解決待ち"
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 次の強制アタックへ
+        //----------------------------------
+
+        setTimeout(
+            () => {
+
+                if(
+                    typeof startNextForcedAttack ===
+                        "function"
+                ){
+
+                    startNextForcedAttack();
+
+                }
+
+            },
+            100
+        );
+
+    }
 
 }
 
@@ -1290,11 +2040,16 @@ function damagePlayer(
         damage;
 
 
-    //----------------------------------
-    // ガーゴイルによるダメージ軽減
+    //==================================
+    // プレイヤーダメージ軽減能力
     //
-    // 複数能力対応
-    //----------------------------------
+    // reducePlayerDamage を持つ
+    // すべてのサモンの軽減値を合計する
+    //
+    // ガーゴイル複数体
+    // ドッペルゲンガーによるコピー
+    // の両方に対応
+    //==================================
 
     const field =
         player === PLAYER
@@ -1302,51 +2057,139 @@ function damagePlayer(
             : enemyField;
 
 
-    const gargoyle =
-        field.find(
-            summon =>
-                !summon.destroyed &&
-                hasSummonAbility(
+    //----------------------------------
+    // 軽減値合計
+    //----------------------------------
+
+    let totalReduction = 0;
+
+
+    //----------------------------------
+    // 能力保持サモン
+    //----------------------------------
+
+    const reducingSummons = [];
+
+
+    field.forEach(
+        summon => {
+
+            //----------------------------------
+            // 無効なサモン
+            //----------------------------------
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // ダメージ軽減能力取得
+            //----------------------------------
+
+            const reduceAbility =
+                getSummonAbility(
                     summon,
                     "reducePlayerDamage"
-                )
-        );
+                );
 
 
-    if(gargoyle){
+            if(!reduceAbility){
 
-        //----------------------------------
-        // ダメージ軽減能力取得
-        //----------------------------------
+                return;
 
-        const reduceAbility =
-            getSummonAbility(
-                gargoyle,
-                "reducePlayerDamage"
-            );
+            }
 
 
-        const reduction =
-            reduceAbility?.value ?? 1;
+            //----------------------------------
+            // 軽減値
+            //----------------------------------
 
+            const reduction =
+                reduceAbility.value ?? 1;
+
+
+            //----------------------------------
+            // 合計
+            //----------------------------------
+
+            totalReduction +=
+                reduction;
+
+
+            reducingSummons.push({
+
+                summon:
+                    summon,
+
+                reduction:
+                    reduction
+
+            });
+
+        }
+    );
+
+
+    //----------------------------------
+    // ダメージ軽減
+    //----------------------------------
+
+    if(totalReduction > 0){
 
         damage =
             Math.max(
                 0,
-                damage - reduction
+                damage - totalReduction
             );
 
 
         console.log(
-            "ガーゴイル：ダメージ軽減",
-            "能力保持サモン=",
-            gargoyle.card.name,
+            "================================"
+        );
+
+        console.log(
+            "プレイヤーダメージ軽減"
+        );
+
+        console.log(
             "元ダメージ=",
-            originalDamage,
-            "軽減=",
-            reduction,
+            originalDamage
+        );
+
+
+        reducingSummons.forEach(
+            data => {
+
+                console.log(
+                    "能力保持サモン=",
+                    data.summon.card.name,
+                    "軽減=",
+                    data.reduction
+                );
+
+            }
+        );
+
+
+        console.log(
+            "合計軽減=",
+            totalReduction
+        );
+
+        console.log(
             "軽減後=",
             damage
+        );
+
+        console.log(
+            "================================"
         );
 
     }
@@ -1441,7 +2284,7 @@ function damagePlayer(
 
         console.log(
             "レジスト待機",
-            "ガーゴイル軽減後ダメージ=",
+            "軽減後ダメージ=",
             event.damage
         );
 
@@ -2223,7 +3066,8 @@ function executeBlock(blocker){
 
 
     //----------------------------------
-    // バジリスク：バトル相手を記録
+    // バジリスク：
+    // バトル相手を記録
     //----------------------------------
 
     setBasiliskBattleTarget(
@@ -2238,15 +3082,15 @@ function executeBlock(blocker){
 
     dealDamage(
         attackingSummon,
-        getPower(blocker)
+        getPower(
+            blocker
+        )
     );
 
 
     //----------------------------------
     // ゴーレム
     // ブロック時はダメージを受けない
-    //
-    // 複数能力対応
     //----------------------------------
 
     if(
@@ -2262,7 +3106,6 @@ function executeBlock(blocker){
         );
 
     }
-
     else{
 
         dealDamage(
@@ -2273,6 +3116,16 @@ function executeBlock(blocker){
         );
 
     }
+
+
+    //==================================
+    // 今回が強制アタックか保存
+    //==================================
+
+    const wasForcedAttack =
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode;
 
 
     //----------------------------------
@@ -2291,8 +3144,29 @@ function executeBlock(blocker){
     hideActionGuide();
 
 
+    //==================================
+    // 強制アタックだった場合
+    //
+    // finishAttack() →
+    // startNextForcedAttack()
+    //
+    // に任せる
+    //==================================
+
+    if(wasForcedAttack){
+
+        console.log(
+            "CPU強制アタック：",
+            "ブロック後の通常攻撃継続処理をスキップ"
+        );
+
+        return;
+
+    }
+
+
     //----------------------------------
-    // CPUターンなら次の攻撃へ
+    // 通常CPU攻撃なら次へ
     //----------------------------------
 
     if(

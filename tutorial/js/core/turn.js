@@ -460,7 +460,23 @@ function readySummons(owner){
         enemyField;
 
 
+    //----------------------------------
+    // 今回アタック可能になった
+    // ワーウルフを保存
+    //----------------------------------
+
+    const forcedAttackSummons = [];
+
+
     for(const summon of field){
+
+        //----------------------------------
+        // 以前の攻撃可能状態を保存
+        //----------------------------------
+
+        const wasAttackReady =
+            summon.attackReady;
+
 
         //----------------------------------
         // 一時パワーをリセット
@@ -517,12 +533,80 @@ function readySummons(owner){
         //----------------------------------
 
         if(
-            ability?.type !==
-            "copySummonAbility"
+            !hasSummonAbility(
+                summon,
+                "copySummonAbility"
+            )
         ){
 
             applySummonAbility(
                 summon
+            );
+
+        }
+
+
+        //==================================
+        // ワーウルフ
+        //
+        // 今回
+        // attackReady false → true
+        // になった場合に強制アタック
+        //==================================
+
+        if(
+            !wasAttackReady &&
+            summon.attackReady &&
+            hasSummonAbility(
+                summon,
+                "forceAttackWhenReady"
+            )
+        ){
+
+            forcedAttackSummons.push(
+                summon
+            );
+
+
+            console.log(
+                "ワーウルフ：アタック可能になった",
+                summon.card.name,
+                "owner=",
+                summon.owner
+            );
+
+        }
+
+    }
+
+
+    //==================================
+    // 強制アタック予約
+    //
+    // readySummonsの全処理が
+    // 完了してから開始する
+    //==================================
+
+    if(
+        forcedAttackSummons.length > 0
+    ){
+
+        console.log(
+            "強制アタック対象：",
+            forcedAttackSummons.map(
+                summon =>
+                    summon.card.name
+            )
+        );
+
+
+        if(
+            typeof queueForcedAttacks ===
+                "function"
+        ){
+
+            queueForcedAttacks(
+                forcedAttackSummons
             );
 
         }
