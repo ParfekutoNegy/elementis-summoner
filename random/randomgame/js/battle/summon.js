@@ -177,6 +177,10 @@ function dealDamage(
     sourceCard = null
 ){
 
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
     if(!target){
 
         return;
@@ -251,7 +255,7 @@ function dealDamage(
 
 
     //----------------------------------
-    // レジスト後ダメージ反映
+    // レジスト後ダメージ
     //----------------------------------
 
     damage =
@@ -259,6 +263,177 @@ function dealDamage(
             0,
             event.damage
         );
+
+
+    //==================================
+    // ドライアド
+    //
+    // 自分のサモンが受ける
+    // ダメージは－1される
+    //
+    // ・複数体は加算
+    // ・ドッペルゲンガー対応
+    // ・自身も軽減対象
+    //==================================
+
+    const field =
+        target.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    //----------------------------------
+    // 軽減値合計
+    //----------------------------------
+
+    let totalReduction = 0;
+
+
+    //----------------------------------
+    // 軽減能力を持つサモン
+    //----------------------------------
+
+    const reducingSummons = [];
+
+
+    for(const summon of field){
+
+        //----------------------------------
+        // 無効なサモン
+        //----------------------------------
+
+        if(
+            !summon ||
+            !summon.card ||
+            summon.destroyed
+        ){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // ドライアド能力取得
+        //----------------------------------
+
+        const reduceAbility =
+            getSummonAbility(
+                summon,
+                "reduceOwnSummonDamage"
+            );
+
+
+        if(!reduceAbility){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // 軽減値
+        //----------------------------------
+
+        const reduction =
+            Number(
+                reduceAbility.value ?? 1
+            ) || 0;
+
+
+        if(reduction <= 0){
+
+            continue;
+
+        }
+
+
+        //----------------------------------
+        // 軽減値加算
+        //----------------------------------
+
+        totalReduction +=
+            reduction;
+
+
+        reducingSummons.push({
+
+            summon:
+                summon,
+
+            reduction:
+                reduction
+
+        });
+
+    }
+
+
+    //----------------------------------
+    // ドライアドによる軽減
+    //----------------------------------
+
+    if(totalReduction > 0){
+
+        const beforeReduction =
+            damage;
+
+
+        damage =
+            Math.max(
+                0,
+                damage - totalReduction
+            );
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "サモンダメージ軽減"
+        );
+
+        console.log(
+            "対象=",
+            target.card.name
+        );
+
+        console.log(
+            "軽減前=",
+            beforeReduction
+        );
+
+
+        reducingSummons.forEach(
+            data => {
+
+                console.log(
+                    "能力保持サモン=",
+                    data.summon.card.name,
+                    "軽減=",
+                    data.reduction
+                );
+
+            }
+        );
+
+
+        console.log(
+            "合計軽減=",
+            totalReduction
+        );
+
+        console.log(
+            "軽減後=",
+            damage
+        );
+
+        console.log(
+            "================================"
+        );
+
+    }
 
 
     //----------------------------------
@@ -271,6 +446,9 @@ function dealDamage(
 
     //----------------------------------
     // ダメージ表示
+    //
+    // 0まで軽減した場合も
+    // 「0」を表示する
     //----------------------------------
 
     showDamageNumber(
@@ -281,7 +459,9 @@ function dealDamage(
 
     //==================================================
     // カーススモーク
-    // 1以上のダメージを受けた場合
+    //
+    // 最終的に1以上の
+    // ダメージを受けた場合のみ発動
     //==================================================
 
     if(
@@ -801,6 +981,17 @@ function startDoppelgangerTargetSelect(
         doppelgangerSource =
             source;
 
+//----------------------------------
+// 通常の行動可能カード発光を消す
+//----------------------------------
+
+updateUsableCardHighlight();
+
+//----------------------------------
+// 場の行動可能サモン発光を消す
+//----------------------------------
+
+updateAttackHighlight();
 
         //----------------------------------
         // 対象発光
@@ -1125,6 +1316,32 @@ function selectDoppelgangerTarget(
     }
 
 
+    //==================================
+    // ジャックフロスト
+    // カードプレイ枚数制限
+    //==================================
+
+    const cardPlayLimitAbility =
+        getSummonAbility(
+            source,
+            "limitEnemyCardPlay"
+        );
+
+
+    if(cardPlayLimitAbility){
+
+        console.log(
+            "ドッペルゲンガー：",
+            "カードプレイ制限能力コピー",
+            "owner=",
+            source.owner,
+            "limit=",
+            cardPlayLimitAbility.value
+        );
+
+    }
+
+
     //----------------------------------
     // 発光解除
     //----------------------------------
@@ -1210,6 +1427,26 @@ function selectDoppelgangerTarget(
     }
 
 
+    //==================================
+    // カードプレイ制限更新
+    //
+    // ジャックフロストをコピーした場合、
+    // コピー成立直後から制限を有効にする
+    //
+    // ジャックフロスト以外をコピーした場合も
+    // 再計算するだけなので問題なし
+    //==================================
+
+    if(
+        typeof refreshCardPlayLimitState ===
+            "function"
+    ){
+
+        refreshCardPlayLimitState();
+
+    }
+
+
     //----------------------------------
     // ゲーム状態更新
     //----------------------------------
@@ -1217,6 +1454,13 @@ function selectDoppelgangerTarget(
     updateGameState();
 
     updateButtons();
+
+
+    //----------------------------------
+    // 通常の行動可能カード発光を復帰
+    //----------------------------------
+
+    updateUsableCardHighlight();
 
 
     return true;
@@ -1238,7 +1482,6 @@ function applySummonAbility(summon){
 
     //==================================
     // ドッペルゲンガー
-    // 場に出たとき能力コピー
     //==================================
 
     const copyAbility =
@@ -1260,6 +1503,7 @@ function applySummonAbility(summon){
 
 
     //==================================
+    // ドラゴン
     // ターン中パワーアップ
     //==================================
 
@@ -1286,10 +1530,6 @@ function applySummonAbility(summon){
         );
 
 
-        //----------------------------------
-        // 現在パワー表示更新
-        //----------------------------------
-
         if(summon.view){
 
             summon.view.updateCurrentPower(
@@ -1302,7 +1542,19 @@ function applySummonAbility(summon){
 
 
     //==================================
-    // 召喚ターン攻撃可能
+    // ユニコーン等
+    //
+    // 召喚ターンからアタック可能
+    //
+    // attackReady は変更しない。
+    //
+    // summonTurnAttack を持っていること自体を
+    // startAttack / canAttack 側で確認して
+    // 召喚ターンのアタックを許可する。
+    //
+    // これによりメドゥーサがいる場合は
+    // summonTurnAttack より優先して
+    // アタックを禁止できる。
     //==================================
 
     if(
@@ -1312,14 +1564,57 @@ function applySummonAbility(summon){
         )
     ){
 
-        summon.attackReady =
-            true;
+        console.log(
+            "召喚ターン攻撃能力あり",
+            summon.card.name,
+            "attackReady=",
+            summon.attackReady
+        );
 
+    }
+
+
+    //==================================
+    // ジャックフロスト
+    //
+    // 相手は1ターンに指定枚数までしか
+    // カードをプレイできない
+    //
+    // 場に出た瞬間から制限を有効化
+    //==================================
+
+    const cardPlayLimitAbility =
+        getSummonAbility(
+            summon,
+            "limitEnemyCardPlay"
+        );
+
+
+    if(cardPlayLimitAbility){
 
         console.log(
-            "召喚ターン攻撃可能",
-            summon.card.name
+            "カードプレイ制限能力適用",
+            summon.card.name,
+            "owner=",
+            summon.owner,
+            "limit=",
+            cardPlayLimitAbility.value
         );
+
+
+        //----------------------------------
+        // 現在のプレイ枚数を維持したまま
+        // 制限だけを再評価する
+        //----------------------------------
+
+        if(
+            typeof refreshCardPlayLimitState ===
+                "function"
+        ){
+
+            refreshCardPlayLimitState();
+
+        }
 
     }
 
@@ -2168,6 +2463,37 @@ function getUsableCatSithMagias(){
     console.log(
         "★ ケット・シー使用可能マギア判定開始"
     );
+
+
+    //==================================
+    // ケルベロス
+    // クールゾーン操作禁止
+    //==================================
+
+    if(
+        isCoolZoneLocked(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "★ ケット・シー使用不可"
+        );
+
+        console.log(
+            "★ 相手の能力により",
+            "クールゾーンのカードを",
+            "プレイ・対象選択できません"
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        return [];
+
+    }
 
 
     //----------------------------------
@@ -4646,5 +4972,585 @@ function resolveNextCoolTrigger(){
 
 
     resolveNextCoolTrigger();
+
+}
+
+/* =========================================================
+クールゾーン操作禁止判定
+========================================================= */
+
+function isCoolZoneLocked(owner){
+
+    //----------------------------------
+    // owner の相手フィールド
+    //----------------------------------
+
+    const opponentField =
+        owner === PLAYER
+            ? enemyField
+            : playerField;
+
+
+    if(
+        !Array.isArray(
+            opponentField
+        )
+    ){
+        return false;
+    }
+
+
+    //----------------------------------
+    // ケルベロス系能力確認
+    //----------------------------------
+
+    const lockSummon =
+        opponentField.find(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+                    return false;
+                }
+
+
+                return hasSummonAbility(
+                    summon,
+                    "lockEnemyCoolZone"
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 制限なし
+    //----------------------------------
+
+    if(!lockSummon){
+
+        return false;
+
+    }
+
+
+    console.log(
+        "クールゾーン操作禁止",
+        {
+            owner:
+                owner,
+
+            source:
+                lockSummon.card.name
+        }
+    );
+
+
+    return true;
+
+}
+
+function startSummonFromCool(
+    card
+){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ クールゾーンからサモン開始",
+        card?.name
+    );
+
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !card ||
+        card.type !== "サモン"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールゾーンに存在するか
+    //----------------------------------
+
+    if(
+        !board ||
+        !Array.isArray(
+            board.playerCoolCards
+        ) ||
+        !board.playerCoolCards.includes(
+            card
+        )
+    ){
+
+        console.log(
+            "クールゾーンにカードがありません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールからプレイする能力
+    //----------------------------------
+
+    const ability =
+        Array.isArray(
+            card.ability
+        )
+        ?
+        card.ability.find(
+            ability =>
+                ability?.type ===
+                "playFromCoolWithCostDown"
+        )
+        :
+        (
+            card.ability?.type ===
+            "playFromCoolWithCostDown"
+                ?
+                card.ability
+                :
+                null
+        );
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // PLAYERターンのみ
+    //----------------------------------
+
+    if(
+        game.currentPlayer !== PLAYER
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ケルベロス
+    //----------------------------------
+
+    if(
+        isCoolZoneLocked(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "クールゾーンからプレイ不可：",
+            "ケルベロス等による制限"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ジャックフロスト等
+    //----------------------------------
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "クールゾーンからプレイ不可：",
+            "カードプレイ枚数上限"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 1ターン1サモン
+    //----------------------------------
+
+    if(
+        summonUsedThisTurn
+    ){
+
+        alert(
+            "このターンはサモンを使用済みです"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 他のカード処理中
+    //----------------------------------
+
+    if(
+        summonCard
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 軽減後コスト
+    //----------------------------------
+
+    const baseCost =
+        Number(
+            getCurrentCardCost(
+                card,
+                PLAYER
+            )
+        ) || 0;
+
+
+    const reduction =
+        Number(
+            ability.value
+        ) || 0;
+
+
+    const currentCost =
+        Math.max(
+            0,
+            baseCost - reduction
+        );
+
+
+    //----------------------------------
+    // コスト支払い可能確認
+    //----------------------------------
+
+    if(
+        board.handCards.length <
+        currentCost
+    ){
+
+        alert(
+            "コストが足りません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールプレイモード
+    //----------------------------------
+
+    summonFromCoolMode = true;
+
+    summonFromCoolCost =
+        currentCost;
+
+
+    //----------------------------------
+    // 使用カード
+    //----------------------------------
+
+    summonCard =
+        card;
+
+
+    //----------------------------------
+    // コストモード
+    //----------------------------------
+
+    costMode =
+        "summon";
+
+
+    //----------------------------------
+    // 手札の通常発光解除
+    //----------------------------------
+
+    board.handCards.forEach(
+        handCard => {
+
+            handCard.setHighlight(
+                false
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // コスト対象
+    //----------------------------------
+
+    costTargetCard =
+        card;
+
+
+    //----------------------------------
+    // コスト選択リセット
+    //----------------------------------
+
+    selectedCostCards = [];
+
+    costConfirm = false;
+
+
+    //----------------------------------
+    // 0コスト
+    //----------------------------------
+
+    if(
+        currentCost === 0
+    ){
+
+        costConfirm = true;
+
+    }
+
+
+    //----------------------------------
+    // クールモーダルを閉じる
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "cool-modal"
+        );
+
+
+    if(modal){
+
+        modal.style.display =
+            "none";
+
+    }
+
+
+    //----------------------------------
+    // 案内
+    //----------------------------------
+
+    showActionGuide(
+        "クールゾーンからプレイ<br>" +
+        "コストゾーンに置くカードを<br>" +
+        currentCost +
+        "枚選んでください"
+    );
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    updateButtons();
+
+
+    console.log(
+        "スパルトイ：クールプレイ",
+        {
+            card:
+                card.name,
+
+            baseCost:
+                baseCost,
+
+            reduction:
+                reduction,
+
+            currentCost:
+                currentCost
+        }
+    );
+
+}
+
+//==================================================
+// サモンの属性プレイ制限
+//
+// ケートス等
+//
+// 自分は指定された属性以外の
+// サモンをプレイできない
+//==================================================
+
+function canPlaySummonByElementRestriction(
+    owner,
+    card
+){
+
+    //----------------------------------
+    // サモン以外は制限しない
+    //----------------------------------
+
+    if(
+        !card ||
+        card.type !== "サモン"
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 自分の場を取得
+    //----------------------------------
+
+    const field =
+        owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    if(!Array.isArray(field)){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 属性制限能力を持つサモンを探す
+    //----------------------------------
+
+    const restrictionSummon =
+        field.find(
+            summon => {
+
+                if(
+                    !summon ||
+                    !summon.card ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                return hasSummonAbility(
+                    summon,
+                    "onlyPlayElementSummon"
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 制限なし
+    //----------------------------------
+
+    if(!restrictionSummon){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 能力取得
+    //
+    // ドッペルゲンガーにも対応
+    //----------------------------------
+
+    const ability =
+        getSummonAbility(
+            restrictionSummon,
+            "onlyPlayElementSummon"
+        );
+
+
+    if(!ability){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // プレイ可能な属性
+    //----------------------------------
+
+    const allowedElement =
+        ability.element;
+
+
+    //----------------------------------
+    // カードの属性
+    //
+    // card.element はDOM要素なので
+    // elementType を使用する
+    //----------------------------------
+
+    const cardElement =
+        card.elementType;
+
+
+    //----------------------------------
+    // 指定属性ならプレイ可能
+    //----------------------------------
+
+    if(
+        cardElement ===
+        allowedElement
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 指定属性以外は禁止
+    //----------------------------------
+
+    console.log(
+        "サモン属性プレイ制限",
+        {
+            owner:
+                owner,
+
+            card:
+                card.name,
+
+            cardElement:
+                cardElement,
+
+            allowedElement:
+                allowedElement,
+
+            source:
+                restrictionSummon.card.name
+        }
+    );
+
+
+    return false;
 
 }

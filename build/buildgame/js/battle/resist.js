@@ -305,6 +305,20 @@ function payResistCost(){
         "payResistCost"
     );
 
+
+    //==================================
+    // カードプレイ成立
+    //
+    // ジャックフロスト等の
+    // プレイ枚数管理
+    //==================================
+
+    registerCardPlay(
+        PLAYER,
+        resistUsingCard
+    );
+
+
     //----------------------------------
     // コスト支払い
     //----------------------------------
@@ -317,13 +331,13 @@ function payResistCost(){
 
     });
 
+
     //----------------------------------
-// 表示状態解除
-//----------------------------------
+    // 表示状態解除
+    //----------------------------------
 
-resistUsingCard.setSelected(false);
-resistUsingCard.setTarget(false);
-
+    resistUsingCard.setSelected(false);
+    resistUsingCard.setTarget(false);
 
 
     //----------------------------------
@@ -334,73 +348,80 @@ resistUsingCard.setTarget(false);
         resistUsingCard
     );
 
+
     //----------------------------------
     // クールへ送る
     // サンドプロテクトは手札へ戻るため除外
     //----------------------------------
 
     if(
-        resistUsingCard.name !== "サンドプロテクト"
+        resistUsingCard.name !==
+        "サンドプロテクト"
     ){
 
-    board.addCoolCard(
-        resistUsingCard,
-        PLAYER
-    );
-}
-
-//----------------------------------
-// このイベントでは再使用不可
-//----------------------------------
-
-resistUsingCard.usedThisEvent = true;
-
-
-//----------------------------------
-// 効果発動
-//----------------------------------
-
-activateResist(
-    resistUsingCard
-);
-
-//----------------------------------
-// 状態リセット
-//----------------------------------
-
-selectedResistCostCards = [];
-
-
-//----------------------------------
-// レジスト表示解除
-//----------------------------------
-
-board.handCards.forEach(card=>{
-
-    if(card.type === "レジスト"){
-
-        card.setHighlight(false);
+        board.addCoolCard(
+            resistUsingCard,
+            PLAYER
+        );
 
     }
 
-});
 
-if(resistUsingCard){
+    //----------------------------------
+    // このイベントでは再使用不可
+    //----------------------------------
 
-    resistUsingCard.setHighlight(false);
-    resistUsingCard.setSelected(false);
-    resistUsingCard.setCostSelected(false);
-
-}
+    resistUsingCard.usedThisEvent = true;
 
 
-resistUsingCard = null;
+    //----------------------------------
+    // 効果発動
+    //----------------------------------
 
-resistCostConfirm = false;
+    activateResist(
+        resistUsingCard
+    );
 
-resistMode = false;
 
-selectableResistCards = [];
+    //----------------------------------
+    // 状態リセット
+    //----------------------------------
+
+    selectedResistCostCards = [];
+
+
+    //----------------------------------
+    // レジスト表示解除
+    //----------------------------------
+
+    board.handCards.forEach(card=>{
+
+        if(card.type === "レジスト"){
+
+            card.setHighlight(false);
+
+        }
+
+    });
+
+
+    if(resistUsingCard){
+
+        resistUsingCard.setHighlight(false);
+        resistUsingCard.setSelected(false);
+        resistUsingCard.setCostSelected(false);
+
+    }
+
+
+    resistUsingCard = null;
+
+    resistCostConfirm = false;
+
+    resistMode = false;
+
+    selectableResistCards = [];
+
 
     //----------------------------------
     // ボタンを通常状態へ戻す
@@ -409,10 +430,13 @@ selectableResistCards = [];
     document.getElementById(
         "confirm-button"
     ).onclick =
-    payCost;
+        payCost;
+
 
     finishResist();
+
     updateButtons();
+
 }
 
 
@@ -609,13 +633,8 @@ function passResist(){
 
 
         //----------------------------------
-        // ★重要
-        //
-        // ここでは damagePlayer() を
-        // 呼ばない
-        //
-        // ガーゴイル軽減はすでに
-        // 終了しているため
+        // ガーゴイル軽減は
+        // すでに終了している
         //----------------------------------
 
         const finalDamage =
@@ -628,6 +647,80 @@ function passResist(){
         );
 
 
+        //==================================
+        // ネレイド
+        //
+        // レジストを使用しなかった場合でも
+        // 最終ダメージに対して
+        // ネレイド能力を使用できる
+        //==================================
+
+        if(
+            finalDamage > 0 &&
+            checkNereidDamagePrevent(
+                event.player,
+                finalDamage,
+                event
+            )
+        ){
+
+            console.log(
+                "レジストなし：",
+                "ネレイド能力選択待機"
+            );
+
+
+            //----------------------------------
+            // 使用済みフラグ解除
+            //----------------------------------
+
+            for(const card of board.handCards){
+
+                card.usedThisEvent =
+                    false;
+
+            }
+
+
+            //----------------------------------
+            // 手札状態解除
+            //----------------------------------
+
+            clearHandSelection();
+
+
+            for(const card of board.handCards){
+
+                card.setSelected(false);
+
+                card.setCostSelected(false);
+
+                card.setHighlight(false);
+
+            }
+
+
+            //----------------------------------
+            // 表示更新
+            //----------------------------------
+
+            updateGameState();
+
+            updateButtons();
+
+
+//----------------------------------
+// updateGameState() 後に
+// ネレイド発光を再設定
+//----------------------------------
+
+updateNereidDamagePreventHighlight();
+
+            return;
+
+        }
+
+
         //----------------------------------
         // バトルログ
         //----------------------------------
@@ -636,10 +729,10 @@ function passResist(){
 
             const damageTarget =
                 event.player === PLAYER
-                ?
-                "PLAYER"
-                :
-                "CPU";
+                    ?
+                    "PLAYER"
+                    :
+                    "CPU";
 
 
             addBattleLog(
@@ -650,15 +743,12 @@ function passResist(){
 
 
         //----------------------------------
-        // ★確定ダメージを直接適用
+        // 確定ダメージを直接適用
         //----------------------------------
 
         applyPlayerDamage(
-
             event.player,
-
             finalDamage
-
         );
 
     }
@@ -983,6 +1073,7 @@ function sandProtect(card){
     );
 }
 
+
 //======================================
 // レジスト終了
 //======================================
@@ -1114,6 +1205,52 @@ function finishResist(){
 
             }
 
+
+            //==================================
+            // CPUネレイド能力判定
+            //
+            // ここまで来たということは
+            // CPUが今回使用するレジストがない
+            //
+            // 使用条件
+            //
+            // ・受けるダメージが3以上
+            // または
+            // ・そのダメージでライフが0以下
+            //==================================
+
+            if(
+                currentResistEvent.type ===
+                    GAME_EVENT.BEFORE_PLAYER_DAMAGE &&
+                currentResistEvent.damage > 0
+            ){
+
+                const nereidUsed =
+                    checkNereidDamagePrevent(
+                        ENEMY,
+                        currentResistEvent.damage,
+                        currentResistEvent
+                    );
+
+
+                //----------------------------------
+                // ネレイド使用
+                //----------------------------------
+
+                if(nereidUsed){
+
+                    console.log(
+                        "CPUネレイド：ダメージ0"
+                    );
+
+
+                    currentResistEvent.damage =
+                        0;
+
+                }
+
+            }
+
         }
 
 
@@ -1145,7 +1282,8 @@ function finishResist(){
                 console.log(
                     "追加プレイヤーレジスト選択",
                     resistCards.map(
-                        card => card.name
+                        card =>
+                            card.name
                     )
                 );
 
@@ -1166,103 +1304,69 @@ function finishResist(){
 
 
     //==================================
-    // ここから最終ダメージ解決
-    //==================================
-
-    const finalDamage =
-        Math.max(
-            0,
-            currentResistEvent.damage
-        );
-
-
-    console.log(
-        "レジスト処理終了",
-        "最終ダメージ=",
-        finalDamage
-    );
-
-
-    //==================================
-    // プレイヤーへのダメージ
+    // ダメージ解決
     //==================================
 
     if(
-        currentResistEvent.type ===
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+        currentResistEvent.damage > 0
     ){
 
         //----------------------------------
-        // バトルログ
+        // プレイヤーへのダメージ
         //----------------------------------
 
-        if(finalDamage > 0){
+        if(
+            currentResistEvent.type ===
+                GAME_EVENT.BEFORE_PLAYER_DAMAGE
+        ){
 
-            const damageTarget =
-                currentResistEvent.player === PLAYER
-                    ? "PLAYER"
-                    : "CPU";
+            damagePlayer(
 
+                currentResistEvent.player,
 
-            addBattleLog(
-                `${damageTarget}：${finalDamage}ダメージ`
+                currentResistEvent.damage,
+
+                true
+
             );
 
         }
 
 
         //----------------------------------
-        // 確定ダメージを直接適用
-        //
-        // damagePlayer() は呼ばない
-        // ガーゴイル等の再処理を防ぐ
+        // サモンへのダメージ
         //----------------------------------
 
-        applyPlayerDamage(
-            currentResistEvent.player,
-            finalDamage
-        );
+        if(
+            currentResistEvent.type ===
+                GAME_EVENT.BEFORE_SUMMON_DAMAGE
+        ){
 
-    }
+            const summon =
+                currentResistEvent.target;
 
-
-    //==================================
-    // サモンへのダメージ
-    //==================================
-
-    else if(
-        currentResistEvent.type ===
-        GAME_EVENT.BEFORE_SUMMON_DAMAGE
-    ){
-
-        const summon =
-            currentResistEvent.target;
-
-
-        if(summon){
-
-            //----------------------------------
-            // 最終ダメージ適用
-            //----------------------------------
 
             summon.damage +=
-                finalDamage;
+                currentResistEvent.damage;
 
-
-            //----------------------------------
-            // ダメージ表示
-            //----------------------------------
 
             showDamageNumber(
+
                 summon,
-                finalDamage
+
+                currentResistEvent.damage
+
             );
 
 
             console.log(
+
                 "サモンダメージ解決",
+
                 summon.card.name,
-                finalDamage
+
+                currentResistEvent.damage
+
             );
 
         }
@@ -1270,9 +1374,9 @@ function finishResist(){
     }
 
 
-    //==================================
+    //----------------------------------
     // 使用済みフラグ解除
-    //==================================
+    //----------------------------------
 
     for(
         const card of selectableResistCards
@@ -1286,7 +1390,7 @@ function finishResist(){
 
 
     //----------------------------------
-    // CPU手札
+    // CPUレジストの使用済み解除
     //----------------------------------
 
     for(
@@ -1298,10 +1402,6 @@ function finishResist(){
     }
 
 
-    //----------------------------------
-    // CPUクール
-    //----------------------------------
-
     for(
         const card of enemyCoolCards
     ){
@@ -1311,9 +1411,9 @@ function finishResist(){
     }
 
 
-    //==================================
+    //----------------------------------
     // レジスト表示解除
-    //==================================
+    //----------------------------------
 
     for(
         const card of selectableResistCards
@@ -1326,22 +1426,22 @@ function finishResist(){
     }
 
 
-    //==================================
-    // 状態保存
-    //==================================
+    //----------------------------------
+    // レジスト状態保存
+    //----------------------------------
 
     const wasPlayerDamage =
         currentResistEvent.type ===
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE;
+            GAME_EVENT.BEFORE_PLAYER_DAMAGE;
 
 
     const attacker =
         currentResistEvent.attacker;
 
 
-    //==================================
+    //----------------------------------
     // レジスト状態解除
-    //==================================
+    //----------------------------------
 
     currentResistEvent = null;
 
@@ -1359,9 +1459,9 @@ function finishResist(){
     updateButtons();
 
 
-    //==================================
+    //----------------------------------
     // 戦闘解決
-    //==================================
+    //----------------------------------
 
     resolveBattle();
 
@@ -1542,17 +1642,52 @@ function getCurrentEnemyCardCost(card){
 
 
             //----------------------------------
-            // 現在持っている能力を取得
+            // 属性コスト軽減
             //
             // ドッペルゲンガーの
             // コピー能力も含む
             //----------------------------------
 
-            const ability =
-                summon.ability;
+            const costDownAbility =
+                getSummonAbility(
+                    summon,
+                    "elementCostDown"
+                );
 
 
-            if(!ability){
+            if(
+                costDownAbility &&
+                costDownAbility.element ===
+                    card.elementType
+            ){
+
+                cost -=
+                    Number(
+                        costDownAbility.value
+                    ) || 0;
+
+            }
+
+        }
+    );
+
+
+    //==================================
+    // PLAYER場の能力を確認
+    //==================================
+
+    playerField.forEach(
+        summon => {
+
+            //----------------------------------
+            // サモン確認
+            //----------------------------------
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
 
                 return;
 
@@ -1560,25 +1695,53 @@ function getCurrentEnemyCardCost(card){
 
 
             //----------------------------------
-            // 属性コスト軽減
+            // セイレーン
+            // CPUのマギアコスト +1
             //----------------------------------
 
+            const magiaCostUpAbility =
+                getSummonAbility(
+                    summon,
+                    "enemyMagiaCostUp"
+                );
+
+
             if(
-                ability.type ===
-                "elementCostDown"
+                magiaCostUpAbility &&
+                card.type ===
+                    "マギア"
             ){
 
-                if(
-                    ability.element ===
-                    card.element
-                ){
+                cost +=
+                    Number(
+                        magiaCostUpAbility.value
+                    ) || 0;
 
-                    cost -=
-                        Number(
-                            ability.value
-                        ) || 0;
+            }
 
-                }
+
+            //----------------------------------
+            // ハーピー
+            // CPUのレジストコスト +1
+            //----------------------------------
+
+            const resistCostUpAbility =
+                getSummonAbility(
+                    summon,
+                    "enemyResistCostUp"
+                );
+
+
+            if(
+                resistCostUpAbility &&
+                card.type ===
+                    "レジスト"
+            ){
+
+                cost +=
+                    Number(
+                        resistCostUpAbility.value
+                    ) || 0;
 
             }
 
@@ -1600,7 +1763,6 @@ function getCurrentEnemyCardCost(card){
     return cost;
 
 }
-
 //======================================
 // CPUレジスト使用
 //======================================
@@ -1608,6 +1770,35 @@ function getCurrentEnemyCardCost(card){
 function useCpuResist(card){
 
     if(!card){
+
+        return false;
+
+    }
+
+
+    //==================================
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //==================================
+
+    if(
+        !canPlayCardByLimit(
+            ENEMY
+        )
+    ){
+
+        console.log(
+            "CPUレジスト使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                ENEMY
+            ),
+            "/",
+            getCardPlayLimit(
+                ENEMY
+            )
+        );
 
         return false;
 
@@ -1668,6 +1859,19 @@ function useCpuResist(card){
     console.log(
         "CPUレジスト使用",
         card.name
+    );
+
+
+    //==================================
+    // カードプレイ成立
+    //
+    // ジャックフロスト等の
+    // プレイ枚数管理
+    //==================================
+
+    registerCardPlay(
+        ENEMY,
+        card
     );
 
 

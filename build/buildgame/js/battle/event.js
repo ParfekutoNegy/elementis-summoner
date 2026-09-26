@@ -61,6 +61,10 @@ function emitGameEvent(event){
 // レジスト確認
 //======================================
 
+//======================================
+// レジスト確認
+//======================================
+
 function triggerResist(event){
 
     //----------------------------------
@@ -96,10 +100,9 @@ function triggerResist(event){
     }
 
 
-
-    //----------------------------------
+    //==================================
     // CPUがダメージを受ける場合
-    //----------------------------------
+    //==================================
 
     if(
         event.player === ENEMY
@@ -111,11 +114,42 @@ function triggerResist(event){
 
 
         //----------------------------------
+        // カードプレイ枚数上限確認
+        //
+        // ジャックフロスト等
+        //----------------------------------
+
+        if(
+            !canPlayCardByLimit(
+                ENEMY
+            )
+        ){
+
+            console.log(
+                "CPUレジスト発動不可：",
+                "カードプレイ枚数上限",
+                getCardPlayCount(
+                    ENEMY
+                ),
+                "/",
+                getCardPlayLimit(
+                    ENEMY
+                )
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
         // CPUレジスト候補検索
         //----------------------------------
 
         const cpuResistCards =
-        findCpuResistCards(event);
+            findCpuResistCards(
+                event
+            );
 
 
         //----------------------------------
@@ -139,38 +173,40 @@ function triggerResist(event){
         // イベント保存
         //----------------------------------
 
-        currentResistEvent = event;
+        currentResistEvent =
+            event;
 
 
-//----------------------------------
-// CPUが使うレジストを選択
-//----------------------------------
+        //----------------------------------
+        // CPUが使うレジストを選択
+        //----------------------------------
 
-const cpuResist =
-selectBestCpuResist(
-    cpuResistCards,
-    event.damage,
-    event
-);
-
-
-if(!cpuResist){
-
-    console.log(
-        "CPUレジスト：使用カードを選択できません"
-    );
-
-    currentResistEvent = null;
-
-    return false;
-
-}
+        const cpuResist =
+            selectBestCpuResist(
+                cpuResistCards,
+                event.damage,
+                event
+            );
 
 
-console.log(
-    "CPUレジスト自動使用",
-    cpuResist.name
-);
+        if(!cpuResist){
+
+            console.log(
+                "CPUレジスト：使用カードを選択できません"
+            );
+
+            currentResistEvent =
+                null;
+
+            return false;
+
+        }
+
+
+        console.log(
+            "CPUレジスト自動使用",
+            cpuResist.name
+        );
 
 
         //----------------------------------
@@ -178,9 +214,9 @@ console.log(
         //----------------------------------
 
         const result =
-        useCpuResist(
-            cpuResist
-        );
+            useCpuResist(
+                cpuResist
+            );
 
 
         //----------------------------------
@@ -189,23 +225,57 @@ console.log(
 
         if(result){
 
-    setTimeout(()=>{
+            setTimeout(()=>{
 
-        finishResist();
+                finishResist();
 
-    },2000);
+            },2000);
 
 
-    return true;
+            return true;
 
-}
+        }
 
 
         //----------------------------------
         // 使用失敗
         //----------------------------------
 
-        currentResistEvent = null;
+        currentResistEvent =
+            null;
+
+        return false;
+
+    }
+
+
+    //==================================
+    // PLAYERがダメージを受ける場合
+    //==================================
+
+    //----------------------------------
+    // カードプレイ枚数上限確認
+    //
+    // ジャックフロスト等
+    //----------------------------------
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "PLAYERレジスト発動不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
+            )
+        );
 
         return false;
 
@@ -213,11 +283,13 @@ console.log(
 
 
     //----------------------------------
-    // プレイヤーがダメージを受ける場合
+    // 使用可能レジスト検索
     //----------------------------------
 
     const resistCards =
-    findResistCards(event);
+        findResistCards(
+            event
+        );
 
 
     //----------------------------------
@@ -237,7 +309,8 @@ console.log(
     // 発動イベントを保存
     //----------------------------------
 
-    currentResistEvent = event;
+    currentResistEvent =
+        event;
 
 
     //----------------------------------

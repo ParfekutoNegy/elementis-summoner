@@ -598,7 +598,6 @@ function applySummonAbility(summon){
 
     //==================================
     // ドッペルゲンガー
-    // 場に出たとき能力コピー
     //==================================
 
     const copyAbility =
@@ -620,6 +619,7 @@ function applySummonAbility(summon){
 
 
     //==================================
+    // ドラゴン
     // ターン中パワーアップ
     //==================================
 
@@ -646,10 +646,6 @@ function applySummonAbility(summon){
         );
 
 
-        //----------------------------------
-        // 現在パワー表示更新
-        //----------------------------------
-
         if(summon.view){
 
             summon.view.updateCurrentPower(
@@ -662,7 +658,19 @@ function applySummonAbility(summon){
 
 
     //==================================
-    // 召喚ターン攻撃可能
+    // ユニコーン等
+    //
+    // 召喚ターンからアタック可能
+    //
+    // attackReady は変更しない。
+    //
+    // summonTurnAttack を持っていること自体を
+    // startAttack / canAttack 側で確認して
+    // 召喚ターンのアタックを許可する。
+    //
+    // これによりメドゥーサがいる場合は
+    // summonTurnAttack より優先して
+    // アタックを禁止できる。
     //==================================
 
     if(
@@ -672,14 +680,57 @@ function applySummonAbility(summon){
         )
     ){
 
-        summon.attackReady =
-            true;
+        console.log(
+            "召喚ターン攻撃能力あり",
+            summon.card.name,
+            "attackReady=",
+            summon.attackReady
+        );
 
+    }
+
+
+    //==================================
+    // ジャックフロスト
+    //
+    // 相手は1ターンに指定枚数までしか
+    // カードをプレイできない
+    //
+    // 場に出た瞬間から制限を有効化
+    //==================================
+
+    const cardPlayLimitAbility =
+        getSummonAbility(
+            summon,
+            "limitEnemyCardPlay"
+        );
+
+
+    if(cardPlayLimitAbility){
 
         console.log(
-            "召喚ターン攻撃可能",
-            summon.card.name
+            "カードプレイ制限能力適用",
+            summon.card.name,
+            "owner=",
+            summon.owner,
+            "limit=",
+            cardPlayLimitAbility.value
         );
+
+
+        //----------------------------------
+        // 現在のプレイ枚数を維持したまま
+        // 制限だけを再評価する
+        //----------------------------------
+
+        if(
+            typeof refreshCardPlayLimitState ===
+                "function"
+        ){
+
+            refreshCardPlayLimitState();
+
+        }
 
     }
 

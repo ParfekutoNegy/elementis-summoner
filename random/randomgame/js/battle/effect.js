@@ -309,13 +309,16 @@ function activateCardEffect(
         // 強制コスト
         //==================================
 
-        case "forceCost":
+case "forceCost":
 
-            startForceCostSelect(
-                target
-            );
+    forceCostSource =
+        "magia";
 
-            break;
+    startForceCostSelect(
+        target
+    );
+
+    break;
 
     }
 
@@ -471,6 +474,23 @@ function showPlayerDamageNumber(target, damage){
 function canUseCard(card){
 
     //----------------------------------
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //----------------------------------
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
     // 相手ターン
     //----------------------------------
 
@@ -485,6 +505,7 @@ function canUseCard(card){
 
     }
 
+
     //----------------------------------
     // サモン
     //----------------------------------
@@ -492,7 +513,26 @@ function canUseCard(card){
     if(card.type === "サモン"){
 
 
+        //==================================
+        // ケートス等
+        // サモン属性プレイ制限
+        //==================================
+
+        if(
+            !canPlaySummonByElementRestriction(
+                PLAYER,
+                card
+            )
+        ){
+
+            return false;
+
+        }
+
+
+        //----------------------------------
         // 1ターン1体制限
+        //----------------------------------
 
         if(summonUsedThisTurn){
 
@@ -501,7 +541,9 @@ function canUseCard(card){
         }
 
 
+        //----------------------------------
         // コスト確認
+        //----------------------------------
 
         if(!canPayCost(card)){
 
@@ -547,30 +589,30 @@ function canUseCard(card){
 
 
 
-//----------------------------------
-// レジスト
-//----------------------------------
+    //----------------------------------
+    // レジスト
+    //----------------------------------
 
-if(card.type === "レジスト"){
+    if(card.type === "レジスト"){
 
 
-    if(!canUseResist(card)){
+        if(!canUseResist(card)){
 
-        return false;
+            return false;
+
+        }
+
+
+        if(!canPayCost(card)){
+
+            return false;
+
+        }
+
+
+        return true;
 
     }
-
-
-    if(!canPayCost(card)){
-
-        return false;
-
-    }
-
-
-    return true;
-
-}
 
 
     return false;

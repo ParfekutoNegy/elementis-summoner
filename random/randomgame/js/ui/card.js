@@ -216,9 +216,20 @@ else if(
     this.area === "hand"
 ){
 
-    // 手札はコスト表示
+    //----------------------------------
+    // 手札は現在の実コストを表示
+    //
+    // サラマンダー等のコスト軽減
+    // セイレーン等のマギアコスト増加
+    // ハーピー等のレジストコスト増加
+    // をすべて反映
+    //----------------------------------
+
     this.costElement.textContent =
-        getEffectiveCost(this);
+        getCurrentCardCost(
+            this,
+            PLAYER
+        );
 
     this.costElement.style.display =
         "flex";

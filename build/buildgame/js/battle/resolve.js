@@ -204,7 +204,8 @@ function removeDestroyedFromField(field){
 
     ){
 
-        const summon = field[i];
+        const summon =
+            field[i];
 
 
         if(summon.destroyed){
@@ -241,8 +242,6 @@ function removeDestroyedFromField(field){
                     abilityBeforeLeaving
                 );
 
-                refreshCoolModal();
-
             }
 
 
@@ -252,7 +251,9 @@ function removeDestroyedFromField(field){
 
             if(board){
 
-                if(summon.owner === PLAYER){
+                if(
+                    summon.owner === PLAYER
+                ){
 
                     board.removePlayerCard(
                         summon.view
@@ -283,13 +284,10 @@ function removeDestroyedFromField(field){
             //----------------------------------
             // ドッペルゲンガー能力の再確認
             //----------------------------------
-            // 今離れたサモンをコピー元にしている
-            // ドッペルゲンガーがいれば能力を失わせる
-            //----------------------------------
 
             if(
                 typeof validateAllDoppelgangerAbilities ===
-                "function"
+                    "function"
             ){
 
                 validateAllDoppelgangerAbilities();
@@ -298,23 +296,86 @@ function removeDestroyedFromField(field){
 
 
             //----------------------------------
-            // プレイヤー側の場が変化したので
-            // 手札コスト表示を更新
+            // カードプレイ制限を即時更新
+            //
+            // ジャックフロスト等
             //----------------------------------
 
             if(
-                summon.owner === PLAYER
+                typeof refreshCardPlayLimitState ===
+                    "function"
             ){
 
-                updateHandCostDisplay();
+                refreshCardPlayLimitState();
 
             }
+
+
+            //==================================
+            // クールモーダルを再描画
+            //
+            // ケルベロス等が場を離れた後の
+            // 使用可能状態を反映する
+            //==================================
+
+            if(
+                typeof refreshCoolModal ===
+                    "function"
+            ){
+
+                refreshCoolModal();
+
+            }
+
+
+            //----------------------------------
+            // サモン能力使用可能状態を即時更新
+            //----------------------------------
+
+            if(
+                typeof updateAttackHighlight ===
+                    "function"
+            ){
+
+                updateAttackHighlight();
+
+            }
+
+
+            if(
+                typeof updateButtons ===
+                    "function"
+            ){
+
+                updateButtons();
+
+            }
+
+
+//----------------------------------
+// 場のコスト関連能力が変化したので
+// PLAYER手札の現在コストを再表示
+//
+// サラマンダー等：自分のコスト軽減
+// セイレーン等　：相手のマギアコスト増加
+// ハーピー等　　：相手のレジストコスト増加
+//----------------------------------
+
+if(
+    typeof updateHandCostDisplay ===
+        "function"
+){
+
+    updateHandCostDisplay();
+
+}
 
         }
 
     }
 
 }
+
 function clearDamage(){
 
     const fields = [
@@ -377,10 +438,10 @@ function resolveBasiliskBattle(){
 
     const field =
         target.owner === PLAYER
-        ?
-        playerField
-        :
-        enemyField;
+            ?
+            playerField
+            :
+            enemyField;
 
 
     if(
@@ -419,10 +480,10 @@ function resolveBasiliskBattle(){
 
     const owner =
         target.owner === PLAYER
-        ?
-        "PLAYER"
-        :
-        "CPU";
+            ?
+            "PLAYER"
+            :
+            "CPU";
 
 
     addBattleLog(
@@ -448,9 +509,6 @@ function resolveBasiliskBattle(){
         target.owner,
         abilityBeforeLeaving
     );
-
-
-    refreshCoolModal();
 
 
     //----------------------------------
@@ -480,7 +538,9 @@ function resolveBasiliskBattle(){
     //----------------------------------
 
     const index =
-        field.indexOf(target);
+        field.indexOf(
+            target
+        );
 
 
     if(
@@ -501,10 +561,64 @@ function resolveBasiliskBattle(){
 
     if(
         typeof validateAllDoppelgangerAbilities ===
-        "function"
+            "function"
     ){
 
         validateAllDoppelgangerAbilities();
+
+    }
+
+
+    //----------------------------------
+    // カードプレイ制限を即時更新
+    //----------------------------------
+
+    if(
+        typeof refreshCardPlayLimitState ===
+            "function"
+    ){
+
+        refreshCardPlayLimitState();
+
+    }
+
+
+    //==================================
+    // クールモーダルを再描画
+    //
+    // 場から削除した後に行うことが重要
+    //==================================
+
+    if(
+        typeof refreshCoolModal ===
+            "function"
+    ){
+
+        refreshCoolModal();
+
+    }
+
+
+    //----------------------------------
+    // サモン能力使用可能状態を即時更新
+    //----------------------------------
+
+    if(
+        typeof updateAttackHighlight ===
+            "function"
+    ){
+
+        updateAttackHighlight();
+
+    }
+
+
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
 
     }
 

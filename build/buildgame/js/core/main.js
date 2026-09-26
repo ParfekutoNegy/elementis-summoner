@@ -164,6 +164,462 @@ let coolTriggerTargetMode = false;
 let coolTriggerCurrent = null;
 
 //==================================================
+// ターン中のカードプレイ枚数
+//
+// ジャックフロスト等の
+// 「1ターンにプレイできる枚数」制限で使用
+//==================================================
+
+let playerCardPlayCount = 0;
+
+let enemyCardPlayCount = 0;
+
+//==================================
+// スパルトイ
+// クールゾーンからのプレイ
+//==================================
+
+let summonFromCoolMode = false;
+
+let summonFromCoolCost = null;
+
+//==================================
+// クールゾーンからプレイするカード
+//==================================
+
+let selectedCoolPlayCard = null;
+
+//==================================================
+// カードプレイ枚数取得
+//==================================================
+
+function getCardPlayCount(
+    owner
+){
+
+    if(owner === PLAYER){
+
+        return playerCardPlayCount;
+
+    }
+
+
+    if(owner === ENEMY){
+
+        return enemyCardPlayCount;
+
+    }
+
+
+    return 0;
+
+}
+
+
+//==================================================
+// カードプレイ枚数リセット
+//==================================================
+
+function resetCardPlayCount(
+    owner
+){
+
+    if(owner === PLAYER){
+
+        playerCardPlayCount = 0;
+
+    }
+    else if(owner === ENEMY){
+
+        enemyCardPlayCount = 0;
+
+    }
+
+
+    console.log(
+        "カードプレイ枚数リセット",
+        owner
+    );
+
+}
+
+
+//==================================================
+// カードが実際にプレイされたことを記録
+//==================================================
+
+function registerCardPlay(
+    owner,
+    card
+){
+
+    //----------------------------------
+    // PLAYER
+    //----------------------------------
+
+    if(
+        owner === PLAYER
+    ){
+
+        playerCardPlayCount++;
+
+    }
+
+
+    //----------------------------------
+    // CPU
+    //----------------------------------
+
+    else if(
+        owner === ENEMY
+    ){
+
+        enemyCardPlayCount++;
+
+    }
+
+
+    //----------------------------------
+    // 不明な所有者
+    //----------------------------------
+
+    else{
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "カードプレイ記録",
+        {
+            owner:
+                owner,
+
+            card:
+                card?.name ??
+                "不明",
+
+            count:
+                getCardPlayCount(
+                    owner
+                ),
+
+            limit:
+                getCardPlayLimit(
+                    owner
+                )
+        }
+    );
+
+
+    //==================================
+    // PLAYERの使用可能発光更新
+    //
+    // 2枚目をプレイした直後などに
+    // 3枚目の黄色発光を消す
+    //==================================
+
+    if(
+        owner === PLAYER
+    ){
+
+        updateUsableCardHighlight();
+
+    }
+
+}
+
+
+//==================================================
+// 相手から受けている
+// カードプレイ枚数制限を取得
+//
+// 制限なしなら Infinity
+//==================================================
+
+function getCardPlayLimit(
+    owner
+){
+
+    //----------------------------------
+    // 相手フィールドを取得
+    //----------------------------------
+
+    const opponentField =
+        owner === PLAYER
+            ? enemyField
+            : playerField;
+
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            opponentField
+        )
+    ){
+
+        return Infinity;
+
+    }
+
+
+    //----------------------------------
+    // 現在受けている制限を取得
+    //----------------------------------
+
+    let limit =
+        Infinity;
+
+
+    opponentField.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            const ability =
+                getSummonAbility(
+                    summon,
+                    "limitEnemyCardPlay"
+                );
+
+
+            if(!ability){
+
+                return;
+
+            }
+
+
+            const value =
+                Number(
+                    ability.value
+                );
+
+
+            if(
+                !Number.isFinite(
+                    value
+                )
+            ){
+
+                return;
+
+            }
+
+
+            limit =
+                Math.min(
+                    limit,
+                    value
+                );
+
+        }
+    );
+
+
+    return limit;
+
+}
+
+//==================================================
+// カードプレイ枚数制限
+// 状態・UI更新
+//
+// ジャックフロスト等の
+// limitEnemyCardPlay に対応
+//==================================================
+
+function refreshCardPlayLimitState(){
+
+    //----------------------------------
+    // 現在の制限状態を取得
+    //----------------------------------
+
+    const playerCount =
+        getCardPlayCount(
+            PLAYER
+        );
+
+    const playerLimit =
+        getCardPlayLimit(
+            PLAYER
+        );
+
+
+    const enemyCount =
+        getCardPlayCount(
+            ENEMY
+        );
+
+    const enemyLimit =
+        getCardPlayLimit(
+            ENEMY
+        );
+
+
+    //----------------------------------
+    // デバッグログ
+    //----------------------------------
+
+    console.log(
+        "カードプレイ制限更新",
+        {
+            playerCount:
+                playerCount,
+
+            playerLimit:
+                playerLimit,
+
+            enemyCount:
+                enemyCount,
+
+            enemyLimit:
+                enemyLimit,
+
+            playerCanPlay:
+                playerLimit === Infinity ||
+                playerCount < playerLimit,
+
+            enemyCanPlay:
+                enemyLimit === Infinity ||
+                enemyCount < enemyLimit
+        }
+    );
+
+
+    //==================================
+    // PLAYER側UI更新
+    //==================================
+
+    //----------------------------------
+    // 手札の使用可能発光更新
+    //----------------------------------
+
+    if(
+        typeof updateUsableCardHighlight ===
+        "function"
+    ){
+
+        updateUsableCardHighlight();
+
+    }
+
+
+    //----------------------------------
+    // ボタン更新
+    //----------------------------------
+
+    if(
+        typeof updateButtons ===
+        "function"
+    ){
+
+        updateButtons();
+
+    }
+
+}
+
+//==================================================
+// 現在カードをプレイできるか
+//==================================================
+
+function canPlayCardByLimit(
+    owner
+){
+
+    const count =
+        getCardPlayCount(
+            owner
+        );
+
+
+    const limit =
+        getCardPlayLimit(
+            owner
+        );
+
+
+    //----------------------------------
+    // 制限なし
+    //----------------------------------
+
+    if(
+        limit === Infinity
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 制限枚数未満なら使用可能
+    //----------------------------------
+
+    return count < limit;
+
+}
+
+
+//==================================================
+// カードプレイ制限確認
+//
+// 使用不可の場合はログも出す
+//==================================================
+
+function checkCardPlayLimit(
+    owner
+){
+
+    const canPlay =
+        canPlayCardByLimit(
+            owner
+        );
+
+
+    if(canPlay){
+
+        return true;
+
+    }
+
+
+    console.log(
+        "カードプレイ不可：",
+        owner,
+        "このターンのプレイ枚数=",
+        getCardPlayCount(
+            owner
+        ),
+        "上限=",
+        getCardPlayLimit(
+            owner
+        )
+    );
+
+
+    return false;
+
+}
+
+//==================================================
 // ゲーム開始設定読み込み
 //==================================================
 
@@ -1995,6 +2451,80 @@ function onCardClick(card){
         }
     );
 
+    //==================================================
+// ネレイド
+// ダメージ無効能力 使用サモン選択中
+//==================================================
+
+if(nereidDamageWaiting){
+
+    //----------------------------------
+    // 自分の場以外は選択不可
+    //----------------------------------
+
+    if(card.area !== "field"){
+
+        console.log(
+            "ネレイド能力：",
+            "自分の場のサモン以外は選択不可"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // サモン取得
+    //----------------------------------
+
+    const summon =
+        findSummonByView(
+            card
+        );
+
+
+    if(!summon){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ネレイド能力を使用できる
+    // サモンか確認
+    //----------------------------------
+
+    if(
+        !nereidSelectableSummons.includes(
+            summon
+        )
+    ){
+
+        console.log(
+            "ネレイド能力：選択対象外",
+            summon.card.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 能力使用
+    //----------------------------------
+
+    selectNereidDamagePreventSummon(
+        summon
+    );
+
+
+    return;
+
+}
+
         //==================================================
     // クール時誘発能力
     // マンドラゴラ系 対象選択中
@@ -3657,6 +4187,64 @@ function showCardInfo(card){
 function startSummon(card){
 
     //----------------------------------
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //----------------------------------
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "サモン使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
+            ),
+            "card=",
+            card?.name
+        );
+
+        return;
+
+    }
+
+
+    //==================================================
+    // サモン属性プレイ制限
+    //
+    // ケートス等
+    //==================================================
+
+    if(
+        !canPlaySummonByElementRestriction(
+            PLAYER,
+            card
+        )
+    ){
+
+        console.log(
+            "サモン使用不可：",
+            "属性プレイ制限",
+            "card=",
+            card?.name,
+            "element=",
+            card?.elementType
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
     // 1ターン1枚制限
     //----------------------------------
 
@@ -3760,6 +4348,7 @@ function startSummon(card){
 
     }
 
+
     //----------------------------------
     // コスト表示
     //----------------------------------
@@ -3791,28 +4380,67 @@ function startSummon(card){
 
 function selectCostCard(card){
 
-    if(card === summonCard){
+    if(
+        card === summonCard
+    ){
+
         return;
+
     }
 
 
     //----------------------------------
     // 現在の必要コスト
     //----------------------------------
+    //
+    // 通常：
+    // getCurrentCardCost()
+    //
+    // スパルトイ：
+    // クールからプレイするときは
+    // -2後のコストを使用
+    //----------------------------------
 
-    const currentCost =
-        getCurrentCardCost(
-            summonCard
+    let currentCost;
+
+
+    if(
+        summonFromCoolMode &&
+        summonFromCoolCost !== null
+    ){
+
+        currentCost =
+            summonFromCoolCost;
+
+
+        console.log(
+            "クールゾーンプレイ：",
+            "軽減後コスト=",
+            currentCost
         );
+
+    }
+    else{
+
+        currentCost =
+            getCurrentCardCost(
+                summonCard,
+                PLAYER
+            );
+
+    }
 
 
     //----------------------------------
     // 0コストなら選択不要
     //----------------------------------
 
-    if(currentCost === 0){
+    if(
+        currentCost === 0
+    ){
 
-        costConfirm = true;
+        costConfirm =
+            true;
 
         updateButtons();
 
@@ -3826,19 +4454,30 @@ function selectCostCard(card){
     //----------------------------------
 
     if(
-        selectedCostCards.includes(card)
+        selectedCostCards.includes(
+            card
+        )
     ){
 
         selectedCostCards =
-        selectedCostCards.filter(
-            c => c !== card
+            selectedCostCards.filter(
+                c =>
+                    c !== card
+            );
+
+
+        card.setSelected(
+            false
         );
 
-        card.setSelected(false);
+        card.setCostSelected(
+            false
+        );
 
-        card.setCostSelected(false);
 
-        costConfirm = false;
+        costConfirm =
+            false;
+
 
         updateButtons();
 
@@ -3865,9 +4504,14 @@ function selectCostCard(card){
     // コスト追加
     //----------------------------------
 
-    selectedCostCards.push(card);
+    selectedCostCards.push(
+        card
+    );
 
-    card.setCostSelected(true);
+
+    card.setCostSelected(
+        true
+    );
 
 
     //----------------------------------
@@ -3879,7 +4523,8 @@ function selectCostCard(card){
         currentCost
     ){
 
-        costConfirm = true;
+        costConfirm =
+            true;
 
     }
 
@@ -3898,26 +4543,117 @@ function payCost(){
     // 選択したカードをコストへ送る
     //----------------------------------
 
-    selectedCostCards.forEach(card=>{
+    selectedCostCards.forEach(
+        card => {
 
-        card.setSelected(false);
-        card.setCostSelected(true);
+            card.setSelected(
+                false
+            );
 
-        moveToCost(card);
+            card.setCostSelected(
+                true
+            );
 
-    });
+            moveToCost(
+                card
+            );
+
+        }
+    );
 
 
     //----------------------------------
     // 使用カード処理
     //----------------------------------
 
-    summonCard.setSelected(false);
-
-
-    board.removeHandCard(
-        summonCard
+    summonCard.setSelected(
+        false
     );
+
+
+    //==================================
+    // スパルトイ
+    // クールゾーンからプレイ
+    //==================================
+
+if(
+    summonFromCoolMode
+){
+
+    //----------------------------------
+    // クールゾーンから削除
+    //----------------------------------
+
+    const index =
+        board.playerCoolCards.indexOf(
+            summonCard
+        );
+
+
+    if(
+        index !== -1
+    ){
+
+        board.playerCoolCards.splice(
+            index,
+            1
+        );
+
+    }
+
+
+    console.log(
+        "クールゾーンからカード削除",
+        summonCard.name
+    );
+
+
+    //==================================
+    // クールゾーン表示更新
+    //==================================
+
+    //----------------------------------
+    // 左下の常設表示
+    //----------------------------------
+
+    if(
+        typeof board.updateCoolCount ===
+        "function"
+    ){
+
+        board.updateCoolCount();
+
+    }
+
+
+    //----------------------------------
+    // 開いているクールモーダル
+    //----------------------------------
+
+    if(
+        typeof refreshCoolModal ===
+        "function"
+    ){
+
+        refreshCoolModal();
+
+    }
+
+}
+
+
+    //==================================
+    // 通常
+    // 手札からプレイ
+    //==================================
+
+    else{
+
+        board.removeHandCard(
+            summonCard
+        );
+
+    }
 
 
     //----------------------------------
@@ -3928,22 +4664,35 @@ function payCost(){
         summonCard.type === "サモン"
     ){
 
+        //==================================
+        // カードプレイ成立
+        //
+        // ジャックフロスト等
+        //==================================
+
+        registerCardPlay(
+            PLAYER,
+            summonCard
+        );
+
+
         summonCard.area =
-        "field";
+            "field";
 
 
         const summon =
-        new Summon(
-            summonCard,
-            PLAYER
-        );
+            new Summon(
+                summonCard,
+                PLAYER
+            );
 
 
         //----------------------------------
         // 召喚したターンは攻撃不可
         //----------------------------------
 
-        summon.attackReady = false;
+        summon.attackReady =
+            false;
 
 
         summon.view.setHighlight(
@@ -3964,9 +4713,22 @@ function payCost(){
         // バトルログ
         //----------------------------------
 
-        addBattleLog(
-            `PLAYER：${summonCard.name}を召喚`
-        );
+        if(
+            summonFromCoolMode
+        ){
+
+            addBattleLog(
+                `PLAYER：${summonCard.name}をクールゾーンから召喚`
+            );
+
+        }
+        else{
+
+            addBattleLog(
+                `PLAYER：${summonCard.name}を召喚`
+            );
+
+        }
 
 
         //----------------------------------
@@ -4004,6 +4766,16 @@ function payCost(){
         summonCard.type === "マギア"
     ){
 
+        //==================================
+        // カードプレイ成立
+        //==================================
+
+        registerCardPlay(
+            PLAYER,
+            summonCard
+        );
+
+
         //----------------------------------
         // バトルログ
         //----------------------------------
@@ -4023,10 +4795,6 @@ function payCost(){
 
         //==================================
         // ケット・シー
-        //
-        // ここまで来た時点で
-        // コスト支払いまで完了しているため
-        // 能力使用成立
         //==================================
 
         if(
@@ -4051,9 +4819,13 @@ function payCost(){
     // 状態リセット
     //----------------------------------
 
-    if(selectedHandCard){
+    if(
+        selectedHandCard
+    ){
 
-        selectedHandCard.setSelected(false);
+        selectedHandCard.setSelected(
+            false
+        );
 
     }
 
@@ -4062,26 +4834,38 @@ function payCost(){
 
 
     if(
-        summonCard?.type === "サモン"
+        summonCard?.type ===
+        "サモン"
     ){
 
-        summonUsedThisTurn = true;
+        summonUsedThisTurn =
+            true;
 
     }
 
 
     summonCard = null;
+
     selectedHandCard = null;
 
 
-    costConfirm = false;
+    costConfirm =
+        false;
+
+
+    //----------------------------------
+    // スパルトイ状態リセット
+    //----------------------------------
+
+    summonFromCoolMode =
+        false;
+
+    summonFromCoolCost =
+        null;
 
 
     //----------------------------------
     // 行動案内を消す
-    //----------------------------------
-    // ドッペルゲンガーの対象選択中は
-    // 対象選択案内を残す
     //----------------------------------
 
     if(
@@ -4829,17 +5613,18 @@ document.getElementById(
 
 if(endTurnButton){
 
-    const actionRunning =
+const actionRunning =
 
-        summonCard ||
-        resistUsingCard ||
-        resistMode ||
-        blockMode ||
-        attackMode ||
-        coolRecoveryMode ||
-        magiaTargetMode ||
-        summonAbilityTargetMode ||
-        summonAbilityCostMode;
+    summonCard ||
+    resistUsingCard ||
+    resistMode ||
+    blockMode ||
+    attackMode ||
+    coolRecoveryMode ||
+    magiaTargetMode ||
+    summonAbilityTargetMode ||
+    summonAbilityCostMode ||
+    nereidDamageWaiting;
 
     endTurnButton.disabled =
 
@@ -4849,6 +5634,103 @@ if(endTurnButton){
 }
 
 resetActionButtons();
+
+//======================================
+// カリュブディス
+// 強制コスト選択中
+//======================================
+
+if(
+    forceCostMode &&
+    forceCostPlayer === PLAYER &&
+    forceCostSource === "charybdis"
+){
+
+    console.log(
+        "updateButtons：",
+        "カリュブディス強制コスト選択中",
+        selectedForceCostCard
+            ?
+            selectedForceCostCard.name
+            :
+            "未選択"
+    );
+
+
+    //----------------------------------
+    // アクションエリア表示
+    //----------------------------------
+
+    actionArea.style.display =
+        "flex";
+
+
+    //----------------------------------
+    // まだカードを選んでいない
+    //----------------------------------
+
+    if(!selectedForceCostCard){
+
+        return;
+
+    }
+
+
+    //==================================
+    // 決定のみ表示
+    //
+    // カリュブディスは強制なので
+    // キャンセル不可
+    //==================================
+
+    useButton.style.display =
+        "inline-block";
+
+
+    useButton.textContent =
+        "決定";
+
+
+    useButton.onclick =
+        confirmForceCostCard;
+
+
+    return;
+
+}
+
+//==================================================
+// ネレイド
+// ダメージ無効能力 選択中
+//==================================================
+
+if(nereidDamageWaiting){
+
+    actionArea.style.display =
+        "flex";
+
+
+    //----------------------------------
+    // 「使わない」
+    //
+    // 既存のレジスト用ボタンを流用
+    //----------------------------------
+
+    resistPassButton.style.display =
+        "inline-block";
+
+
+    resistPassButton.textContent =
+        "使わない";
+
+
+    resistPassButton.onclick =
+        skipNereidDamagePrevent;
+
+
+    return;
+
+}
 
 //==================================
 // ケット・シー
@@ -5371,12 +6253,127 @@ if(magiaTargetMode){
 
 }
 
+//==================================================
+// クールゾーンからプレイするサモン選択中
+// スパルトイ等
+//==================================================
+
+if(
+    selectedCoolPlayCard &&
+    !summonCard &&
+    !resistMode &&
+    !attackMode &&
+    !coolRecoveryMode &&
+    game.currentPlayer === PLAYER
+){
 
     //----------------------------------
-    // 通常カード選択中
+    // プレイ枚数制限
     //----------------------------------
 
     if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        selectedCoolPlayCard =
+            null;
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ケルベロス
+    //----------------------------------
+
+    if(
+        isCoolZoneLocked(
+            PLAYER
+        )
+    ){
+
+        selectedCoolPlayCard =
+            null;
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 1ターン1サモン
+    //----------------------------------
+
+    if(
+        summonUsedThisTurn
+    ){
+
+        selectedCoolPlayCard =
+            null;
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // プレイボタン表示
+    //----------------------------------
+
+    actionArea.style.display =
+        "flex";
+
+
+    if(useButton){
+
+        useButton.style.display =
+            "inline-block";
+
+
+        useButton.textContent =
+            "プレイ";
+
+
+        useButton.onclick = ()=>{
+
+            const card =
+                selectedCoolPlayCard;
+
+
+            //----------------------------------
+            // 選択解除
+            //----------------------------------
+
+            selectedCoolPlayCard =
+                null;
+
+
+            //----------------------------------
+            // クールからプレイ開始
+            //----------------------------------
+
+            startSummonFromCool(
+                card
+            );
+
+        };
+
+    }
+
+
+    return;
+
+}
+
+
+//----------------------------------
+// 通常カード選択中
+//----------------------------------
+
+if(
     selectedHandCard &&
     !summonCard &&
     !resistMode &&
@@ -5385,11 +6382,46 @@ if(magiaTargetMode){
 ){
 
 
-        actionArea.style.display =
+    //==================================
+    // カードプレイ枚数上限
+    //
+    // ジャックフロスト等
+    //==================================
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "プレイボタン非表示：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
+            )
+        );
+
+
+        //----------------------------------
+        // resetActionButtons()で
+        // ボタンは既に非表示になっている
+        //----------------------------------
+
+        return;
+
+    }
+
+
+    actionArea.style.display =
         "flex";
 
 
-   if(useButton){
+    if(useButton){
 
 
 //----------------------------------
@@ -5400,16 +6432,35 @@ if(
     selectedHandCard.type === "サモン"
 ){
 
+    //==================================
+    // ケートス等
+    // サモン属性プレイ制限
+    //==================================
+
+    const canPlayByElement =
+        canPlaySummonByElementRestriction(
+            PLAYER,
+            selectedHandCard
+        );
+
+
+    //----------------------------------
+    // プレイ可能
+    //----------------------------------
+
     if(
         !summonUsedThisTurn &&
-        canPayCost(selectedHandCard)
+        canPayCost(
+            selectedHandCard
+        ) &&
+        canPlayByElement
     ){
 
         useButton.style.display =
-        "inline-block";
+            "inline-block";
 
         useButton.textContent =
-        "プレイ";
+            "プレイ";
 
         useButton.onclick = ()=>{
 
@@ -5421,8 +6472,25 @@ if(
 
     }
 
-}
 
+    //----------------------------------
+    // ケートス等によりプレイ不可
+    //----------------------------------
+
+    else if(
+        !canPlayByElement
+    ){
+
+        console.log(
+            "プレイボタン非表示：",
+            "サモン属性プレイ制限",
+            selectedHandCard.name,
+            selectedHandCard.elementType
+        );
+
+    }
+
+}
 
 
 //----------------------------------
@@ -6292,7 +7360,7 @@ function renderCoolModal(){
     //----------------------------------
 
     coolCards.forEach(
-        card=>{
+        card => {
 
             const image =
                 document.createElement(
@@ -6308,17 +7376,237 @@ function renderCoolModal(){
                 "cool-card";
 
 
+            //==================================
+            // クールゾーンからプレイ可能判定
+            //==================================
+
+            let canPlayFromCool =
+                false;
+
+
+            const ability =
+                Array.isArray(
+                    card.ability
+                )
+                ?
+                card.ability.find(
+                    ability =>
+                        ability?.type ===
+                        "playFromCoolWithCostDown"
+                )
+                :
+                (
+                    card.ability?.type ===
+                    "playFromCoolWithCostDown"
+                        ?
+                        card.ability
+                        :
+                        null
+                );
+
+
+            if(ability){
+
+                //----------------------------------
+                // PLAYERターン
+                //----------------------------------
+
+                const isPlayerTurn =
+                    game.currentPlayer ===
+                    PLAYER;
+
+
+                //----------------------------------
+                // 1ターン1サモン
+                //----------------------------------
+
+                const summonAvailable =
+                    !summonUsedThisTurn;
+
+
+                //----------------------------------
+                // ケルベロス
+                //----------------------------------
+
+                const coolAvailable =
+                    !isCoolZoneLocked(
+                        PLAYER
+                    );
+
+
+                //----------------------------------
+                // ジャックフロスト
+                //----------------------------------
+
+                const cardPlayAvailable =
+                    canPlayCardByLimit(
+                        PLAYER
+                    );
+
+
+                //----------------------------------
+                // 軽減後コスト
+                //----------------------------------
+
+                const baseCost =
+                    Number(
+                        getCurrentCardCost(
+                            card,
+                            PLAYER
+                        )
+                    ) || 0;
+
+
+                const reduction =
+                    Number(
+                        ability.value
+                    ) || 0;
+
+
+                const coolCost =
+                    Math.max(
+                        0,
+                        baseCost - reduction
+                    );
+
+
+                //----------------------------------
+                // 支払い可能確認
+                //----------------------------------
+
+                const canPayCoolCost =
+                    board.handCards.length >=
+                    coolCost;
+
+
+                //----------------------------------
+                // 最終判定
+                //----------------------------------
+
+                canPlayFromCool =
+                    isPlayerTurn &&
+                    summonAvailable &&
+                    coolAvailable &&
+                    cardPlayAvailable &&
+                    canPayCoolCost;
+
+            }
+
+
+            //==================================
+            // プレイ可能発光
+            //==================================
+
+            if(
+                canPlayFromCool
+            ){
+
+                image.classList.add(
+                    "cool-card-playable"
+                );
+
+            }
+
+
+            //==================================
+            // 選択中表示
+            //==================================
+
+            if(
+                selectedCoolPlayCard ===
+                card
+            ){
+
+                image.classList.add(
+                    "selected"
+                );
+
+            }
+
+
             //----------------------------------
-            // 通常閲覧
+            // カードクリック
             //----------------------------------
 
             image.onclick = ()=>{
 
-                if(coolRecoveryMode){
+                //----------------------------------
+                // クール回収中
+                //----------------------------------
+
+                if(
+                    coolRecoveryMode
+                ){
 
                     return;
 
                 }
+
+
+                //==================================
+                // プレイ可能なカード
+                //==================================
+
+                if(
+                    canPlayFromCool
+                ){
+
+                    //----------------------------------
+                    // 同じカードを再クリック
+                    // → 選択解除
+                    //----------------------------------
+
+                    if(
+                        selectedCoolPlayCard ===
+                        card
+                    ){
+
+                        selectedCoolPlayCard =
+                            null;
+
+                    }
+
+
+                    //----------------------------------
+                    // 選択
+                    //----------------------------------
+
+                    else{
+
+                        selectedCoolPlayCard =
+                            card;
+
+                    }
+
+
+                    //----------------------------------
+                    // モーダル再描画
+                    //----------------------------------
+
+                    renderCoolModal();
+
+
+                    //----------------------------------
+                    // ボタン更新
+                    //----------------------------------
+
+                    updateButtons();
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 通常カード閲覧
+                //----------------------------------
+
+                selectedCoolPlayCard =
+                    null;
+
+
+                updateButtons();
 
 
                 showCardInfo(
@@ -6882,6 +8170,28 @@ function updateUsableCardHighlight(){
 
 
     //==================================================
+    // ドッペルゲンガー
+    // コピー対象選択中
+    //
+    // 手札の通常の黄色発光は行わない
+    //==================================================
+
+    if(
+        typeof doppelgangerTargetMode !==
+            "undefined" &&
+        doppelgangerTargetMode
+    ){
+
+        console.log(
+            "ドッペルゲンガー対象選択中：通常発光なし"
+        );
+
+        return;
+
+    }
+
+
+    //==================================================
     // サモン能力コスト選択中
     //
     // 通常の使用可能カード発光は行わない
@@ -6940,6 +8250,35 @@ function updateUsableCardHighlight(){
     }
 
 
+    //==================================================
+    // カードプレイ枚数上限
+    //
+    // ジャックフロスト等
+    //==================================================
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "通常カード発光なし：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
+            )
+        );
+
+        return;
+
+    }
+
+
     //----------------------------------
     // 行動中は禁止
     //----------------------------------
@@ -6976,9 +8315,32 @@ function updateUsableCardHighlight(){
             card.type === "サモン"
         ){
 
+            //==================================
+            // ケートス等
+            // サモン属性プレイ制限
+            //==================================
+
+            const canPlayByElement =
+
+                typeof canPlaySummonByElementRestriction ===
+                    "function"
+                    ?
+                    canPlaySummonByElementRestriction(
+                        PLAYER,
+                        card
+                    )
+                    :
+                    true;
+
+
+            //----------------------------------
+            // 発光可能
+            //----------------------------------
+
             if(
                 !summonUsedThisTurn &&
-                canPayCost(card)
+                canPayCost(card) &&
+                canPlayByElement
             ){
 
                 card.setHighlight(true);
@@ -7045,7 +8407,6 @@ function updateUsableCardHighlight(){
     });
 
 }
-
 
 //==================================================
 // サモン能力 使用可能判定
@@ -7243,53 +8604,88 @@ function canUseSummonAbility(summon){
     }
 
 
-    //==================================================
-    // ケット・シー
-    //
-    // クールゾーンに
-    // 「現在プレイ可能な風マギア」が
-    // 1枚以上ある場合だけ使用可能
-    //==================================================
+//==================================================
+// ケット・シー
+//
+// クールゾーンに
+// 「現在プレイ可能な風マギア」が
+// 1枚以上ある場合だけ使用可能
+//
+// ジャックフロスト等の
+// カードプレイ枚数制限にも対応
+//==================================================
+
+if(
+    ability.type ===
+    "playWindMagiaFromCool"
+){
+
+    //----------------------------------
+    // カードプレイ枚数上限
+    //----------------------------------
 
     if(
-        ability.type ===
-        "playWindMagiaFromCool"
+        !canPlayCardByLimit(
+            PLAYER
+        )
     ){
 
-        const usableMagias =
-            getUsableCatSithMagias();
-
-
-        //----------------------------------
-        // 使用可能な風マギアなし
-        //----------------------------------
-
-        if(
-            usableMagias.length === 0
-        ){
-
-            console.log(
-                "ケット・シー能力使用不可：",
-                "使用可能な風マギアなし"
-            );
-
-            return false;
-
-        }
-
-
         console.log(
-            "ケット・シー能力使用可能：",
-            usableMagias.map(
-                card =>
-                    card.name
+            "ケット・シー能力使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
             )
         );
 
-
-        return true;
+        return false;
 
     }
+
+
+    //----------------------------------
+    // 使用可能な風マギア取得
+    //----------------------------------
+
+    const usableMagias =
+        getUsableCatSithMagias();
+
+
+    //----------------------------------
+    // 使用可能な風マギアなし
+    //----------------------------------
+
+    if(
+        usableMagias.length === 0
+    ){
+
+        console.log(
+            "ケット・シー能力使用不可：",
+            "使用可能な風マギアなし"
+        );
+
+        return false;
+
+    }
+
+
+    console.log(
+        "ケット・シー能力使用可能：",
+        summon.card.name,
+        usableMagias.map(
+            card =>
+                card.name
+        )
+    );
+
+
+    return true;
+
+}
 
 
     //==================================================
@@ -8740,8 +10136,10 @@ function moveLamiaTargetToHand(
 
     const field =
         owner === PLAYER
-            ? playerField
-            : enemyField;
+            ?
+            playerField
+            :
+            enemyField;
 
 
     //----------------------------------
@@ -8754,7 +10152,9 @@ function moveLamiaTargetToHand(
         );
 
 
-    if(index !== -1){
+    if(
+        index !== -1
+    ){
 
         field.splice(
             index,
@@ -8770,7 +10170,7 @@ function moveLamiaTargetToHand(
 
     if(
         typeof validateAllDoppelgangerAbilities ===
-        "function"
+            "function"
     ){
 
         validateAllDoppelgangerAbilities();
@@ -8779,10 +10179,67 @@ function moveLamiaTargetToHand(
 
 
     //----------------------------------
+    // カードプレイ制限を即時更新
+    //----------------------------------
+
+    if(
+        typeof refreshCardPlayLimitState ===
+            "function"
+    ){
+
+        refreshCardPlayLimitState();
+
+    }
+
+
+    //==================================
+    // クールモーダルを再描画
+    //
+    // ケルベロス等を手札へ戻した場合、
+    // クールゾーンの使用可能状態を更新
+    //==================================
+
+    if(
+        typeof refreshCoolModal ===
+            "function"
+    ){
+
+        refreshCoolModal();
+
+    }
+
+
+    //----------------------------------
+    // サモン能力使用可能状態を即時更新
+    //----------------------------------
+
+    if(
+        typeof updateAttackHighlight ===
+            "function"
+    ){
+
+        updateAttackHighlight();
+
+    }
+
+
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
     // 表示から削除
     //----------------------------------
 
-    if(owner === PLAYER){
+    if(
+        owner === PLAYER
+    ){
 
         board.removePlayerCard(
             summon.view
@@ -8832,7 +10289,9 @@ function moveLamiaTargetToHand(
     // PLAYER手札
     //==================================
 
-    if(owner === PLAYER){
+    if(
+        owner === PLAYER
+    ){
 
         card.area =
             "hand";
@@ -8891,6 +10350,7 @@ function moveLamiaTargetToHand(
     );
 
 }
+
 function moveLamiaTargetToCool(
     summon
 ){
@@ -8915,8 +10375,10 @@ function moveLamiaTargetToCool(
 
     const field =
         owner === PLAYER
-            ? playerField
-            : enemyField;
+            ?
+            playerField
+            :
+            enemyField;
 
 
     //----------------------------------
@@ -8947,14 +10409,13 @@ function moveLamiaTargetToCool(
     );
 
 
-    refreshCoolModal();
-
-
     //----------------------------------
     // 表示から削除
     //----------------------------------
 
-    if(owner === PLAYER){
+    if(
+        owner === PLAYER
+    ){
 
         board.removePlayerCard(
             summon.view
@@ -8980,7 +10441,9 @@ function moveLamiaTargetToCool(
         );
 
 
-    if(index !== -1){
+    if(
+        index !== -1
+    ){
 
         field.splice(
             index,
@@ -8996,7 +10459,7 @@ function moveLamiaTargetToCool(
 
     if(
         typeof validateAllDoppelgangerAbilities ===
-        "function"
+            "function"
     ){
 
         validateAllDoppelgangerAbilities();
@@ -9005,10 +10468,66 @@ function moveLamiaTargetToCool(
 
 
     //----------------------------------
+    // カードプレイ制限を即時更新
+    //----------------------------------
+
+    if(
+        typeof refreshCardPlayLimitState ===
+            "function"
+    ){
+
+        refreshCardPlayLimitState();
+
+    }
+
+
+    //==================================
+    // クールモーダルを再描画
+    //
+    // 場から削除した後に更新する
+    //==================================
+
+    if(
+        typeof refreshCoolModal ===
+            "function"
+    ){
+
+        refreshCoolModal();
+
+    }
+
+
+    //----------------------------------
+    // サモン能力使用可能状態を即時更新
+    //----------------------------------
+
+    if(
+        typeof updateAttackHighlight ===
+            "function"
+    ){
+
+        updateAttackHighlight();
+
+    }
+
+
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //----------------------------------
     // PLAYER側の場が変化
     //----------------------------------
 
-    if(owner === PLAYER){
+    if(
+        owner === PLAYER
+    ){
 
         updateHandCostDisplay();
 
@@ -9023,6 +10542,7 @@ function moveLamiaTargetToCool(
     );
 
 }
+
 function finishLamiaAbility(){
 
     //----------------------------------
@@ -9327,9 +10847,38 @@ function updateCardAction(card){
         );
 
 
+    //==================================
+    // メドゥーサ
+    //
+    // 相手のサモンは
+    // 能力や効果にかかわらず
+    // 場に出たターンは
+    // アタックできない
+    //==================================
+
+    const summonTurnAttackPrevented =
+        typeof isSummonTurnAttackPrevented ===
+            "function"
+            ?
+            isSummonTurnAttackPrevented(
+                summon
+            )
+            :
+            false;
+
+
+    //----------------------------------
+    // 最終的なアタック可能状態
+    //----------------------------------
+
     const attackReady =
+
         summon.attackReady ||
-        summonTurnAttack;
+
+        (
+            summonTurnAttack &&
+            !summonTurnAttackPrevented
+        );
 
 
     //----------------------------------
@@ -9380,7 +10929,22 @@ function updateCardAction(card){
 
 
     //----------------------------------
-    // アタック不可
+    // メドゥーサによりアタック不可
+    //----------------------------------
+
+    else if(summonTurnAttackPrevented){
+
+        console.log(
+            "アタックボタン非表示：",
+            summon.card.name,
+            "メドゥーサにより召喚ターンアタック不可"
+        );
+
+    }
+
+
+    //----------------------------------
+    // オーガ等によりアタック不可
     //----------------------------------
 
     else if(battleLocked){
@@ -9613,7 +11177,8 @@ function getCurrentCardCost(
 
             if(
                 !summon ||
-                !summon.card
+                !summon.card ||
+                summon.destroyed
             ){
                 return;
             }
@@ -9637,7 +11202,9 @@ function getCurrentCardCost(
             ){
 
                 cost -=
-                    costDownAbility.value;
+                    Number(
+                        costDownAbility.value
+                    ) || 0;
 
             }
 
@@ -9660,7 +11227,8 @@ function getCurrentCardCost(
 
             if(
                 !summon ||
-                !summon.card
+                !summon.card ||
+                summon.destroyed
             ){
                 return;
             }
@@ -9671,7 +11239,7 @@ function getCurrentCardCost(
             // 相手のマギアコスト +1
             //----------------------------------
 
-            const costUpAbility =
+            const magiaCostUpAbility =
                 getSummonAbility(
                     summon,
                     "enemyMagiaCostUp"
@@ -9679,13 +11247,41 @@ function getCurrentCardCost(
 
 
             if(
-                costUpAbility &&
+                magiaCostUpAbility &&
                 card.type ===
                     "マギア"
             ){
 
                 cost +=
-                    costUpAbility.value;
+                    Number(
+                        magiaCostUpAbility.value
+                    ) || 0;
+
+            }
+
+
+            //----------------------------------
+            // ハーピー
+            // 相手のレジストコスト +1
+            //----------------------------------
+
+            const resistCostUpAbility =
+                getSummonAbility(
+                    summon,
+                    "enemyResistCostUp"
+                );
+
+
+            if(
+                resistCostUpAbility &&
+                card.type ===
+                    "レジスト"
+            ){
+
+                cost +=
+                    Number(
+                        resistCostUpAbility.value
+                    ) || 0;
 
             }
 

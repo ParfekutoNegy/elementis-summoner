@@ -157,9 +157,7 @@ function runCpuTurnStep(){
     //==================================
     // クール時誘発能力の解決待ち
     //
-    // マンドラゴラ・ヴァンパイア等の
-    // 能力解決がすべて終わるまで
-    // CPUターンを進めない
+    // マンドラゴラ・ヴァンパイア等
     //==================================
 
     if(
@@ -182,9 +180,7 @@ function runCpuTurnStep(){
     //==================================
     // 強制アタックの解決待ち
     //
-    // ワーウルフ等の強制アタックが
-    // 完全に終了するまで
-    // 通常CPU行動を進めない
+    // ワーウルフ等
     //==================================
 
     if(
@@ -211,17 +207,41 @@ function runCpuTurnStep(){
     }
 
 
-    //----------------------------------
+    //==================================
     // プレイヤー操作待ち
-    //----------------------------------
+    //
+    // レジスト
+    // ブロック
+    // ネレイド
+    //==================================
 
     if(
         resistMode ||
-        blockMode
+        blockMode ||
+        (
+            typeof nereidDamageWaiting !==
+                "undefined" &&
+            nereidDamageWaiting
+        )
     ){
 
         console.log(
-            "CPU停止：プレイヤー操作待ち"
+            "CPU停止：プレイヤー操作待ち",
+            {
+                resistMode:
+                    resistMode,
+
+                blockMode:
+                    blockMode,
+
+                nereidDamageWaiting:
+                    typeof nereidDamageWaiting !==
+                        "undefined"
+                        ?
+                        nereidDamageWaiting
+                        :
+                        false
+            }
         );
 
         cpuWaiting = true;
@@ -230,6 +250,10 @@ function runCpuTurnStep(){
 
     }
 
+
+    //----------------------------------
+    // 待機解除
+    //----------------------------------
 
     cpuWaiting = false;
 
@@ -1015,6 +1039,10 @@ function createCpuAttackQueue(){
 // CPU次の攻撃
 //======================================
 
+//======================================
+// CPU次の攻撃
+//======================================
+
 function cpuNextAttack(){
 
 
@@ -1038,32 +1066,119 @@ function cpuNextAttack(){
 
     }
 
-    console.log(
-    "CPU次攻撃処理",
-    "cpuTurnStep=",
-    cpuTurnStep,
-    "cpuAttackIndex=",
-    cpuAttackIndex,
-    "queue=",
-    cpuAttackQueue.map(
-        summon => summon.card.name
-    )
-);
 
-    //----------------------------------
+    console.log(
+        "CPU次攻撃処理",
+        "cpuTurnStep=",
+        cpuTurnStep,
+        "cpuAttackIndex=",
+        cpuAttackIndex,
+        "queue=",
+        cpuAttackQueue.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+
+    //==================================
     // プレイヤー操作待ち
-    //----------------------------------
+    //
+    // ・レジスト
+    // ・ブロック
+    // ・スフィンクス
+    // ・カリュブディス
+    //==================================
 
     if(
         resistMode ||
-        blockMode
+        blockMode ||
+        (
+            forceCostMode &&
+            (
+                forceCostSource ===
+                    "sphinx" ||
+
+                forceCostSource ===
+                    "charybdis"
+            )
+        )
     ){
 
-        cpuWaiting = true;
+        cpuWaiting =
+            true;
+
 
         console.log(
-            "CPU攻撃停止：プレイヤー操作待ち"
+            "CPU攻撃停止：プレイヤー操作待ち",
+            {
+                resistMode:
+                    resistMode,
+
+                blockMode:
+                    blockMode,
+
+                forceCostMode:
+                    forceCostMode,
+
+                forceCostSource:
+                    forceCostSource
+            }
         );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // ネレイド能力選択待ち
+    //==================================
+
+    if(
+        typeof nereidDamageWaiting !==
+            "undefined" &&
+        nereidDamageWaiting
+    ){
+
+        cpuWaiting =
+            true;
+
+
+        console.log(
+            "CPU攻撃停止：",
+            "ネレイド能力選択待ち"
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // カリュブディス処理待ち
+    //
+    // PLAYER側のカリュブディスが
+    // CPUのアタックに反応している場合
+    //==================================
+
+    if(
+        typeof charybdisAttackWaiting !==
+            "undefined" &&
+        charybdisAttackWaiting
+    ){
+
+        cpuWaiting =
+            true;
+
+
+        console.log(
+            "CPU攻撃停止：",
+            "カリュブディス処理待ち"
+        );
+
 
         return;
 
@@ -1097,7 +1212,8 @@ function cpuNextAttack(){
 
             cpuTurnStep = 1;
 
-        }else{
+        }
+        else{
 
             cpuTurnStep = 4;
 
@@ -1108,6 +1224,7 @@ function cpuNextAttack(){
             runCpuTurnStep,
             500
         );
+
 
         return;
 
@@ -1124,21 +1241,25 @@ function cpuNextAttack(){
             "CPU攻撃中止：ゲーム終了"
         );
 
+
         cpuAttackQueue = [];
+
         cpuAttackIndex = 0;
+
 
         return;
 
     }
+
 
     //----------------------------------
     // 攻撃役
     //----------------------------------
 
     const attacker =
-    cpuAttackQueue[
-        cpuAttackIndex
-    ];
+        cpuAttackQueue[
+            cpuAttackIndex
+        ];
 
 
     //----------------------------------
@@ -1148,26 +1269,30 @@ function cpuNextAttack(){
     if(
         !attacker ||
         attacker.isRest ||
-        !enemyField.includes(attacker)
+        !enemyField.includes(
+            attacker
+        )
     ){
 
         cpuAttackIndex++;
 
+
         cpuNextAttack();
+
 
         return;
 
     }
 
 
-//----------------------------------
-// 攻撃対象
-//----------------------------------
+    //----------------------------------
+    // 攻撃対象
+    //----------------------------------
 
-const target =
-    selectCpuAttackTarget(
-        attacker
-    );
+    const target =
+        selectCpuAttackTarget(
+            attacker
+        );
 
 
     //----------------------------------
@@ -1178,7 +1303,9 @@ const target =
 
         cpuAttackIndex++;
 
+
         cpuNextAttack();
+
 
         return;
 
@@ -1190,8 +1317,10 @@ const target =
         attacker.card.name,
         "→",
         target === PLAYER
-        ? "PLAYER"
-        : target.card.name
+            ?
+            "PLAYER"
+            :
+            target.card.name
     );
 
 
@@ -1200,28 +1329,59 @@ const target =
     //----------------------------------
 
     attackingSummon =
-    attacker;
+        attacker;
 
-    attackMode = true;
+
+    attackMode =
+        true;
 
 
     const result =
-    executeAttack(
-        attacker,
-        target
-    );
+        executeAttack(
+            attacker,
+            target
+        );
 
 
-    //----------------------------------
-    // 待機
-    //----------------------------------
+    //==================================
+    // 攻撃処理待機
+    //
+    // WAIT_RESIST
+    //   レジスト選択
+    //
+    // WAIT_BLOCK
+    //   ブロック選択
+    //
+    // WAIT_SPHINX
+    //   スフィンクス強制コスト
+    //
+    // WAIT_CHARYBDIS
+    //   カリュブディス強制コスト
+    //==================================
 
     if(
-        result === "WAIT_RESIST" ||
-        result === "WAIT_BLOCK"
+        result ===
+            "WAIT_RESIST" ||
+
+        result ===
+            "WAIT_BLOCK" ||
+
+        result ===
+            "WAIT_SPHINX" ||
+
+        result ===
+            "WAIT_CHARYBDIS"
     ){
 
-        cpuWaiting = true;
+        cpuWaiting =
+            true;
+
+
+        console.log(
+            "CPU攻撃待機",
+            result
+        );
+
 
         return;
 
@@ -1241,7 +1401,6 @@ const target =
     );
 
 }
-
 
 
 //======================================
@@ -1326,6 +1485,30 @@ function selectCpuAttackTarget(
 
 
                 if(summon.destroyed){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // シーサーペント
+                // アタック対象にできない
+                //----------------------------------
+
+                if(
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeAttacked"
+                    )
+                ){
+
+                    console.log(
+                        "CPU攻撃対象から除外：",
+                        summon.card.name,
+                        "アタック対象不可"
+                    );
+
 
                     return false;
 
@@ -1544,6 +1727,30 @@ function selectCpuAttackTarget(
                     }
 
 
+                    //----------------------------------
+                    // シーサーペント
+                    // アタック対象にできない
+                    //----------------------------------
+
+                    if(
+                        hasSummonAbility(
+                            summon,
+                            "cannotBeAttacked"
+                        )
+                    ){
+
+                        console.log(
+                            "CPU攻撃対象から除外：",
+                            summon.card.name,
+                            "アタック対象不可"
+                        );
+
+
+                        return false;
+
+                    }
+
+
                     if(!summon.isRest){
 
                         return false;
@@ -1599,6 +1806,30 @@ function selectCpuAttackTarget(
             summon => {
 
                 if(summon.destroyed){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // シーサーペント
+                // アタック対象にできない
+                //----------------------------------
+
+                if(
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeAttacked"
+                    )
+                ){
+
+                    console.log(
+                        "CPU攻撃対象から除外：",
+                        summon.card.name,
+                        "アタック対象不可"
+                    );
+
 
                     return false;
 
@@ -1774,6 +2005,64 @@ function cpuSummon(card){
     }
 
 
+    //==================================
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //==================================
+
+    if(
+        !canPlayCardByLimit(
+            ENEMY
+        )
+    ){
+
+        console.log(
+            "CPUサモン使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                ENEMY
+            ),
+            "/",
+            getCardPlayLimit(
+                ENEMY
+            ),
+            "card=",
+            card.name
+        );
+
+        return false;
+
+    }
+
+
+    //==================================
+    // ケートス等
+    // サモン属性プレイ制限
+    //==================================
+
+    if(
+        !canPlaySummonByElementRestriction(
+            ENEMY,
+            card
+        )
+    ){
+
+        console.log(
+            "CPUサモン使用不可：",
+            "属性プレイ制限",
+            "card=",
+            card.name,
+            "element=",
+            card.elementType
+        );
+
+
+        return false;
+
+    }
+
+
     //----------------------------------
     // 現在のコスト取得
     //----------------------------------
@@ -1821,10 +2110,10 @@ function cpuSummon(card){
     //----------------------------------
 
     const costCards =
-selectCpuCostCards(
-    card,
-    currentCost
-);
+        selectCpuCostCards(
+            card,
+            currentCost
+        );
 
 
     //----------------------------------
@@ -1865,17 +2154,53 @@ selectCpuCostCards(
     //----------------------------------
 
     const result =
-    executeSummon(
-        card,
-        ENEMY
+        executeSummon(
+            card,
+            ENEMY
+        );
+
+
+    //----------------------------------
+    // 召喚失敗
+    //----------------------------------
+
+    if(
+        result === false
+    ){
+
+        console.log(
+            "CPUサモン：召喚失敗",
+            card.name
+        );
+
+        return false;
+
+    }
+
+
+    //==================================
+    // カードプレイ成立
+    //
+    // ジャックフロスト等の
+    // プレイ枚数管理
+    //==================================
+
+    registerCardPlay(
+        ENEMY,
+        card
     );
 
+
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
     addBattleLog(
-    `CPU：${card.name}を召喚`
-);
+        `CPU：${card.name}を召喚`
+    );
 
 
-    return result !== false;
+    return true;
 
 }
 
@@ -1911,12 +2236,6 @@ function moveEnemyToCost(card){
 
 }
 
-
-//======================================
-// CPUマギア使用
-//======================================
-
-
 //======================================
 // CPUマギア使用
 //======================================
@@ -1925,6 +2244,51 @@ function cpuMagia(
     card,
     target
 ){
+
+    //==================================
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //==================================
+
+    if(
+        !canPlayCardByLimit(
+            ENEMY
+        )
+    ){
+
+        console.log(
+            "CPUマギア使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                ENEMY
+            ),
+            "/",
+            getCardPlayLimit(
+                ENEMY
+            ),
+            "card=",
+            card?.name
+        );
+
+        return false;
+
+    }
+
+
+    //==================================
+    // カードプレイ成立
+    //
+    // 通常のCPUマギアだけでなく
+    // ケット・シー等から
+    // cpuMagia()を通る場合もここで数える
+    //==================================
+
+    registerCardPlay(
+        ENEMY,
+        card
+    );
+
 
     //----------------------------------
     // バトルログ
@@ -2032,14 +2396,14 @@ function cpuMagia(
         //----------------------------------
 
         console.log(
-    "★ CPUマギア対象デバッグ",
-    "target=",
-    target,
-    "target===PLAYER=",
-    target === PLAYER,
-    "target==='player'=",
-    target === "player"
-);
+            "★ CPUマギア対象デバッグ",
+            "target=",
+            target,
+            "target===PLAYER=",
+            target === PLAYER,
+            "target==='player'=",
+            target === "player"
+        );
 
 
         showCpuMagiaTargetHighlight(
@@ -2047,13 +2411,16 @@ function cpuMagia(
         );
 
 
-        //----------------------------------
-        // プレイヤーが手札を選択
-        //----------------------------------
+//----------------------------------
+// プレイヤーが手札を選択
+//----------------------------------
 
-        startForceCostSelect(
-            target
-        );
+forceCostSource =
+    "magia";
+
+startForceCostSelect(
+    target
+);
 
 
         //----------------------------------
@@ -2083,16 +2450,14 @@ function cpuMagia(
     setTimeout(()=>{
 
         console.log(
-    "★ CPUマギア対象デバッグ",
-    "target=",
-    target,
-    "target===PLAYER=",
-    target === PLAYER,
-    "target==='player'=",
-    target === "player"
-);
-
-
+            "★ CPUマギア対象デバッグ",
+            "target=",
+            target,
+            "target===PLAYER=",
+            target === PLAYER,
+            "target==='player'=",
+            target === "player"
+        );
 
 
         showCpuMagiaTargetHighlight(
@@ -6426,6 +6791,32 @@ function evaluateCpuSummonAction(
     }
 
 
+    //==================================
+    // ケートス等
+    // サモン属性プレイ制限
+    //==================================
+
+    if(
+        !canPlaySummonByElementRestriction(
+            ENEMY,
+            card
+        )
+    ){
+
+        console.log(
+            "CPUポイント評価：サモン候補外",
+            card.name,
+            "属性プレイ制限",
+            "element=",
+            card.elementType
+        );
+
+
+        return null;
+
+    }
+
+
     //----------------------------------
     // 現在コスト
     //----------------------------------
@@ -8312,9 +8703,18 @@ function createCpuActions(){
     const actions = [];
 
 
-    //==================================
-    // サモン候補
-    //==================================
+//==================================
+// サモン候補
+//
+// ジャックフロスト等の
+// プレイ枚数上限も確認
+//==================================
+
+if(
+    canPlayCardByLimit(
+        ENEMY
+    )
+){
 
     const summonActions =
         createCpuSummonActions();
@@ -8324,10 +8724,36 @@ function createCpuActions(){
         ...summonActions
     );
 
+}
+else{
 
-    //==================================
-    // マギア候補
-    //==================================
+    console.log(
+        "CPU：サモン候補を作成しない",
+        "カードプレイ枚数上限",
+        getCardPlayCount(
+            ENEMY
+        ),
+        "/",
+        getCardPlayLimit(
+            ENEMY
+        )
+    );
+
+}
+
+
+//==================================
+// マギア候補
+//
+// ジャックフロスト等の
+// プレイ枚数上限も確認
+//==================================
+
+if(
+    canPlayCardByLimit(
+        ENEMY
+    )
+){
 
     enemyHandCards.forEach(
         card => {
@@ -8349,6 +8775,22 @@ function createCpuActions(){
         }
     );
 
+}
+else{
+
+    console.log(
+        "CPU：マギア候補を作成しない",
+        "カードプレイ枚数上限",
+        getCardPlayCount(
+            ENEMY
+        ),
+        "/",
+        getCardPlayLimit(
+            ENEMY
+        )
+    );
+
+}
 
     //==================================
     // ★ ブロック不可サモン確認
@@ -8516,6 +8958,37 @@ function createCpuActions(){
 
         }
 
+        //==================================
+// カードをプレイするサモン能力
+// プレイ枚数制限
+//
+// ケット・シー
+// playWindMagiaFromCool
+//==================================
+
+if(
+    ability.type ===
+        "playWindMagiaFromCool" &&
+    !canPlayCardByLimit(
+        ENEMY
+    )
+){
+
+    console.log(
+        "CPU：ケット・シー系能力候補外",
+        "カードプレイ枚数上限",
+        getCardPlayCount(
+            ENEMY
+        ),
+        "/",
+        getCardPlayLimit(
+            ENEMY
+        )
+    );
+
+    continue;
+
+}
 
         //==================================
         // 対象取得
@@ -11818,6 +12291,36 @@ function cpuUseCatSithAbility(source){
     }
 
 
+    //==================================
+    // カードプレイ枚数上限確認
+    //
+    // クールゾーンからプレイする
+    // マギアも1枚として数える
+    //==================================
+
+    if(
+        !canPlayCardByLimit(
+            ENEMY
+        )
+    ){
+
+        console.log(
+            "CPUケット・シー系能力使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                ENEMY
+            ),
+            "/",
+            getCardPlayLimit(
+                ENEMY
+            )
+        );
+
+        return false;
+
+    }
+
+
     //----------------------------------
     // 使用可能確認
     //----------------------------------
@@ -11831,6 +12334,11 @@ function cpuUseCatSithAbility(source){
         return false;
 
     }
+
+
+    //----------------------------------
+    // 以下は現在の処理をそのまま
+    //----------------------------------
 
 
     //----------------------------------

@@ -2186,16 +2186,32 @@ function startForceCostSelect(target){
         // プレイヤーに手札選択を要求
         //----------------------------------
 
-        if(
-            magiaCard &&
-            magiaCard.owner === ENEMY
-        ){
+//----------------------------------
+// PLAYERが選択する場合の案内
+//----------------------------------
 
-            showActionGuide(
-                "手札を1枚コストゾーンに置いてください"
-            );
+if(
+    forceCostSource === "sphinx"
+){
 
-        }
+    showActionGuide(
+        "スフィンクスの能力が発動。<br>" +
+        "コストゾーンに置くカードを<br>" +
+        "1枚選んでください"
+    );
+
+}
+else if(
+    magiaCard &&
+    magiaCard.owner === ENEMY
+){
+
+    showActionGuide(
+        "コストゾーンに置くカードを<br>" +
+        "1枚選んでください"
+    );
+
+}
 
 
         //----------------------------------

@@ -545,3 +545,13 @@
     }
 
 }
+
+.cool-card-playable{
+
+    cursor:pointer;
+
+    filter:
+        drop-shadow(0 0 6px #ffd84a)
+        drop-shadow(0 0 12px #ffd84a);
+
+}

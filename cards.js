@@ -715,7 +715,12 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"folklore",
-        image: "images/051-ジャックフロスト.jpg"
+        image: "images/051-ジャックフロスト.jpg",
+        text:"相手は１ターンに２枚までしかカードをプレイできない。",
+        ability:{
+            type:"limitEnemyCardPlay",
+            value:2
+        }
     },
     {
         id: 52,
@@ -725,7 +730,11 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"folklore",
-        image: "images/052-シーサーペント.jpg"
+        image: "images/052-シーサーペント.jpg",
+        text:"相手のサモンはこのカードにアタックできない。",
+        ability:{
+            type:"cannotBeAttacked"
+        }
     },
     {
         id: 53,
@@ -814,7 +823,11 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"folklore",
-        image: "images/060-トロール.jpg"
+        image: "images/060-トロール.jpg",
+        text:"このカードは相手のサモンから自分のサモンへのアタックをブロックできる。",
+        ability:{
+            type:"blockSummonAttack"
+        }
     },
     {
         id: 61,
@@ -875,7 +888,11 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"mythology",
-        image: "images/066-ケルベロス.jpg"
+        image: "images/066-ケルベロス.jpg",
+        text:"相手はクールゾーンのカードをプレイすることができず、対象に選ぶこともできない。",
+        ability:{
+            type:"lockEnemyCoolZone"
+        }
     },
     {
         id: 67,
@@ -885,7 +902,11 @@ const CARD_LIST = [
         cost: 2,
         power: 4,
         series:"mythology",
-        image: "images/067-サイクロプス.jpg"
+        image: "images/067-サイクロプス.jpg",
+        text:"このカードはターン開始時にタテ向きにできない。",
+        ability:{
+            type:"cannotReadyAtTurnStart"
+        }
     },
     {
         id: 68,
@@ -966,7 +987,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"mythology",
-        image: "images/074-ハーピー.jpg"
+        image: "images/074-ハーピー.jpg",
+        text:"相手のレジストのコストは＋１される。",
+        ability:{
+            type:"enemyResistCostUp",
+            value:1
+        }
     },
     {
         id: 75,
@@ -991,7 +1017,12 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"mythology",
-        image: "images/076-スフィンクス.jpg"
+        image: "images/076-スフィンクス.jpg",
+        text:"このカードがアタックしたとき、相手は手札を１枚選び、コストゾーンに伏せる。",
+        ability:{
+            type:"forceEnemyHandToCostOnAttack",
+            value:1
+        }   
     }, 
     {
         id: 77,
@@ -1045,7 +1076,11 @@ const CARD_LIST = [
         cost: 1,
         power: 1,
         series:"mythology",
-        image: "images/081-ネレイド.jpg"
+        image: "images/081-ネレイド.jpg",
+        text:"自分がダメージを受けるとき、このカードをクールゾーンに置き、受けるダメージを０にしてもよい。",
+        ability:{
+            type:"preventPlayerDamageByCoolingSelf"
+        }
     }, 
     {
         id: 82,
@@ -1055,7 +1090,12 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"mythology",
-        image: "images/082-カリュブディス.jpg"
+        image: "images/082-カリュブディス.jpg",
+        text:"相手のサモンがアタックしたとき、相手は手札を１枚選び、コストゾーンに伏せる。",
+        ability:{
+            type:"forceEnemyHandToCostWhenEnemyAttack",
+            value:1
+        }
     }, 
     {
         id: 83,
@@ -1075,7 +1115,12 @@ const CARD_LIST = [
         cost: 3,
         power: 4,
         series:"mythology",
-        image: "images/084-ケートス.jpg"
+        image: "images/084-ケートス.jpg",
+        text:"自分は【水】以外のサモンをプレイできない。",
+        ability:{
+            type:"onlyPlayElementSummon",
+            element:"水"
+        }
     }, 
     {
         id: 85,
@@ -1136,7 +1181,12 @@ const CARD_LIST = [
         cost: 2,
         power: 1,
         series:"mythology",
-        image: "images/090-ドライアド.jpg"
+        image: "images/090-ドライアド.jpg",
+        text:"自分のサモンが受けるダメージは－1される。",
+        ability:{
+            type:"reduceOwnSummonDamage",
+            value:1
+        }
     },
     {
         id: 91,
@@ -1146,7 +1196,11 @@ const CARD_LIST = [
         cost: 2,
         power: 2,
         series:"mythology",
-        image: "images/091-メドゥーサ.jpg"
+        image: "images/091-メドゥーサ.jpg",
+        text:"相手のサモンは能力や効果にかかわらず、場に出たターンはアタックできない。",
+        ability:{
+            type:"preventEnemySummonTurnAttack"
+        }
     },
     {
         id: 92,
@@ -1156,7 +1210,12 @@ const CARD_LIST = [
         cost: 3,
         power: 2,
         series:"mythology",
-        image: "images/092-スパルトイ.jpg"
+        image: "images/092-スパルトイ.jpg",
+        text:"このカードはクールゾーンからコストを－２してプレイできる。",
+        ability:{
+            type:"playFromCoolWithCostDown",
+            value:2
+        }
     },
     {
         id: 93,

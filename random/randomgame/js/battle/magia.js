@@ -13,6 +13,36 @@ let forceCostMode = false;
 let forceCostPlayer = null;
 let selectedForceCostCard = null;
 
+let forceCostSource =
+    null;
+
+let sphinxAttackWaiting =
+    false;
+
+let sphinxAttackTarget =
+    null;
+
+ //==================================================
+// カリュブディス
+// 攻撃時誘発管理
+//==================================================
+
+let charybdisAttackWaiting =
+    false;
+
+let charybdisAttackAttacker =
+    null;
+
+let charybdisAttackTarget =
+    null;
+
+let charybdisTriggerQueue =
+    [];
+
+let charybdisCurrentTrigger =
+    null;   
+
+    
 //=========================
 // マギア効果処理
 //=========================
@@ -88,6 +118,37 @@ function resetMagiaState(){
 function startMagia(card){
 
     //----------------------------------
+    // カードプレイ枚数制限
+    //
+    // ジャックフロスト等
+    //----------------------------------
+
+    if(
+        !canPlayCardByLimit(
+            PLAYER
+        )
+    ){
+
+        console.log(
+            "マギア使用不可：",
+            "カードプレイ枚数上限",
+            getCardPlayCount(
+                PLAYER
+            ),
+            "/",
+            getCardPlayLimit(
+                PLAYER
+            ),
+            "card=",
+            card?.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
     // 使用中なら終了
     //----------------------------------
 
@@ -105,7 +166,8 @@ function startMagia(card){
     magiaCard = card;
 
     magiaCard.owner =
-    PLAYER;
+        PLAYER;
+
 
     //----------------------------------
     // 攻撃可能サモンの発光解除
@@ -115,7 +177,6 @@ function startMagia(card){
 
 
     magiaTarget = null;
-
 
 
     //----------------------------------
@@ -128,11 +189,9 @@ function startMagia(card){
     magiaTarget = null;
 
 
-
     //----------------------------------
     // 対象選択開始
     //----------------------------------
-
 
     startMagiaTargetSelect(
         card
@@ -328,6 +387,7 @@ function resolveMagia(){
 
             }
 
+
 //==================================
 // 効果解決完了
 // ↓
@@ -404,13 +464,16 @@ setTimeout(()=>{
         }
 
 
-        //----------------------------------
-        // 通常の強制コスト選択
-        //----------------------------------
+//----------------------------------
+// 通常の強制コスト選択
+//----------------------------------
 
-        startForceCostSelect(
-            magiaTarget
-        );
+forceCostSource =
+    "magia";
+
+startForceCostSelect(
+    magiaTarget
+);
 
 
         return;
@@ -2137,11 +2200,25 @@ function isValidMagiaCoolTarget(
 // ウインドプレッシャー
 // 相手手札選択開始
 //======================================
+//======================================
+// 強制コスト選択開始
+//
+// ・ウインドプレッシャー
+// ・スフィンクス
+// ・カリュブディス
+//======================================
+
 function startForceCostSelect(target){
 
     console.log(
-        "ウインドプレッシャー：相手の手札選択開始",
-        target
+        "強制コスト選択開始",
+        {
+            target:
+                target,
+
+            source:
+                forceCostSource
+        }
     );
 
 
@@ -2152,11 +2229,14 @@ function startForceCostSelect(target){
     forceCostPlayer =
         target;
 
+
     forceCostMode =
         true;
 
+
     selectedForceCostCard =
-    null;
+        null;
+
 
     //----------------------------------
     // 対象プレイヤーの手札確認
@@ -2164,25 +2244,40 @@ function startForceCostSelect(target){
 
     const targetHand =
         target === PLAYER
-        ? board.handCards
-        : enemyHandCards;
+            ?
+            board.handCards
+            :
+            enemyHandCards;
 
 
-    //----------------------------------
+    //==================================
     // 手札がない
-    //----------------------------------
+    //==================================
 
     if(
+        !targetHand ||
         targetHand.length === 0
     ){
 
         console.log(
-            "ウインドプレッシャー：",
+            "強制コスト：",
             target === PLAYER
-            ? "プレイヤー"
-            : "CPU",
-            "の手札なし"
+                ?
+                "PLAYER"
+                :
+                "CPU",
+            "の手札なし",
+            "source=",
+            forceCostSource
         );
+
+
+        //----------------------------------
+        // 発生元を保存
+        //----------------------------------
+
+        const resolvedSource =
+            forceCostSource;
 
 
         //----------------------------------
@@ -2192,14 +2287,18 @@ function startForceCostSelect(target){
         forceCostMode =
             false;
 
+
         forceCostPlayer =
             null;
 
 
+        selectedForceCostCard =
+            null;
+
+
         //----------------------------------
-        // CPUがプレイヤーを対象にした場合
+        // PLAYER選択案内を消す
         //----------------------------------
-        // 手札0枚なので効果なし
 
         if(
             target === PLAYER
@@ -2210,20 +2309,98 @@ function startForceCostSelect(target){
         }
 
 
-        //----------------------------------
-        // マギア解決を続行
-        //----------------------------------
+        //==================================
+        // カリュブディス
+        //==================================
+
+        if(
+            resolvedSource ===
+                "charybdis"
+        ){
+
+            console.log(
+                "カリュブディス：",
+                "攻撃側の手札が0枚のため効果なし"
+            );
+
+
+            forceCostSource =
+                null;
+
+
+            charybdisCurrentTrigger =
+                null;
+
+
+            //----------------------------------
+            // 次のカリュブディス誘発へ
+            //
+            // 残っていなければ
+            // 攻撃処理が再開される
+            //----------------------------------
+
+            setTimeout(
+                ()=>{
+
+                    resolveNextCharybdisTrigger();
+
+                },
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // スフィンクス
+        //==================================
+
+        if(
+            resolvedSource ===
+                "sphinx"
+        ){
+
+            console.log(
+                "スフィンクス：",
+                "相手の手札が0枚のため効果なし"
+            );
+
+
+            //----------------------------------
+            // resolveSphinxForceCost() 側で
+            // forceCostSource も解除する
+            //----------------------------------
+
+            resolveSphinxForceCost();
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // ウインドプレッシャー
+        //==================================
+
+        forceCostSource =
+            null;
+
 
         resolveMagiaAfterForceCost();
+
 
         return;
 
     }
 
 
-    //----------------------------------
-    // CPU
-    //----------------------------------
+    //==================================
+    // CPUが選択する場合
+    //==================================
 
     if(
         target === ENEMY
@@ -2236,23 +2413,53 @@ function startForceCostSelect(target){
     }
 
 
-    //----------------------------------
-    // プレイヤー
-    //----------------------------------
+    //==================================
+    // PLAYERが選択する場合
+    //==================================
 
     if(
         target === PLAYER
     ){
 
-        //----------------------------------
-        // CPUが使用したウインドプレッシャー
-        // プレイヤーに手札選択を要求
-        //----------------------------------
+        //==================================
+        // カリュブディス
+        //==================================
 
         if(
-            magiaCard &&
-            magiaCard.owner === ENEMY
+            forceCostSource ===
+                "charybdis"
         ){
+
+            showActionGuide(
+                "カリュブディスの能力が発動しました。<br>" +
+                "手札を1枚コストゾーンに置いてください。"
+            );
+
+        }
+
+
+        //==================================
+        // スフィンクス
+        //==================================
+
+        else if(
+            forceCostSource ===
+                "sphinx"
+        ){
+
+            showActionGuide(
+                "スフィンクスの能力が発動しました<br>" +
+                "手札を1枚コストゾーンに置いてください"
+            );
+
+        }
+
+
+        //==================================
+        // ウインドプレッシャー
+        //==================================
+
+        else{
 
             showActionGuide(
                 "手札を1枚コストゾーンに置いてください"
@@ -2262,24 +2469,38 @@ function startForceCostSelect(target){
 
 
         //----------------------------------
-        // プレイヤー手札を発光
+        // PLAYER手札を発光
         //----------------------------------
 
         updateHandHighlight();
 
+
+        //----------------------------------
+        // ボタン更新
+        //----------------------------------
+
         updateButtons();
+
 
         return;
 
     }
 
 
-    //----------------------------------
-    // その他
-    //----------------------------------
+    //==================================
+    // 想定外
+    //==================================
+
+    console.warn(
+        "強制コスト：",
+        "対象プレイヤーが不正",
+        target
+    );
+
 
     forceCostMode =
         false;
+
 
     forceCostPlayer =
         null;
@@ -2368,6 +2589,67 @@ function selectForceCostCard(card){
 
 }
 
+
+function cancelForceCostCard(){
+
+    console.log(
+        "ウインドプレッシャー：コストカード選択キャンセル"
+    );
+
+
+    //----------------------------------
+    // 選択解除
+    //----------------------------------
+
+    if(selectedForceCostCard){
+
+        selectedForceCostCard.setSelected(
+            false
+        );
+
+    }
+
+
+    selectedForceCostCard =
+        null;
+
+
+    //----------------------------------
+    // カード情報を閉じる
+    //----------------------------------
+
+    clearHandSelection();
+
+
+    //----------------------------------
+    // 再び「1枚選んでください」の状態
+    //----------------------------------
+
+    showActionGuide(
+        "手札を1枚コストゾーンに置いてください"
+    );
+
+
+    updateButtons();
+
+}
+
+
+//======================================
+// 強制コスト選択後
+// マギア解決
+//======================================
+
+//======================================
+// 強制コストカード決定
+//
+// ・ウインドプレッシャー
+// ・スフィンクス
+// ・カリュブディス
+//
+// 共通処理
+//======================================
+
 function confirmForceCostCard(){
 
     //----------------------------------
@@ -2386,13 +2668,28 @@ function confirmForceCostCard(){
 
 
     console.log(
-        "ウインドプレッシャー：コストカード決定",
-        selectedForceCostCard.name
+        "強制コストカード決定",
+        selectedForceCostCard.name,
+        "source=",
+        forceCostSource
     );
 
 
     //----------------------------------
+    // 発生元を保存
+    //
+    // この後 forceCostSource が
+    // 変更されても判定できるようにする
+    //----------------------------------
+
+    const resolvedSource =
+        forceCostSource;
+
+
+    //----------------------------------
     // 使用中のマギアを保存
+    //
+    // ウインドプレッシャーの場合に使用
     //----------------------------------
 
     const resolvedMagia =
@@ -2451,9 +2748,92 @@ function confirmForceCostCard(){
     updateButtons();
 
 
-    //----------------------------------
-    // マギア解決
-    //----------------------------------
+    //==================================
+    // カリュブディス
+    //==================================
+
+    if(
+        resolvedSource ===
+            "charybdis"
+    ){
+
+        console.log(
+            "カリュブディス：",
+            "PLAYER強制コスト選択完了",
+            selectedCard.name
+        );
+
+
+        //----------------------------------
+        // 今回の強制コスト処理終了
+        //----------------------------------
+
+        forceCostSource =
+            null;
+
+
+        //----------------------------------
+        // 現在の誘発を解決済みにする
+        //----------------------------------
+
+        charybdisCurrentTrigger =
+            null;
+
+
+        //----------------------------------
+        // UI更新
+        //----------------------------------
+
+        updateGameState();
+
+        updateButtons();
+
+
+        //==================================
+        // 次のカリュブディスへ
+        //
+        // まだ誘発が残っていれば次を処理
+        // 全部終われば攻撃を再開
+        //==================================
+
+        setTimeout(
+            ()=>{
+
+                resolveNextCharybdisTrigger();
+
+            },
+            500
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // スフィンクス
+    //==================================
+
+    if(
+        resolvedSource ===
+            "sphinx"
+    ){
+
+        resolveSphinxForceCost();
+
+        return;
+
+    }
+
+
+    //==================================
+    // ウインドプレッシャー
+    //==================================
+
+    forceCostSource =
+        null;
+
 
     resolveMagiaAfterForceCost(
         resolvedMagia,
@@ -2475,280 +2855,308 @@ function confirmForceCostCard(){
 
 }
 
-function cancelForceCostCard(){
-
-    console.log(
-        "ウインドプレッシャー：コストカード選択キャンセル"
-    );
-
-
-    //----------------------------------
-    // 選択解除
-    //----------------------------------
-
-    if(selectedForceCostCard){
-
-        selectedForceCostCard.setSelected(
-            false
-        );
-
-    }
-
-
-    selectedForceCostCard =
-        null;
-
-
-    //----------------------------------
-    // カード情報を閉じる
-    //----------------------------------
-
-    clearHandSelection();
-
-
-    //----------------------------------
-    // 再び「1枚選んでください」の状態
-    //----------------------------------
-
-    showActionGuide(
-        "手札を1枚コストゾーンに置いてください"
-    );
-
-
-    updateButtons();
-
-}
-
-
-//======================================
-// 強制コスト選択後
-// マギア解決
-//======================================
-
-function resolveMagiaAfterForceCost(
-    resolvedMagia,
-    selectedForceCostPlayer = null
-){
-
-    //----------------------------------
-    // マギア確認
-    //----------------------------------
-
-    if(!resolvedMagia){
-
-        console.error(
-            "resolveMagiaAfterForceCost：マギアがありません"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // CPUマギアか保存
-    //----------------------------------
-
-    const isCpuMagia =
-        resolvedMagia.owner === ENEMY;
-
-
-    //----------------------------------
-    // 対象を保存
-    //----------------------------------
-
-    const resolvedTarget =
-        magiaTarget;
-
-
-    //==================================
-    // マギアプレイ時サモン能力
-    //==================================
-    //
-    // ウインドプレッシャーなど
-    // forceCost系マギアは
-    // resolveMagia() の通常処理を通らないため
-    // ここで1回だけ発動させる
-    //==================================
-
-    triggerSummonAbilitiesOnMagiaPlay(
-        resolvedMagia.owner
-    );
-
-
-    //----------------------------------
-    // 手札から削除
-    //----------------------------------
-
-    if(
-        resolvedMagia.owner === PLAYER
-    ){
-
-        board.handCards =
-            board.handCards.filter(
-                card =>
-                    card !== resolvedMagia
-            );
-
-    }
-    else{
-
-        enemyHandCards =
-            enemyHandCards.filter(
-                card =>
-                    card !== resolvedMagia
-            );
-
-    }
-
-
-    //==================================
-    // 効果解決完了
-    // ↓
-    // 撃破解決
-    // ↓
-    // マギアをクールへ
-    //==================================
-
-    setTimeout(()=>{
-
-        //----------------------------------
-        // CPUマギア対象発光解除
-        //----------------------------------
-
-        if(
-            isCpuMagia
-        ){
-
-            clearCpuMagiaTargetHighlight(
-                resolvedTarget
-            );
-
-        }
-
-
-        //----------------------------------
-        // まず撃破解決
-        //----------------------------------
-
-        resolveBattle();
-
-
-        //----------------------------------
-        // その後マギアをクールへ
-        //----------------------------------
-
-        resolvedMagia.area =
-            "cool";
-
-
-        board.addCoolCard(
-            resolvedMagia,
-            resolvedMagia.owner
-        );
-
-
-        console.log(
-            "forceCostマギア効果解決完了 → クールへ",
-            resolvedMagia.name
-        );
-
-
-    },5000);
-
-
-    //----------------------------------
-    // マギア状態解除
-    //----------------------------------
-
-    resetMagiaState();
-
-    summonCard = null;
-
-    selectedCostCards = [];
-
-    costConfirm = false;
-
-
-    //----------------------------------
-    // CPUであれば再開可能状態へ
-    //----------------------------------
-
-    if(
-        isCpuMagia
-    ){
-
-        cpuWaiting = false;
-
-    }
-
-
-    //----------------------------------
-    // UI更新
-    //----------------------------------
-
-    updateButtons();
-
-
-    //----------------------------------
-    // PLAYERの手札を選択した場合
-    //----------------------------------
-    // CPUが使った場合ではなく、
-    // PLAYERがCPUのカードを選択した場合
-
-    if(
-        selectedForceCostPlayer === PLAYER &&
-        game.currentPlayer === PLAYER
-    ){
-
-        console.log(
-            "★ ウインドプレッシャー解決後",
-            "PLAYER使用可能カード発光更新"
-        );
-
-
-        updateUsableCardHighlight();
-
-    }
-
-
-    //----------------------------------
-    // CPUターンなら再開
-    //----------------------------------
-
-    if(
-        isCpuMagia &&
-        game.currentPlayer === ENEMY
-    ){
-
-        console.log(
-            "CPU：ウインドプレッシャー解決完了"
-        );
-
-
-        setTimeout(()=>{
-
-            console.log(
-                "CPU：マギア後の行動再開"
-            );
-
-
-            cpuTurnStep = 0;
-
-            runCpuTurnStep();
-
-        },1200);
-
-    }
-
-}
-
 
 //======================================
 // CPUによる強制コスト選択
 //======================================
 
 function cpuForceCostSelect(){
+
+    //----------------------------------
+    // 発生元を確認
+    //----------------------------------
+
+    const source =
+        forceCostSource;
+
+
+    console.log(
+        "CPU強制コスト選択",
+        "source=",
+        source
+    );
+
+
+    //==================================
+    // カリュブディス
+    //
+    // 相手のサモンがアタックしたとき、
+    // 相手は手札を1枚選び、
+    // コストゾーンに伏せる。
+    //
+    // CPUがアタックした場合は
+    // CPU自身の手札から1枚選ぶ
+    //==================================
+
+    if(
+        source ===
+            "charybdis"
+    ){
+
+        //----------------------------------
+        // CPU手札なし
+        //----------------------------------
+
+        if(
+            enemyHandCards.length === 0
+        ){
+
+            console.log(
+                "CPU：カリュブディス能力",
+                "手札なし"
+            );
+
+
+            //----------------------------------
+            // 強制コスト状態解除
+            //----------------------------------
+
+            forceCostMode =
+                false;
+
+            forceCostPlayer =
+                null;
+
+            forceCostSource =
+                null;
+
+
+            //----------------------------------
+            // 現在のカリュブディス誘発終了
+            //----------------------------------
+
+            charybdisCurrentTrigger =
+                null;
+
+
+            //----------------------------------
+            // 次のカリュブディスへ
+            //----------------------------------
+
+            setTimeout(
+                ()=>{
+
+                    resolveNextCharybdisTrigger();
+
+                },
+                500
+            );
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // CPUが手札をランダム選択
+        //----------------------------------
+
+        const card =
+            enemyHandCards[
+                Math.floor(
+                    Math.random() *
+                    enemyHandCards.length
+                )
+            ];
+
+
+        console.log(
+            "CPU：カリュブディス能力",
+            "コストゾーンに置くカード",
+            card.name
+        );
+
+
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
+
+        if(
+            typeof addBattleLog ===
+                "function"
+        ){
+
+            addBattleLog(
+                `CPU：${card.name}をコストゾーンに置いた`
+            );
+
+        }
+
+
+        //----------------------------------
+        // コストへ移動
+        //
+        // 既存のCPU用処理を使用
+        //----------------------------------
+
+        moveEnemyToCost(
+            card
+        );
+
+
+        //----------------------------------
+        // 強制コスト状態解除
+        //----------------------------------
+
+        forceCostMode =
+            false;
+
+        forceCostPlayer =
+            null;
+
+        forceCostSource =
+            null;
+
+
+        //----------------------------------
+        // 現在のカリュブディス誘発終了
+        //----------------------------------
+
+        charybdisCurrentTrigger =
+            null;
+
+
+        //----------------------------------
+        // UI更新
+        //----------------------------------
+
+        updateGameState();
+
+        updateButtons();
+
+
+        //----------------------------------
+        // 次のカリュブディスへ
+        //
+        // 複数いれば次を解決
+        // 全部終われば攻撃再開
+        //----------------------------------
+
+        setTimeout(
+            ()=>{
+
+                resolveNextCharybdisTrigger();
+
+            },
+            500
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // スフィンクス
+    //==================================
+
+    if(
+        source ===
+            "sphinx"
+    ){
+
+        //----------------------------------
+        // CPU手札なし
+        //----------------------------------
+
+        if(
+            enemyHandCards.length === 0
+        ){
+
+            console.log(
+                "CPU：スフィンクス能力",
+                "対象手札なし"
+            );
+
+
+            forceCostMode =
+                false;
+
+
+            forceCostPlayer =
+                null;
+
+
+            //----------------------------------
+            // スフィンクスの攻撃再開
+            //----------------------------------
+
+            resolveSphinxForceCost();
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // CPUが手札をランダム選択
+        //----------------------------------
+
+        const card =
+            enemyHandCards[
+                Math.floor(
+                    Math.random() *
+                    enemyHandCards.length
+                )
+            ];
+
+
+        console.log(
+            "CPU：スフィンクス能力",
+            "コストゾーンに置くカード",
+            card.name
+        );
+
+
+        //----------------------------------
+        // コストへ移動
+        //----------------------------------
+
+        moveEnemyToCost(
+            card
+        );
+
+
+        //----------------------------------
+        // 状態解除
+        //----------------------------------
+
+        forceCostMode =
+            false;
+
+
+        forceCostPlayer =
+            null;
+
+
+        //----------------------------------
+        // UI更新
+        //----------------------------------
+
+        updateGameState();
+
+        updateButtons();
+
+
+        //----------------------------------
+        // スフィンクスの攻撃再開
+        //----------------------------------
+
+        resolveSphinxForceCost();
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // ここからウインドプレッシャー
+    //==================================
+
 
     //----------------------------------
     // マギア確認
@@ -2759,6 +3167,7 @@ function cpuForceCostSelect(){
         console.error(
             "cpuForceCostSelect：magiaCardがありません"
         );
+
 
         return;
 
@@ -2789,7 +3198,16 @@ function cpuForceCostSelect(){
         forceCostMode =
             false;
 
+
         forceCostPlayer =
+            null;
+
+
+        //----------------------------------
+        // 発生元解除
+        //----------------------------------
+
+        forceCostSource =
             null;
 
 
@@ -2843,7 +3261,16 @@ function cpuForceCostSelect(){
     forceCostMode =
         false;
 
+
     forceCostPlayer =
+        null;
+
+
+    //----------------------------------
+    // 発生元解除
+    //----------------------------------
+
+    forceCostSource =
         null;
 
 
@@ -2863,6 +3290,161 @@ function cpuForceCostSelect(){
     resolveMagiaAfterForceCost(
         resolvedMagia,
         ENEMY
+    );
+
+}
+//======================================
+// スフィンクス
+// 強制コスト効果解決完了
+//======================================
+
+function resolveSphinxForceCost(){
+
+    console.log(
+        "スフィンクス：強制コスト効果解決完了"
+    );
+
+
+    //----------------------------------
+    // 待機していなければ終了
+    //----------------------------------
+
+    if(
+        !sphinxAttackWaiting
+    ){
+
+        forceCostSource =
+            null;
+
+        return;
+
+    }
+
+
+    //==================================
+    // 攻撃情報保存
+    //
+    // スフィンクス能力発動時に
+    // 保存しておいた攻撃情報を使用
+    //==================================
+
+    const attacker =
+        sphinxAttackAttacker;
+
+
+    const target =
+        sphinxAttackTarget;
+
+
+    //==================================
+    // スフィンクス状態解除
+    //==================================
+
+    sphinxAttackWaiting =
+        false;
+
+
+    sphinxAttackAttacker =
+        null;
+
+
+    sphinxAttackTarget =
+        null;
+
+
+    forceCostSource =
+        null;
+
+
+    //----------------------------------
+    // 強制コスト状態も念のため解除
+    //----------------------------------
+
+    forceCostMode =
+        false;
+
+
+    forceCostPlayer =
+        null;
+
+
+    selectedForceCostCard =
+        null;
+
+
+    //----------------------------------
+    // 攻撃情報確認
+    //----------------------------------
+
+    if(
+        !attacker ||
+        target == null
+    ){
+
+        console.warn(
+            "スフィンクス：",
+            "攻撃再開情報がありません"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "スフィンクス：アタック処理再開",
+        attacker.card.name,
+        target
+    );
+
+
+    //==================================
+    // カリュブディス確認
+    //
+    // スフィンクス能力の解決後、
+    // 相手側にカリュブディス能力を
+    // 持つサモンがいるか確認する
+    //==================================
+
+    const charybdisStarted =
+        startCharybdisTriggers(
+            attacker,
+            target
+        );
+
+
+    //----------------------------------
+    // カリュブディス誘発あり
+    //----------------------------------
+
+    if(charybdisStarted){
+
+        console.log(
+            "スフィンクス解決後：",
+            "カリュブディス処理待機"
+        );
+
+
+        //----------------------------------
+        // カリュブディス側から
+        // 攻撃処理を再開するため、
+        // ここでは終了
+        //----------------------------------
+
+        return;
+
+    }
+
+
+    //==================================
+    // カリュブディスなし
+    //
+    // 通常のブロック・ダメージ処理へ
+    //==================================
+
+    continueAttackAfterAttackAbility(
+        attacker,
+        target
     );
 
 }
