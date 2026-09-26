@@ -177,10 +177,6 @@ function dealDamage(
     sourceCard = null
 ){
 
-    //----------------------------------
-    // 対象確認
-    //----------------------------------
-
     if(!target){
 
         return;
@@ -255,10 +251,10 @@ function dealDamage(
 
 
     //----------------------------------
-    // レジスト後ダメージ
+    // レジスト後ダメージ正規化
     //----------------------------------
 
-    damage =
+    event.damage =
         Math.max(
             0,
             event.damage
@@ -266,227 +262,44 @@ function dealDamage(
 
 
     //==================================
-    // ドライアド
-    //
-    // 自分のサモンが受ける
-    // ダメージは－1される
-    //
-    // ・複数体は加算
-    // ・ドッペルゲンガー対応
-    // ・自身も軽減対象
+    // ヒュドラ
+    // ダメージ無効能力確認
     //==================================
 
-    const field =
-        target.owner === PLAYER
-            ? playerField
-            : enemyField;
-
-
-    //----------------------------------
-    // 軽減値合計
-    //----------------------------------
-
-    let totalReduction = 0;
-
-
-    //----------------------------------
-    // 軽減能力を持つサモン
-    //----------------------------------
-
-    const reducingSummons = [];
-
-
-    for(const summon of field){
-
-        //----------------------------------
-        // 無効なサモン
-        //----------------------------------
-
-        if(
-            !summon ||
-            !summon.card ||
-            summon.destroyed
-        ){
-
-            continue;
-
-        }
-
-
-        //----------------------------------
-        // ドライアド能力取得
-        //----------------------------------
-
-        const reduceAbility =
-            getSummonAbility(
-                summon,
-                "reduceOwnSummonDamage"
-            );
-
-
-        if(!reduceAbility){
-
-            continue;
-
-        }
-
-
-        //----------------------------------
-        // 軽減値
-        //----------------------------------
-
-        const reduction =
-            Number(
-                reduceAbility.value ?? 1
-            ) || 0;
-
-
-        if(reduction <= 0){
-
-            continue;
-
-        }
-
-
-        //----------------------------------
-        // 軽減値加算
-        //----------------------------------
-
-        totalReduction +=
-            reduction;
-
-
-        reducingSummons.push({
-
-            summon:
-                summon,
-
-            reduction:
-                reduction
-
-        });
-
-    }
-
-
-    //----------------------------------
-    // ドライアドによる軽減
-    //----------------------------------
-
-    if(totalReduction > 0){
-
-        const beforeReduction =
-            damage;
-
-
-        damage =
-            Math.max(
-                0,
-                damage - totalReduction
-            );
-
-
-        console.log(
-            "================================"
-        );
-
-        console.log(
-            "サモンダメージ軽減"
-        );
-
-        console.log(
-            "対象=",
-            target.card.name
-        );
-
-        console.log(
-            "軽減前=",
-            beforeReduction
-        );
-
-
-        reducingSummons.forEach(
-            data => {
-
-                console.log(
-                    "能力保持サモン=",
-                    data.summon.card.name,
-                    "軽減=",
-                    data.reduction
-                );
-
-            }
-        );
-
-
-        console.log(
-            "合計軽減=",
-            totalReduction
-        );
-
-        console.log(
-            "軽減後=",
-            damage
-        );
-
-        console.log(
-            "================================"
-        );
-
-    }
-
-
-    //----------------------------------
-    // ダメージ加算
-    //----------------------------------
-
-    target.damage +=
-        damage;
-
-
-    //----------------------------------
-    // ダメージ表示
-    //
-    // 0まで軽減した場合も
-    // 「0」を表示する
-    //----------------------------------
-
-    showDamageNumber(
-        target,
-        damage
-    );
-
-
-    //==================================================
-    // カーススモーク
-    //
-    // 最終的に1以上の
-    // ダメージを受けた場合のみ発動
-    //==================================================
-
     if(
-        damage >= 1 &&
-        isCurseSmokeTarget(
-            target
-        )
+        event.damage > 0
     ){
 
-        console.log(
-            "カーススモーク発動",
-            target.card.name,
-            "damage=",
-            damage
-        );
+        const waitHydra =
+            startHydraDamageAbility(
+                event
+            );
 
 
-        //----------------------------------
-        // 通常の破壊と同じ扱い
-        //----------------------------------
+        if(waitHydra){
 
-        target.destroyed =
-            true;
+            console.log(
+                "ヒュドラ能力選択待機",
+                target.card.name,
+                "damage=",
+                event.damage
+            );
+
+            return;
+
+        }
 
     }
+
+
+    //==================================
+    // ヒュドラを使用しない場合
+    // 最終ダメージ処理
+    //==================================
+
+    applyHydraResolvedDamage(
+        event
+    );
 
 }
 
@@ -5560,5 +5373,890 @@ function canPlaySummonByElementRestriction(
 
 
     return false;
+
+}
+
+//======================================
+// ヒュドラ
+// ダメージ無効能力取得
+//======================================
+
+function getHydraDamageAbility(
+    summon
+){
+
+    if(
+        !summon ||
+        !summon.card ||
+        summon.destroyed
+    ){
+
+        return null;
+
+    }
+
+
+    return getSummonAbility(
+        summon,
+        "preventDamageByPayingCost"
+    );
+
+}
+
+//======================================
+// ヒュドラ
+// 能力コスト支払い可能確認
+//======================================
+
+function canPayHydraDamageCost(
+    summon
+){
+
+    const ability =
+        getHydraDamageAbility(
+            summon
+        );
+
+
+    if(!ability){
+
+        return false;
+
+    }
+
+
+    const cost =
+        ability.cost ?? 3;
+
+
+    //----------------------------------
+    // PLAYER
+    //----------------------------------
+
+    if(
+        summon.owner === PLAYER
+    ){
+
+        return (
+            Array.isArray(
+                board.handCards
+            ) &&
+            board.handCards.length >=
+                cost
+        );
+
+    }
+
+
+    //----------------------------------
+    // CPU
+    //----------------------------------
+
+    if(
+        summon.owner === ENEMY
+    ){
+
+        return (
+            Array.isArray(
+                enemyHandCards
+            ) &&
+            enemyHandCards.length >=
+                cost
+        );
+
+    }
+
+
+    return false;
+
+}
+
+//======================================
+// ヒュドラ
+// ダメージ無効能力使用可能確認
+//======================================
+
+function canUseHydraDamageAbility(
+    summon,
+    damage
+){
+
+    //----------------------------------
+    // ダメージなし
+    //----------------------------------
+
+    if(
+        !damage ||
+        damage <= 0
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 能力なし
+    //----------------------------------
+
+    if(
+        !getHydraDamageAbility(
+            summon
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // コスト不足
+    //----------------------------------
+
+    if(
+        !canPayHydraDamageCost(
+            summon
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+//======================================
+// ヒュドラ
+// ダメージ無効能力開始
+//======================================
+
+function startHydraDamageAbility(
+    event
+){
+
+    //----------------------------------
+    // イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        event.type !==
+            GAME_EVENT.BEFORE_SUMMON_DAMAGE
+    ){
+
+        return false;
+
+    }
+
+
+    const summon =
+        event.target;
+
+
+    //----------------------------------
+    // 使用可能確認
+    //----------------------------------
+
+    if(
+        !canUseHydraDamageAbility(
+            summon,
+            event.damage
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // CPUは後で実装
+    //----------------------------------
+
+    if(
+        summon.owner !== PLAYER
+    ){
+
+        return false;
+
+    }
+
+
+    console.log(
+        "ヒュドラ能力使用確認",
+        summon.card.name,
+        "damage=",
+        event.damage
+    );
+
+
+    //----------------------------------
+    // 待機情報保存
+    //----------------------------------
+
+    hydraDamageWaiting =
+        true;
+
+    hydraDamageEvent =
+        event;
+
+    hydraDamageSummon =
+        summon;
+
+    hydraSelectedCostCards =
+        [];
+
+
+    //----------------------------------
+    // 案内
+    //----------------------------------
+
+    showActionGuide(
+        "3コストを支払い、受けるダメージを0にしますか？"
+    );
+
+
+    //----------------------------------
+    // ボタン更新
+    //----------------------------------
+
+    updateButtons();
+
+
+    return true;
+
+}
+
+//======================================
+// ヒュドラ
+// 能力を使わない
+//======================================
+
+function passHydraDamageAbility(){
+
+    if(
+        !hydraDamageWaiting ||
+        !hydraDamageEvent
+    ){
+
+        return;
+
+    }
+
+
+    console.log(
+        "ヒュドラ能力を使用しない"
+    );
+
+
+    const event =
+        hydraDamageEvent;
+
+
+    //----------------------------------
+    // 状態解除
+    //----------------------------------
+
+    hydraDamageWaiting =
+        false;
+
+hydraCostSelectMode =
+    false;
+
+
+    hydraDamageEvent =
+        null;
+
+    hydraDamageSummon =
+        null;
+
+    hydraSelectedCostCards =
+        [];
+
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 元のダメージを適用
+    //----------------------------------
+
+    applyHydraResolvedDamage(
+        event
+    );
+
+}
+
+//======================================
+// ヒュドラ判定後
+// 確定ダメージ適用
+//======================================
+
+function applyHydraResolvedDamage(
+    event
+){
+
+    if(
+        !event ||
+        !event.target
+    ){
+
+        return;
+
+    }
+
+
+    const target =
+        event.target;
+
+
+    let damage =
+        Math.max(
+            0,
+            event.damage
+        );
+
+
+    console.log(
+        "ヒュドラ判定後ダメージ",
+        target.card.name,
+        damage
+    );
+
+
+    //==================================
+    // ドライアド
+    // 自分のサモンが受けるダメージ－1
+    //==================================
+
+    const field =
+        target.owner === PLAYER
+            ?
+            playerField
+            :
+            enemyField;
+
+
+    let reduction =
+        0;
+
+
+    field.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            const ability =
+                getSummonAbility(
+                    summon,
+                    "reduceOwnSummonDamage"
+                );
+
+
+            if(ability){
+
+                reduction +=
+                    ability.value ?? 1;
+
+            }
+
+        }
+    );
+
+
+    damage =
+        Math.max(
+            0,
+            damage - reduction
+        );
+
+
+    //----------------------------------
+    // ダメージ加算
+    //----------------------------------
+
+    target.damage +=
+        damage;
+
+
+    //----------------------------------
+    // ダメージ表示
+    //----------------------------------
+
+    showDamageNumber(
+        target,
+        damage
+    );
+
+
+    //==================================
+    // カーススモーク
+    //==================================
+
+    if(
+        damage >= 1 &&
+        isCurseSmokeTarget(
+            target
+        )
+    ){
+
+        console.log(
+            "カーススモーク発動",
+            target.card.name,
+            "damage=",
+            damage
+        );
+
+        target.destroyed =
+            true;
+
+    }
+
+}
+
+//======================================
+// ヒュドラ
+// 3コスト選択開始
+//======================================
+
+function startHydraCostSelect(){
+
+    if(
+        !hydraDamageWaiting ||
+        !hydraDamageSummon ||
+        !hydraDamageEvent
+    ){
+
+        return;
+
+    }
+
+
+    const ability =
+        getHydraDamageAbility(
+            hydraDamageSummon
+        );
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    const cost =
+        ability.cost ?? 3;
+
+
+    //----------------------------------
+    // 念のため支払い可能確認
+    //----------------------------------
+
+    if(
+        board.handCards.length <
+        cost
+    ){
+
+        console.log(
+            "ヒュドラ：コスト不足"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "ヒュドラ：コスト選択開始",
+        "必要コスト=",
+        cost
+    );
+
+
+//----------------------------------
+// 選択初期化
+//----------------------------------
+
+hydraCostSelectMode =
+    true;
+
+hydraSelectedCostCards =
+    [];
+
+
+    //----------------------------------
+    // 通常の手札発光を解除
+    //----------------------------------
+
+    board.handCards.forEach(
+        card => {
+
+            card.setSelected(
+                false
+            );
+
+            card.setCostSelected(
+                false
+            );
+
+            card.setHighlight(
+                false
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // コスト選択案内
+    //----------------------------------
+
+    showActionGuide(
+        "ヒュドラの能力コストとして<br>" +
+        cost +
+        "枚選んでください"
+    );
+
+
+    //----------------------------------
+    // ボタン更新
+    //----------------------------------
+
+    updateButtons();
+
+}
+
+//======================================
+// ヒュドラ
+// コストカード選択
+//======================================
+
+function selectHydraCostCard(
+    card
+){
+
+    if(
+        !hydraDamageWaiting ||
+        !hydraDamageSummon ||
+        !card
+    ){
+
+        return;
+
+    }
+
+
+    const ability =
+        getHydraDamageAbility(
+            hydraDamageSummon
+        );
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
+    const cost =
+        ability.cost ?? 3;
+
+
+    //----------------------------------
+    // 現在手札にあるカードのみ
+    //----------------------------------
+
+    if(
+        !board.handCards.includes(
+            card
+        )
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択済みなら解除
+    //----------------------------------
+
+    if(
+        hydraSelectedCostCards.includes(
+            card
+        )
+    ){
+
+        hydraSelectedCostCards =
+            hydraSelectedCostCards.filter(
+                selected =>
+                    selected !== card
+            );
+
+
+        card.setSelected(
+            false
+        );
+
+        card.setCostSelected(
+            false
+        );
+
+
+        updateButtons();
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 必要枚数以上は選択不可
+    //----------------------------------
+
+    if(
+        hydraSelectedCostCards.length >=
+        cost
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択
+    //----------------------------------
+
+    hydraSelectedCostCards.push(
+        card
+    );
+
+
+    card.setCostSelected(
+        true
+    );
+
+
+    console.log(
+        "ヒュドラ：コスト選択",
+        card.name,
+        hydraSelectedCostCards.length +
+            "/" +
+            cost
+    );
+
+
+    updateButtons();
+
+}
+
+//======================================
+// ヒュドラ
+// 能力コスト支払い・ダメージ無効
+//======================================
+
+function confirmHydraDamageAbility(){
+
+    if(
+        !hydraDamageWaiting ||
+        !hydraDamageEvent ||
+        !hydraDamageSummon
+    ){
+        return;
+    }
+
+
+    const ability =
+        getHydraDamageAbility(
+            hydraDamageSummon
+        );
+
+
+    if(!ability){
+        return;
+    }
+
+
+    const cost =
+        ability.cost ?? 3;
+
+
+    //----------------------------------
+    // 必要枚数確認
+    //----------------------------------
+
+    if(
+        hydraSelectedCostCards.length !==
+        cost
+    ){
+
+        console.log(
+            "ヒュドラ：",
+            "コスト枚数不足",
+            hydraSelectedCostCards.length,
+            "/",
+            cost
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // ダメージイベントを保存
+    //----------------------------------
+
+    const event =
+        hydraDamageEvent;
+
+
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
+    console.log(
+        "ヒュドラ能力使用",
+        hydraDamageSummon.card.name,
+        "支払い=",
+        hydraSelectedCostCards.map(
+            card => card.name
+        )
+    );
+
+
+    if(
+        typeof addBattleLog ===
+        "function"
+    ){
+
+        addBattleLog(
+            `${hydraDamageSummon.card.name}の能力発動`
+        );
+
+    }
+
+
+    //----------------------------------
+    // 選択した3枚をコストへ
+    //----------------------------------
+
+    const paymentCards =
+        [
+            ...hydraSelectedCostCards
+        ];
+
+
+    paymentCards.forEach(
+        card => {
+
+            card.setSelected(
+                false
+            );
+
+            card.setCostSelected(
+                false
+            );
+
+            moveToCost(
+                card
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // 今回のダメージを0にする
+    //----------------------------------
+
+    event.damage =
+        0;
+
+
+    //----------------------------------
+    // ヒュドラ状態解除
+    //----------------------------------
+
+    hydraDamageWaiting =
+        false;
+
+    hydraCostSelectMode =
+        false;
+
+    hydraDamageEvent =
+        null;
+
+    hydraDamageSummon =
+        null;
+
+    hydraSelectedCostCards =
+        [];
+
+
+    //----------------------------------
+    // 操作案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // 0ダメージを適用
+    //----------------------------------
+
+    applyHydraResolvedDamage(
+        event
+    );
+
+
+    //----------------------------------
+    // 手札表示更新
+    //----------------------------------
+
+    if(
+        typeof updateHandCostDisplay ===
+        "function"
+    ){
+
+        updateHandCostDisplay();
+
+    }
+
+
+    //----------------------------------
+    // 使用可能カード発光更新
+    //----------------------------------
+
+    if(
+        typeof updateUsableCardHighlight ===
+        "function"
+    ){
+
+        updateUsableCardHighlight();
+
+    }
+
+
+    //----------------------------------
+    // ボタン更新
+    //----------------------------------
+
+    updateButtons();
 
 }

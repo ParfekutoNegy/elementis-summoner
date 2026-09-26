@@ -1105,7 +1105,12 @@ const CARD_LIST = [
         cost: 3,
         power: 3,
         series:"mythology",
-        image: "images/083-ヒュドラ.jpg"
+        image: "images/083-ヒュドラ.jpg",
+        text:"このカードがダメージを受けるとき、３コストを支払い受けるダメージを０にしてもよい。",
+        ability:{
+            type:"preventDamageByPayingCost",
+            cost:3
+        }
     }, 
     {
         id: 84,

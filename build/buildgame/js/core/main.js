@@ -189,6 +189,28 @@ let summonFromCoolCost = null;
 
 let selectedCoolPlayCard = null;
 
+//======================================
+// ヒュドラ
+// ダメージ無効能力
+//======================================
+
+let hydraDamageWaiting =
+    false;
+
+let hydraDamageEvent =
+    null;
+
+let hydraDamageSummon =
+    null;
+
+let hydraSelectedCostCards =
+    [];
+
+let hydraCostSelectMode =
+    false;
+
+
+
 //==================================================
 // カードプレイ枚数取得
 //==================================================
@@ -2520,6 +2542,61 @@ if(nereidDamageWaiting){
         summon
     );
 
+
+    return;
+
+}
+
+//==================================================
+// ヒュドラ
+// 能力コスト選択中
+//==================================================
+
+if(
+    hydraDamageWaiting &&
+    hydraCostSelectMode
+){
+
+    //----------------------------------
+    // PLAYERのヒュドラのみ
+    //----------------------------------
+
+    if(
+        !hydraDamageSummon ||
+        hydraDamageSummon.owner !== PLAYER
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 手札のみ選択可能
+    //----------------------------------
+
+    if(
+        card.area === "hand"
+    ){
+
+        console.log(
+            "ヒュドラ：",
+            "コストカードクリック",
+            card.name
+        );
+
+
+        selectHydraCostCard(
+            card
+        );
+
+    }
+
+
+    //----------------------------------
+    // ヒュドラのコスト選択中は
+    // 他のカードクリック処理へ進ませない
+    //----------------------------------
 
     return;
 
@@ -5634,6 +5711,98 @@ const actionRunning =
 }
 
 resetActionButtons();
+
+//======================================
+// ヒュドラ
+// ダメージ無効能力
+//======================================
+
+if(
+    hydraDamageWaiting &&
+    hydraDamageSummon &&
+    hydraDamageSummon.owner === PLAYER
+){
+
+    const ability =
+        getHydraDamageAbility(
+            hydraDamageSummon
+        );
+
+
+    const cost =
+        ability?.cost ?? 3;
+
+
+    actionArea.style.display =
+        "flex";
+
+
+    //==================================
+    // まだコスト選択を開始していない
+    //==================================
+
+    if(
+        hydraSelectedCostCards.length ===
+        0
+    ){
+
+        //----------------------------------
+        // 能力を使う
+        //----------------------------------
+
+        useButton.style.display =
+            "inline-block";
+
+        useButton.textContent =
+            "能力を使う";
+
+        useButton.onclick =
+            startHydraCostSelect;
+
+
+        //----------------------------------
+        // 使わない
+        //----------------------------------
+
+        resistPassButton.style.display =
+            "inline-block";
+
+        resistPassButton.textContent =
+            "使わない";
+
+        resistPassButton.onclick =
+            passHydraDamageAbility;
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // コスト選択中
+    //==================================
+
+if(
+    hydraSelectedCostCards.length ===
+    cost
+){
+
+    confirmButton.style.display =
+        "inline-block";
+
+    confirmButton.textContent =
+        "決定";
+
+    confirmButton.onclick =
+        confirmHydraDamageAbility;
+
+}
+
+
+    return;
+
+}
 
 //======================================
 // カリュブディス
