@@ -1153,7 +1153,7 @@ function clickEnemyPlayer(){
 
 
             //----------------------------------
-            // ここから能力コスト選択へ
+            // 能力コスト選択へ
             //----------------------------------
 
             startSummonAbilityCost();
@@ -1195,7 +1195,9 @@ function clickEnemyPlayer(){
 
 
         if(
-            !targets.includes("enemy")
+            !targets.includes(
+                "enemy"
+            )
         ){
 
             console.log(
@@ -1215,12 +1217,61 @@ function clickEnemyPlayer(){
             ENEMY;
 
 
+        //----------------------------------
+        // 第1対象選択終了
+        //----------------------------------
+
         magiaTargetMode =
             false;
 
 
+        //----------------------------------
+        // 発光解除
+        //----------------------------------
+
         clearMagiaHighlight();
 
+
+        console.log(
+            "マギア対象決定：相手",
+            magiaCard.name
+        );
+
+
+        //==================================================
+        // 追加の自分サモン選択
+        //
+        // イグナイト等
+        //
+        // 第1対象を決定したあと、
+        // パワーを参照する自分サモンを選択する
+        //==================================================
+
+        if(
+            magiaCard.effect?.valueType ===
+                "ownSummonPower"
+        ){
+
+            console.log(
+                "追加サモン選択が必要",
+                magiaCard.name
+            );
+
+
+            startMagiaOwnSummonSelect();
+
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 通常マギア
+        //
+        // 追加サモン選択がない場合のみ
+        // コスト選択へ
+        //----------------------------------
 
         startMagiaCost();
 

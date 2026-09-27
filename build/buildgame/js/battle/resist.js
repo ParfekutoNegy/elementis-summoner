@@ -4,7 +4,7 @@
 
 let currentResistEvent = null;
 
-
+let resistPassedThisEvent = false;
 
 //======================================
 // レジスト発動開始
@@ -515,6 +515,14 @@ function passResist(){
 
 
     //----------------------------------
+// このイベントでは
+// これ以上レジストを使用しない
+//----------------------------------
+
+resistPassedThisEvent = true;
+
+
+    //----------------------------------
     // 行動案内を消す
     //----------------------------------
 
@@ -522,7 +530,7 @@ function passResist(){
 
 
     //----------------------------------
-    // 現在のイベント
+    // 現在のイベント確認
     //----------------------------------
 
     const event =
@@ -562,6 +570,7 @@ function passResist(){
     );
 
 
+
     selectableResistCards =
         [];
 
@@ -585,272 +594,45 @@ function passResist(){
         );
 
 
-    //----------------------------------
-    // サモンへのダメージ
-    //----------------------------------
+    console.log(
+        "レジストを使用せず解決へ",
+        {
+            type:
+                event.type,
 
-    if(
-        event.type ===
-        GAME_EVENT.BEFORE_SUMMON_DAMAGE
-    ){
-
-        console.log(
-            "レジストなし：サモンへダメージ",
-            event.target?.card?.name,
-            event.damage
-        );
-
-
-        if(
-            event.target &&
-            event.damage > 0
-        ){
-
-            dealDamage(
-                event.target,
-                event.damage
-            );
-
-        }
-
-    }
-
-
-    //----------------------------------
-    // プレイヤーへのダメージ
-    //----------------------------------
-
-    else if(
-        event.type ===
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE
-    ){
-
-        console.log(
-            "レジストなし：プレイヤーへダメージ",
-            event.player,
-            event.damage
-        );
-
-
-        //----------------------------------
-        // ガーゴイル軽減は
-        // すでに終了している
-        //----------------------------------
-
-        const finalDamage =
-            event.damage;
-
-
-        console.log(
-            "レジストなし：確定ダメージ",
-            finalDamage
-        );
-
-
-        //==================================
-        // ネレイド
-        //
-        // レジストを使用しなかった場合でも
-        // 最終ダメージに対して
-        // ネレイド能力を使用できる
-        //==================================
-
-        if(
-            finalDamage > 0 &&
-            checkNereidDamagePrevent(
+            target:
+                event.target?.card?.name ??
                 event.player,
-                finalDamage,
-                event
-            )
-        ){
 
-            console.log(
-                "レジストなし：",
-                "ネレイド能力選択待機"
-            );
-
-
-            //----------------------------------
-            // 使用済みフラグ解除
-            //----------------------------------
-
-            for(const card of board.handCards){
-
-                card.usedThisEvent =
-                    false;
-
-            }
-
-
-            //----------------------------------
-            // 手札状態解除
-            //----------------------------------
-
-            clearHandSelection();
-
-
-            for(const card of board.handCards){
-
-                card.setSelected(false);
-
-                card.setCostSelected(false);
-
-                card.setHighlight(false);
-
-            }
-
-
-            //----------------------------------
-            // 表示更新
-            //----------------------------------
-
-            updateGameState();
-
-            updateButtons();
-
-
-//----------------------------------
-// updateGameState() 後に
-// ネレイド発光を再設定
-//----------------------------------
-
-updateNereidDamagePreventHighlight();
-
-            return;
-
+            damage:
+                event.damage
         }
+    );
 
 
-        //----------------------------------
-        // バトルログ
-        //----------------------------------
-
-        if(finalDamage > 0){
-
-            const damageTarget =
-                event.player === PLAYER
-                    ?
-                    "PLAYER"
-                    :
-                    "CPU";
-
-
-            addBattleLog(
-                `${damageTarget}：${finalDamage}ダメージ`
-            );
-
-        }
-
-
-        //----------------------------------
-        // 確定ダメージを直接適用
-        //----------------------------------
-
-        applyPlayerDamage(
-            event.player,
-            finalDamage
-        );
-
-    }
+    //==================================
+    // 重要
+    //
+    // ここでは
+    //
+    // dealDamage()
+    // damagePlayer()
+    //
+    // を呼ばない。
+    //
+    // すでに BEFORE_*_DAMAGE の
+    // レジスト判定まで終了しているため、
+    // 再度呼ぶと同じイベントが
+    // 発生してしまう。
+    //
+    // 残りダメージの処理は
+    // finishResist() に任せる。
+    //==================================
 
 
-    //----------------------------------
-    // 使用済みフラグ解除
-    //----------------------------------
-
-    for(const card of board.handCards){
-
-        card.usedThisEvent =
-            false;
-
-    }
-
-
-    //----------------------------------
-    // イベント終了
-    //----------------------------------
-
-    currentResistEvent =
-        null;
-
-
-    //----------------------------------
-    // 戦闘解決
-    //----------------------------------
-
-    resolveBattle();
-
-
-    finishAttack();
-
-
-    //----------------------------------
-    // 手札状態解除
-    //----------------------------------
-
-    clearHandSelection();
-
-
-    for(const card of board.handCards){
-
-        card.setSelected(false);
-
-        card.setCostSelected(false);
-
-        card.setHighlight(false);
-
-    }
-
-
-    //----------------------------------
-    // 通常状態へ更新
-    //----------------------------------
-
-    updateGameState();
-
-
-    //----------------------------------
-    // CPU攻撃中なら再開
-    //----------------------------------
-
-    if(
-        game.currentPlayer === ENEMY &&
-        game.state === TURN_STATE.PLAYING
-    ){
-
-        console.log(
-            "レジストなし CPU攻撃再開"
-        );
-
-
-        cpuWaiting =
-            false;
-
-
-        //----------------------------------
-        // 今回の攻撃完了
-        //----------------------------------
-
-        cpuAttackIndex++;
-
-
-        //----------------------------------
-        // 次の攻撃へ
-        //----------------------------------
-
-        setTimeout(
-            () => {
-
-                cpuNextAttack();
-
-            },
-            2000
-        );
-
-    }
+    finishResist();
 
 }
-
 //======================================
 // レジスト選択開始
 //======================================
@@ -1105,7 +887,9 @@ function finishResist(){
         "対象=",
         currentResistEvent.player,
         "残りダメージ=",
-        currentResistEvent.damage
+        currentResistEvent.damage,
+        "pass=",
+        resistPassedThisEvent
     );
 
 
@@ -1208,15 +992,6 @@ function finishResist(){
 
             //==================================
             // CPUネレイド能力判定
-            //
-            // ここまで来たということは
-            // CPUが今回使用するレジストがない
-            //
-            // 使用条件
-            //
-            // ・受けるダメージが3以上
-            // または
-            // ・そのダメージでライフが0以下
             //==================================
 
             if(
@@ -1262,39 +1037,58 @@ function finishResist(){
             currentResistEvent.player === PLAYER
         ){
 
-            const resistCards =
-                findResistCards(
-                    currentResistEvent
-                ).filter(
-                    card =>
-                        !card.usedThisEvent
-                );
-
-
-            //----------------------------------
-            // 追加レジスト選択
-            //----------------------------------
+            //==================================
+            // 「プレイしない」を選んでいない場合だけ
+            // 追加レジストを確認する
+            //==================================
 
             if(
-                resistCards.length > 0
+                !resistPassedThisEvent
             ){
 
-                console.log(
-                    "追加プレイヤーレジスト選択",
-                    resistCards.map(
+                const resistCards =
+                    findResistCards(
+                        currentResistEvent
+                    ).filter(
                         card =>
-                            card.name
-                    )
+                            !card.usedThisEvent
+                    );
+
+
+                //----------------------------------
+                // 追加レジスト選択
+                //----------------------------------
+
+                if(
+                    resistCards.length > 0
+                ){
+
+                    console.log(
+                        "追加プレイヤーレジスト選択",
+                        resistCards.map(
+                            card =>
+                                card.name
+                        )
+                    );
+
+
+                    showResistSelection(
+                        resistCards,
+                        currentResistEvent
+                    );
+
+
+                    return;
+
+                }
+
+            }
+            else{
+
+                console.log(
+                    "PLAYER：このイベントでは",
+                    "これ以上レジストを使用しない"
                 );
-
-
-                showResistSelection(
-                    resistCards,
-                    currentResistEvent
-                );
-
-
-                return;
 
             }
 
@@ -1456,11 +1250,51 @@ function finishResist(){
     selectedResistCostCards = [];
 
 
+    //==================================
+    // 「プレイしない」状態解除
+    //
+    // ここで解除するため、
+    // 次のマギア・次の攻撃では
+    // 再びレジストできる
+    //==================================
+
+    resistPassedThisEvent =
+        false;
+
+
     updateButtons();
 
 
+    //==================================
+    // マギアによるダメージへの
+    // レジストだった場合
+    //
+    // 停止していたマギアの
+    // 終了処理へ戻す
+    //==================================
+
+    if(
+        typeof resistMagiaWaiting !==
+            "undefined" &&
+        resistMagiaWaiting
+    ){
+
+        console.log(
+            "レジスト終了：",
+            "停止中マギアの解決を再開"
+        );
+
+
+        resumeMagiaAfterResist();
+
+
+        return;
+
+    }
+
+
     //----------------------------------
-    // 戦闘解決
+    // 通常の戦闘解決
     //----------------------------------
 
     resolveBattle();

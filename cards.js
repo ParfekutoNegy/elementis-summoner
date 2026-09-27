@@ -545,15 +545,29 @@ const CARD_LIST = [
             value:2
         }
     },
-    {
-        id: 37,
-        name:"マグナブレイズ",
-        type: "マギア",
-        element: "火",
-        cost: 2,
-        series:"folklore",
-        image: "images/037-マグナブレイズ.jpg"
+{
+    id: 37,
+    name:"マグナブレイズ",
+    type:"マギア",
+    element:"火",
+    cost:2,
+    series:"folklore",
+    image:"images/037-マグナブレイズ.jpg",
+
+    effect:{
+        target:[
+            "enemySummon",
+            "enemy",
+            "playerSummon"
+        ],
+        type:"damage",
+        valueType:"ownCoolElementCount",
+        element:"火"
     },
+    tag:"相手、もしくはサモン１体",
+    text:
+        "対象に自分のクールゾーンにある【火】カードの枚数分のダメージを与える。"
+},
     {
         id: 38,
         name:"インフェルノ",
@@ -561,7 +575,8 @@ const CARD_LIST = [
         element: "火",
         cost: 3,
         series:"folklore",
-        image: "images/038-インフェルノ.jpg"
+        image: "images/038-インフェルノ.jpg",
+        tag:"サモン１体",
     },
     {
         id: 39,
@@ -940,7 +955,19 @@ const CARD_LIST = [
         element: "火",
         cost: 1,
         series:"mythology",
-        image: "images/070-ソウルバーン.jpg"
+        image: "images/070-ソウルバーン.jpg",
+        tag:"相手、もしくはサモン１体",
+        text:"プレイ時に自分のライフポイントを２減らす。対象に２ダメージを与える。",
+        effect:{
+            target:[
+                "enemySummon",
+                "enemy",
+                "playerSummon"
+            ],
+            type:"damage",
+            value:2,
+            lifeCost:2
+        }
     }, 
     {
         id: 71,
@@ -949,7 +976,19 @@ const CARD_LIST = [
         element: "火",
         cost: 2,
         series:"mythology",
-        image: "images/071-イグナイト.jpg"
+        image: "images/071-イグナイト.jpg",
+        tag:"相手、もしくはサモン１体",
+        text:"自分のサモン１体を選び、そのパワー分のダメージを対象に与える。選んだサモンをクールゾーンに置く。",
+        effect:{
+            target:[
+                "enemySummon",
+                "enemy",
+                "playerSummon"
+            ],
+            type:"damage",
+            valueType:"ownSummonPower",
+            coolOwnSummon:true
+        },
     }, 
     {
         id: 72,

@@ -8,6 +8,21 @@ let magiaTarget = null;
 // マギア対象選択中
 let magiaTargetMode = false;
 
+let nereidWaitingMagiaOwnSummon =
+    null;
+
+//==================================================
+// 追加サモン選択型ダメージマギア
+//
+// イグナイト等
+//==================================================
+
+let magiaOwnSummonSelectMode =
+    false;
+
+let magiaSelectedOwnSummon =
+    null;
+
 
 let forceCostMode = false;
 let forceCostPlayer = null;
@@ -41,6 +56,35 @@ let charybdisTriggerQueue =
 
 let charybdisCurrentTrigger =
     null;   
+//======================================
+// ヒュドラ
+// マギアダメージ待機
+//======================================
+
+let hydraMagiaWaiting =
+    false;
+
+let hydraWaitingMagia =
+    null;
+
+let hydraWaitingMagiaTarget =
+    null;
+
+let hydraWaitingMagiaOwnSummon =
+    null;    
+
+//==================================================
+// レジストによって停止中のマギア
+//==================================================
+
+let resistMagiaWaiting = false;
+
+let resistWaitingMagia = null;
+
+let resistWaitingMagiaTarget = null;
+
+let resistWaitingMagiaOwnSummon =
+    null;
 
     
 //=========================
@@ -96,15 +140,32 @@ function resetMagiaState(){
 
     clearMagiaHighlight();
 
-    //----------------------------------
-    // 状態初期化
-    //----------------------------------
 
-    magiaCard = null;
+    //==================================
+    // 通常マギア状態初期化
+    //==================================
 
-    magiaTarget = null;
+    magiaCard =
+        null;
 
-    magiaTargetMode = false;
+    magiaTarget =
+        null;
+
+    magiaTargetMode =
+        false;
+
+
+    //==================================
+    // 追加サモン選択状態初期化
+    //
+    // イグナイト等
+    //==================================
+
+    magiaOwnSummonSelectMode =
+        false;
+
+    magiaSelectedOwnSummon =
+        null;
 
 
     //----------------------------------
@@ -319,9 +380,6 @@ function resolveMagia(){
         //----------------------------------
         // PLAYER → CPU
         //----------------------------------
-        // CPU手札が0枚なら
-        // 何も起こらずそのまま終了
-        //----------------------------------
 
         if(
             magiaCard.owner === PLAYER &&
@@ -335,10 +393,6 @@ function resolveMagia(){
             );
 
 
-            //----------------------------------
-            // マギア情報を保存
-            //----------------------------------
-
             const resolvedMagia =
                 magiaCard;
 
@@ -348,12 +402,8 @@ function resolveMagia(){
 
             const isCpuMagia =
                 resolvedMagia.owner ===
-                ENEMY;
+                    ENEMY;
 
-
-            //==================================
-            // マギアプレイ時サモン能力
-            //==================================
 
             triggerSummonAbilitiesOnMagiaPlay(
                 resolvedMagia.owner
@@ -361,7 +411,7 @@ function resolveMagia(){
 
 
             //----------------------------------
-            // マギアを手札から削除
+            // 手札から削除
             //----------------------------------
 
             if(
@@ -388,64 +438,52 @@ function resolveMagia(){
             }
 
 
-//==================================
-// 効果解決完了
-// ↓
-// 撃破解決
-// ↓
-// マギアをクールへ
-//==================================
+            setTimeout(
+                () => {
 
-setTimeout(()=>{
+                    //----------------------------------
+                    // CPU対象発光解除
+                    //----------------------------------
 
-    //----------------------------------
-    // CPUマギア対象発光解除
-    //----------------------------------
+                    if(isCpuMagia){
 
-    if(
-        isCpuMagia
-    ){
+                        clearCpuMagiaTargetHighlight(
+                            resolvedTarget
+                        );
 
-        clearCpuMagiaTargetHighlight(
-            resolvedTarget
-        );
-
-    }
+                    }
 
 
-    //----------------------------------
-    // まず撃破解決
-    //----------------------------------
+                    //----------------------------------
+                    // 戦闘解決
+                    //----------------------------------
 
-    resolveBattle();
-
-
-    //----------------------------------
-    // その後マギアをクールへ
-    //----------------------------------
-
-    resolvedMagia.area =
-        "cool";
+                    resolveBattle();
 
 
-    board.addCoolCard(
-        resolvedMagia,
-        resolvedMagia.owner
-    );
+                    //----------------------------------
+                    // マギアをクールへ
+                    //----------------------------------
+
+                    resolvedMagia.area =
+                        "cool";
 
 
-    console.log(
-        "forceCostマギア効果解決完了 → クールへ",
-        resolvedMagia.name
-    );
+                    board.addCoolCard(
+                        resolvedMagia,
+                        resolvedMagia.owner
+                    );
 
 
-},5000);
+                    console.log(
+                        "forceCostマギア効果解決完了 → クールへ",
+                        resolvedMagia.name
+                    );
 
+                },
+                5000
+            );
 
-            //----------------------------------
-            // 状態リセット
-            //----------------------------------
 
             resetMagiaState();
 
@@ -464,16 +502,17 @@ setTimeout(()=>{
         }
 
 
-//----------------------------------
-// 通常の強制コスト選択
-//----------------------------------
+        //----------------------------------
+        // 通常の強制コスト選択
+        //----------------------------------
 
-forceCostSource =
-    "magia";
+        forceCostSource =
+            "magia";
 
-startForceCostSelect(
-    magiaTarget
-);
+
+        startForceCostSelect(
+            magiaTarget
+        );
 
 
         return;
@@ -485,27 +524,32 @@ startForceCostSelect(
     // 通常マギア
     //==================================
 
-
-    //----------------------------------
-    // マギア情報を保存
-    //----------------------------------
-
     const resolvedMagia =
         magiaCard;
+
 
     const resolvedTarget =
         magiaTarget;
 
+
+    //----------------------------------
+    // イグナイト等
+    //
+    // resetMagiaState()で消える前に
+    // 選択サモンを保存
+    //----------------------------------
+
+    const resolvedOwnSummon =
+        magiaSelectedOwnSummon;
+
+
     const isCpuMagia =
         resolvedMagia.owner ===
-        ENEMY;
+            ENEMY;
 
 
     //==================================
     // マギアプレイ時サモン能力
-    //==================================
-    //
-    // 効果解決の直前に発動
     //==================================
 
     triggerSummonAbilitiesOnMagiaPlay(
@@ -517,85 +561,228 @@ startForceCostSelect(
     // 効果発動
     //----------------------------------
 
-    activateCardEffect(
-        resolvedMagia,
-        resolvedTarget,
-        resolvedMagia.owner
-    );
-
-
-//----------------------------------
-// 手札から削除
-//----------------------------------
-
-if(
-    resolvedMagia.owner === PLAYER
-){
-
-    board.handCards =
-        board.handCards.filter(
-            card =>
-                card !==
-                resolvedMagia
+    const effectResult =
+        activateCardEffect(
+            resolvedMagia,
+            resolvedTarget,
+            resolvedMagia.owner
         );
 
-}
-else{
 
-    enemyHandCards =
-        enemyHandCards.filter(
-            card =>
-                card !==
-                resolvedMagia
+    //==================================
+    // マギア解決中にゲーム終了
+    //==================================
+
+    if(
+        effectResult ===
+            "GAME_OVER"
+    ){
+
+        console.log(
+            "マギア解決中にゲーム終了",
+            resolvedMagia.name
         );
 
-}
+
+        resetMagiaState();
+
+        summonCard =
+            null;
+
+        selectedCostCards =
+            [];
+
+        costConfirm =
+            false;
 
 
-//==================================
-// 効果解決完了
-// ↓
-// 撃破解決
-// ↓
-// マギアをクールへ
-//==================================
+        updateButtons();
 
-setTimeout(()=>{
+
+        return;
+
+    }
+
+
+    //==================================
+    // ヒュドラ待機
+    //==================================
+
+    if(
+        effectResult ===
+            "WAIT_HYDRA"
+    ){
+
+        console.log(
+            "マギア解決停止：",
+            resolvedMagia.name,
+            "→ ヒュドラ能力待ち"
+        );
+
+
+        hydraMagiaWaiting =
+            true;
+
+        hydraWaitingMagia =
+            resolvedMagia;
+
+        hydraWaitingMagiaTarget =
+            resolvedTarget;
+
+        hydraWaitingMagiaOwnSummon =
+            resolvedOwnSummon;
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // ネレイド待機
+    //==================================
+
+    if(
+        effectResult ===
+            "WAIT_NEREID"
+    ){
+
+        console.log(
+            "マギア解決停止：",
+            resolvedMagia.name,
+            "→ ネレイド能力待ち"
+        );
+
+
+        nereidMagiaWaiting =
+            true;
+
+        nereidWaitingMagia =
+            resolvedMagia;
+
+        nereidWaitingMagiaTarget =
+            resolvedTarget;
+
+        nereidWaitingMagiaOwnSummon =
+            resolvedOwnSummon;
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // レジスト待機
+    //==================================
+
+    if(
+        effectResult ===
+            "WAIT_RESIST"
+    ){
+
+        console.log(
+            "マギア解決停止：",
+            resolvedMagia.name,
+            "→ レジスト待ち"
+        );
+
+
+        resistMagiaWaiting =
+            true;
+
+        resistWaitingMagia =
+            resolvedMagia;
+
+        resistWaitingMagiaTarget =
+            resolvedTarget;
+
+        resistWaitingMagiaOwnSummon =
+            resolvedOwnSummon;
+
+
+        return;
+
+    }
+
 
     //----------------------------------
-    // まず撃破解決
+    // 手札から削除
     //----------------------------------
 
-    resolveBattle();
+    if(
+        resolvedMagia.owner === PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
 
 
-    //----------------------------------
-    // その後マギアをクールへ
-    //----------------------------------
+    //==================================
+    // 効果解決完了
+    //==================================
 
-    resolvedMagia.area =
-        "cool";
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // イグナイト等
+            //
+            // 選択した自分サモンを
+            // クールへ
+            //----------------------------------
+
+            resolveMagiaCoolOwnSummon(
+                resolvedMagia,
+                resolvedOwnSummon
+            );
 
 
-    board.addCoolCard(
-        resolvedMagia,
-        resolvedMagia.owner
+            //----------------------------------
+            // 戦闘解決
+            //----------------------------------
+
+            resolveBattle();
+
+
+            //----------------------------------
+            // マギアをクールへ
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "マギア効果解決完了 → クールへ",
+                resolvedMagia.name
+            );
+
+        },
+        1000
     );
-
-
-    console.log(
-        "マギア効果解決完了 → クールへ",
-        resolvedMagia.name
-    );
-
-
-    //----------------------------------
-    // ワームなどの動的パワー表示は
-    // addCoolCard → updateCoolCount で
-    // 自動更新される
-    //----------------------------------
-
-},1000);
 
 
     //----------------------------------
@@ -604,14 +791,230 @@ setTimeout(()=>{
 
     resetMagiaState();
 
-    summonCard = null;
+    summonCard =
+        null;
 
-    selectedCostCards = [];
+    selectedCostCards =
+        [];
 
-    costConfirm = false;
+    costConfirm =
+        false;
 
 
     updateButtons();
+
+}
+
+//==================================================
+// ヒュドラ
+// 停止していたマギア解決を再開
+//==================================================
+
+function resumeMagiaAfterHydra(){
+
+    //----------------------------------
+    // 待機確認
+    //----------------------------------
+
+    if(
+        !hydraMagiaWaiting ||
+        !hydraWaitingMagia
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 保存情報
+    //----------------------------------
+
+    const resolvedMagia =
+        hydraWaitingMagia;
+
+    const resolvedTarget =
+        hydraWaitingMagiaTarget;
+
+    const resolvedOwnSummon =
+        hydraWaitingMagiaOwnSummon;
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+            ENEMY;
+
+
+    console.log(
+        "ヒュドラ：マギア解決再開",
+        {
+            magia:
+                resolvedMagia.name,
+
+            target:
+                resolvedTarget?.card?.name ??
+                resolvedTarget,
+
+            owner:
+                resolvedMagia.owner
+        }
+    );
+
+
+    //==================================
+    // ヒュドラ待機解除
+    //==================================
+
+    hydraMagiaWaiting =
+        false;
+
+    hydraWaitingMagia =
+        null;
+
+    hydraWaitingMagiaTarget =
+        null;
+
+    hydraWaitingMagiaOwnSummon =
+        null;
+
+
+    //==================================
+    // マギアを手札から削除
+    //==================================
+
+    if(
+        resolvedMagia.owner ===
+            PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+
+
+    //==================================
+    // マギア状態リセット
+    //==================================
+
+    resetMagiaState();
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    updateButtons();
+
+
+    //==================================
+    // 効果解決完了
+    //==================================
+
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // CPUマギア対象発光解除
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof clearCpuMagiaTargetHighlight ===
+                    "function"
+            ){
+
+                clearCpuMagiaTargetHighlight(
+                    resolvedTarget
+                );
+
+            }
+
+
+            //----------------------------------
+            // イグナイト等
+            // 選択サモンをクールへ
+            //----------------------------------
+
+            resolveMagiaCoolOwnSummon(
+                resolvedMagia,
+                resolvedOwnSummon
+            );
+
+
+            //----------------------------------
+            // 撃破解決
+            //----------------------------------
+
+            resolveBattle();
+
+
+            //----------------------------------
+            // マギアをクールへ
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "ヒュドラ解決後：",
+                "マギア効果解決完了 → クールへ",
+                resolvedMagia.name
+            );
+
+
+            //----------------------------------
+            // CPU行動再開
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof runCpuTurnStep ===
+                    "function"
+            ){
+
+                setTimeout(
+                    () => {
+
+                        runCpuTurnStep();
+
+                    },
+                    500
+                );
+
+            }
+
+        },
+        1000
+    );
+
+
+    return true;
 
 }
 
@@ -670,6 +1073,206 @@ function startMagiaTargetSelect(card){
     //----------------------------------
 
     highlightMagiaTargets();
+
+}
+
+//==================================================
+// マギア：追加の自分サモン選択開始
+//
+// valueType:"ownSummonPower"
+// coolOwnSummon:true
+//
+// イグナイト等
+//==================================================
+
+function startMagiaOwnSummonSelect(){
+
+    //----------------------------------
+    // 使用中マギア確認
+    //----------------------------------
+
+    if(
+        !magiaCard ||
+        !magiaCard.effect
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択できるサモン確認
+    //----------------------------------
+
+    const selectableSummons =
+        playerField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        );
+
+
+    if(
+        selectableSummons.length === 0
+    ){
+
+        console.warn(
+            "追加サモン選択：",
+            "選択できる自分のサモンがありません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 通常マギア対象選択終了
+    //----------------------------------
+
+    magiaTargetMode =
+        false;
+
+
+    clearMagiaHighlight();
+
+
+    //----------------------------------
+    // 追加選択開始
+    //----------------------------------
+
+    magiaOwnSummonSelectMode =
+        true;
+
+    magiaSelectedOwnSummon =
+        null;
+
+
+    //----------------------------------
+    // 案内
+    //----------------------------------
+
+    showActionGuide(
+        "パワーを参照する自分のサモンを選んでください"
+    );
+
+
+    //----------------------------------
+    // 自分サモンを発光
+    //----------------------------------
+
+    selectableSummons.forEach(
+        summon => {
+
+            summon.view
+                .getElement()
+                .classList.add(
+                    "magia-target"
+                );
+
+        }
+    );
+
+
+    console.log(
+        "マギア：追加サモン選択開始",
+        magiaCard.name
+    );
+
+
+    updateButtons();
+
+}
+
+//==================================================
+// マギア：追加の自分サモン決定
+//==================================================
+
+function selectMagiaOwnSummon(
+    summon
+){
+
+    //----------------------------------
+    // 選択中確認
+    //----------------------------------
+
+    if(
+        !magiaOwnSummonSelectMode ||
+        !magiaCard
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 自分の場のサモンのみ
+    //----------------------------------
+
+    if(
+        !summon ||
+        summon.owner !== PLAYER ||
+        summon.destroyed ||
+        !playerField.includes(
+            summon
+        )
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 選択保存
+    //----------------------------------
+
+    magiaSelectedOwnSummon =
+        summon;
+
+
+    console.log(
+        "マギア：追加サモン決定",
+        {
+            magia:
+                magiaCard.name,
+
+            damageTarget:
+                magiaTarget?.card?.name ??
+                magiaTarget,
+
+            selectedSummon:
+                summon.card?.name,
+
+            power:
+                getPower(
+                    summon
+                )
+        }
+    );
+
+
+    //----------------------------------
+    // 選択終了
+    //----------------------------------
+
+    magiaOwnSummonSelectMode =
+        false;
+
+
+    clearMagiaHighlight();
+
+
+    //----------------------------------
+    // 通常のマギアコスト選択へ
+    //----------------------------------
+
+    startMagiaCost();
+
+
+    return true;
 
 }
 
@@ -3445,6 +4048,334 @@ function resolveSphinxForceCost(){
     continueAttackAfterAttackAbility(
         attacker,
         target
+    );
+
+}
+
+function resumeMagiaAfterResist(){
+
+    //----------------------------------
+    // 待機確認
+    //----------------------------------
+
+    if(
+        !resistMagiaWaiting ||
+        !resistWaitingMagia
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 保存情報
+    //----------------------------------
+
+    const resolvedMagia =
+        resistWaitingMagia;
+
+    const resolvedTarget =
+        resistWaitingMagiaTarget;
+
+    const resolvedOwnSummon =
+        resistWaitingMagiaOwnSummon;
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+            ENEMY;
+
+
+    console.log(
+        "レジスト後：マギア解決再開",
+        {
+            magia:
+                resolvedMagia.name,
+
+            target:
+                resolvedTarget?.card?.name ??
+                resolvedTarget,
+
+            owner:
+                resolvedMagia.owner
+        }
+    );
+
+
+    //==================================
+    // レジスト待機解除
+    //==================================
+
+    resistMagiaWaiting =
+        false;
+
+    resistWaitingMagia =
+        null;
+
+    resistWaitingMagiaTarget =
+        null;
+
+    resistWaitingMagiaOwnSummon =
+        null;
+
+
+    //----------------------------------
+    // activateCardEffect() は
+    // 再実行しない
+    //----------------------------------
+
+
+    //==================================
+    // マギアを手札から削除
+    //==================================
+
+    if(
+        resolvedMagia.owner ===
+            PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+
+
+    //==================================
+    // マギア状態リセット
+    //==================================
+
+    resetMagiaState();
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    updateButtons();
+
+
+    //==================================
+    // マギア後処理
+    //==================================
+
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // CPUマギア対象発光解除
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof clearCpuMagiaTargetHighlight ===
+                    "function"
+            ){
+
+                clearCpuMagiaTargetHighlight(
+                    resolvedTarget
+                );
+
+            }
+
+
+            //----------------------------------
+            // イグナイト等
+            // 選択サモンをクールへ
+            //----------------------------------
+
+            resolveMagiaCoolOwnSummon(
+                resolvedMagia,
+                resolvedOwnSummon
+            );
+
+
+            //----------------------------------
+            // 戦闘解決
+            //----------------------------------
+
+            resolveBattle();
+
+
+            //----------------------------------
+            // マギアをクールへ
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "レジスト後：",
+                "マギア効果解決完了 → クールへ",
+                resolvedMagia.name
+            );
+
+
+            //==================================
+            // CPUマギアならCPU処理再開
+            //==================================
+
+            if(
+                isCpuMagia &&
+                game.currentPlayer === ENEMY &&
+                game.state === TURN_STATE.PLAYING
+            ){
+
+                console.log(
+                    "レジスト後：CPUマギア処理再開"
+                );
+
+
+                cpuWaiting =
+                    false;
+
+
+                if(
+                    typeof runCpuTurnStep ===
+                        "function"
+                ){
+
+                    setTimeout(
+                        () => {
+
+                            runCpuTurnStep();
+
+                        },
+                        500
+                    );
+
+                }
+
+            }
+
+        },
+        1000
+    );
+
+
+    return true;
+
+}
+
+//==================================================
+// マギア
+// 選択した自分サモンをクールゾーンへ
+//
+// イグナイト等
+//==================================================
+
+function resolveMagiaCoolOwnSummon(
+    resolvedMagia,
+    selectedSummon
+){
+
+    //----------------------------------
+    // この効果を持たない
+    //----------------------------------
+
+    if(
+        !resolvedMagia ||
+        resolvedMagia.effect?.coolOwnSummon !==
+            true
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択サモンなし
+    //----------------------------------
+
+    if(!selectedSummon){
+
+        console.warn(
+            "マギア：クールへ置くサモンがありません",
+            resolvedMagia.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 所有者の場
+    //----------------------------------
+
+    const field =
+        selectedSummon.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    //----------------------------------
+    // すでに場を離れている
+    //
+    // ダメージ対象と参照サモンが
+    // 同じだった場合などに備える
+    //----------------------------------
+
+    if(
+        !field.includes(
+            selectedSummon
+        )
+    ){
+
+        console.log(
+            "マギア：選択サモンはすでに場を離れています",
+            selectedSummon.card?.name
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールへ
+    //----------------------------------
+
+    console.log(
+        "マギア：選択サモンをクールへ",
+        {
+            magia:
+                resolvedMagia.name,
+
+            summon:
+                selectedSummon.card?.name
+        }
+    );
+
+
+    moveLamiaTargetToCool(
+        selectedSummon
     );
 
 }

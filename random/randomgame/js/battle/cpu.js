@@ -153,6 +153,35 @@ function runCpuTurnStep(){
 
     }
 
+    //======================================
+// ヒュドラ
+// ダメージ無効能力の解決待ち
+//
+// PLAYERが
+// ・能力を使うか
+// ・使わないか
+// ・3コストとして何を選ぶか
+//
+// を決定するまでCPUターンを進めない
+//======================================
+
+if(
+    typeof hydraDamageWaiting !==
+        "undefined" &&
+    hydraDamageWaiting
+){
+
+    console.log(
+        "CPU停止：ヒュドラ能力の解決待ち"
+    );
+
+    cpuWaiting =
+        true;
+
+    return;
+
+}
+
 
     //==================================
     // クール時誘発能力の解決待ち
@@ -2242,7 +2271,8 @@ function moveEnemyToCost(card){
 
 function cpuMagia(
     card,
-    target
+    target,
+    ownSummon = null
 ){
 
     //==================================
@@ -2277,6 +2307,78 @@ function cpuMagia(
 
 
     //==================================
+    // 自分サモンパワー参照型確認
+    //
+    // イグナイト等
+    //==================================
+
+    if(
+        card.effect?.valueType ===
+            "ownSummonPower"
+    ){
+
+        //----------------------------------
+        // 参照サモンなし
+        //----------------------------------
+
+        if(!ownSummon){
+
+            console.log(
+                "CPUマギア使用不可：",
+                card.name,
+                "参照サモンなし"
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // すでに破壊されている
+        //----------------------------------
+
+        if(
+            ownSummon.destroyed
+        ){
+
+            console.log(
+                "CPUマギア使用不可：",
+                card.name,
+                "参照サモン破壊済み",
+                ownSummon.card?.name
+            );
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 現在CPUの場に存在するか
+        //----------------------------------
+
+        if(
+            !enemyField.includes(
+                ownSummon
+            )
+        ){
+
+            console.log(
+                "CPUマギア使用不可：",
+                card.name,
+                "参照サモンが場にいない",
+                ownSummon.card?.name
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    //==================================
     // カードプレイ成立
     //
     // 通常のCPUマギアだけでなく
@@ -2300,9 +2402,26 @@ function cpuMagia(
 
     addBattleLog(
         `CPU：対象 → ${
-            getMagiaTargetLog(target)
+            getMagiaTargetLog(
+                target
+            )
         }`
     );
+
+
+    //==================================
+    // 追加サモンログ
+    //
+    // イグナイト等
+    //==================================
+
+    if(ownSummon){
+
+        addBattleLog(
+            `CPU：${ownSummon.card.name}のパワーを参照`
+        );
+
+    }
 
 
     //----------------------------------
@@ -2357,6 +2476,42 @@ function cpuMagia(
         target;
 
 
+    //==================================
+    // 追加サモン情報保存
+    //
+    // PLAYER版イグナイトと同じ
+    // magiaSelectedOwnSummonを使用する
+    //==================================
+
+    magiaSelectedOwnSummon =
+        ownSummon;
+
+
+    if(ownSummon){
+
+        console.log(
+            "CPU：マギア追加サモン保存",
+            {
+                magia:
+                    card.name,
+
+                target:
+                    target?.card?.name ??
+                    target,
+
+                ownSummon:
+                    ownSummon.card?.name,
+
+                power:
+                    getPower(
+                        ownSummon
+                    )
+            }
+        );
+
+    }
+
+
     //----------------------------------
     // CPUマギアを手札から除外
     //----------------------------------
@@ -2383,7 +2538,7 @@ function cpuMagia(
     if(
         card.effect &&
         card.effect.type ===
-        "forceCost"
+            "forceCost"
     ){
 
         console.log(
@@ -2411,23 +2566,25 @@ function cpuMagia(
         );
 
 
-//----------------------------------
-// プレイヤーが手札を選択
-//----------------------------------
+        //----------------------------------
+        // プレイヤーが手札を選択
+        //----------------------------------
 
-forceCostSource =
-    "magia";
+        forceCostSource =
+            "magia";
 
-startForceCostSelect(
-    target
-);
+
+        startForceCostSelect(
+            target
+        );
 
 
         //----------------------------------
         // CPUターン停止
         //----------------------------------
 
-        cpuWaiting = true;
+        cpuWaiting =
+            true;
 
 
         return true;
@@ -2848,18 +3005,31 @@ function selectCpuMagiaTarget(card){
     // 通常マギア
     //==================================
 
-    const candidates = [];
+const candidates = [];
 
 
-    const isDamageMagia =
-        card.effect.type ===
-        "damage";
+const isDamageMagia =
+    card.effect.type ===
+    "damage";
 
 
-    const damageValue =
-        Number(
-            card.effect.value
-        ) || 0;
+//==================================
+// 現在の実ダメージ
+//
+// 通常ダメージ
+// マグナブレイズ
+// 火マギアダメージ上昇
+// に対応
+//==================================
+
+const damageValue =
+    isDamageMagia
+        ?
+        getCpuMagiaDamageValue(
+            card
+        )
+        :
+        0;
 
 
     //==================================
@@ -6125,21 +6295,26 @@ function selectCpuDamageMagiaTarget(card){
     }
 
 
-    //----------------------------------
-    // ダメージ量
-    //----------------------------------
+//----------------------------------
+// 現在の実ダメージ
+//
+// 通常ダメージ
+// マグナブレイズ
+// 火マギアダメージ上昇
+// に対応
+//----------------------------------
 
-    const damageValue =
-        Number(
-            card.effect?.value
-        ) || 0;
+const damageValue =
+    getCpuMagiaDamageValue(
+        card
+    );
 
 
-    if(damageValue <= 0){
+if(damageValue <= 0){
 
-        return null;
+    return null;
 
-    }
+}
 
 
     //----------------------------------
@@ -7087,6 +7262,86 @@ function createCpuMagiaAction(card){
     }
 
 
+    //======================================
+    // ライフコスト確認
+    //
+    // ソウルバーン等
+    //
+    // ライフコストを支払った時点で
+    // CPUのライフが0以下になる場合は
+    // 効果より先にCPUが敗北するため
+    // 使用候補から除外する
+    //======================================
+
+    const lifeCost =
+        Number(
+            card.effect?.lifeCost
+        ) || 0;
+
+
+    if(
+        lifeCost > 0 &&
+        game.enemyLife <= lifeCost
+    ){
+
+        console.log(
+            "CPUポイント評価：マギア候補外",
+            card.name,
+            "ライフコストで敗北",
+            "CPU LIFE=",
+            game.enemyLife,
+            "lifeCost=",
+            lifeCost
+        );
+
+
+        return null;
+
+    }
+
+
+    //======================================
+    // 自分サモンパワー参照型
+    //
+    // イグナイト等
+    //
+    // ダメージ対象と
+    // クールへ送る自分サモンを
+    // セットで決定する
+    //======================================
+
+    let ownSummonPowerPlan =
+        null;
+
+
+    if(
+        card.effect?.type ===
+            "damage" &&
+        card.effect?.valueType ===
+            "ownSummonPower"
+    ){
+
+        ownSummonPowerPlan =
+            createCpuOwnSummonPowerDamagePlan(
+                card
+            );
+
+
+        if(!ownSummonPowerPlan){
+
+            console.log(
+                "CPUポイント評価：マギア候補外",
+                card.name,
+                "パワー参照プランなし"
+            );
+
+            return null;
+
+        }
+
+    }
+
+
     //----------------------------------
     // プレイヤー手札枚数
     //----------------------------------
@@ -7110,28 +7365,51 @@ function createCpuMagiaAction(card){
 
 
     //----------------------------------
-    // 必殺条件
+    // ダメージマギア判定
     //----------------------------------
 
     const isDamageMagia =
         card.effect &&
         card.effect.type ===
-        "damage";
+            "damage";
 
+
+    //==================================
+    // 現在の実ダメージ
+    //
+    // ・通常ダメージ
+    // ・マグナブレイズ
+    // ・イグナイト
+    // ・火マギアダメージ上昇
+    //
+    // に対応
+    //==================================
 
     const damageValue =
         isDamageMagia
-            ? Number(
-                card.effect.value
-            ) || 0
-            : 0;
+            ?
+            (
+                ownSummonPowerPlan
+                    ?
+                    ownSummonPowerPlan.damage
+                    :
+                    getCpuMagiaDamageValue(
+                        card
+                    )
+            )
+            :
+            0;
 
+
+    //----------------------------------
+    // 必殺条件
+    //----------------------------------
 
     const isPlayerLethal =
         isDamageMagia &&
         playerHandCount <= 1 &&
         damageValue >=
-        game.playerLife;
+            game.playerLife;
 
 
     //----------------------------------
@@ -7142,9 +7420,9 @@ function createCpuMagiaAction(card){
         !canIgnoreHandLimit &&
         !isPlayerLethal &&
         enemyHandCards.length
-        - 1
-        - currentCost
-        < 2
+            - 1
+            - currentCost
+            < 2
     ){
 
         console.log(
@@ -7207,7 +7485,8 @@ function createCpuMagiaAction(card){
     // アクアストリーム専用条件
     //======================================
 
-    let aquaStreamInfo = null;
+    let aquaStreamInfo =
+        null;
 
 
     if(
@@ -7279,7 +7558,8 @@ function createCpuMagiaAction(card){
     // カーススモーク専用使用判定
     //======================================
 
-    let curseSmokePlan = null;
+    let curseSmokePlan =
+        null;
 
 
     if(
@@ -7385,7 +7665,9 @@ function createCpuMagiaAction(card){
 
         console.log(
             "パワー=",
-            getPower(target)
+            getPower(
+                target
+            )
         );
 
         console.log(
@@ -7395,6 +7677,40 @@ function createCpuMagiaAction(card){
 
         console.log(
             "================================"
+        );
+
+    }
+
+
+    //======================================
+    // 自分サモンパワー参照型
+    //
+    // イグナイト等
+    //======================================
+
+    else if(
+        ownSummonPowerPlan
+    ){
+
+        target =
+            ownSummonPowerPlan.target;
+
+
+        console.log(
+            "CPU：パワー参照マギア対象決定",
+            card.name,
+            "target=",
+            target === PLAYER
+                ?
+                "PLAYER"
+                :
+                target?.card?.name,
+            "ownSummon=",
+            ownSummonPowerPlan
+                .ownSummon
+                .card?.name,
+            "damage=",
+            ownSummonPowerPlan.damage
         );
 
     }
@@ -7440,6 +7756,23 @@ function createCpuMagiaAction(card){
             card,
             target
         );
+
+
+    //==================================
+    // パワー参照用サモン保存
+    //
+    // イグナイト等
+    //==================================
+
+    if(
+        ownSummonPowerPlan
+    ){
+
+        action.ownSummon =
+            ownSummonPowerPlan
+                .ownSummon;
+
+    }
 
 
     //==================================
@@ -7495,7 +7828,8 @@ function createCpuMagiaAction(card){
             "計画=",
             curseSmokePlan.type,
             "対象=",
-            curseSmokePlan.target.card?.name,
+            curseSmokePlan.target
+                .card?.name,
             "power=",
             getPower(
                 curseSmokePlan.target
@@ -7506,6 +7840,91 @@ function createCpuMagiaAction(card){
 
     }
 
+//==================================
+// 自分サモンをクールへ送るデメリット
+//
+// イグナイト等
+//==================================
+
+if(
+    card.effect?.coolOwnSummon === true &&
+    ownSummonPowerPlan?.ownSummon
+){
+
+    const lostSummon =
+        ownSummonPowerPlan.ownSummon;
+
+
+    const lostPower =
+        getPower(
+            lostSummon
+        );
+
+
+    //----------------------------------
+    // 基本減点
+    //
+    // サモン1体を失うこと自体を
+    // 大きなデメリットとして扱う
+    //----------------------------------
+
+    let penalty =
+        60;
+
+
+    //----------------------------------
+    // 継続能力を持つサモンなら
+    // さらに失いたくない
+    //----------------------------------
+
+    const abilities =
+        getSummonAbilities(
+            lostSummon
+        );
+
+
+    if(
+        abilities.length > 0
+    ){
+
+        penalty +=
+            20;
+
+    }
+
+
+    //----------------------------------
+    // 評価へ反映
+    //----------------------------------
+
+    addCpuActionPoints(
+        action,
+        -penalty,
+        "自分サモンを失う"
+    );
+
+
+    console.log(
+        "CPU：自分サモンクール評価",
+        {
+            magia:
+                card.name,
+
+            summon:
+                lostSummon.card?.name,
+
+            power:
+                lostPower,
+
+            abilityCount:
+                abilities.length,
+
+            penalty:
+                penalty
+        }
+    );
+
+}
 
     //==================================
     // カード別基本評価
@@ -7583,18 +8002,100 @@ function createCpuMagiaAction(card){
 
     //==================================
     // ダメージマギア評価
+    //
+    // 固定ダメージだけでなく
+    //
+    // ・マグナブレイズ
+    // ・イグナイト
+    // ・火マギアダメージ上昇
+    //
+    // などを含めた現在の実ダメージで評価
     //==================================
 
     if(
         card.effect &&
         card.effect.type ===
-        "damage"
+            "damage"
     ){
 
         const damage =
-            Number(
-                card.effect.value
-            ) || 0;
+            ownSummonPowerPlan
+                ?
+                ownSummonPowerPlan.damage
+                :
+                getCpuMagiaDamageValue(
+                    card
+                );
+
+
+        //======================================
+        // ライフコスト評価
+        //
+        // 使用可能ではあるが、
+        // 自分のライフを減らすため減点する
+        //======================================
+
+        if(
+            lifeCost > 0
+        ){
+
+            let lifeCostPenalty =
+                lifeCost * 10;
+
+
+            //----------------------------------
+            // 支払い後の残りライフ
+            //----------------------------------
+
+            const remainingLife =
+                game.enemyLife -
+                lifeCost;
+
+
+            //----------------------------------
+            // 残りライフが少ないほど
+            // 使用を慎重にする
+            //----------------------------------
+
+            if(
+                remainingLife === 1
+            ){
+
+                lifeCostPenalty +=
+                    40;
+
+            }
+            else if(
+                remainingLife === 2
+            ){
+
+                lifeCostPenalty +=
+                    20;
+
+            }
+
+
+            addCpuActionPoints(
+                action,
+                -lifeCostPenalty,
+                "ライフコスト"
+            );
+
+
+            console.log(
+                "CPU：ライフコスト評価",
+                card.name,
+                "現在LIFE=",
+                game.enemyLife,
+                "支払い=",
+                lifeCost,
+                "支払い後=",
+                remainingLife,
+                "減点=",
+                lifeCostPenalty
+            );
+
+        }
 
 
         //----------------------------------
@@ -7944,7 +8445,8 @@ function createCpuMagiaAction(card){
             //----------------------------------
 
             for(
-                const attacker of attackableSummons
+                const attacker
+                of attackableSummons
             ){
 
                 const currentPower =
@@ -8174,29 +8676,46 @@ function createCpuMagiaAction(card){
 
 
     //==================================
-    // ウィルオウィスプとのコンボ
+    // 火マギアダメージ上昇とのコンボ
     //==================================
 
     if(
-        card.name === "パイロフレイム" ||
-        card.name === "ファイアボール" ||
-        card.name === "エクスプロジア"
+        card.type === "マギア" &&
+        card.elementType === "火" &&
+        card.effect?.type === "damage"
     ){
 
-        const hasWillOWisp =
+        const hasFireMagiaDamageUp =
             enemyField.some(
-                summon =>
-                    summon.card?.name ===
-                    "ウィルオウィスプ"
+                summon => {
+
+                    if(
+                        !summon ||
+                        summon.destroyed
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return !!getSummonAbility(
+                        summon,
+                        "fireMagiaDamageUp"
+                    );
+
+                }
             );
 
 
-        if(hasWillOWisp){
+        if(
+            hasFireMagiaDamageUp
+        ){
 
             addCpuActionPoints(
                 action,
                 30,
-                "ウィルオウィスプとのコンボ"
+                "火マギアダメージ上昇とのコンボ"
             );
 
         }
@@ -8248,7 +8767,11 @@ function createCpuMagiaAction(card){
         card.name,
         "target=",
         target?.card?.name ||
-        target,
+            target,
+        "ownSummon=",
+        action.ownSummon
+            ?.card?.name ||
+            null,
         "points=",
         action.points
     );
@@ -9526,6 +10049,13 @@ function cpuExecuteBestAction(){
     );
 
     console.log(
+        "ownSummon=",
+        bestAction.ownSummon
+            ?.card?.name ||
+        null
+    );
+
+    console.log(
         "points=",
         bestAction.points
     );
@@ -9612,8 +10142,22 @@ function cpuExecuteBestAction(){
         const card =
             bestAction.card;
 
+
         const target =
             bestAction.target;
+
+
+        //==================================
+        // 追加サモン
+        //
+        // イグナイト等
+        //
+        // 通常マギアではnull
+        //==================================
+
+        const ownSummon =
+            bestAction.ownSummon ??
+            null;
 
 
         if(
@@ -9642,14 +10186,25 @@ function cpuExecuteBestAction(){
             card.name,
             "target=",
             target?.card?.name ||
-            target
+            target,
+            "ownSummon=",
+            ownSummon
+                ?.card?.name ||
+            null
         );
 
+
+        //==================================
+        // CPUマギア実行
+        //
+        // ownSummonを追加で渡す
+        //==================================
 
         const result =
             cpuMagia(
                 card,
-                target
+                target,
+                ownSummon
             );
 
 
@@ -12517,5 +13072,594 @@ function cpuUseCatSithAbility(source){
 
 
     return result;
+
+}
+
+//======================================
+// CPU：マギアの現在ダメージ取得
+//======================================
+
+function getCpuMagiaDamageValue(
+    card,
+    ownSummon = null
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !card.effect ||
+        card.effect.type !== "damage"
+    ){
+
+        return 0;
+
+    }
+
+
+    let damage =
+        0;
+
+
+    //==================================
+    // 自分サモンパワー参照型
+    //
+    // イグナイト等
+    //==================================
+
+    if(
+        card.effect.valueType ===
+            "ownSummonPower"
+    ){
+
+        if(
+            !ownSummon ||
+            ownSummon.destroyed ||
+            !enemyField.includes(
+                ownSummon
+            )
+        ){
+
+            return 0;
+
+        }
+
+
+        damage =
+            getPower(
+                ownSummon
+            );
+
+    }
+
+
+    //==================================
+    // クールゾーン属性枚数型
+    //==================================
+
+    else if(
+        card.effect.valueType ===
+            "ownCoolElementCount"
+    ){
+
+        const targetElement =
+            card.effect.element;
+
+
+        damage =
+            enemyCoolCards.filter(
+                coolCard => {
+
+                    if(!coolCard){
+
+                        return false;
+
+                    }
+
+
+                    return (
+                        coolCard.elementType ===
+                        targetElement
+                    );
+
+                }
+            ).length;
+
+    }
+
+
+    //==================================
+    // 固定ダメージ
+    //==================================
+
+    else{
+
+        damage =
+            Number(
+                card.effect.value
+            ) || 0;
+
+    }
+
+
+    //==================================
+    // 火マギアダメージ上昇
+    //==================================
+
+    if(
+        card.type === "マギア" &&
+        card.elementType === "火"
+    ){
+
+        enemyField.forEach(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return;
+
+                }
+
+
+                const ability =
+                    getSummonAbility(
+                        summon,
+                        "fireMagiaDamageUp"
+                    );
+
+
+                if(!ability){
+
+                    return;
+
+                }
+
+
+                damage +=
+                    Number(
+                        ability.value
+                    ) || 0;
+
+            }
+        );
+
+    }
+
+
+    console.log(
+        "CPU：現在マギアダメージ",
+        card.name,
+        damage
+    );
+
+
+    return damage;
+
+}
+
+//==================================================
+// CPU
+// 自分サモンパワー参照ダメージマギア計画
+//
+// イグナイト等
+//==================================================
+
+function createCpuOwnSummonPowerDamagePlan(
+    card
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !card ||
+        card.effect?.type !==
+            "damage" ||
+        card.effect?.valueType !==
+            "ownSummonPower"
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // クールへ送れるCPUサモン
+    //----------------------------------
+
+    const ownSummons =
+        enemyField.filter(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    if(
+        ownSummons.length === 0
+    ){
+
+        console.log(
+            "CPU：パワー参照マギア候補外",
+            card.name,
+            "自分サモンなし"
+        );
+
+        return null;
+
+    }
+
+
+    //==================================
+    // 火マギアダメージ上昇
+    //==================================
+
+    let fireBonus =
+        0;
+
+
+    if(
+        card.type === "マギア" &&
+        card.elementType === "火"
+    ){
+
+        enemyField.forEach(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return;
+
+                }
+
+
+                const ability =
+                    getSummonAbility(
+                        summon,
+                        "fireMagiaDamageUp"
+                    );
+
+
+                if(ability){
+
+                    fireBonus +=
+                        Number(
+                            ability.value
+                        ) || 0;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    //----------------------------------
+    // 全プラン
+    //----------------------------------
+
+    const plans =
+        [];
+
+
+    //==================================
+    // 各CPUサモンを
+    // イグナイトの参照元として評価
+    //==================================
+
+    ownSummons.forEach(
+        ownSummon => {
+
+            //----------------------------------
+            // 現在パワー
+            //----------------------------------
+
+            const power =
+                getPower(
+                    ownSummon
+                );
+
+
+            //----------------------------------
+            // 最終ダメージ
+            //
+            // サモンの現在パワー
+            // ＋
+            // 火マギアダメージ上昇
+            //----------------------------------
+
+            const damage =
+                power +
+                fireBonus;
+
+
+            //==============================
+            // PLAYER直接
+            //==============================
+
+            if(
+                card.effect.target.includes(
+                    "enemy"
+                )
+            ){
+
+                //----------------------------------
+                // ダメージが高いほど高評価
+                //----------------------------------
+
+                let score =
+                    damage * 10;
+
+
+                //----------------------------------
+                // PLAYERを倒せる
+                //
+                // 最優先級
+                //----------------------------------
+
+                if(
+                    damage >=
+                    game.playerLife
+                ){
+
+                    score +=
+                        500;
+
+                }
+
+
+                //----------------------------------
+                // プラン登録
+                //
+                // 高パワーだからという理由では
+                // 減点しない
+                //----------------------------------
+
+                plans.push({
+
+                    target:
+                        PLAYER,
+
+                    ownSummon:
+                        ownSummon,
+
+                    damage:
+                        damage,
+
+                    score:
+                        score
+
+                });
+
+            }
+
+
+            //==============================
+            // PLAYERサモン
+            //==============================
+
+            if(
+                card.effect.target.includes(
+                    "enemySummon"
+                )
+            ){
+
+                playerField.forEach(
+                    target => {
+
+                        if(
+                            !target ||
+                            target.destroyed
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // マギア対象不可
+                        //----------------------------------
+
+                        if(
+                            isMagiaTargetBlocked(
+                                card,
+                                target
+                            )
+                        ){
+
+                            return;
+
+                        }
+
+
+                        const targetPower =
+                            getPower(
+                                target
+                            );
+
+
+                        //----------------------------------
+                        // 倒せないなら
+                        // 基本候補から外す
+                        //----------------------------------
+
+                        if(
+                            damage <
+                            targetPower
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // サモン撃破基本点
+                        //----------------------------------
+
+                        let score =
+                            30;
+
+
+                        //----------------------------------
+                        // 高パワーの相手を
+                        // 倒すほど高評価
+                        //----------------------------------
+
+                        score +=
+                            targetPower * 10;
+
+
+                        //----------------------------------
+                        // オーバーダメージを少し減点
+                        //
+                        // 高パワーのサモンを使うこと
+                        // 自体は悪くない。
+                        //
+                        // ただし、もっと小さいパワーで
+                        // 十分倒せる場合はそちらを
+                        // 少し優先する。
+                        //----------------------------------
+
+                        score -=
+                            (
+                                damage -
+                                targetPower
+                            ) * 2;
+
+
+                        //----------------------------------
+                        // プラン登録
+                        //----------------------------------
+
+                        plans.push({
+
+                            target:
+                                target,
+
+                            ownSummon:
+                                ownSummon,
+
+                            damage:
+                                damage,
+
+                            score:
+                                score
+
+                        });
+
+                    }
+                );
+
+            }
+
+        }
+    );
+
+
+    //----------------------------------
+    // プランなし
+    //----------------------------------
+
+    if(
+        plans.length === 0
+    ){
+
+        console.log(
+            "CPU：パワー参照マギア",
+            card.name,
+            "有効プランなし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 最高評価
+    //----------------------------------
+
+    plans.sort(
+        (a,b) =>
+            b.score -
+            a.score
+    );
+
+
+    const bestPlan =
+        plans[0];
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "CPU：パワー参照マギア計画",
+        card.name
+    );
+
+    console.log(
+        "対象=",
+        bestPlan.target === PLAYER
+            ?
+            "PLAYER"
+            :
+            bestPlan.target.card?.name
+    );
+
+    console.log(
+        "クールへ送るサモン=",
+        bestPlan.ownSummon.card?.name
+    );
+
+    console.log(
+        "参照パワー=",
+        getPower(
+            bestPlan.ownSummon
+        )
+    );
+
+    console.log(
+        "最終ダメージ=",
+        bestPlan.damage
+    );
+
+    console.log(
+        "計画点=",
+        bestPlan.score
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return bestPlan;
 
 }

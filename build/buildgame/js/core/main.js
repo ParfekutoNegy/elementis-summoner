@@ -2473,6 +2473,67 @@ function onCardClick(card){
         }
     );
 
+        //==================================================
+    // マギア
+    // 追加の自分サモン選択中
+    //
+    // イグナイト等
+    //==================================================
+
+    if(
+        typeof magiaOwnSummonSelectMode !==
+            "undefined" &&
+        magiaOwnSummonSelectMode
+    ){
+
+        //----------------------------------
+        // 自分の場以外は選択不可
+        //----------------------------------
+
+        if(
+            card.area !== "field"
+        ){
+
+            console.log(
+                "マギア追加サモン対象外",
+                card.name
+            );
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // サモン取得
+        //----------------------------------
+
+        const summon =
+            findSummonByView(
+                card
+            );
+
+
+        if(!summon){
+
+            return;
+
+        }
+
+
+        //----------------------------------
+        // 選択処理
+        //----------------------------------
+
+        selectMagiaOwnSummon(
+            summon
+        );
+
+
+        return;
+
+    }
+
     //==================================================
 // ネレイド
 // ダメージ無効能力 使用サモン選択中
@@ -3441,6 +3502,10 @@ if(
             // 対象決定
             //----------------------------------
 
+            //----------------------------------
+            // 対象決定
+            //----------------------------------
+
             magiaTarget =
                 summon;
 
@@ -3457,6 +3522,28 @@ if(
                 summon.card.name
             );
 
+
+            //==================================
+            // 追加の自分サモン選択
+            //
+            // イグナイト等
+            //==================================
+
+            if(
+                magiaCard.effect?.valueType ===
+                    "ownSummonPower"
+            ){
+
+                startMagiaOwnSummonSelect();
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 通常マギア
+            //----------------------------------
 
             startMagiaCost();
 
@@ -3551,47 +3638,103 @@ if(
         }
 
 
+//----------------------------------
+// 相手プレイヤー
+//----------------------------------
+
+if(
+    card.area === "enemy" ||
+    card === ENEMY ||
+    card === "enemy"
+){
+
+    //----------------------------------
+    // マギア対象として有効か確認
+    //----------------------------------
+
+    if(
+        isValidMagiaTarget(
+            magiaCard,
+            ENEMY
+        )
+    ){
+
         //----------------------------------
-        // 相手プレイヤー
+        // 対象決定
         //----------------------------------
+
+        magiaTarget =
+            ENEMY;
+
+
+        //----------------------------------
+        // 通常の対象選択終了
+        //----------------------------------
+
+        magiaTargetMode =
+            false;
+
+
+        //----------------------------------
+        // 対象発光解除
+        //----------------------------------
+
+        clearMagiaHighlight();
+
+
+        console.log(
+            "マギア対象決定：相手"
+        );
+
+
+        //==================================
+        // 追加の自分サモン選択
+        //
+        // イグナイト等
+        //
+        // valueType:
+        // "ownSummonPower"
+        //
+        // の場合は、
+        // ここではまだコスト選択へ進まず
+        // パワーを参照する自分のサモンを
+        // 選択する
+        //==================================
 
         if(
-            card.area === "enemy" ||
-            card === ENEMY ||
-            card === "enemy"
+            magiaCard.effect?.valueType ===
+                "ownSummonPower"
         ){
 
-            if(
-                isValidMagiaTarget(
-                    magiaCard,
-                    ENEMY
-                )
-            ){
-
-                magiaTarget =
-                    ENEMY;
+            console.log(
+                "追加サモン選択が必要",
+                magiaCard.name
+            );
 
 
-                magiaTargetMode =
-                    false;
-
-
-                clearMagiaHighlight();
-
-
-                console.log(
-                    "マギア対象決定：相手"
-                );
-
-
-                startMagiaCost();
-
-            }
+            startMagiaOwnSummonSelect();
 
 
             return;
 
         }
+
+
+        //----------------------------------
+        // 通常マギア
+        //
+        // 追加サモン選択が不要なら
+        // そのままコスト選択へ
+        //----------------------------------
+
+        startMagiaCost();
+
+    }
+
+
+    return;
+
+}
 
 
         //----------------------------------
@@ -8464,6 +8607,38 @@ function updateUsableCardHighlight(){
 
     ){
 
+        console.log(
+            "通常カード発光停止：行動状態が残っています",
+            {
+                summonCard:
+                    summonCard
+                        ? summonCard.name
+                        : null,
+
+                attackMode:
+                    attackMode,
+
+                magiaCard:
+                    magiaCard
+                        ? magiaCard.name
+                        : null,
+
+                resistUsingCard:
+                    resistUsingCard
+                        ? resistUsingCard.name
+                        : null,
+
+                blockMode:
+                    blockMode,
+
+                summonAbilityTargetMode:
+                    summonAbilityTargetMode,
+
+                summonAbilityCostMode:
+                    summonAbilityCostMode
+            }
+        );
+
         return;
 
     }
@@ -11730,6 +11905,7 @@ function showActionGuide(message){
         "block";
 
 }
+
 function hideActionGuide(){
 
         console.log(

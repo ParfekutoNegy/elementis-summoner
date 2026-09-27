@@ -23,159 +23,530 @@ function activateCardEffect(
         // ダメージ
         //==================================
 
-        case "damage":{
+case "damage":{
 
 
-            console.log(
-                "===== マギアダメージ処理 =====",
-                "card=",
-                card.name,
-                "type=",
-                card.type,
-                "element=",
-                card.element,
-                "owner=",
-                card.owner,
-                "baseDamage=",
-                card.effect.value
+    console.log(
+        "===== マギアダメージ処理 =====",
+        "card=",
+        card.name,
+        "type=",
+        card.type,
+        "element=",
+        card.elementType,
+        "owner=",
+        card.owner,
+        "baseDamage=",
+        card.effect.value
+    );
+
+
+    //==================================================
+    // プレイ時ライフコスト
+    //
+    // ソウルバーン等
+    //==================================================
+
+    const lifeCost =
+        Number(
+            card.effect.lifeCost
+        ) || 0;
+
+
+    if(lifeCost > 0){
+
+        //----------------------------------
+        // 使用者
+        //----------------------------------
+
+        const lifeCostPlayer =
+            card.owner === ENEMY
+                ? ENEMY
+                : PLAYER;
+
+
+        console.log(
+            "マギア：ライフコスト支払い",
+            card.name,
+            "owner=",
+            lifeCostPlayer,
+            "cost=",
+            lifeCost
+        );
+
+
+        //----------------------------------
+        // ライフコスト支払い
+        //----------------------------------
+
+        const survived =
+            payLifeCost(
+                lifeCostPlayer,
+                lifeCost
             );
 
 
-            //----------------------------------
-            // 基本ダメージ
-            //----------------------------------
+        //----------------------------------
+        // ライフコストで敗北
+        //----------------------------------
 
-            let damage =
-                card.effect.value;
-
-
-            //----------------------------------
-            // 火属性マギア
-            //----------------------------------
-
-            if(
-                card.type === "マギア" &&
-                card.elementType === "火"
-            ){
-
-                //----------------------------------
-                // 使用者の場
-                //----------------------------------
-
-                const field =
-                    card.owner === ENEMY
-                        ? enemyField
-                        : playerField;
-
-
-                //----------------------------------
-                // 火マギアダメージ上昇
-                //----------------------------------
-
-                field.forEach(
-                    summon => {
-
-                        if(
-                            !summon ||
-                            summon.destroyed
-                        ){
-
-                            return;
-
-                        }
-
-
-                        //----------------------------------
-                        // 火マギアダメージ上昇能力取得
-                        //----------------------------------
-
-                        const ability =
-                            getSummonAbility(
-                                summon,
-                                "fireMagiaDamageUp"
-                            );
-
-
-                        if(!ability){
-
-                            return;
-
-                        }
-
-
-                        //----------------------------------
-                        // ダメージ加算
-                        //----------------------------------
-
-                        const value =
-                            Number(
-                                ability.value
-                            ) || 0;
-
-
-                        damage +=
-                            value;
-
-
-                        console.log(
-                            "火マギアダメージ上昇",
-                            summon.card.name,
-                            "+",
-                            value
-                        );
-
-                    }
-                );
-
-            }
-
+        if(!survived){
 
             console.log(
-                "最終マギアダメージ",
                 card.name,
-                damage
+                "：ライフコストにより使用者敗北",
+                "効果ダメージは解決しない"
             );
 
 
-            //----------------------------------
-            // プレイヤーへのダメージ
-            //----------------------------------
+            return "GAME_OVER";
 
-            if(
-                target === PLAYER ||
-                target === ENEMY
-            ){
+        }
 
-                damagePlayer(
-                    target,
-                    damage,
-                    false,
-                    card
-                );
-
-            }
+    }
 
 
-            //----------------------------------
-            // サモンへのダメージ
-            //----------------------------------
+    //==================================================
+    // 基本ダメージ
+    //==================================================
 
-            else if(target){
-
-                dealDamage(
-                    target,
-                    damage,
-                    card
-                );
-
-            }
+    let damage =
+        0;
 
 
-            break;
+    //==================================================
+    // 自分のサモンの現在パワーを参照
+    //
+    // イグナイト等
+    //
+    // PLAYER / CPU 共通
+    //==================================================
+
+    if(
+        card.effect.valueType ===
+            "ownSummonPower"
+    ){
+
+        //----------------------------------
+        // 使用者のフィールド
+        //----------------------------------
+
+        const ownerField =
+            card.owner === ENEMY
+                ?
+                enemyField
+                :
+                playerField;
+
+
+        //----------------------------------
+        // 選択したサモン確認
+        //----------------------------------
+
+        if(
+            !magiaSelectedOwnSummon ||
+            magiaSelectedOwnSummon.destroyed ||
+            !ownerField.includes(
+                magiaSelectedOwnSummon
+            )
+        ){
+
+            console.warn(
+                "マギア：参照サモンが無効",
+                {
+                    magia:
+                        card.name,
+
+                    owner:
+                        card.owner,
+
+                    summon:
+                        magiaSelectedOwnSummon
+                            ?.card?.name ??
+                        null
+                }
+            );
+
+
+            return "INVALID";
 
         }
 
 
+        //----------------------------------
+        // 所有者確認
+        //----------------------------------
+
+        if(
+            magiaSelectedOwnSummon.owner !==
+            card.owner
+        ){
+
+            console.warn(
+                "マギア：参照サモンの所有者が不正",
+                {
+                    magia:
+                        card.name,
+
+                    magiaOwner:
+                        card.owner,
+
+                    summon:
+                        magiaSelectedOwnSummon
+                            .card?.name,
+
+                    summonOwner:
+                        magiaSelectedOwnSummon
+                            .owner
+                }
+            );
+
+
+            return "INVALID";
+
+        }
+
+
+        //----------------------------------
+        // 現在パワー取得
+        //----------------------------------
+
+        damage =
+            getPower(
+                magiaSelectedOwnSummon
+            );
+
+
+        console.log(
+            "自分サモンパワー参照ダメージ",
+            {
+                magia:
+                    card.name,
+
+                owner:
+                    card.owner,
+
+                summon:
+                    magiaSelectedOwnSummon
+                        .card
+                        .name,
+
+                power:
+                    damage,
+
+                target:
+                    target?.card?.name ??
+                    target
+            }
+        );
+
+    }
+
+
+    //==================================================
+    // クールゾーンの指定属性カード枚数を参照
+    //
+    // マグナブレイズ等
+    //==================================================
+
+    else if(
+        card.effect.valueType ===
+            "ownCoolElementCount"
+    ){
+
+        //----------------------------------
+        // 参照するクールゾーン
+        //----------------------------------
+
+        const coolCards =
+            card.owner === ENEMY
+                ?
+                enemyCoolCards
+                :
+                board.playerCoolCards;
+
+
+        //----------------------------------
+        // 数える属性
+        //----------------------------------
+
+        const targetElement =
+            card.effect.element;
+
+
+        //----------------------------------
+        // 指定属性の枚数
+        //----------------------------------
+
+        damage =
+            coolCards.filter(
+                coolCard => {
+
+                    if(!coolCard){
+
+                        return false;
+
+                    }
+
+
+                    return (
+                        coolCard.elementType ===
+                        targetElement
+                    );
+
+                }
+            ).length;
+
+
+        console.log(
+            "クールゾーン属性枚数ダメージ",
+            {
+                card:
+                    card.name,
+
+                owner:
+                    card.owner,
+
+                element:
+                    targetElement,
+
+                coolCards:
+                    coolCards.map(
+                        coolCard =>
+                            ({
+                                name:
+                                    coolCard.name,
+
+                                element:
+                                    coolCard.elementType
+                            })
+                    ),
+
+                damage:
+                    damage
+            }
+        );
+
+    }
+
+
+    //==================================================
+    // 通常の固定ダメージ
+    //==================================================
+
+    else{
+
+        damage =
+            Number(
+                card.effect.value
+            ) || 0;
+
+    }
+
+
+    console.log(
+        "基本マギアダメージ",
+        card.name,
+        damage
+    );
+
+
+    //==================================================
+    // 火属性マギア
+    //
+    // ウィルオウィスプ等
+    //==================================================
+
+    if(
+        card.type === "マギア" &&
+        card.elementType === "火"
+    ){
+
+        const field =
+            card.owner === ENEMY
+                ?
+                enemyField
+                :
+                playerField;
+
+
+        field.forEach(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return;
+
+                }
+
+
+                const ability =
+                    getSummonAbility(
+                        summon,
+                        "fireMagiaDamageUp"
+                    );
+
+
+                if(!ability){
+
+                    return;
+
+                }
+
+
+                const value =
+                    Number(
+                        ability.value
+                    ) || 0;
+
+
+                damage +=
+                    value;
+
+
+                console.log(
+                    "火マギアダメージ上昇",
+                    summon.card.name,
+                    "+",
+                    value
+                );
+
+            }
+        );
+
+    }
+
+
+    console.log(
+        "最終マギアダメージ",
+        card.name,
+        damage
+    );
+
+
+    //==================================================
+    // プレイヤーへのダメージ
+    //==================================================
+
+    if(
+        target === PLAYER ||
+        target === ENEMY
+    ){
+
+        const damageResult =
+            damagePlayer(
+                target,
+                damage,
+                false,
+                card
+            );
+
+
+        //----------------------------------
+        // ネレイド待機
+        //----------------------------------
+
+        if(
+            damageResult ===
+            "WAIT_NEREID"
+        ){
+
+            console.log(
+                "マギア効果停止：",
+                "ネレイド能力待ち"
+            );
+
+
+            return "WAIT_NEREID";
+
+        }
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(
+            damageResult ===
+            "WAIT_RESIST"
+        ){
+
+            console.log(
+                "マギア効果停止：",
+                "レジスト待ち"
+            );
+
+
+            return "WAIT_RESIST";
+
+        }
+
+    }
+
+
+    //==================================================
+    // サモンへのダメージ
+    //==================================================
+
+    else if(target){
+
+        const damageResult =
+            dealDamage(
+                target,
+                damage,
+                card
+            );
+
+
+        //----------------------------------
+        // ヒュドラ待機
+        //----------------------------------
+
+        if(
+            damageResult ===
+            "WAIT_HYDRA"
+        ){
+
+            console.log(
+                "マギア効果停止：",
+                target.card?.name,
+                "のヒュドラ能力待ち"
+            );
+
+
+            return "WAIT_HYDRA";
+
+        }
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(
+            damageResult ===
+            "WAIT_RESIST"
+        ){
+
+            console.log(
+                "マギア効果停止：",
+                "レジスト待ち"
+            );
+
+
+            return "WAIT_RESIST";
+
+        }
+
+    }
+
+
+    return "DONE";
+
+}
         //==================================
         // 手札追加
         //==================================
@@ -241,6 +612,98 @@ function activateCardEffect(
             );
 
             break;
+
+
+        //==================================
+        // カーススモーク
+        //
+        // このターン中、
+        // 対象が1以上のダメージを受けたとき
+        // クールゾーンに置く
+        //==================================
+
+        case "curseSmoke":{
+
+            //----------------------------------
+            // 対象確認
+            //----------------------------------
+
+            if(!target){
+
+                console.warn(
+                    "カーススモーク：対象なし"
+                );
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // status配列を準備
+            //----------------------------------
+
+            if(
+                !Array.isArray(
+                    target.status
+                )
+            ){
+
+                target.status =
+                    [];
+
+            }
+
+
+            //----------------------------------
+            // 重複確認
+            //----------------------------------
+
+            const alreadyApplied =
+                target.status.some(
+                    status =>
+                        status.type ===
+                        "curseSmoke"
+                );
+
+
+            //----------------------------------
+            // まだ付与されていない場合
+            //----------------------------------
+
+            if(!alreadyApplied){
+
+                target.status.push({
+
+                    type:
+                        "curseSmoke",
+
+                    source:
+                        card
+
+                });
+
+
+                console.log(
+                    "カーススモーク付与",
+                    target.card?.name
+                );
+
+            }
+            else{
+
+                console.log(
+                    "カーススモーク：",
+                    "すでに付与済み",
+                    target.card?.name
+                );
+
+            }
+
+
+            break;
+
+        }
 
 
         //==================================

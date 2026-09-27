@@ -179,7 +179,7 @@ function dealDamage(
 
     if(!target){
 
-        return;
+        return "DONE";
 
     }
 
@@ -232,7 +232,9 @@ function dealDamage(
     //----------------------------------
 
     const waitResist =
-        emitGameEvent(event);
+        emitGameEvent(
+            event
+        );
 
 
     //----------------------------------
@@ -245,13 +247,13 @@ function dealDamage(
             "レジスト待機中 ダメージ停止"
         );
 
-        return;
+        return "WAIT_RESIST";
 
     }
 
 
     //----------------------------------
-    // レジスト後ダメージ正規化
+    // ダメージを正規化
     //----------------------------------
 
     event.damage =
@@ -263,7 +265,7 @@ function dealDamage(
 
     //==================================
     // ヒュドラ
-    // ダメージ無効能力確認
+    // ダメージ無効能力
     //==================================
 
     if(
@@ -285,21 +287,36 @@ function dealDamage(
                 event.damage
             );
 
-            return;
+
+            //----------------------------------
+            // 重要
+            //
+            // 呼び出し元に
+            // 「まだダメージ処理は終わっていない」
+            // と伝える
+            //----------------------------------
+
+            return "WAIT_HYDRA";
 
         }
 
     }
 
 
-    //==================================
-    // ヒュドラを使用しない場合
-    // 最終ダメージ処理
-    //==================================
+    //----------------------------------
+    // 最終ダメージ適用
+    //----------------------------------
 
     applyHydraResolvedDamage(
         event
     );
+
+
+    //----------------------------------
+    // ダメージ処理完了
+    //----------------------------------
+
+    return "DONE";
 
 }
 
@@ -5531,6 +5548,205 @@ function canUseHydraDamageAbility(
 
 //======================================
 // ヒュドラ
+// 最終ダメージ予測
+//======================================
+
+function getHydraExpectedDamage(
+    summon,
+    damage
+){
+
+    if(!summon){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 元ダメージ
+    //----------------------------------
+
+    let finalDamage =
+        Math.max(
+            0,
+            damage
+        );
+
+
+    //==================================
+    // ドライアド
+    // 自分のサモンが受けるダメージ－1
+    //==================================
+
+    const field =
+        summon.owner === PLAYER
+            ?
+            playerField
+            :
+            enemyField;
+
+
+    let reduction =
+        0;
+
+
+    field.forEach(
+        fieldSummon => {
+
+            if(
+                !fieldSummon ||
+                fieldSummon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            const ability =
+                getSummonAbility(
+                    fieldSummon,
+                    "reduceOwnSummonDamage"
+                );
+
+
+            if(ability){
+
+                reduction +=
+                    ability.value ?? 1;
+
+            }
+
+        }
+    );
+
+
+    //----------------------------------
+    // 軽減後ダメージ
+    //----------------------------------
+
+    finalDamage =
+        Math.max(
+            0,
+            finalDamage - reduction
+        );
+
+
+    return finalDamage;
+
+}
+
+
+//======================================
+// CPUヒュドラ
+// 能力を使用するか
+//======================================
+
+function cpuShouldUseHydraDamageAbility(
+    summon,
+    damage
+){
+
+    if(
+        !summon ||
+        summon.owner !== ENEMY
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 最終ダメージ予測
+    //----------------------------------
+
+    const finalDamage =
+        getHydraExpectedDamage(
+            summon,
+            damage
+        );
+
+
+    //----------------------------------
+    // ダメージ0なら使用しない
+    //----------------------------------
+
+    if(finalDamage <= 0){
+
+        console.log(
+            "CPUヒュドラ：能力不使用",
+            "最終ダメージ0"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 現在の蓄積ダメージ
+    //----------------------------------
+
+    const currentDamage =
+        summon.damage ?? 0;
+
+
+    //----------------------------------
+    // 現在パワー
+    //----------------------------------
+
+    const currentPower =
+        getPower(
+            summon
+        );
+
+
+    //----------------------------------
+    // 今回のダメージで破壊されるか
+    //----------------------------------
+
+    const wouldBeDestroyed =
+        currentDamage +
+        finalDamage >=
+        currentPower;
+
+
+    console.log(
+        "CPUヒュドラ能力判断",
+        {
+            summon:
+                summon.card.name,
+
+            power:
+                currentPower,
+
+            currentDamage:
+                currentDamage,
+
+            incomingDamage:
+                damage,
+
+            finalDamage:
+                finalDamage,
+
+            wouldBeDestroyed:
+                wouldBeDestroyed
+        }
+    );
+
+
+    //----------------------------------
+    // 破壊される場合のみ使用
+    //----------------------------------
+
+    return wouldBeDestroyed;
+
+}
+
+//======================================
+// ヒュドラ
 // ダメージ無効能力開始
 //======================================
 
@@ -5573,9 +5789,373 @@ function startHydraDamageAbility(
     }
 
 
-    //----------------------------------
-    // CPUは後で実装
-    //----------------------------------
+    //==================================
+    // CPU
+    //==================================
+
+    if(
+        summon.owner === ENEMY
+    ){
+
+        //----------------------------------
+        // 使用判断
+        //----------------------------------
+
+        const shouldUse =
+            cpuShouldUseHydraDamageAbility(
+                summon,
+                event.damage
+            );
+
+
+        //----------------------------------
+        // 使用しない
+        //----------------------------------
+
+        if(!shouldUse){
+
+            console.log(
+                "CPUヒュドラ：",
+                "能力を使用しない",
+                summon.card.name
+            );
+
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 能力取得
+        //----------------------------------
+
+        const ability =
+            getSummonAbility(
+                summon,
+                "preventDamageByPayingCost"
+            );
+
+
+        const cost =
+            ability?.cost ?? 3;
+
+
+        //----------------------------------
+        // 念のため手札確認
+        //----------------------------------
+
+        if(
+            enemyHandCards.length <
+            cost
+        ){
+
+            console.log(
+                "CPUヒュドラ：",
+                "手札不足のため能力使用不可"
+            );
+
+
+            return false;
+
+        }
+
+
+        console.log(
+            "CPUヒュドラ：能力使用",
+            summon.card.name,
+            "damage=",
+            event.damage,
+            "cost=",
+            cost
+        );
+
+
+        //==================================
+        // CPU能力カード表示
+        //==================================
+
+        if(
+            typeof showCpuCardAction ===
+                "function"
+        ){
+
+            showCpuCardAction(
+                summon.card,
+                "ABILITY",
+                PLAYER
+            );
+
+        }
+
+
+        //==================================
+        // 支払いカードをランダム選択
+        //==================================
+
+        const candidates =
+            [
+                ...enemyHandCards
+            ];
+
+
+        const paymentCards =
+            [];
+
+
+        for(
+            let i = 0;
+            i < cost;
+            i++
+        ){
+
+            const index =
+                Math.floor(
+                    Math.random() *
+                    candidates.length
+                );
+
+
+            const card =
+                candidates[
+                    index
+                ];
+
+
+            paymentCards.push(
+                card
+            );
+
+
+            candidates.splice(
+                index,
+                1
+            );
+
+        }
+
+
+        //==================================
+        // バトルログ
+        //==================================
+
+        if(
+            typeof addBattleLog ===
+                "function"
+        ){
+
+            addBattleLog(
+                `CPU：${summon.card.name}の能力を使用`
+            );
+
+        }
+
+
+        //==================================
+        // コスト支払い
+        //==================================
+
+        paymentCards.forEach(
+            card => {
+
+                console.log(
+                    "CPUヒュドラ：",
+                    card.name,
+                    "をコストゾーンへ"
+                );
+
+
+                moveEnemyToCost(
+                    card
+                );
+
+            }
+        );
+
+
+        //==================================
+        // ダメージを0
+        //==================================
+
+        event.damage =
+            0;
+
+
+        //----------------------------------
+        // UI更新
+        //----------------------------------
+
+        updateGameState();
+
+
+        //==================================
+        // CPUヒュドラ演出待機
+        //==================================
+
+        hydraDamageWaiting =
+            true;
+
+        hydraDamageEvent =
+            event;
+
+        hydraDamageSummon =
+            summon;
+
+        hydraSelectedCostCards =
+            [];
+
+
+        //==================================
+        // WAIT_HYDRA が呼び出し元まで
+        // 戻ったあとに中央案内を表示
+        //==================================
+
+        setTimeout(
+            () => {
+
+                //----------------------------------
+                // 待機状態確認
+                //----------------------------------
+
+                if(
+                    !hydraDamageWaiting ||
+                    hydraDamageEvent !==
+                        event
+                ){
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 中央案内
+                //----------------------------------
+
+                if(
+                    typeof showActionGuide ===
+                        "function"
+                ){
+
+                    showActionGuide(
+                        `${summon.card.name}の能力が発動。<br>` +
+                        `${cost}コストで受けるダメージを0にしました。`
+                    );
+
+                }
+
+
+                console.log(
+                    "CPUヒュドラ：能力案内表示"
+                );
+
+            },
+            50
+        );
+
+
+        //==================================
+        // 演出終了後
+        // ダメージ確定 → 元処理再開
+        //==================================
+
+        setTimeout(
+            () => {
+
+                //----------------------------------
+                // 待機状態確認
+                //----------------------------------
+
+                if(
+                    !hydraDamageWaiting ||
+                    hydraDamageEvent !==
+                        event
+                ){
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "CPUヒュドラ：能力演出終了"
+                );
+
+
+                //==================================
+                // 待機解除
+                //==================================
+
+                hydraDamageWaiting =
+                    false;
+
+                hydraCostSelectMode =
+                    false;
+
+                hydraDamageEvent =
+                    null;
+
+                hydraDamageSummon =
+                    null;
+
+                hydraSelectedCostCards =
+                    [];
+
+
+                //----------------------------------
+                // 中央案内を消す
+                //----------------------------------
+
+                if(
+                    typeof hideActionGuide ===
+                        "function"
+                ){
+
+                    hideActionGuide();
+
+                }
+
+
+                //==================================
+                // 0ダメージを確定
+                //==================================
+
+                applyHydraResolvedDamage(
+                    event
+                );
+
+
+                //==================================
+                // 停止していた処理を再開
+                //==================================
+
+                if(
+                    typeof resumeBattleAfterHydra ===
+                        "function"
+                ){
+
+                    resumeBattleAfterHydra();
+
+                }
+
+            },
+            1800
+        );
+
+
+        //==================================
+        // dealDamage()をここで停止
+        // → WAIT_HYDRA
+        //==================================
+
+        return true;
+
+    }
+
+
+    //==================================
+    // PLAYER
+    //==================================
 
     if(
         summon.owner !== PLAYER
@@ -5594,9 +6174,9 @@ function startHydraDamageAbility(
     );
 
 
-    //----------------------------------
-    // 待機情報保存
-    //----------------------------------
+    //==================================
+    // PLAYER待機情報保存
+    //==================================
 
     hydraDamageWaiting =
         true;
@@ -5611,21 +6191,25 @@ function startHydraDamageAbility(
         [];
 
 
-    //----------------------------------
+    //==================================
     // 案内
-    //----------------------------------
+    //==================================
 
     showActionGuide(
-        "3コストを支払い、受けるダメージを0にしますか？"
+        "3コストで受けるダメージを0にしますか？"
     );
 
 
-    //----------------------------------
+    //==================================
     // ボタン更新
-    //----------------------------------
+    //==================================
 
     updateButtons();
 
+
+    //----------------------------------
+    // PLAYER操作待ち
+    //----------------------------------
 
     return true;
 
@@ -5688,6 +6272,19 @@ hydraCostSelectMode =
     applyHydraResolvedDamage(
         event
     );
+
+        //----------------------------------
+    // 停止していた戦闘を再開
+    //----------------------------------
+
+    if(
+        typeof resumeBattleAfterHydra ===
+        "function"
+    ){
+
+        resumeBattleAfterHydra();
+
+    }
 
 }
 
@@ -6258,5 +6855,18 @@ function confirmHydraDamageAbility(){
     //----------------------------------
 
     updateButtons();
+
+        //----------------------------------
+    // 停止していた戦闘を再開
+    //----------------------------------
+
+    if(
+        typeof resumeBattleAfterHydra ===
+        "function"
+    ){
+
+        resumeBattleAfterHydra();
+
+    }
 
 }

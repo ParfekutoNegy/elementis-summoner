@@ -73,11 +73,64 @@ let nereidDamageEvent = null;
 let nereidSelectableSummons = [];
 
 //==================================================
+// ネレイド
+// マギア待機
+//==================================================
+
+let nereidMagiaWaiting =
+    false;
+
+let nereidWaitingMagia =
+    null;
+
+let nereidWaitingMagiaTarget =
+    null;
+
+//======================================
+// ヒュドラ
+// 戦闘ダメージ処理の一時停止
+//======================================
+
+let hydraBattleWaiting =
+    false;
+
+let hydraBattleAttacker =
+    null;
+
+let hydraBattleTarget =
+    null;
+
+let hydraBattleStep =
+    0;
+//======================================
+// ヒュドラ
+// ブロック戦闘の一時停止
+//======================================
+
+let hydraBlockWaiting =
+    false;
+
+let hydraBlockAttacker =
+    null;
+
+let hydraBlocker =
+    null;
+
+let hydraBlockStep =
+    0;
+
+let hydraBlockWasForcedAttack =
+    false;    
+
+
+
+//==================================================
 // メドゥーサ
 //
 // 相手のサモンは能力や効果にかかわらず、
 // 場に出たターンはアタックできない
 //==================================================
+
 
 function isSummonTurnAttackPrevented(
     summon
@@ -2083,24 +2136,146 @@ function continueAttackAfterAttackAbility(
         );
 
 
-        //----------------------------------
-        // ダメージ交換
-        //----------------------------------
+//----------------------------------
+// ダメージ交換
+//----------------------------------
 
-        dealDamage(
-            target,
-            getPower(
-                attackingSummon
-            )
-        );
+//==================================
+// ① 攻撃対象へのダメージ
+//==================================
+
+const targetDamageResult =
+    dealDamage(
+        target,
+        getPower(
+            attackingSummon
+        ),
+        attackingSummon.card
+    );
 
 
-        dealDamage(
-            attackingSummon,
-            getPower(
-                target
-            )
-        );
+//----------------------------------
+// ヒュドラ待機
+//----------------------------------
+
+if(
+    targetDamageResult ===
+    "WAIT_HYDRA"
+){
+
+    console.log(
+        "戦闘停止：",
+        target.card.name,
+        "のヒュドラ能力待ち"
+    );
+
+
+    hydraBattleWaiting =
+        true;
+
+    hydraBattleAttacker =
+        attackingSummon;
+
+    hydraBattleTarget =
+        target;
+
+    hydraBattleStep =
+        1;
+
+
+    return "WAIT_HYDRA";
+
+}
+
+
+//----------------------------------
+// レジスト待機
+//----------------------------------
+
+if(
+    targetDamageResult ===
+    "WAIT_RESIST"
+){
+
+    console.log(
+        "戦闘停止：",
+        target.card.name,
+        "へのダメージのレジスト待ち"
+    );
+
+
+    return "WAIT_RESIST";
+
+}
+
+
+//==================================
+// ② 攻撃者への反撃ダメージ
+//==================================
+
+const attackerDamageResult =
+    dealDamage(
+        attackingSummon,
+        getPower(
+            target
+        ),
+        target.card
+    );
+
+
+//----------------------------------
+// ヒュドラ待機
+//----------------------------------
+
+if(
+    attackerDamageResult ===
+    "WAIT_HYDRA"
+){
+
+    console.log(
+        "戦闘停止：",
+        attackingSummon.card.name,
+        "のヒュドラ能力待ち"
+    );
+
+
+    hydraBattleWaiting =
+        true;
+
+    hydraBattleAttacker =
+        attackingSummon;
+
+    hydraBattleTarget =
+        target;
+
+    hydraBattleStep =
+        2;
+
+
+    return "WAIT_HYDRA";
+
+}
+
+
+//----------------------------------
+// レジスト待機
+//----------------------------------
+
+if(
+    attackerDamageResult ===
+    "WAIT_RESIST"
+){
+
+    console.log(
+        "戦闘停止：",
+        attackingSummon.card.name,
+        "へのダメージのレジスト待ち"
+    );
+
+
+    return "WAIT_RESIST";
+
+}
 
     }
 
@@ -2325,6 +2500,514 @@ if(
         },
         1000
     );
+
+}
+
+//==================================================
+// ヒュドラ
+// 一時停止していた戦闘を再開
+//==================================================
+
+function resumeBattleAfterHydra(){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "ヒュドラ戦闘再開確認",
+        {
+            normal:
+                hydraBattleWaiting,
+
+            block:
+                hydraBlockWaiting,
+
+            normalStep:
+                hydraBattleStep,
+
+            blockStep:
+                hydraBlockStep
+        }
+    );
+
+    console.log(
+        "================================"
+    );
+
+    //==================================================
+// マギアによるヒュドラ待機
+//==================================================
+
+if(
+    typeof hydraMagiaWaiting !==
+        "undefined" &&
+    hydraMagiaWaiting
+){
+
+    console.log(
+        "ヒュドラ：",
+        "停止中のマギアを再開"
+    );
+
+
+    if(
+        typeof resumeMagiaAfterHydra ===
+        "function"
+    ){
+
+        resumeMagiaAfterHydra();
+
+    }
+
+
+    return;
+
+}
+
+
+    //==================================================
+    // ブロック戦闘
+    //==================================================
+
+    if(hydraBlockWaiting){
+
+        //----------------------------------
+        // 保存情報
+        //----------------------------------
+
+        const attacker =
+            hydraBlockAttacker;
+
+        const blocker =
+            hydraBlocker;
+
+        const step =
+            hydraBlockStep;
+
+        const wasForcedAttack =
+            hydraBlockWasForcedAttack;
+
+
+        //----------------------------------
+        // 必要情報確認
+        //----------------------------------
+
+        if(
+            !attacker ||
+            !blocker
+        ){
+
+            console.warn(
+                "ヒュドラ：",
+                "ブロック戦闘再開情報がありません"
+            );
+
+
+            resetHydraBlockBattleState();
+
+
+            return;
+
+        }
+
+
+        console.log(
+            "ヒュドラ：ブロック戦闘再開",
+            {
+                attacker:
+                    attacker.card?.name,
+
+                blocker:
+                    blocker.card?.name,
+
+                step:
+                    step
+            }
+        );
+
+
+        //==================================
+        // STEP 1
+        //
+        // ブロッカーから攻撃者への
+        // ダメージで停止していた
+        //
+        // → 次はブロッカーが
+        //    攻撃者からダメージを受ける
+        //==================================
+
+        if(step === 1){
+
+            //----------------------------------
+            // ゴーレム
+            //----------------------------------
+
+            if(
+                hasSummonAbility(
+                    blocker,
+                    "noDamageWhenBlocking"
+                )
+            ){
+
+                console.log(
+                    "ゴーレム：",
+                    "ブロック時のダメージ無効",
+                    blocker.card.name
+                );
+
+            }
+            else{
+
+                //----------------------------------
+                // ブロッカーへのダメージ
+                //----------------------------------
+
+                const blockerDamageResult =
+                    dealDamage(
+                        blocker,
+                        getPower(
+                            attacker
+                        ),
+                        attacker.card
+                    );
+
+
+                //----------------------------------
+                // ブロッカー側でも
+                // ヒュドラ能力が発動
+                //----------------------------------
+
+                if(
+                    blockerDamageResult ===
+                    "WAIT_HYDRA"
+                ){
+
+                    console.log(
+                        "ブロック戦闘再停止：",
+                        blocker.card.name,
+                        "のヒュドラ能力待ち"
+                    );
+
+
+                    hydraBlockStep =
+                        2;
+
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // レジスト待機
+                //----------------------------------
+
+                if(
+                    blockerDamageResult ===
+                    "WAIT_RESIST"
+                ){
+
+                    console.log(
+                        "ブロック戦闘再停止：",
+                        "ブロッカーへのレジスト待ち"
+                    );
+
+
+                    hydraBlockStep =
+                        2;
+
+
+                    return;
+
+                }
+
+            }
+
+        }
+
+
+        //==================================
+        // STEP 2 または
+        // STEP 1の残りまで終了
+        //
+        // → 戦闘完了
+        //==================================
+
+        resetHydraBlockBattleState();
+
+
+        //----------------------------------
+        // 戦闘解決
+        //----------------------------------
+
+        resolveBattle();
+
+
+        //----------------------------------
+        // 攻撃終了
+        //----------------------------------
+
+        finishAttack();
+
+        hideActionGuide();
+
+
+        //==================================
+        // 強制アタック
+        //
+        // finishAttack() 側で
+        // 次の強制アタックへ進む
+        //==================================
+
+        if(wasForcedAttack){
+
+            console.log(
+                "CPU強制アタック：",
+                "ヒュドラ解決後の通常CPU攻撃継続をスキップ"
+            );
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // 通常CPU攻撃
+        //==================================
+
+        if(
+            game.currentPlayer ===
+            ENEMY
+        ){
+
+            console.log(
+                "CPU：",
+                "ヒュドラ解決後、次の攻撃へ"
+            );
+
+
+            setTimeout(
+                cpuNextAttack,
+                2000
+            );
+
+        }
+
+
+        return;
+
+    }
+
+
+    //==================================================
+    // 通常のサモン同士の戦闘
+    //==================================================
+
+    if(hydraBattleWaiting){
+
+        //----------------------------------
+        // 保存情報
+        //----------------------------------
+
+        const attacker =
+            hydraBattleAttacker;
+
+        const target =
+            hydraBattleTarget;
+
+        const step =
+            hydraBattleStep;
+
+
+        //----------------------------------
+        // 必要情報確認
+        //----------------------------------
+
+        if(
+            !attacker ||
+            !target
+        ){
+
+            console.warn(
+                "ヒュドラ：",
+                "通常戦闘再開情報がありません"
+            );
+
+
+            resetHydraNormalBattleState();
+
+
+            return;
+
+        }
+
+
+        console.log(
+            "ヒュドラ：通常戦闘再開",
+            {
+                attacker:
+                    attacker.card?.name,
+
+                target:
+                    target.card?.name,
+
+                step:
+                    step
+            }
+        );
+
+
+        //==================================
+        // STEP 1
+        //
+        // 攻撃対象へのダメージで停止
+        //
+        // → 攻撃者への反撃ダメージへ
+        //==================================
+
+        if(step === 1){
+
+            const attackerDamageResult =
+                dealDamage(
+                    attacker,
+                    getPower(
+                        target
+                    ),
+                    target.card
+                );
+
+
+            //----------------------------------
+            // 攻撃者側でもヒュドラ
+            //----------------------------------
+
+            if(
+                attackerDamageResult ===
+                "WAIT_HYDRA"
+            ){
+
+                console.log(
+                    "通常戦闘再停止：",
+                    attacker.card.name,
+                    "のヒュドラ能力待ち"
+                );
+
+
+                hydraBattleStep =
+                    2;
+
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // レジスト待機
+            //----------------------------------
+
+            if(
+                attackerDamageResult ===
+                "WAIT_RESIST"
+            ){
+
+                console.log(
+                    "通常戦闘再停止：",
+                    "攻撃者へのレジスト待ち"
+                );
+
+
+                hydraBattleStep =
+                    2;
+
+
+                return;
+
+            }
+
+        }
+
+
+        //==================================
+        // ダメージ交換完了
+        //==================================
+
+        resetHydraNormalBattleState();
+
+
+        setTimeout(
+            () => {
+
+                resolveBattle();
+
+                finishAttack();
+
+            },
+            1000
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 待機中の戦闘なし
+    //----------------------------------
+
+    console.log(
+        "ヒュドラ戦闘再開：",
+        "待機中の戦闘なし"
+    );
+
+}
+
+//==================================================
+// ヒュドラ
+// 通常戦闘待機状態リセット
+//==================================================
+
+function resetHydraNormalBattleState(){
+
+    hydraBattleWaiting =
+        false;
+
+    hydraBattleAttacker =
+        null;
+
+    hydraBattleTarget =
+        null;
+
+    hydraBattleStep =
+        0;
+
+}
+
+
+//==================================================
+// ヒュドラ
+// ブロック戦闘待機状態リセット
+//==================================================
+
+function resetHydraBlockBattleState(){
+
+    hydraBlockWaiting =
+        false;
+
+    hydraBlockAttacker =
+        null;
+
+    hydraBlocker =
+        null;
+
+    hydraBlockStep =
+        0;
+
+    hydraBlockWasForcedAttack =
+        false;
 
 }
 
@@ -3059,7 +3742,7 @@ function checkNereidDamagePrevent(
         ){
 
             showActionGuide(
-                `${summon.card.name}の能力が発動しました。<br>` +
+                `${summon.card.name}の能力が発動。<br>` +
                 `受ける${damage}ダメージを0にします。`
             );
 
@@ -3246,34 +3929,6 @@ function skipNereidDamagePrevent(){
 
 //==================================================
 // ネレイド
-// 選択発光解除
-//==================================================
-
-function clearNereidDamagePreventHighlight(){
-
-    nereidSelectableSummons.forEach(
-        summon => {
-
-            if(
-                summon &&
-                summon.view &&
-                typeof summon.view.setHighlight ===
-                    "function"
-            ){
-
-                summon.view.setHighlight(
-                    false
-                );
-
-            }
-
-        }
-    );
-
-}
-
-//==================================================
-// ネレイド
 // 能力選択後のダメージ処理再開
 //==================================================
 
@@ -3357,10 +4012,8 @@ function finishNereidDamagePrevent(
 
         const damageTarget =
             data.player === PLAYER
-                ?
-                "PLAYER"
-                :
-                "CPU";
+                ? "PLAYER"
+                : "CPU";
 
 
         addBattleLog(
@@ -3397,6 +4050,30 @@ function finishNereidDamagePrevent(
         console.log(
             "ネレイド：ダメージ無効"
         );
+
+    }
+
+
+    //==================================
+    // マギア待機から来た場合
+    //==================================
+
+    if(
+        typeof nereidMagiaWaiting !==
+            "undefined" &&
+        nereidMagiaWaiting
+    ){
+
+        console.log(
+            "ネレイド処理完了：",
+            "停止中のマギアを再開"
+        );
+
+
+        resumeMagiaAfterNereid();
+
+
+        return;
 
     }
 
@@ -3510,10 +4187,7 @@ function finishNereidDamagePrevent(
 
 
     //==================================
-    // レジストを経由していない場合
-    //
-    // 呼び出し元の攻撃処理が
-    // 続きを担当する
+    // 通常ダメージ経路
     //==================================
 
     console.log(
@@ -3522,6 +4196,260 @@ function finishNereidDamagePrevent(
 
 }
 
+
+//==================================================
+// ネレイド
+// 選択発光解除
+//==================================================
+
+function clearNereidDamagePreventHighlight(){
+
+    nereidSelectableSummons.forEach(
+        summon => {
+
+            if(
+                summon &&
+                summon.view &&
+                typeof summon.view.setHighlight ===
+                    "function"
+            ){
+
+                summon.view.setHighlight(
+                    false
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+
+//==================================================
+// ネレイド
+// 停止中のマギア処理を再開
+//==================================================
+
+function resumeMagiaAfterNereid(){
+
+    //----------------------------------
+    // 待機確認
+    //----------------------------------
+
+    if(
+        !nereidMagiaWaiting ||
+        !nereidWaitingMagia
+    ){
+
+        console.warn(
+            "ネレイド：再開するマギアなし"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 情報保存
+    //----------------------------------
+
+    const resolvedMagia =
+        nereidWaitingMagia;
+
+    const resolvedTarget =
+        nereidWaitingMagiaTarget;
+
+    const resolvedOwnSummon =
+        nereidWaitingMagiaOwnSummon;
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+            ENEMY;
+
+
+    console.log(
+        "ネレイド後マギア再開",
+        resolvedMagia.name
+    );
+
+
+    //----------------------------------
+    // ネレイド待機状態解除
+    //----------------------------------
+
+    nereidMagiaWaiting =
+        false;
+
+    nereidWaitingMagia =
+        null;
+
+    nereidWaitingMagiaTarget =
+        null;
+
+    nereidWaitingMagiaOwnSummon =
+        null;
+
+
+    //----------------------------------
+    // activateCardEffect() は
+    // 再実行しない
+    //----------------------------------
+
+
+    //----------------------------------
+    // マギアを手札から削除
+    //----------------------------------
+
+    if(
+        resolvedMagia.owner === PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+
+
+    //----------------------------------
+    // マギア状態リセット
+    //----------------------------------
+
+    resetMagiaState();
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    updateButtons();
+
+
+    //==================================
+    // マギア後処理
+    //==================================
+
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // CPUマギア対象発光解除
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof clearCpuMagiaTargetHighlight ===
+                    "function"
+            ){
+
+                clearCpuMagiaTargetHighlight(
+                    resolvedTarget
+                );
+
+            }
+
+
+            //----------------------------------
+            // イグナイト等
+            // 選択サモンをクールへ
+            //----------------------------------
+
+            resolveMagiaCoolOwnSummon(
+                resolvedMagia,
+                resolvedOwnSummon
+            );
+
+
+            //----------------------------------
+            // 戦闘解決
+            //----------------------------------
+
+            resolveBattle();
+
+
+            //----------------------------------
+            // マギアをクールへ
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "ネレイド後：マギア効果解決完了 → クールへ",
+                resolvedMagia.name
+            );
+
+
+            //==================================
+            // CPUマギアならCPU処理再開
+            //==================================
+
+            if(
+                isCpuMagia &&
+                game.currentPlayer === ENEMY &&
+                game.state === TURN_STATE.PLAYING
+            ){
+
+                console.log(
+                    "ネレイド後：CPUマギア処理再開"
+                );
+
+
+                cpuWaiting =
+                    false;
+
+
+                if(
+                    typeof runCpuTurnStep ===
+                        "function"
+                ){
+
+                    setTimeout(
+                        () => {
+
+                            runCpuTurnStep();
+
+                        },
+                        500
+                    );
+
+                }
+
+            }
+
+        },
+        1000
+    );
+
+}
 //==================================================
 // ネレイド
 // 使用可能サモン発光
@@ -3601,13 +4529,6 @@ function damagePlayer(
 
     //==================================
     // プレイヤーダメージ軽減能力
-    //
-    // reducePlayerDamage を持つ
-    // すべてのサモンの軽減値を合計する
-    //
-    // ガーゴイル複数体
-    // ドッペルゲンガーによるコピー
-    // の両方に対応
     //==================================
 
     const field =
@@ -3616,26 +4537,13 @@ function damagePlayer(
             : enemyField;
 
 
-    //----------------------------------
-    // 軽減値合計
-    //----------------------------------
-
     let totalReduction = 0;
-
-
-    //----------------------------------
-    // 能力保持サモン
-    //----------------------------------
 
     const reducingSummons = [];
 
 
     field.forEach(
         summon => {
-
-            //----------------------------------
-            // 無効なサモン
-            //----------------------------------
 
             if(
                 !summon ||
@@ -3647,10 +4555,6 @@ function damagePlayer(
 
             }
 
-
-            //----------------------------------
-            // ダメージ軽減能力取得
-            //----------------------------------
 
             const reduceAbility =
                 getSummonAbility(
@@ -3666,17 +4570,9 @@ function damagePlayer(
             }
 
 
-            //----------------------------------
-            // 軽減値
-            //----------------------------------
-
             const reduction =
                 reduceAbility.value ?? 1;
 
-
-            //----------------------------------
-            // 合計
-            //----------------------------------
 
             totalReduction +=
                 reduction;
@@ -3754,9 +4650,9 @@ function damagePlayer(
     }
 
 
-    //----------------------------------
-    // レジストをスキップする場合
-    //----------------------------------
+    //==================================
+    // レジストスキップ
+    //==================================
 
     if(skipResist){
 
@@ -3764,6 +4660,27 @@ function damagePlayer(
             "レジストスキップ：確定ダメージ",
             damage
         );
+
+
+        //----------------------------------
+        // ネレイド
+        //----------------------------------
+
+        if(
+            checkNereidDamagePrevent(
+                player,
+                damage,
+                null
+            )
+        ){
+
+            console.log(
+                "ネレイド能力選択待機"
+            );
+
+            return "WAIT_NEREID";
+
+        }
 
 
         //----------------------------------
@@ -3795,14 +4712,14 @@ function damagePlayer(
         );
 
 
-        return;
+        return "DONE";
 
     }
 
 
-    //----------------------------------
-    // レジスト用イベント作成
-    //----------------------------------
+    //==================================
+    // レジストイベント作成
+    //==================================
 
     const event = {
 
@@ -3832,7 +4749,9 @@ function damagePlayer(
     //----------------------------------
 
     const resist =
-        emitGameEvent(event);
+        emitGameEvent(
+            event
+        );
 
 
     //----------------------------------
@@ -3856,17 +4775,20 @@ function damagePlayer(
         };
 
 
-        return;
+        return "WAIT_RESIST";
 
     }
 
 
-    //----------------------------------
+    //==================================
     // レジストなし
-    //----------------------------------
+    //==================================
 
     const finalDamage =
-        event.damage;
+        Math.max(
+            0,
+            event.damage
+        );
 
 
     console.log(
@@ -3874,25 +4796,27 @@ function damagePlayer(
         finalDamage
     );
 
+
     //==================================
-// ネレイド
-//==================================
+    // ネレイド
+    //==================================
 
-if(
-    checkNereidDamagePrevent(
-        player,
-        finalDamage,
-        null
-    )
-){
+    if(
+        checkNereidDamagePrevent(
+            player,
+            finalDamage,
+            null
+        )
+    ){
 
-    console.log(
-        "ネレイド能力選択待機"
-    );
+        console.log(
+            "ネレイド能力選択待機"
+        );
 
-    return;
 
-}
+        return "WAIT_NEREID";
+
+    }
 
 
     //----------------------------------
@@ -3922,6 +4846,31 @@ if(
         player,
         finalDamage
     );
+
+
+    //----------------------------------
+    // AFTER_PLAYER_DAMAGE
+    //----------------------------------
+
+    if(finalDamage > 0){
+
+        emitGameEvent({
+
+            type:
+                GAME_EVENT.AFTER_PLAYER_DAMAGE,
+
+            player:
+                player,
+
+            damage:
+                finalDamage
+
+        });
+
+    }
+
+
+    return "DONE";
 
 }
 
@@ -3960,6 +4909,116 @@ function applyPlayerDamage(
 
 }
 
+//======================================
+// ライフコスト支払い
+//
+// ダメージではなく
+// ライフポイントそのものを減らす
+//======================================
+
+function payLifeCost(
+    player,
+    amount
+){
+
+    //----------------------------------
+    // 不正値対策
+    //----------------------------------
+
+    amount =
+        Math.max(
+            0,
+            Number(amount) || 0
+        );
+
+
+    if(amount <= 0){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // PLAYER
+    //----------------------------------
+
+    if(player === PLAYER){
+
+        game.playerLife -=
+            amount;
+
+
+        console.log(
+            "PLAYER ライフコスト",
+            amount,
+            "残りライフ=",
+            game.playerLife
+        );
+
+    }
+
+
+    //----------------------------------
+    // CPU
+    //----------------------------------
+
+    else if(player === ENEMY){
+
+        game.enemyLife -=
+            amount;
+
+
+        console.log(
+            "CPU ライフコスト",
+            amount,
+            "残りライフ=",
+            game.enemyLife
+        );
+
+    }
+
+
+    //----------------------------------
+    // ライフ表示更新
+    //----------------------------------
+
+    updateLifeDisplay();
+
+
+    //----------------------------------
+    // 生存確認
+    //----------------------------------
+
+    const alive =
+        player === PLAYER
+            ? game.playerLife > 0
+            : game.enemyLife > 0;
+
+
+    //----------------------------------
+    // 0以下なら即座に勝敗判定
+    //----------------------------------
+
+    if(!alive){
+
+        console.log(
+            "ライフコストにより敗北",
+            player
+        );
+
+
+        checkGameOver();
+
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
 
 //======================================
 // ライフ表示更新
@@ -5198,10 +6257,6 @@ function executeBlock(blocker){
 
     //----------------------------------
     // トロール用状態解除
-    //
-    // ここから先の戦闘相手は
-    // 元の攻撃対象ではなく
-    // ブロッカーになる
     //----------------------------------
 
     if(wasSummonAttackBlock){
@@ -5236,17 +6291,90 @@ function executeBlock(blocker){
     );
 
 
+    //==================================
+    // 今回が強制アタックか保存
+    //==================================
+
+    const wasForcedAttack =
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode;
+
+
+    //==================================
+    // ① ブロッカーから攻撃者へのダメージ
+    //==================================
+
+    const attackerDamageResult =
+        dealDamage(
+            attackingSummon,
+            getPower(
+                blocker
+            ),
+            blocker.card
+        );
+
+
     //----------------------------------
-    // ブロッカーから攻撃者へのダメージ
+    // 攻撃者側ヒュドラ待機
     //----------------------------------
 
-    dealDamage(
-        attackingSummon,
-        getPower(
-            blocker
-        )
-    );
+    if(
+        attackerDamageResult ===
+        "WAIT_HYDRA"
+    ){
 
+        console.log(
+            "ブロック戦闘停止：",
+            attackingSummon.card.name,
+            "のヒュドラ能力待ち"
+        );
+
+
+        hydraBlockWaiting =
+            true;
+
+        hydraBlockAttacker =
+            attackingSummon;
+
+        hydraBlocker =
+            blocker;
+
+        hydraBlockStep =
+            1;
+
+        hydraBlockWasForcedAttack =
+            wasForcedAttack;
+
+
+        return "WAIT_HYDRA";
+
+    }
+
+
+    //----------------------------------
+    // レジスト待機
+    //----------------------------------
+
+    if(
+        attackerDamageResult ===
+        "WAIT_RESIST"
+    ){
+
+        console.log(
+            "ブロック戦闘停止：",
+            "攻撃者へのレジスト待ち"
+        );
+
+
+        return "WAIT_RESIST";
+
+    }
+
+
+    //==================================
+    // ② 攻撃者からブロッカーへのダメージ
+    //==================================
 
     //----------------------------------
     // ゴーレム
@@ -5268,24 +6396,73 @@ function executeBlock(blocker){
     }
     else{
 
-        dealDamage(
-            blocker,
-            getPower(
-                attackingSummon
-            )
-        );
+        const blockerDamageResult =
+            dealDamage(
+                blocker,
+                getPower(
+                    attackingSummon
+                ),
+                attackingSummon.card
+            );
+
+
+        //----------------------------------
+        // ブロッカー側ヒュドラ待機
+        //----------------------------------
+
+        if(
+            blockerDamageResult ===
+            "WAIT_HYDRA"
+        ){
+
+            console.log(
+                "ブロック戦闘停止：",
+                blocker.card.name,
+                "のヒュドラ能力待ち"
+            );
+
+
+            hydraBlockWaiting =
+                true;
+
+            hydraBlockAttacker =
+                attackingSummon;
+
+            hydraBlocker =
+                blocker;
+
+            hydraBlockStep =
+                2;
+
+            hydraBlockWasForcedAttack =
+                wasForcedAttack;
+
+
+            return "WAIT_HYDRA";
+
+        }
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(
+            blockerDamageResult ===
+            "WAIT_RESIST"
+        ){
+
+            console.log(
+                "ブロック戦闘停止：",
+                "ブロッカーへのレジスト待ち"
+            );
+
+
+            return "WAIT_RESIST";
+
+        }
 
     }
-
-
-    //==================================
-    // 今回が強制アタックか保存
-    //==================================
-
-    const wasForcedAttack =
-        typeof forcedAttackMode !==
-            "undefined" &&
-        forcedAttackMode;
 
 
     //----------------------------------
@@ -5306,11 +6483,6 @@ function executeBlock(blocker){
 
     //==================================
     // 強制アタックだった場合
-    //
-    // finishAttack() →
-    // startNextForcedAttack()
-    //
-    // に任せる
     //==================================
 
     if(wasForcedAttack){
@@ -5395,7 +6567,6 @@ function executeCpuBlock(
             "CPUブロッカーなし"
         );
 
-
         return false;
 
     }
@@ -5409,7 +6580,7 @@ function executeCpuBlock(
 
 
     //----------------------------------
-    // 攻撃者をブロック対象にする
+    // CPUブロッカー
     //----------------------------------
 
     console.log(
@@ -5464,6 +6635,19 @@ function executeCpuBlock(
 
 
     //----------------------------------
+    // ブロッカーを横向き
+    //----------------------------------
+
+    blocker.isRest =
+        true;
+
+
+    blocker.view.setHorizontal(
+        true
+    );
+
+
+    //----------------------------------
     // バジリスク：
     // バトル相手を記録
     //----------------------------------
@@ -5474,23 +6658,131 @@ function executeCpuBlock(
     );
 
 
+    //==================================
+    // 今回が強制アタックか保存
+    //==================================
+
+    const wasForcedAttack =
+        typeof forcedAttackMode !==
+            "undefined" &&
+        forcedAttackMode;
+
+
+    //==================================
+    // ① ブロッカー → 攻撃者
+    //==================================
+
+    const attackerDamageResult =
+        dealDamage(
+            attacker,
+            getPower(
+                blocker
+            ),
+            blocker.card
+        );
+
+
+    //==================================
+    // ヒュドラ待機
+    //==================================
+
+    if(
+        attackerDamageResult ===
+        "WAIT_HYDRA"
+    ){
+
+        console.log(
+            "CPUブロック戦闘停止：",
+            attacker.card.name,
+            "のヒュドラ能力待ち"
+        );
+
+
+        hydraBlockWaiting =
+            true;
+
+
+        hydraBlockAttacker =
+            attacker;
+
+
+        hydraBlocker =
+            blocker;
+
+
+        //----------------------------------
+        // STEP1
+        //
+        // ブロッカー → 攻撃者
+        // の処理中
+        //
+        // 再開後は
+        // 攻撃者 → ブロッカー
+        // へ進む
+        //----------------------------------
+
+        hydraBlockStep =
+            1;
+
+
+        hydraBlockWasForcedAttack =
+            wasForcedAttack;
+
+
+        return true;
+
+    }
+
+
     //----------------------------------
-    // ブロッカーから攻撃者へのダメージ
+    // レジスト待機
     //----------------------------------
 
-    dealDamage(
-        attacker,
-        getPower(
-            blocker
-        )
-    );
+    if(
+        attackerDamageResult ===
+        "WAIT_RESIST"
+    ){
+
+        console.log(
+            "CPUブロック戦闘停止：",
+            attacker.card.name,
+            "のレジスト待ち"
+        );
+
+
+        hydraBlockWaiting =
+            true;
+
+
+        hydraBlockAttacker =
+            attacker;
+
+
+        hydraBlocker =
+            blocker;
+
+
+        hydraBlockStep =
+            1;
+
+
+        hydraBlockWasForcedAttack =
+            wasForcedAttack;
+
+
+        return true;
+
+    }
+
+
+    //==================================
+    // ② 攻撃者 → ブロッカー
+    //==================================
 
 
     //----------------------------------
     // ゴーレム
     // ブロック時はダメージを受けない
-    //
-    // 複数能力対応
     //----------------------------------
 
     if(
@@ -5508,26 +6800,117 @@ function executeCpuBlock(
     }
     else{
 
-        dealDamage(
-            blocker,
-            getPower(
-                attacker
-            )
-        );
+        const blockerDamageResult =
+            dealDamage(
+                blocker,
+                getPower(
+                    attacker
+                ),
+                attacker.card
+            );
+
+
+        //==================================
+        // ヒュドラ待機
+        //==================================
+
+        if(
+            blockerDamageResult ===
+            "WAIT_HYDRA"
+        ){
+
+            console.log(
+                "CPUブロック戦闘停止：",
+                blocker.card.name,
+                "のヒュドラ能力待ち"
+            );
+
+
+            hydraBlockWaiting =
+                true;
+
+
+            hydraBlockAttacker =
+                attacker;
+
+
+            hydraBlocker =
+                blocker;
+
+
+            //----------------------------------
+            // STEP2
+            //
+            // 攻撃者 → ブロッカー
+            // まで到達済み
+            //
+            // 再開後は
+            // 戦闘解決へ進む
+            //----------------------------------
+
+            hydraBlockStep =
+                2;
+
+
+            hydraBlockWasForcedAttack =
+                wasForcedAttack;
+
+
+            return true;
+
+        }
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(
+            blockerDamageResult ===
+            "WAIT_RESIST"
+        ){
+
+            console.log(
+                "CPUブロック戦闘停止：",
+                blocker.card.name,
+                "のレジスト待ち"
+            );
+
+
+            hydraBlockWaiting =
+                true;
+
+
+            hydraBlockAttacker =
+                attacker;
+
+
+            hydraBlocker =
+                blocker;
+
+
+            hydraBlockStep =
+                2;
+
+
+            hydraBlockWasForcedAttack =
+                wasForcedAttack;
+
+
+            return true;
+
+        }
 
     }
 
 
-    //----------------------------------
-    // ブロッカーも攻撃済みにする
-    //----------------------------------
+    //==================================
+    // 双方のダメージ処理完了
+    //==================================
 
-    blocker.isRest =
-        true;
-
-
-    blocker.view.setHorizontal(
-        true
+    console.log(
+        "CPUブロック：",
+        "双方のダメージ処理完了"
     );
 
 
@@ -5554,6 +6937,23 @@ function executeCpuBlock(
             //----------------------------------
 
             finishAttack();
+
+
+            //----------------------------------
+            // 強制アタックの場合は
+            // finishAttack() 側に任せる
+            //----------------------------------
+
+            if(wasForcedAttack){
+
+                console.log(
+                    "CPU強制アタック：",
+                    "ブロック後の通常継続処理をスキップ"
+                );
+
+                return;
+
+            }
 
         },
         1000
@@ -6205,3 +7605,4 @@ function finishCharybdisTriggers(){
     );
 
 }
+

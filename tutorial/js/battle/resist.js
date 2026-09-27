@@ -4,7 +4,7 @@
 
 let currentResistEvent = null;
 
-
+let resistPassedThisEvent = false;
 
 //======================================
 // レジスト発動開始
