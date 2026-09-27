@@ -1128,43 +1128,39 @@ function finishResist(){
         }
 
 
-        //----------------------------------
-        // サモンへのダメージ
-        //----------------------------------
+//----------------------------------
+// サモンへのダメージ
+//----------------------------------
 
-        if(
-            currentResistEvent.type ===
-                GAME_EVENT.BEFORE_SUMMON_DAMAGE
-        ){
+if(
+    currentResistEvent.type ===
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE
+){
 
-            const summon =
-                currentResistEvent.target;
-
-
-            summon.damage +=
-                currentResistEvent.damage;
+    const summon =
+        currentResistEvent.target;
 
 
-            showDamageNumber(
-
-                summon,
-
-                currentResistEvent.damage
-
-            );
+    console.log(
+        "レジスト後：サモンダメージ確定",
+        summon?.card?.name,
+        currentResistEvent.damage
+    );
 
 
-            console.log(
+    //----------------------------------
+    // 確定ダメージ処理
+    //
+    // dealDamage() は使用しない
+    // 再びレジストイベントを
+    // 発生させないため
+    //----------------------------------
 
-                "サモンダメージ解決",
+    applyHydraResolvedDamage(
+        currentResistEvent
+    );
 
-                summon.card.name,
-
-                currentResistEvent.damage
-
-            );
-
-        }
+}
 
     }
 

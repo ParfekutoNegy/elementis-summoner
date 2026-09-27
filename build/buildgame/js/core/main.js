@@ -6819,13 +6819,60 @@ else if(
         );
 
 
+    //==================================
+    // 自分のサモンを使用するマギア
+    //
+    // イグナイト等
+    //==================================
+
+    let canUseOwnSummonMagia =
+        true;
+
+
+    if(
+        selectedHandCard.effect &&
+        selectedHandCard.effect.valueType ===
+            "ownSummonPower" &&
+        selectedHandCard.effect.coolOwnSummon ===
+            true
+    ){
+
+        //----------------------------------
+        // 自分の場に使用できる
+        // サモンが存在するか
+        //----------------------------------
+
+        canUseOwnSummonMagia =
+            playerField.some(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            );
+
+
+        if(!canUseOwnSummonMagia){
+
+            console.log(
+                "プレイボタン非表示：",
+                selectedHandCard.name,
+                "自分のサモンがいません"
+            );
+
+        }
+
+    }
+
+
     //----------------------------------
     // 使用可能
     //----------------------------------
 
     if(
         canUse &&
-        canPayCost(selectedHandCard)
+        canUseOwnSummonMagia &&
+        canPayCost(
+            selectedHandCard
+        )
     ){
 
         useButton.style.display =
@@ -8702,9 +8749,46 @@ function updateUsableCardHighlight(){
             card.type === "マギア"
         ){
 
+            //==================================
+            // 自分のサモンを使用するマギア
+            //
+            // イグナイト等
+            //==================================
+
+            let canUseOwnSummonMagia =
+                true;
+
+
+            if(
+                card.effect &&
+                card.effect.valueType ===
+                    "ownSummonPower" &&
+                card.effect.coolOwnSummon ===
+                    true
+            ){
+
+                //----------------------------------
+                // 自分の場にサモンがいるか
+                //----------------------------------
+
+                canUseOwnSummonMagia =
+                    playerField.some(
+                        summon =>
+                            summon &&
+                            !summon.destroyed
+                    );
+
+            }
+
+
+            //----------------------------------
+            // 発光可能
+            //----------------------------------
+
             if(
                 canPayCost(card) &&
-                canUseMagia(card)
+                canUseMagia(card) &&
+                canUseOwnSummonMagia
             ){
 
                 card.setHighlight(true);

@@ -3027,6 +3027,19 @@ function finishAttack(){
 
 
     //----------------------------------
+    // 今回がCPUの通常アタックだったか保存
+    //
+    // attackingSummonをnullにする前に
+    // 保存しておく
+    //----------------------------------
+
+    const wasCpuNormalAttack =
+        !wasForcedAttack &&
+        attackingSummon &&
+        attackingSummon.owner === ENEMY;
+
+
+    //----------------------------------
     // 攻撃対象発光解除
     //----------------------------------
 
@@ -3050,7 +3063,9 @@ function finishAttack(){
             "攻撃終了",
             attackingSummon.card.name,
             "forced=",
-            wasForcedAttack
+            wasForcedAttack,
+            "cpuNormal=",
+            wasCpuNormalAttack
         );
 
     }
@@ -3108,15 +3123,16 @@ function finishAttack(){
 
     blockingSummon = null;
 
+
     //----------------------------------
-// サモン攻撃ブロック状態終了
-//----------------------------------
+    // サモン攻撃ブロック状態終了
+    //----------------------------------
 
-summonAttackBlockMode =
-    false;
+    summonAttackBlockMode =
+        false;
 
-originalAttackTargetSummon =
-    null;
+    originalAttackTargetSummon =
+        null;
 
 
     //----------------------------------
@@ -3143,7 +3159,7 @@ originalAttackTargetSummon =
 
 
     //==================================
-    // 次の強制アタック
+    // 強制アタックだった場合
     //==================================
 
     if(wasForcedAttack){
@@ -3188,6 +3204,62 @@ originalAttackTargetSummon =
             },
             100
         );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // CPU通常アタックだった場合
+    //==================================
+
+    if(wasCpuNormalAttack){
+
+        console.log(
+            "CPU通常アタック終了：",
+            "次のCPU攻撃へ"
+        );
+
+
+        //----------------------------------
+        // CPU待機解除
+        //----------------------------------
+
+        cpuWaiting =
+            false;
+
+
+        //----------------------------------
+        // 今回の攻撃を完了扱いにする
+        //----------------------------------
+
+        cpuAttackIndex++;
+
+
+        //----------------------------------
+        // 次のCPU攻撃へ
+        //----------------------------------
+
+        setTimeout(
+            () => {
+
+                if(
+                    typeof cpuNextAttack ===
+                        "function"
+                ){
+
+                    cpuNextAttack();
+
+                }
+
+            },
+            500
+        );
+
+
+        return;
 
     }
 
@@ -7643,6 +7715,13 @@ function finishCharybdisTriggers(){
                     :
                     null,
 
+            target:
+                target === PLAYER
+                    ?
+                    "PLAYER"
+                    :
+                    target?.card?.name ?? null,
+
             remainingTriggers:
                 charybdisTriggerQueue.length
         }
@@ -7670,7 +7749,7 @@ function finishCharybdisTriggers(){
 
 
     //----------------------------------
-    // 強制コスト状態
+    // 強制コスト状態解除
     //----------------------------------
 
     if(
@@ -7704,13 +7783,88 @@ function finishCharybdisTriggers(){
 
     if(
         !attacker ||
-        !target == null
-
+        target == null
     ){
 
         console.warn(
-            "カリュブディス：攻撃再開情報なし"
+            "カリュブディス：攻撃再開情報なし",
+            {
+                attacker:
+                    attacker?.card?.name ??
+                    null,
+
+                target:
+                    target
+            }
         );
+
+
+        //----------------------------------
+        // CPU待機解除
+        //----------------------------------
+
+        if(
+            game.currentPlayer === ENEMY
+        ){
+
+            cpuWaiting =
+                false;
+
+        }
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃者がすでに場にいない
+    //----------------------------------
+
+    const attackerField =
+        attacker.owner === PLAYER
+            ?
+            playerField
+            :
+            enemyField;
+
+
+    if(
+        !attackerField.includes(
+            attacker
+        ) ||
+        attacker.destroyed
+    ){
+
+        console.log(
+            "カリュブディス：",
+            "攻撃者が場にいないため攻撃終了",
+            attacker.card?.name
+        );
+
+
+        //----------------------------------
+        // CPUアタックなら次へ
+        //----------------------------------
+
+        if(
+            attacker.owner === ENEMY
+        ){
+
+            cpuWaiting =
+                false;
+
+            cpuAttackIndex++;
+
+
+            setTimeout(
+                cpuNextAttack,
+                500
+            );
+
+        }
+
 
         return;
 
@@ -7720,13 +7874,37 @@ function finishCharybdisTriggers(){
     //==================================================
     // 通常の攻撃処理へ戻る
     //
-    // executeAttack()を再実行しないことが重要
+    // executeAttack()は再実行しない
     //==================================================
 
     console.log(
         "カリュブディス：アタック処理再開",
-        attacker.card.name
+        {
+            attacker:
+                attacker.card.name,
+
+            target:
+                target === PLAYER
+                    ?
+                    "PLAYER"
+                    :
+                    target?.card?.name
+        }
     );
+
+
+    //----------------------------------
+    // CPU待機解除
+    //----------------------------------
+
+    if(
+        attacker.owner === ENEMY
+    ){
+
+        cpuWaiting =
+            false;
+
+    }
 
 
     continueAttackAfterAttackAbility(

@@ -9303,43 +9303,39 @@ if(
         }
 
 
-        //----------------------------------
-        // サモンへのダメージ
-        //----------------------------------
+ //----------------------------------
+// サモンへのダメージ
+//----------------------------------
 
-        else if(
-            target &&
-            target.card
-        ){
+if(
+    currentResistEvent.type ===
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE
+){
 
-            const targetPower =
-                getPower(
-                    target
-                );
+    const summon =
+        currentResistEvent.target;
 
 
-            if(
-                damage >=
-                targetPower
-            ){
-
-                addCpuActionPoints(
-                    action,
-                    50,
-                    "サモン破壊可能"
-                );
-
-            }
+    console.log(
+        "レジスト後：サモンダメージ確定",
+        summon?.card?.name,
+        currentResistEvent.damage
+    );
 
 
-            addCpuActionPoints(
-                action,
-                targetPower * 5,
-                "高パワーサモンを対象"
-            );
+    //----------------------------------
+    // 確定ダメージ処理
+    //
+    // dealDamage() は使用しない
+    // 再びレジストイベントを
+    // 発生させないため
+    //----------------------------------
 
-        }
+    applyHydraResolvedDamage(
+        currentResistEvent
+    );
 
+}
     }
 
 
