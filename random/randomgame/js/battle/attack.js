@@ -2149,7 +2149,8 @@ const targetDamageResult =
         getPower(
             attackingSummon
         ),
-        attackingSummon.card
+        attackingSummon.card,
+        true
     );
 
 
@@ -2218,9 +2219,9 @@ const attackerDamageResult =
         getPower(
             target
         ),
-        target.card
+        target.card,
+        true
     );
-
 
 //----------------------------------
 // ヒュドラ待機
@@ -5841,6 +5842,129 @@ function updateAttackHighlight(){
 
 }
 
+//==================================================
+// サモンが現在ブロックされないか
+//==================================================
+
+function isSummonUnblockable(
+    summon
+){
+
+    //----------------------------------
+    // サモン確認
+    //----------------------------------
+
+    if(!summon){
+
+        return false;
+
+    }
+
+
+    //==================================
+    // グリフォン等
+    // 恒常的なブロック不可能力
+    //==================================
+
+    if(
+        hasSummonAbility(
+            summon,
+            "cannotBeBlocked"
+        )
+    ){
+
+        console.log(
+            "ブロック不可能力",
+            summon.card?.name
+        );
+
+
+        return true;
+
+    }
+
+
+    //==================================
+    // ★追加
+    // ブレイクスルー等
+    //
+    // このターン中、
+    // 現在パワーが指定値以下なら
+    // ブロックされない
+    //==================================
+
+    const statuses =
+        Array.isArray(
+            summon.status
+        )
+            ? summon.status
+            : [];
+
+
+    const breakthrough =
+        statuses.find(
+            status =>
+                status?.type ===
+                "conditionalCannotBeBlocked"
+        );
+
+
+    //----------------------------------
+    // 一時効果なし
+    //----------------------------------
+
+    if(!breakthrough){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 条件となる最大パワー
+    //----------------------------------
+
+    const maxPower =
+        breakthrough.maxPower ?? 2;
+
+
+    //----------------------------------
+    // ★重要
+    //
+    // 対象にした時点のパワーではなく、
+    // 攻撃時点の現在パワーで判定
+    //----------------------------------
+
+    const currentPower =
+        getPower(
+            summon
+        );
+
+
+    if(
+        currentPower <=
+        maxPower
+    ){
+
+        console.log(
+            "条件付きブロック不可",
+            summon.card?.name,
+            "現在パワー=",
+            currentPower,
+            "条件=",
+            maxPower
+        );
+
+
+        return true;
+
+    }
+
+
+    return false;
+
+}
+
 //======================================
 // サモンへの攻撃をブロックできる
 // サモンを取得
@@ -5878,13 +6002,17 @@ function findSummonAttackBlockers(
 
 
     //----------------------------------
+    // ★変更
     // ブロック不可攻撃
+    //
+    // グリフォン等の恒常能力
+    // ＋
+    // ブレイクスルー等の条件付き効果
     //----------------------------------
 
     if(
-        hasSummonAbility(
-            attackingSummon,
-            "cannotBeBlocked"
+        isSummonUnblockable(
+            attackingSummon
         )
     ){
 
@@ -6021,7 +6149,6 @@ function findSummonAttackBlockers(
 
 }
 
-
 function findBlockSummons(){
 
     //----------------------------------
@@ -6036,15 +6163,17 @@ function findBlockSummons(){
 
 
     //----------------------------------
-    // 攻撃者のブロック不可能力
+    // ★変更
+    // 攻撃者のブロック不可確認
     //
-    // 複数能力対応
+    // グリフォン等の恒常能力
+    // ＋
+    // ブレイクスルー等の条件付き効果
     //----------------------------------
 
     if(
-        hasSummonAbility(
-            attackingSummon,
-            "cannotBeBlocked"
+        isSummonUnblockable(
+            attackingSummon
         )
     ){
 
@@ -6303,14 +6432,15 @@ function executeBlock(blocker){
     // ① ブロッカーから攻撃者へのダメージ
     //==================================
 
-    const attackerDamageResult =
-        dealDamage(
-            attackingSummon,
-            getPower(
-                blocker
-            ),
-            blocker.card
-        );
+const attackerDamageResult =
+    dealDamage(
+        attackingSummon,
+        getPower(
+            blocker
+        ),
+        blocker.card,
+        true
+    );
 
 
     //----------------------------------
@@ -6394,14 +6524,15 @@ function executeBlock(blocker){
     }
     else{
 
-        const blockerDamageResult =
-            dealDamage(
-                blocker,
-                getPower(
-                    attackingSummon
-                ),
-                attackingSummon.card
-            );
+const blockerDamageResult =
+    dealDamage(
+        blocker,
+        getPower(
+            attackingSummon
+        ),
+        attackingSummon.card,
+        true
+    );
 
 
         //----------------------------------
@@ -6670,15 +6801,15 @@ function executeCpuBlock(
     // ① ブロッカー → 攻撃者
     //==================================
 
-    const attackerDamageResult =
-        dealDamage(
-            attacker,
-            getPower(
-                blocker
-            ),
-            blocker.card
-        );
-
+const attackerDamageResult =
+    dealDamage(
+        attacker,
+        getPower(
+            blocker
+        ),
+        blocker.card,
+        true
+    );
 
     //==================================
     // ヒュドラ待機
@@ -6798,14 +6929,15 @@ function executeCpuBlock(
     }
     else{
 
-        const blockerDamageResult =
-            dealDamage(
-                blocker,
-                getPower(
-                    attacker
-                ),
-                attacker.card
-            );
+const blockerDamageResult =
+    dealDamage(
+        blocker,
+        getPower(
+            attacker
+        ),
+        attacker.card,
+        true
+    );
 
 
         //==================================

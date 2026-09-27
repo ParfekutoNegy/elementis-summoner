@@ -491,7 +491,7 @@ function finishTurnEnd(){
     // ターン終了で効果解除
     //==================================
 
-    clearCurseSmokeStatus();
+    clearTemporaryTurnStatus();
 
 
     //----------------------------------
@@ -1239,7 +1239,7 @@ function finishTurn(){
     // ターン終了効果の解決後に解除
     //----------------------------------
 
-    clearCurseSmokeStatus();
+    clearTemporaryTurnStatus();
 
 
     //----------------------------------

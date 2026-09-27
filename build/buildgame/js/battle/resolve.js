@@ -650,7 +650,7 @@ function resolveBasiliskBattle(){
 // ターン終了時解除
 //==================================================
 
-function clearCurseSmokeStatus(){
+function clearTemporaryTurnStatus(){
 
     const fields = [
         playerField,
@@ -674,38 +674,107 @@ function clearCurseSmokeStatus(){
             }
 
 
-            //----------------------------------
-            // カーススモーク確認
-            //----------------------------------
+            //==================================
+            // カーススモーク
+            //==================================
 
             const hadCurseSmoke =
                 summon.status.some(
                     status =>
-                        status.type ===
+                        status?.type ===
                         "curseSmoke"
                 );
 
 
-            //----------------------------------
-            // カーススモーク解除
-            //----------------------------------
+            //==================================
+            // ★追加
+            // ブレイクスルー
+            // 条件付きブロック不可
+            //==================================
+
+            const hadConditionalCannotBeBlocked =
+                summon.status.some(
+                    status =>
+                        status?.type ===
+                        "conditionalCannotBeBlocked"
+                );
+
+
+            //==================================
+            // ★変更
+            // ターン終了時に消えるstatusを
+            // まとめて解除
+            //==================================
 
             summon.status =
                 summon.status.filter(
-                    status =>
-                        status.type !==
-                        "curseSmoke"
+                    status => {
+
+                        if(!status){
+
+                            return false;
+
+                        }
+
+
+                        //----------------------------------
+                        // カーススモーク
+                        //----------------------------------
+
+                        if(
+                            status.type ===
+                            "curseSmoke"
+                        ){
+
+                            return false;
+
+                        }
+
+
+                        //----------------------------------
+                        // ブレイクスルー
+                        //----------------------------------
+
+                        if(
+                            status.type ===
+                            "conditionalCannotBeBlocked"
+                        ){
+
+                            return false;
+
+                        }
+
+
+                        //----------------------------------
+                        // その他のstatusは残す
+                        //----------------------------------
+
+                        return true;
+
+                    }
                 );
 
 
-            //----------------------------------
+            //==================================
             // ログ
-            //----------------------------------
+            //==================================
 
             if(hadCurseSmoke){
 
                 console.log(
                     "カーススモーク解除",
+                    summon.card.name
+                );
+
+            }
+
+
+            if(
+                hadConditionalCannotBeBlocked
+            ){
+
+                console.log(
+                    "条件付きブロック不可解除",
                     summon.card.name
                 );
 

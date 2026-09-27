@@ -174,13 +174,12 @@ function hasSummonAbility(
 function dealDamage(
     target,
     damage,
-    sourceCard = null
+    sourceCard = null,
+    isBattleDamage = false
 ){
 
     if(!target){
-
         return "DONE";
-
     }
 
 
@@ -188,7 +187,6 @@ function dealDamage(
         "対象所有者",
         target.owner
     );
-
 
     console.log(
         "ダメージ",
@@ -198,7 +196,7 @@ function dealDamage(
 
 
     //----------------------------------
-    // レジストイベント
+    // ダメージイベント作成
     //----------------------------------
 
     const event = {
@@ -222,13 +220,16 @@ function dealDamage(
             sourceCard?.type ?? null,
 
         element:
-            sourceCard?.element ?? null
+            sourceCard?.element ?? null,
+
+        isBattleDamage:
+            isBattleDamage
 
     };
 
 
     //----------------------------------
-    // レジスト確認
+    // レジスト判定
     //----------------------------------
 
     const waitResist =
@@ -236,10 +237,6 @@ function dealDamage(
             event
         );
 
-
-    //----------------------------------
-    // レジスト待機
-    //----------------------------------
 
     if(waitResist){
 
@@ -253,7 +250,7 @@ function dealDamage(
 
 
     //----------------------------------
-    // ダメージを正規化
+    // ダメージ正規化
     //----------------------------------
 
     event.damage =
@@ -263,14 +260,11 @@ function dealDamage(
         );
 
 
-    //==================================
-    // ヒュドラ
-    // ダメージ無効能力
-    //==================================
+    //----------------------------------
+    // ヒュドラ能力
+    //----------------------------------
 
-    if(
-        event.damage > 0
-    ){
+    if(event.damage > 0){
 
         const waitHydra =
             startHydraDamageAbility(
@@ -287,15 +281,6 @@ function dealDamage(
                 event.damage
             );
 
-
-            //----------------------------------
-            // 重要
-            //
-            // 呼び出し元に
-            // 「まだダメージ処理は終わっていない」
-            // と伝える
-            //----------------------------------
-
             return "WAIT_HYDRA";
 
         }
@@ -304,7 +289,7 @@ function dealDamage(
 
 
     //----------------------------------
-    // 最終ダメージ適用
+    // 最終ダメージ処理
     //----------------------------------
 
     applyHydraResolvedDamage(
@@ -312,13 +297,11 @@ function dealDamage(
     );
 
 
-    //----------------------------------
-    // ダメージ処理完了
-    //----------------------------------
-
     return "DONE";
 
 }
+
+
 function getPower(summon){
 
     //----------------------------------

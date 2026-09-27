@@ -2345,6 +2345,55 @@ function isValidMagiaTarget(
         }
 
 
+        //==================================
+        // effect.condition による
+        // サモン共通条件
+        //==================================
+
+        const condition =
+            card.effect.condition;
+
+
+        //----------------------------------
+        // 向き条件
+        //----------------------------------
+
+        if(
+            condition?.orientation ===
+            "horizontal"
+        ){
+
+            // ヨコ向きでなければ対象外
+
+            if(
+                !target.isRest
+            ){
+
+                return false;
+
+            }
+
+        }
+
+
+        if(
+            condition?.orientation ===
+            "vertical"
+        ){
+
+            // タテ向きでなければ対象外
+
+            if(
+                target.isRest
+            ){
+
+                return false;
+
+            }
+
+        }
+
+
         //----------------------------------
         // 自分サモン
         //----------------------------------

@@ -35,13 +35,12 @@ const CPU_DECK_LIST = [
         strategy: "wind",
 
         cards: [
-            1, 37, 70, 70, 70,
-            37, 71, 24, 23, 31
+            1, 4, 15, 45, 55,
+            7, 46, 55, 55, 31
         ]
     },*/
 
-
-    {
+{
         id: "cpu_fire",
         name: "火属性デッキ",
         strategy: "fire",

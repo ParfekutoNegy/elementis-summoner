@@ -664,7 +664,19 @@ const CARD_LIST = [
         element: "風",
         cost: 1,
         series:"folklore",
-        image: "images/045-トルネード.jpg"
+        image: "images/045-トルネード.jpg",
+        effect:{
+            target:[
+                "enemySummon",
+                "playerSummon"
+            ],
+            type:"returnToHand",
+            condition:{
+                orientation:"horizontal"
+            }
+        },
+        tag:"ヨコ向きのサモン１体",
+        text:"対象を手札に戻す。"
     },
     {
         id: 46,
@@ -673,7 +685,17 @@ const CARD_LIST = [
         element: "風",
         cost: 1,
         series:"folklore",
-        image: "images/046-ブレイクスルー.jpg"
+        image: "images/046-ブレイクスルー.jpg",
+    effect:{
+        target:[
+            "enemySummon",
+            "playerSummon"
+        ],
+        type:"conditionalCannotBeBlocked",
+        maxPower:2
+    },
+    tag:"サモン１体",
+    text:"このターン中、対象はパワーが２以下ならブロックされない。",
     },
     {
         id: 47,
@@ -769,15 +791,20 @@ const CARD_LIST = [
         series:"folklore",
         image: "images/054-クリスタルピーピング.jpg"
     },
-    {
-        id: 55,
-        name:"イリュージョンフォグ",
-        type: "レジスト",
-        element: "水",
-        cost: 1,
-        series:"folklore",
-        image: "images/055-イリュージョンフォグ.jpg"
-    },
+{
+    id: 55,
+    name:"イリュージョンフォグ",
+    type: "レジスト",
+    element: "水",
+    cost: 1,
+    series:"folklore",
+    image: "images/055-イリュージョンフォグ.jpg",
+    trigger:"beforeSummonDamage",
+    condition:illusionFogCondition,
+    effect:"illusionFog",
+    condi:"サモンがバトル以外でダメージを受けるとき",
+    text:"サモン１体を対象にし、受けるダメージを０にする。"
+},
     {
         id: 56,
         name:"キャンセレーション",

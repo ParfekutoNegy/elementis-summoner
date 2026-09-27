@@ -451,7 +451,8 @@ const resistEffects = {
     waterBarrier,
     liquidVeil,
     rapidMove,
-    sandProtect
+    sandProtect,
+    illusionFog
 
 };
 
@@ -1844,5 +1845,69 @@ function useCpuResist(card){
 
 
     return true;
+
+}
+
+//======================================
+// イリュージョンフォグ
+//======================================
+
+function illusionFog(card){
+
+    console.log(
+        "イリュージョンフォグ発動",
+        {
+            target:
+                currentResistEvent
+                    ?.target
+                    ?.card
+                    ?.name,
+
+            damageBefore:
+                currentResistEvent
+                    ?.damage
+        }
+    );
+
+
+    //----------------------------------
+    // イベント確認
+    //----------------------------------
+
+    if(!currentResistEvent){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // サモンダメージのみ
+    //----------------------------------
+
+    if(
+        currentResistEvent.type !==
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 受けるダメージを0にする
+    //----------------------------------
+
+    currentResistEvent.damage = 0;
+
+
+    console.log(
+        "イリュージョンフォグ：ダメージ0",
+        currentResistEvent
+            .target
+            ?.card
+            ?.name
+    );
 
 }

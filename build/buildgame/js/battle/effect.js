@@ -614,6 +614,132 @@ case "damage":{
 
             break;
 
+                //==================================
+        // ★追加
+        // 条件付きブロック不可
+        //
+        // ブレイクスルー等
+        //
+        // このターン中、
+        // 対象の現在パワーが
+        // 指定値以下ならブロックされない
+        //==================================
+
+        case "conditionalCannotBeBlocked":{
+
+            //----------------------------------
+            // 対象確認
+            //----------------------------------
+
+            if(
+                !target ||
+                !(target instanceof Summon)
+            ){
+
+                console.warn(
+                    "条件付きブロック不可：",
+                    "対象サモンなし"
+                );
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // status配列を準備
+            //----------------------------------
+
+            if(
+                !Array.isArray(
+                    target.status
+                )
+            ){
+
+                target.status =
+                    [];
+
+            }
+
+
+            //----------------------------------
+            // 条件値
+            //----------------------------------
+
+            const maxPower =
+                Number(
+                    card.effect.maxPower
+                ) || 2;
+
+
+            //----------------------------------
+            // 同じ一時効果が
+            // すでに付与されているか
+            //----------------------------------
+
+            const alreadyApplied =
+                target.status.some(
+                    status =>
+                        status?.type ===
+                        "conditionalCannotBeBlocked"
+                );
+
+
+            //----------------------------------
+            // 未付与なら追加
+            //----------------------------------
+
+            if(!alreadyApplied){
+
+                target.status.push({
+
+                    type:
+                        "conditionalCannotBeBlocked",
+
+                    maxPower:
+                        maxPower,
+
+                    source:
+                        card
+
+                });
+
+
+                console.log(
+                    "条件付きブロック不可付与",
+                    {
+                        magia:
+                            card.name,
+
+                        target:
+                            target.card?.name,
+
+                        maxPower:
+                            maxPower,
+
+                        currentPower:
+                            getPower(
+                                target
+                            )
+                    }
+                );
+
+            }
+            else{
+
+                console.log(
+                    "条件付きブロック不可：",
+                    "すでに付与済み",
+                    target.card?.name
+                );
+
+            }
+
+
+            break;
+
+        }    
+
         //==================================
         // カーススモーク
         //
@@ -730,7 +856,51 @@ case "damage":{
         // 手札へ戻す
         //==================================
 
-        case "returnToHand":
+        case "returnToHand":{
+
+
+            //==================================
+            // ★追加
+            // 場のサモンを手札へ戻す
+            //
+            // トルネード等
+            //==================================
+
+            if(
+                target instanceof Summon
+            ){
+
+                console.log(
+                    "マギア：サモンを手札へ戻す",
+                    {
+                        magia:
+                            card.name,
+
+                        target:
+                            target.card?.name,
+
+                        owner:
+                            target.owner
+                    }
+                );
+
+
+                moveLamiaTargetToHand(
+                    target
+                );
+
+
+                break;
+
+            }
+
+
+            //==================================
+            // ↓ここから既存処理
+            //
+            // クールゾーンのカードを
+            // PLAYER手札へ戻す
+            //==================================
 
             board.removeCoolCard(
                 target,
@@ -748,8 +918,10 @@ case "damage":{
                 target
             );
 
+
             break;
 
+        }
 
         //==================================
         // 攻撃可能

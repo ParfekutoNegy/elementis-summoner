@@ -36,6 +36,14 @@ let cpuAttackQueue = [];
 
 let cpuAttackIndex = 0;
 
+//==================================================
+// ブレイクスルー使用後
+// 必ず攻撃するCPUサモン
+//==================================================
+
+let cpuBreakthroughAttackSummon =
+    null;
+
 
 //======================================
 // CPUターン初期化
@@ -852,6 +860,30 @@ function createCpuAttackQueue(){
                         summon
                     );
 
+                //==================================
+                // ブレイクスルー予約サモン
+                //==================================
+
+                if(
+                    typeof cpuBreakthroughAttackSummon !==
+                        "undefined" &&
+                    summon ===
+                        cpuBreakthroughAttackSummon
+                ){
+
+                    console.log(
+                        "CPU攻撃キュー：",
+                        "ブレイクスルー予約サモン",
+                        summon.card.name,
+                        "power=",
+                        summonPower
+                    );
+
+
+                    return true;
+
+                }
+
 
                 //==================================
                 // ブロックされないサモン
@@ -1030,7 +1062,54 @@ function createCpuAttackQueue(){
 
             }
         );
+    //==================================
+    // ブレイクスルー予約サモンを
+    // 攻撃キューの先頭へ移動
+    //==================================
 
+    if(
+        typeof cpuBreakthroughAttackSummon !==
+            "undefined" &&
+        cpuBreakthroughAttackSummon
+    ){
+
+        const breakthroughIndex =
+            cpuAttackQueue.indexOf(
+                cpuBreakthroughAttackSummon
+            );
+
+
+        if(
+            breakthroughIndex > 0
+        ){
+
+            cpuAttackQueue.splice(
+                breakthroughIndex,
+                1
+            );
+
+
+            cpuAttackQueue.unshift(
+                cpuBreakthroughAttackSummon
+            );
+
+        }
+
+
+        if(
+            breakthroughIndex >= 0
+        ){
+
+            console.log(
+                "CPU攻撃キュー：",
+                "ブレイクスルー予約サモンを先頭へ",
+                cpuBreakthroughAttackSummon
+                    .card?.name
+            );
+
+        }
+
+    }
 
     //==================================
     // 最終ログ
@@ -1064,14 +1143,6 @@ function createCpuAttackQueue(){
     );
 
 }
-//======================================
-// CPU次の攻撃
-//======================================
-
-//======================================
-// CPU次の攻撃
-//======================================
-
 function cpuNextAttack(){
 
 
@@ -1090,6 +1161,14 @@ function cpuNextAttack(){
         cpuAttackIndex = 0;
 
         cpuWaiting = false;
+
+        //==================================
+        // ★追加
+        // ブレイクスルー攻撃予約解除
+        //==================================
+
+        cpuBreakthroughAttackSummon =
+            null;
 
         return;
 
@@ -1188,9 +1267,6 @@ function cpuNextAttack(){
 
     //==================================
     // カリュブディス処理待ち
-    //
-    // PLAYER側のカリュブディスが
-    // CPUのアタックに反応している場合
     //==================================
 
     if(
@@ -1231,6 +1307,16 @@ function cpuNextAttack(){
         cpuAttackQueue = [];
 
         cpuAttackIndex = 0;
+
+
+        //----------------------------------
+        // ★追加
+        // 攻撃フェーズ終了時に
+        // 不要な予約が残っていれば解除
+        //----------------------------------
+
+        cpuBreakthroughAttackSummon =
+            null;
 
 
         //----------------------------------
@@ -1275,6 +1361,9 @@ function cpuNextAttack(){
 
         cpuAttackIndex = 0;
 
+        cpuBreakthroughAttackSummon =
+            null;
+
 
         return;
 
@@ -1303,6 +1392,31 @@ function cpuNextAttack(){
         )
     ){
 
+        //----------------------------------
+        // ★追加
+        // 予約サモン自身が
+        // 攻撃不能になった場合は予約解除
+        //----------------------------------
+
+        if(
+            attacker &&
+            attacker ===
+                cpuBreakthroughAttackSummon
+        ){
+
+            console.log(
+                "CPU：ブレイクスルー予約解除",
+                attacker.card?.name,
+                "攻撃不能"
+            );
+
+
+            cpuBreakthroughAttackSummon =
+                null;
+
+        }
+
+
         cpuAttackIndex++;
 
 
@@ -1314,14 +1428,60 @@ function cpuNextAttack(){
     }
 
 
+    //==================================
+    // ★追加
+    // ブレイクスルー予約攻撃か
+    //==================================
+
+    const isBreakthroughAttack =
+        attacker ===
+        cpuBreakthroughAttackSummon;
+
+
     //----------------------------------
     // 攻撃対象
     //----------------------------------
 
-    const target =
-        selectCpuAttackTarget(
-            attacker
+    let target;
+
+
+    //==================================
+    // ★追加
+    // ブレイクスルー対象は
+    // 必ずPLAYER本体へアタック
+    //==================================
+
+    if(isBreakthroughAttack){
+
+        target =
+            PLAYER;
+
+
+        console.log(
+            "CPU：ブレイクスルー優先攻撃",
+            attacker.card.name,
+            "→ PLAYER",
+            "power=",
+            getPower(
+                attacker
+            )
         );
+
+    }
+
+
+    //==================================
+    // 通常攻撃
+    //==================================
+
+    else{
+
+        target =
+            selectCpuAttackTarget(
+                attacker
+            );
+
+    }
 
 
     //----------------------------------
@@ -1329,6 +1489,20 @@ function cpuNextAttack(){
     //----------------------------------
 
     if(!target){
+
+        //----------------------------------
+        // ★追加
+        // 予約攻撃だった場合
+        // 念のため予約解除
+        //----------------------------------
+
+        if(isBreakthroughAttack){
+
+            cpuBreakthroughAttackSummon =
+                null;
+
+        }
+
 
         cpuAttackIndex++;
 
@@ -1365,6 +1539,31 @@ function cpuNextAttack(){
         true;
 
 
+    //==================================
+    // ★追加
+    //
+    // executeAttack()へ入った時点で
+    // ブレイクスルー予約そのものは達成
+    //
+    // レジスト・ネレイド等で待機しても
+    // 同じ攻撃を二重開始しないよう、
+    // ここで予約を解除する
+    //==================================
+
+    if(isBreakthroughAttack){
+
+        console.log(
+            "CPU：ブレイクスルー予約攻撃開始",
+            attacker.card.name
+        );
+
+
+        cpuBreakthroughAttackSummon =
+            null;
+
+    }
+
+
     const result =
         executeAttack(
             attacker,
@@ -1376,16 +1575,9 @@ function cpuNextAttack(){
     // 攻撃処理待機
     //
     // WAIT_RESIST
-    //   レジスト選択
-    //
     // WAIT_BLOCK
-    //   ブロック選択
-    //
     // WAIT_SPHINX
-    //   スフィンクス強制コスト
-    //
     // WAIT_CHARYBDIS
-    //   カリュブディス強制コスト
     //==================================
 
     if(
@@ -2641,6 +2833,382 @@ function cpuMagia(
 
 }
 
+//==================================================
+// CPU：条件付きブロック不可マギア対象選択
+//
+// ブレイクスルー等
+//==================================================
+
+function selectCpuConditionalUnblockableTarget(
+    card
+){
+
+    //----------------------------------
+    // カード確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !card.effect
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 条件付きブロック不可以外
+    //----------------------------------
+
+    if(
+        card.effect.type !==
+        "conditionalCannotBeBlocked"
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 条件となる最大パワー
+    //----------------------------------
+
+    const maxPower =
+        Number(
+            card.effect.maxPower
+        ) || 2;
+
+
+    //==================================
+    // 対象候補
+    //==================================
+
+    const candidates =
+        enemyField.filter(
+            summon => {
+
+                //----------------------------------
+                // 無効なサモン
+                //----------------------------------
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // CPU自身のサモンのみ
+                //----------------------------------
+
+                if(
+                    summon.owner !==
+                    ENEMY
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // マギア対象不可
+                //----------------------------------
+
+                if(
+                    isMagiaTargetBlocked(
+                        card,
+                        summon
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //==================================
+                // ★重要
+                // 現在パワーが条件以下のみ
+                //
+                // 「優先」ではなく、
+                // これを超えるサモンには
+                // CPUは使用しない
+                //==================================
+
+                const currentPower =
+                    getPower(
+                        summon
+                    );
+
+
+                if(
+                    currentPower >
+                    maxPower
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // ヨコ向きは攻撃できない
+                //----------------------------------
+
+                if(
+                    summon.isRest
+                ){
+
+                    return false;
+
+                }
+
+
+                //==================================
+                // このターン攻撃可能か
+                //==================================
+
+                let canAttack =
+                    summon.attackReady;
+
+
+                //----------------------------------
+                // 召喚ターン攻撃能力
+                //----------------------------------
+
+                if(
+                    !canAttack &&
+                    hasSummonAbility(
+                        summon,
+                        "summonTurnAttack"
+                    )
+                ){
+
+                    canAttack =
+                        true;
+
+                }
+
+
+                //----------------------------------
+                // 攻撃できない
+                //----------------------------------
+
+                if(!canAttack){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // メドゥーサによって
+                // 召喚ターン攻撃を禁止されている
+                //----------------------------------
+
+                if(
+                    typeof isSummonTurnAttackPrevented ===
+                        "function" &&
+                    isSummonTurnAttackPrevented(
+                        summon
+                    )
+                ){
+
+                    //----------------------------------
+                    // 通常のattackReadyがないなら
+                    // 攻撃不可
+                    //----------------------------------
+
+                    if(
+                        !summon.attackReady
+                    ){
+
+                        return false;
+
+                    }
+
+                }
+
+
+                //----------------------------------
+                // オーガ等による攻撃制限
+                //----------------------------------
+
+                if(
+                    typeof isOgreBattleLocked ===
+                        "function" &&
+                    isOgreBattleLocked(
+                        summon
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //==================================
+                // すでに恒常的に
+                // ブロックされないなら不要
+                //
+                // グリフォン等
+                //==================================
+
+                if(
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeBlocked"
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //==================================
+                // すでにブレイクスルー等を
+                // 受けているなら不要
+                //==================================
+
+                if(
+                    Array.isArray(
+                        summon.status
+                    ) &&
+                    summon.status.some(
+                        status =>
+                            status?.type ===
+                            "conditionalCannotBeBlocked"
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 候補
+                //----------------------------------
+
+                return true;
+
+            }
+        );
+
+
+    //==================================
+    // 候補なし
+    //==================================
+
+    if(
+        candidates.length === 0
+    ){
+
+        console.log(
+            "CPU：条件付きブロック不可対象なし",
+            card.name
+        );
+
+
+        return null;
+
+    }
+
+
+    //==================================
+    // 候補評価
+    //
+    // 条件を満たす中では
+    // 高パワーを優先
+    //==================================
+
+    candidates.sort(
+        (a,b) =>
+            getPower(b) -
+            getPower(a)
+    );
+
+
+    //----------------------------------
+    // 最大パワー
+    //----------------------------------
+
+    const bestPower =
+        getPower(
+            candidates[0]
+        );
+
+
+    //----------------------------------
+    // 同パワー候補
+    //----------------------------------
+
+    const bestCandidates =
+        candidates.filter(
+            summon =>
+                getPower(
+                    summon
+                ) ===
+                bestPower
+        );
+
+
+    //----------------------------------
+    // 同値ならランダム
+    //----------------------------------
+
+    const target =
+        bestCandidates[
+            Math.floor(
+                Math.random() *
+                bestCandidates.length
+            )
+        ];
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "CPU：条件付きブロック不可対象決定",
+        card.name
+    );
+
+    console.log(
+        "対象=",
+        target.card?.name
+    );
+
+    console.log(
+        "現在パワー=",
+        getPower(
+            target
+        )
+    );
+
+    console.log(
+        "attackReady=",
+        target.attackReady
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return target;
+
+}
+
 //======================================
 // CPUマギア対象選択
 //======================================
@@ -2660,6 +3228,218 @@ function selectCpuMagiaTarget(card){
 
     const targets =
         card.effect.target;
+
+//==================================
+// ★追加
+// 条件付きブロック不可
+//
+// ブレイクスルー等
+//==================================
+
+if(
+    card.effect.type ===
+    "conditionalCannotBeBlocked"
+){
+
+    return (
+        selectCpuConditionalUnblockableTarget(
+            card
+        )
+    );
+
+}
+
+
+    //==================================
+    // ★追加
+    // ヨコ向きサモンを手札へ戻す
+    //
+    // トルネード等
+    //
+    // CPUは自分のサモンではなく、
+    // PLAYERのヨコ向きサモンを優先する
+    //==================================
+
+    if(
+        card.effect.type ===
+            "returnToHand" &&
+        card.effect.condition
+            ?.orientation ===
+            "horizontal" &&
+        targets.includes(
+            "enemySummon"
+        )
+    ){
+
+        //----------------------------------
+        // PLAYERのヨコ向きサモンから
+        // 有効対象だけ取得
+        //----------------------------------
+
+        const candidates =
+            playerField.filter(
+                summon => {
+
+                    if(
+                        !summon ||
+                        summon.destroyed
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // PLAYERサモンのみ
+                    //----------------------------------
+
+                    if(
+                        summon.owner !==
+                        PLAYER
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // ヨコ向きのみ
+                    //----------------------------------
+
+                    if(
+                        !summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // マギア対象不可
+                    //----------------------------------
+
+                    if(
+                        isMagiaTargetBlocked(
+                            card,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(
+            candidates.length === 0
+        ){
+
+            console.log(
+                "CPU：手札戻しマギア対象なし",
+                card.name
+            );
+
+
+            return null;
+
+        }
+
+
+        //----------------------------------
+        // 高パワー順
+        //----------------------------------
+
+        candidates.sort(
+            (a,b) =>
+                getPower(b) -
+                getPower(a)
+        );
+
+
+        //----------------------------------
+        // 最大パワー
+        //----------------------------------
+
+        const maxPower =
+            getPower(
+                candidates[0]
+            );
+
+
+        //----------------------------------
+        // 同じ最大パワーの候補
+        //
+        // 同値ならランダム
+        //----------------------------------
+
+        const bestCandidates =
+            candidates.filter(
+                summon =>
+                    getPower(
+                        summon
+                    ) ===
+                    maxPower
+            );
+
+
+        const target =
+            bestCandidates[
+                Math.floor(
+                    Math.random() *
+                    bestCandidates.length
+                )
+            ];
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "CPU：手札戻しマギア対象決定",
+            card.name
+        );
+
+        console.log(
+            "対象=",
+            target.card?.name
+        );
+
+        console.log(
+            "向き=",
+            target.isRest
+                ? "ヨコ"
+                : "タテ"
+        );
+
+        console.log(
+            "パワー=",
+            getPower(
+                target
+            )
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        return target;
+
+    }
 
 
     //==================================
@@ -3005,31 +3785,31 @@ function selectCpuMagiaTarget(card){
     // 通常マギア
     //==================================
 
-const candidates = [];
+    const candidates = [];
 
 
-const isDamageMagia =
-    card.effect.type ===
-    "damage";
+    const isDamageMagia =
+        card.effect.type ===
+        "damage";
 
 
-//==================================
-// 現在の実ダメージ
-//
-// 通常ダメージ
-// マグナブレイズ
-// 火マギアダメージ上昇
-// に対応
-//==================================
+    //==================================
+    // 現在の実ダメージ
+    //
+    // 通常ダメージ
+    // マグナブレイズ
+    // 火マギアダメージ上昇
+    // に対応
+    //==================================
 
-const damageValue =
-    isDamageMagia
-        ?
-        getCpuMagiaDamageValue(
-            card
-        )
-        :
-        0;
+    const damageValue =
+        isDamageMagia
+            ?
+            getCpuMagiaDamageValue(
+                card
+            )
+            :
+            0;
 
 
     //==================================
@@ -4334,7 +5114,6 @@ function findCpuResistCards(event){
 //======================================
 // CPUレジスト使用判定
 //======================================
-
 function shouldCpuUseResist(event){
 
     console.log(
@@ -4364,7 +5143,6 @@ function shouldCpuUseResist(event){
 
     //======================================
     // CPUサモンへのダメージ
-    // リキッドヴェール判定
     //======================================
 
     if(
@@ -4391,99 +5169,14 @@ function shouldCpuUseResist(event){
 
 
         //----------------------------------
-        // マギアによるダメージか
+        // ダメージ確認
         //----------------------------------
 
-        if(
-            event.sourceType !==
-            "マギア"
-        ){
-
-            console.log(
-                "CPUレジスト不可：マギアではありません"
-            );
-
-            return false;
-
-        }
+        const damage =
+            Number(event.damage) || 0;
 
 
-        //----------------------------------
-        // damageタイプのマギアか
-        //----------------------------------
-
-        if(
-            !event.source ||
-            !event.source.effect ||
-            event.source.effect.type !==
-            "damage"
-        ){
-
-            console.log(
-                "CPUレジスト不可：damageマギアではありません"
-            );
-
-            return false;
-
-        }
-
-
-        //----------------------------------
-        // リキッドヴェール検索
-        //----------------------------------
-
-        const liquidVeil =
-            enemyHandCards.find(
-                card =>
-                    card.name ===
-                    "リキッドヴェール" &&
-                    card.type ===
-                    "レジスト"
-            );
-
-
-        if(!liquidVeil){
-
-            console.log(
-                "CPUレジスト不可：リキッドヴェールなし"
-            );
-
-            return false;
-
-        }
-
-
-        //----------------------------------
-        // このイベントで使用済み
-        //----------------------------------
-
-        if(
-            liquidVeil.usedThisEvent
-        ){
-
-            console.log(
-                "CPUレジスト不可：リキッドヴェール使用済み"
-            );
-
-            return false;
-
-        }
-
-
-        //----------------------------------
-        // コスト確認
-        //----------------------------------
-
-        if(
-            !canPayCost(
-                liquidVeil,
-                ENEMY
-            )
-        ){
-
-            console.log(
-                "CPUレジスト不可：リキッドヴェール コスト不足"
-            );
+        if(damage <= 0){
 
             return false;
 
@@ -4501,15 +5194,8 @@ function shouldCpuUseResist(event){
 
 
         //----------------------------------
-        // 与えられるダメージ
-        //----------------------------------
-
-        const damage =
-            Number(event.damage) || 0;
-
-
-        //----------------------------------
-        // パワー未満
+        // このダメージで破壊されないなら
+        // レジストを温存
         //----------------------------------
 
         if(
@@ -4517,7 +5203,10 @@ function shouldCpuUseResist(event){
         ){
 
             console.log(
-                "CPUレジスト不可：ダメージ不足",
+                "CPUレジスト不可：",
+                "サモンが破壊されない",
+                "target=",
+                event.target.card.name,
                 "power=",
                 power,
                 "damage=",
@@ -4530,36 +5219,121 @@ function shouldCpuUseResist(event){
 
 
         //----------------------------------
-        // パワー+2以上
-        //----------------------------------
-        // リキッドヴェールは使わない
+        // 使用可能なレジストがあるか確認
+        //
+        // findCpuResistCards()をここで
+        // 呼ぶと再帰になるため、
+        // 手札を直接確認する
         //----------------------------------
 
-        if(
-            damage >= power + 2
-        ){
+        const usableResist =
+            enemyHandCards.some(
+                card => {
+
+                    if(
+                        card.type !==
+                        "レジスト"
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    if(
+                        card.usedThisEvent
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 発動タイミング
+                    //----------------------------------
+
+                    if(
+                        Array.isArray(
+                            card.trigger
+                        )
+                    ){
+
+                        if(
+                            !card.trigger.includes(
+                                event.type
+                            )
+                        ){
+
+                            return false;
+
+                        }
+
+                    }
+                    else{
+
+                        if(
+                            card.trigger !==
+                            event.type
+                        ){
+
+                            return false;
+
+                        }
+
+                    }
+
+
+                    //----------------------------------
+                    // 個別条件
+                    //----------------------------------
+
+                    if(
+                        card.condition &&
+                        !card.condition(event)
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // コスト
+                    //----------------------------------
+
+                    if(
+                        !canPayCost(
+                            card,
+                            ENEMY
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        if(!usableResist){
 
             console.log(
-                "CPUレジスト不可：ダメージ過剰",
-                "power=",
-                power,
-                "damage=",
-                damage
+                "CPUレジスト不可：",
+                "使用可能なサモンダメージ用レジストなし"
             );
 
             return false;
 
         }
 
-
-        //----------------------------------
-        // パワーと同じ
-        // またはパワー+1
-        //----------------------------------
 
         console.log(
             "CPUレジスト使用判定：YES",
-            "リキッドヴェール",
             "target=",
             event.target.card.name,
             "power=",
@@ -4616,7 +5390,6 @@ function shouldCpuUseResist(event){
 
     //----------------------------------
     // 1ダメージ
-    // サンドプロテクト候補
     //----------------------------------
 
     if(
@@ -4657,7 +5430,8 @@ function shouldCpuUseResist(event){
     //----------------------------------
 
     if(
-        typeof enemyLife !== "undefined" &&
+        typeof enemyLife !==
+            "undefined" &&
         enemyLife - event.damage <= 0
     ){
 
@@ -4705,122 +5479,119 @@ function selectBestCpuResist(
     }
 
 
-    //----------------------------------
-    // リキッドヴェール優先判定
-    //----------------------------------
+    //======================================
+    // サモンダメージ
+    //======================================
 
     if(
         event &&
         event.type ===
-        GAME_EVENT.BEFORE_SUMMON_DAMAGE
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+        event.target &&
+        event.target.owner === ENEMY
     ){
 
         //----------------------------------
-        // CPUサモンが対象
+        // イリュージョンフォグ
+        //
+        // 条件を満たして候補に入っているなら
+        // ダメージを完全に0にできる
+        //----------------------------------
+
+        const illusionFogCard =
+            cards.find(
+                card =>
+                    card.effect ===
+                    "illusionFog"
+            );
+
+
+        if(illusionFogCard){
+
+            console.log(
+                "CPUレジスト候補：イリュージョンフォグ",
+                "target=",
+                event.target.card.name,
+                "damage=",
+                damage
+            );
+
+        }
+
+
+        //----------------------------------
+        // リキッドヴェール
         //----------------------------------
 
         if(
-            event.target &&
-            event.target.owner === ENEMY
+            event.sourceType ===
+                "マギア" &&
+            event.source &&
+            event.source.effect &&
+            event.source.effect.type ===
+                "damage"
         ){
 
-            //----------------------------------
-            // プレイヤーのマギアによるダメージ
-            //----------------------------------
+            const liquidVeilCard =
+                cards.find(
+                    card =>
+                        card.effect ===
+                        "liquidVeil"
+                );
 
-            if(
-                event.sourceType === "マギア" &&
-                event.source &&
-                event.source.effect &&
-                event.source.effect.type === "damage"
-            ){
 
-                const liquidVeilCard =
-                    cards.find(
-                        card =>
-                            card.effect ===
-                            "liquidVeil"
+            if(liquidVeilCard){
+
+                const power =
+                    getPower(
+                        event.target
                     );
 
 
+                //----------------------------------
+                // パワーと同じ
+                //----------------------------------
+
                 if(
-                    liquidVeilCard
+                    damage === power
                 ){
 
-                    const power =
-                        getPower(
-                            event.target
-                        );
+                    console.log(
+                        "CPUレジスト最優先：リキッドヴェール",
+                        "target=",
+                        event.target.card.name,
+                        "power=",
+                        power,
+                        "damage=",
+                        damage
+                    );
 
 
-                    //----------------------------------
-                    // パワーと同じ
-                    //----------------------------------
+                    return liquidVeilCard;
 
-                    if(
-                        damage === power
-                    ){
-
-                        console.log(
-                            "CPUレジスト最優先：リキッドヴェール",
-                            "target=",
-                            event.target.card.name,
-                            "power=",
-                            power,
-                            "damage=",
-                            damage
-                        );
+                }
 
 
-                        return liquidVeilCard;
+                //----------------------------------
+                // パワー+1
+                //----------------------------------
 
-                    }
+                if(
+                    damage === power + 1
+                ){
 
-
-                    //----------------------------------
-                    // パワー+1
-                    //----------------------------------
-
-                    if(
-                        damage === power + 1
-                    ){
-
-                        console.log(
-                            "CPUレジスト最優先：リキッドヴェール",
-                            "target=",
-                            event.target.card.name,
-                            "power=",
-                            power,
-                            "damage=",
-                            damage
-                        );
+                    console.log(
+                        "CPUレジスト最優先：リキッドヴェール",
+                        "target=",
+                        event.target.card.name,
+                        "power=",
+                        power,
+                        "damage=",
+                        damage
+                    );
 
 
-                        return liquidVeilCard;
-
-                    }
-
-
-                    //----------------------------------
-                    // パワー+2以上
-                    // → リキッドヴェールを使わない
-                    //----------------------------------
-
-                    if(
-                        damage >= power + 2
-                    ){
-
-                        console.log(
-                            "リキッドヴェール不使用：ダメージ過剰",
-                            "target=",
-                            event.target.card.name,
-                            "power=",
-                            power,
-                            "damage=",
-                            damage
-                        );
-
-                    }
+                    return liquidVeilCard;
 
                 }
 
@@ -4848,9 +5619,7 @@ function selectBestCpuResist(
             );
 
 
-        if(
-            sandProtectCard
-        ){
+        if(sandProtectCard){
 
             console.log(
                 "CPUレジスト最優先：サンドプロテクト"
@@ -4900,6 +5669,11 @@ function selectBestCpuResist(
 
 
             case "rapidMove":
+
+                return damage;
+
+
+            case "illusionFog":
 
                 return damage;
 
@@ -7202,6 +7976,298 @@ function createCpuSummonActions(){
 
 }
 
+//==================================================
+// CPU：手札戻しマギア評価
+//
+// トルネード等
+//==================================================
+
+function getCpuReturnToHandMagiaScore(
+    card,
+    target
+){
+
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !card.effect ||
+        !target ||
+        !target.card
+    ){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 手札戻し効果以外
+    //----------------------------------
+
+    if(
+        card.effect.type !==
+            "returnToHand"
+    ){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 相手サモン以外は
+    // 現在のCPU評価では対象外
+    //----------------------------------
+
+    if(
+        target.owner !==
+            PLAYER
+    ){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 対象パワー
+    //----------------------------------
+
+    const targetPower =
+        getPower(
+            target
+        );
+
+
+    //----------------------------------
+    // 基本評価
+    //
+    // サモン1体を場から除去できること自体に価値
+    //----------------------------------
+
+    let score =
+        20;
+
+
+    //----------------------------------
+    // 高パワーほど価値を上げる
+    //----------------------------------
+
+    score +=
+        targetPower * 10;
+
+
+    //==================================
+    // 通常攻撃で処理できるか確認
+    //
+    // ヨコ向きサモンなので、
+    // CPUの攻撃可能サモンで
+    // パワー以上の攻撃が可能なら
+    // トルネードを使う価値を下げる
+    //==================================
+
+    const canDestroyByAttack =
+        enemyField.some(
+            attacker => {
+
+                //----------------------------------
+                // 基本確認
+                //----------------------------------
+
+                if(
+                    !attacker ||
+                    attacker.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // ヨコ向きは攻撃不可
+                //----------------------------------
+
+                if(
+                    attacker.isRest
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // 攻撃可能か
+                //----------------------------------
+
+                let canAttack =
+                    attacker.attackReady;
+
+
+                //----------------------------------
+                // 召喚ターン攻撃能力
+                //----------------------------------
+
+                if(
+                    !canAttack &&
+                    hasSummonAbility(
+                        attacker,
+                        "summonTurnAttack"
+                    )
+                ){
+
+                    canAttack =
+                        true;
+
+                }
+
+
+                //----------------------------------
+                // 攻撃不可
+                //----------------------------------
+
+                if(
+                    !canAttack
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // メドゥーサ等により
+                // 召喚ターン攻撃を封じられている
+                //----------------------------------
+
+                if(
+                    typeof isSummonTurnAttackPrevented ===
+                        "function" &&
+                    isSummonTurnAttackPrevented(
+                        attacker
+                    )
+                ){
+
+                    if(
+                        !attacker.attackReady
+                    ){
+
+                        return false;
+
+                    }
+
+                }
+
+
+                //----------------------------------
+                // オーガ系の戦闘制限
+                //----------------------------------
+
+                if(
+                    typeof isOgreBattleLocked ===
+                        "function" &&
+                    isOgreBattleLocked(
+                        attacker
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // パワー比較
+                //----------------------------------
+
+                return (
+                    getPower(
+                        attacker
+                    ) >=
+                    targetPower
+                );
+
+            }
+        );
+
+
+    //==================================
+    // 攻撃で倒せる
+    //==================================
+
+    if(
+        canDestroyByAttack
+    ){
+
+        //----------------------------------
+        // 攻撃で処理可能なので
+        // トルネードの優先度を大きく下げる
+        //----------------------------------
+
+        score -=
+            40;
+
+
+        console.log(
+            "CPU：手札戻し評価",
+            card.name,
+            "対象=",
+            target.card?.name,
+            "power=",
+            targetPower,
+            "攻撃処理可能",
+            "score=",
+            score
+        );
+
+    }
+
+
+    //==================================
+    // 攻撃で倒せない
+    //==================================
+
+    else{
+
+        //----------------------------------
+        // 攻撃では処理できない相手を
+        // 一時的に除去できるので高評価
+        //----------------------------------
+
+        score +=
+            40;
+
+
+        console.log(
+            "CPU：手札戻し評価",
+            card.name,
+            "対象=",
+            target.card?.name,
+            "power=",
+            targetPower,
+            "攻撃処理不可",
+            "score=",
+            score
+        );
+
+    }
+
+
+    //----------------------------------
+    // 最低0点
+    //----------------------------------
+
+    return Math.max(
+        0,
+        score
+    );
+
+}
+
 
 //======================================
 // CPU：マギア行動候補を作成・ポイント評価
@@ -7784,6 +8850,35 @@ function createCpuMagiaAction(card){
         10,
         "マギア基本点"
     );
+
+    //==================================
+// ★追加
+// 手札戻しマギア評価
+//
+// トルネード等
+//==================================
+
+if(
+    card.effect?.type ===
+        "returnToHand" &&
+    target &&
+    target.card
+){
+
+    const returnToHandScore =
+        getCpuReturnToHandMagiaScore(
+            card,
+            target
+        );
+
+
+    addCpuActionPoints(
+        action,
+        returnToHandScore,
+        "手札戻しマギア"
+    );
+
+}
 
 
     //==================================
@@ -9789,7 +10884,19 @@ if(
     // 攻撃候補
     //==================================
 
+    const hasBreakthroughReservedAttack =
+        typeof cpuBreakthroughAttackSummon !==
+            "undefined" &&
+        cpuBreakthroughAttackSummon &&
+        enemyField.includes(
+            cpuBreakthroughAttackSummon
+        ) &&
+        !cpuBreakthroughAttackSummon.destroyed &&
+        !cpuBreakthroughAttackSummon.isRest;
+
+
     if(
+        hasBreakthroughReservedAttack ||
         hasCannotBeBlockedAttack ||
         cpuHasMeaningfulAttack()
     ){
@@ -9804,13 +10911,28 @@ if(
         // 攻撃基本ポイント
         //----------------------------------
 
-        addCpuActionPoints(
-            attackAction,
-            30,
-            hasCannotBeBlockedAttack
-                ? "ブロック不可サモンの直接攻撃"
-                : "意味のある攻撃"
-        );
+        if(
+            hasBreakthroughReservedAttack
+        ){
+
+            addCpuActionPoints(
+                attackAction,
+                1000,
+                "ブレイクスルー予約サモンの攻撃"
+            );
+
+        }
+        else{
+
+            addCpuActionPoints(
+                attackAction,
+                30,
+                hasCannotBeBlockedAttack
+                    ? "ブロック不可サモンの直接攻撃"
+                    : "意味のある攻撃"
+            );
+
+        }
 
 
         actions.push(
@@ -10195,9 +11317,46 @@ function cpuExecuteBestAction(){
 
 
         //==================================
-        // CPUマギア実行
+        // ★追加
+        // ブレイクスルー等
         //
-        // ownSummonを追加で渡す
+        // CPUがこの効果を使用した場合、
+        // 対象サモンはこのターン
+        // 必ずアタックさせる
+        //==================================
+
+        if(
+            card.effect?.type ===
+                "conditionalCannotBeBlocked" &&
+            target instanceof Summon &&
+            target.owner === ENEMY
+        ){
+
+            cpuBreakthroughAttackSummon =
+                target;
+
+
+            console.log(
+                "CPU：ブレイクスルー攻撃予約",
+                {
+                    magia:
+                        card.name,
+
+                    summon:
+                        target.card?.name,
+
+                    power:
+                        getPower(
+                            target
+                        )
+                }
+            );
+
+        }
+
+
+        //==================================
+        // CPUマギア実行
         //==================================
 
         const result =
