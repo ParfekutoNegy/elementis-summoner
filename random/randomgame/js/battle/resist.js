@@ -1112,15 +1112,44 @@ function finishResist(){
                 GAME_EVENT.BEFORE_PLAYER_DAMAGE
         ){
 
-            damagePlayer(
+            const finalDamage =
+                currentResistEvent.damage;
 
+
+            console.log(
+                "レジスト後：プレイヤーダメージ確定",
                 currentResistEvent.player,
-
-                currentResistEvent.damage,
-
-                true
-
+                finalDamage
             );
+
+
+            //----------------------------------
+            // damagePlayer() は使用しない
+            //
+            // ガーゴイル等の軽減処理は
+            // BEFORE_PLAYER_DAMAGE 発生前に
+            // すでに適用済み
+            //----------------------------------
+
+            if(finalDamage > 0){
+
+                const damageTarget =
+                    currentResistEvent.player === PLAYER
+                        ? "PLAYER"
+                        : "CPU";
+
+
+                addBattleLog(
+                    `${damageTarget}：${finalDamage}ダメージ`
+                );
+
+
+                applyPlayerDamage(
+                    currentResistEvent.player,
+                    finalDamage
+                );
+
+            }
 
         }
 
@@ -1134,31 +1163,22 @@ function finishResist(){
                 GAME_EVENT.BEFORE_SUMMON_DAMAGE
         ){
 
-            const summon =
-                currentResistEvent.target;
-
-
-            summon.damage +=
-                currentResistEvent.damage;
-
-
-            showDamageNumber(
-
-                summon,
-
+            console.log(
+                "レジスト後：サモンダメージ確定",
+                currentResistEvent.target?.card?.name,
                 currentResistEvent.damage
-
             );
 
 
-            console.log(
+            //----------------------------------
+            // dealDamage() は使用しない
+            //
+            // 再びレジストイベントを
+            // 発生させないため
+            //----------------------------------
 
-                "サモンダメージ解決",
-
-                summon.card.name,
-
-                currentResistEvent.damage
-
+            applyHydraResolvedDamage(
+                currentResistEvent
             );
 
         }

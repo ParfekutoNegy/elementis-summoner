@@ -1107,6 +1107,7 @@ const CARD_LIST = [
         cost: 2,
         series:"mythology",
         image: "images/078-カーススモーク.jpg",
+        tag:"サモン１体",
         text:"このターン中、対象は１以上のダメージを受けたときクールゾーンに置く。",
         effect: {
             type: "curseSmoke",

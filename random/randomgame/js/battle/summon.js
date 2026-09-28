@@ -6843,3 +6843,242 @@ function confirmHydraDamageAbility(){
     }
 
 }
+
+//======================================
+// プレイヤーへの予測最終ダメージ
+//
+// ガーゴイル等の
+// reducePlayerDamage を考慮する
+//======================================
+
+function getExpectedPlayerDamage(
+    player,
+    damage
+){
+
+    //----------------------------------
+    // 元ダメージ
+    //----------------------------------
+
+    let finalDamage =
+        Math.max(
+            0,
+            damage
+        );
+
+
+    //----------------------------------
+    // 対象側のフィールド
+    //----------------------------------
+
+    const field =
+        player === PLAYER
+            ?
+            playerField
+            :
+            enemyField;
+
+
+    //----------------------------------
+    // ダメージ軽減合計
+    //----------------------------------
+
+    let reduction =
+        0;
+
+
+    field.forEach(
+        summon => {
+
+            if(
+                !summon ||
+                !summon.card ||
+                summon.destroyed
+            ){
+
+                return;
+
+            }
+
+
+            const ability =
+                getSummonAbility(
+                    summon,
+                    "reducePlayerDamage"
+                );
+
+
+            if(!ability){
+
+                return;
+
+            }
+
+
+            reduction +=
+                ability.value ?? 1;
+
+        }
+    );
+
+
+    //----------------------------------
+    // 軽減後ダメージ
+    //----------------------------------
+
+    finalDamage =
+        Math.max(
+            0,
+            finalDamage - reduction
+        );
+
+
+    return finalDamage;
+
+}
+
+//======================================
+// CPU
+// PLAYERへのアタックが
+// 実際にダメージを与えられるか確認
+//======================================
+
+function canCpuAttackDamagePlayer(
+    attacker
+){
+
+    if(
+        !attacker ||
+        attacker.destroyed
+    ){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃サモンの現在パワー
+    //----------------------------------
+
+    const attackPower =
+        getPower(
+            attacker
+        );
+
+
+    //----------------------------------
+    // ガーゴイル等を考慮した
+    // 予測最終ダメージ
+    //----------------------------------
+
+    const expectedDamage =
+        getExpectedPlayerDamage(
+            PLAYER,
+            attackPower
+        );
+
+
+    console.log(
+        "CPU PLAYER攻撃ダメージ予測",
+        {
+            attacker:
+                attacker.card?.name,
+
+            attackPower:
+                attackPower,
+
+            expectedDamage:
+                expectedDamage
+        }
+    );
+
+
+    //----------------------------------
+    // 1以上通るなら攻撃する意味あり
+    //----------------------------------
+
+    return (
+        expectedDamage > 0
+    );
+
+}
+
+//======================================
+// CPU
+// ダメージマギアの予測最終ダメージ
+//======================================
+
+function getCpuExpectedMagiaDamage(
+    target,
+    damage
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(
+        !target ||
+        damage <= 0
+    ){
+
+        return 0;
+
+    }
+
+
+    //==================================
+    // PLAYER本体
+    //==================================
+
+    if(
+        target === PLAYER ||
+        target === "player"
+    ){
+
+        return getExpectedPlayerDamage(
+            PLAYER,
+            damage
+        );
+
+    }
+
+
+    //==================================
+    // CPU本体
+    //==================================
+
+    if(
+        target === ENEMY ||
+        target === "enemy"
+    ){
+
+        return getExpectedPlayerDamage(
+            ENEMY,
+            damage
+        );
+
+    }
+
+
+    //==================================
+    // サモン
+    //==================================
+
+    if(
+        target.card &&
+        target.owner
+    ){
+
+        return getHydraExpectedDamage(
+            target,
+            damage
+        );
+
+    }
+
+
+    return 0;
+
+}

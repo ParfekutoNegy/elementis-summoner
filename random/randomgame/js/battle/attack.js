@@ -7860,7 +7860,7 @@ function finishCharybdisTriggers(){
 
             setTimeout(
                 cpuNextAttack,
-                500
+                1000
             );
 
         }

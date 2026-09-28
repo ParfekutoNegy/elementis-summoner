@@ -374,11 +374,82 @@ function beginPlaying(){
 
 function endTurn(){
 
+    //----------------------------------
+    // PLAYERターン以外
+    //----------------------------------
+
     if(
         game.currentPlayer !== PLAYER
     ){
 
         return;
+
+    }
+
+
+    //==================================
+    // プレイ中以外はターン終了不可
+    //
+    // ターン終了効果処理中の
+    // 二重実行を防止
+    //==================================
+
+    if(
+        game.state !==
+            TURN_STATE.PLAYING
+    ){
+
+        console.log(
+            "ターン終了不可：",
+            "現在のゲーム状態=",
+            game.state
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クール回収中はターン終了不可
+    //----------------------------------
+
+    if(coolRecoveryMode){
+
+        console.log(
+            "クール回収中のためターン終了不可"
+        );
+
+        return;
+
+    }
+
+
+    //==================================
+    // ここからターン終了処理
+    //
+    // 最初にENDへ変更して
+    // 二重実行を防止する
+    //==================================
+
+    game.state =
+        TURN_STATE.END;
+
+
+    //----------------------------------
+    // ターン終了ボタン停止
+    //----------------------------------
+
+    const endTurnButton =
+        document.getElementById(
+            "endturn-button"
+        );
+
+
+    if(endTurnButton){
+
+        endTurnButton.disabled =
+            true;
 
     }
 
@@ -399,21 +470,6 @@ function endTurn(){
     closeEnemyCoolModal();
 
     closeCostView();
-
-
-    //----------------------------------
-    // クール回収中はターン終了不可
-    //----------------------------------
-
-    if(coolRecoveryMode){
-
-        console.log(
-            "クール回収中のためターン終了不可"
-        );
-
-        return;
-
-    }
 
 
     //----------------------------------
@@ -439,10 +495,6 @@ function endTurn(){
     resetActionButtons();
 
     updateButtons();
-
-
-    game.state =
-        TURN_STATE.END;
 
 
     console.log(
