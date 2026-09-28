@@ -10925,7 +10925,6 @@ function getCurrentCardCost(
 
 
             //----------------------------------
-            // セイレーン
             // 相手のマギアコスト +1
             //----------------------------------
 
@@ -10951,7 +10950,6 @@ function getCurrentCardCost(
 
 
             //----------------------------------
-            // ハーピー
             // 相手のレジストコスト +1
             //----------------------------------
 
@@ -10980,6 +10978,98 @@ function getCurrentCardCost(
 
 
     //----------------------------------
+    // 選択した対象によるコスト軽減
+    //----------------------------------
+
+    if(
+        card.type === "マギア" &&
+        card.effect &&
+        card.effect.costDownElement &&
+        card.effect.costDownValue
+    ){
+
+        let target = null;
+
+
+        //----------------------------------
+        // 現在使用中のマギア
+        //----------------------------------
+
+        if(
+            card === magiaCard
+        ){
+
+            target =
+                magiaTarget;
+
+        }
+
+
+        //----------------------------------
+        // 対象の属性取得
+        //----------------------------------
+
+        if(target){
+
+            const targetElement =
+                target.elementType ??
+                target.element ??
+                target.card?.elementType ??
+                target.card?.element ??
+                null;
+
+
+            //----------------------------------
+            // 指定属性ならコスト軽減
+            //----------------------------------
+
+            if(
+                targetElement ===
+                    card.effect.costDownElement
+            ){
+
+                const reduction =
+                    Number(
+                        card.effect.costDownValue
+                    ) || 0;
+
+
+                cost -=
+                    reduction;
+
+
+                console.log(
+                    "マギア対象によるコスト軽減",
+                    {
+                        card:
+                            card.name,
+
+                        target:
+                            target.name ??
+                            target.card?.name,
+
+                        targetElement:
+                            targetElement,
+
+                        reduction:
+                            reduction,
+
+                        finalCost:
+                            Math.max(
+                                0,
+                                cost
+                            )
+                    }
+                );
+
+            }
+
+        }
+
+    }
+
+
+    //----------------------------------
     // 0未満にはしない
     //----------------------------------
 
@@ -10989,7 +11079,6 @@ function getCurrentCardCost(
     );
 
 }
-
 //======================================
 // バトルログ
 //======================================

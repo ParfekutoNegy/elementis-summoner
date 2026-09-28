@@ -2758,8 +2758,6 @@ function cpuMagia(
 
     //==================================
     // カードプレイ枚数制限
-    //
-    // ジャックフロスト等
     //==================================
 
     if(
@@ -2789,18 +2787,12 @@ function cpuMagia(
 
     //==================================
     // 自分サモンパワー参照型確認
-    //
-    // イグナイト等
     //==================================
 
     if(
         card.effect?.valueType ===
             "ownSummonPower"
     ){
-
-        //----------------------------------
-        // 参照サモンなし
-        //----------------------------------
 
         if(!ownSummon){
 
@@ -2814,10 +2806,6 @@ function cpuMagia(
 
         }
 
-
-        //----------------------------------
-        // すでに破壊されている
-        //----------------------------------
 
         if(
             ownSummon.destroyed
@@ -2834,10 +2822,6 @@ function cpuMagia(
 
         }
 
-
-        //----------------------------------
-        // 現在CPUの場に存在するか
-        //----------------------------------
 
         if(
             !enemyField.includes(
@@ -2860,11 +2844,101 @@ function cpuMagia(
 
 
     //==================================
-    // カードプレイ成立
+    // マギア情報保存
     //
-    // 通常のCPUマギアだけでなく
-    // ケット・シー等から
-    // cpuMagia()を通る場合もここで数える
+    // 対象によってコストが変化する
+    // マギアがあるため、
+    // コスト計算より先に設定する
+    //==================================
+
+    magiaCard =
+        card;
+
+    magiaCard.owner =
+        ENEMY;
+
+    magiaTarget =
+        target;
+
+    magiaSelectedOwnSummon =
+        ownSummon;
+
+
+    //==================================
+    // CPU側の現在コスト
+    //==================================
+
+    const currentCost =
+        getCurrentCardCost(
+            card,
+            ENEMY
+        );
+
+
+    console.log(
+        "CPUマギアコスト",
+        {
+            card:
+                card.name,
+
+            target:
+                target?.name ??
+                target?.card?.name ??
+                target,
+
+            targetElement:
+                target?.elementType ??
+                target?.element ??
+                target?.card?.elementType ??
+                target?.card?.element ??
+                null,
+
+            baseCost:
+                card.cost,
+
+            currentCost:
+                currentCost
+        }
+    );
+
+
+    //==================================
+    // 実際に支払えるか確認
+    //==================================
+
+    if(
+        enemyHandCards.length - 1 <
+        currentCost
+    ){
+
+        console.log(
+            "CPUマギア使用不可：",
+            card.name,
+            "対象決定後のコスト不足",
+            "必要=",
+            currentCost,
+            "支払可能=",
+            enemyHandCards.length - 1
+        );
+
+
+        magiaCard =
+            null;
+
+        magiaTarget =
+            null;
+
+        magiaSelectedOwnSummon =
+            null;
+
+
+        return false;
+
+    }
+
+
+    //==================================
+    // カードプレイ成立
     //==================================
 
     registerCardPlay(
@@ -2890,11 +2964,9 @@ function cpuMagia(
     );
 
 
-    //==================================
+    //----------------------------------
     // 追加サモンログ
-    //
-    // イグナイト等
-    //==================================
+    //----------------------------------
 
     if(ownSummon){
 
@@ -2923,50 +2995,8 @@ function cpuMagia(
 
 
     //----------------------------------
-    // CPU側の現在コスト
+    // 追加サモン情報ログ
     //----------------------------------
-
-    const currentCost =
-        getCurrentCardCost(
-            card,
-            ENEMY
-        );
-
-
-    console.log(
-        "CPUマギアコスト",
-        card.name,
-        "元cost=",
-        card.cost,
-        "現在cost=",
-        currentCost
-    );
-
-
-    //----------------------------------
-    // マギア情報保存
-    //----------------------------------
-
-    magiaCard =
-        card;
-
-    magiaCard.owner =
-        ENEMY;
-
-    magiaTarget =
-        target;
-
-
-    //==================================
-    // 追加サモン情報保存
-    //
-    // PLAYER版イグナイトと同じ
-    // magiaSelectedOwnSummonを使用する
-    //==================================
-
-    magiaSelectedOwnSummon =
-        ownSummon;
-
 
     if(ownSummon){
 
@@ -3027,12 +3057,8 @@ function cpuMagia(
         );
 
 
-        //----------------------------------
-        // 対象発光
-        //----------------------------------
-
         console.log(
-            "★ CPUマギア対象デバッグ",
+            "CPUマギア対象デバッグ",
             "target=",
             target,
             "target===PLAYER=",
@@ -3081,14 +3107,13 @@ function cpuMagia(
 
 
     //----------------------------------
-    // resetMagiaState()で消された後なので
-    // もう一度対象を発光
+    // 対象発光
     //----------------------------------
 
     setTimeout(()=>{
 
         console.log(
-            "★ CPUマギア対象デバッグ",
+            "CPUマギア対象デバッグ",
             "target=",
             target,
             "target===PLAYER=",
@@ -3121,7 +3146,6 @@ function cpuMagia(
     return true;
 
 }
-
 //==================================================
 // CPU：条件付きブロック不可マギア対象選択
 //
@@ -3499,6 +3523,217 @@ function selectCpuConditionalUnblockableTarget(
 }
 
 //======================================
+// CPU：クールゾーンのサモン対象選択
+//======================================
+
+function selectCpuCoolSummonTarget(
+    card
+){
+
+    //----------------------------------
+    // カード確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !card.effect
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // CPUクールゾーン確認
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            enemyCoolCards
+        )
+    ){
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // サモンだけ取得
+    //----------------------------------
+
+    const candidates =
+        enemyCoolCards.filter(
+            coolCard => {
+
+                if(!coolCard){
+
+                    return false;
+
+                }
+
+
+                return (
+                    coolCard.type ===
+                    "サモン"
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 候補なし
+    //----------------------------------
+
+    if(
+        candidates.length === 0
+    ){
+
+        console.log(
+            "CPU：クールゾーンのサモン対象なし",
+            card.name
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // コスト軽減属性
+    //----------------------------------
+
+    const costDownElement =
+        card.effect
+            .costDownElement ??
+        null;
+
+
+    //----------------------------------
+    // コスト軽減対象
+    //----------------------------------
+
+    const reducedCandidates =
+        candidates.filter(
+            coolCard => {
+
+                const element =
+                    coolCard.elementType ??
+                    coolCard.element ??
+                    null;
+
+
+                return (
+                    costDownElement &&
+                    element ===
+                        costDownElement
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 使用する候補
+    //
+    // 軽減対象が存在する場合は
+    // そちらを優先する
+    //----------------------------------
+
+    const usableCandidates =
+        reducedCandidates.length > 0
+            ?
+            reducedCandidates
+            :
+            candidates;
+
+
+    //----------------------------------
+    // パワーが高い順に並べる
+    //----------------------------------
+
+    const sortedCandidates =
+        [...usableCandidates].sort(
+            (a, b) => {
+
+                const powerA =
+                    Number(
+                        a.power
+                    ) || 0;
+
+                const powerB =
+                    Number(
+                        b.power
+                    ) || 0;
+
+
+                return (
+                    powerB -
+                    powerA
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 最もパワーが高いサモン
+    //----------------------------------
+
+    const target =
+        sortedCandidates[0];
+
+
+    //----------------------------------
+    // 対象属性
+    //----------------------------------
+
+    const targetElement =
+        target.elementType ??
+        target.element ??
+        null;
+
+
+    //----------------------------------
+    // 軽減対象か
+    //----------------------------------
+
+    const costDown =
+        (
+            costDownElement &&
+            targetElement ===
+                costDownElement
+        );
+
+
+    console.log(
+        "CPU：クールゾーンサモン対象決定",
+        {
+            magia:
+                card.name,
+
+            target:
+                target.name,
+
+            power:
+                target.power,
+
+            element:
+                targetElement,
+
+            costDown:
+                costDown
+        }
+    );
+
+
+    return target;
+
+}
+
+//======================================
 // CPUマギア対象選択
 //======================================
 
@@ -3517,6 +3752,27 @@ function selectCpuMagiaTarget(card){
 
     const targets =
         card.effect.target;
+
+    //==================================
+    // クールゾーンのサモンを場に出す
+    //==================================
+
+    if(
+        card.effect.type ===
+            "playSummonFromCool" &&
+        targets.includes(
+            "playerCoolSummon"
+        )
+    ){
+
+        return (
+            selectCpuCoolSummonTarget(
+                card
+            )
+        );
+
+    }
+
 
 //==================================
 // ★追加
@@ -8814,6 +9070,115 @@ function getCpuReturnToHandMagiaScore(
 
 }
 
+//======================================
+// CPU：マギアの使用予定コスト取得
+//======================================
+
+function getCpuPlannedMagiaCost(
+    card,
+    target = null
+){
+
+    //----------------------------------
+    // 基本確認
+    //----------------------------------
+
+    if(!card){
+
+        return 0;
+
+    }
+
+
+    //----------------------------------
+    // 通常の現在コスト
+    //----------------------------------
+
+    let cost =
+        getCurrentCardCost(
+            card,
+            ENEMY
+        );
+
+
+    //----------------------------------
+    // 対象によるコスト軽減なし
+    //----------------------------------
+
+    if(
+        !target ||
+        !card.effect ||
+        !card.effect.costDownElement ||
+        !card.effect.costDownValue
+    ){
+
+        return cost;
+
+    }
+
+
+    //----------------------------------
+    // 対象属性取得
+    //----------------------------------
+
+    const targetElement =
+        target.elementType ??
+        target.element ??
+        target.card?.elementType ??
+        target.card?.element ??
+        null;
+
+
+    //----------------------------------
+    // 指定属性なら軽減
+    //----------------------------------
+
+    if(
+        targetElement ===
+        card.effect.costDownElement
+    ){
+
+        const reduction =
+            Number(
+                card.effect.costDownValue
+            ) || 0;
+
+
+        cost =
+            Math.max(
+                0,
+                cost - reduction
+            );
+
+
+        console.log(
+            "CPU：対象によるマギアコスト軽減",
+            {
+                card:
+                    card.name,
+
+                target:
+                    target.name ??
+                    target.card?.name,
+
+                targetElement:
+                    targetElement,
+
+                reduction:
+                    reduction,
+
+                finalCost:
+                    cost
+            }
+        );
+
+    }
+
+
+    return cost;
+
+}
+
 
 //======================================
 // CPU：マギア行動候補を作成・ポイント評価
@@ -8844,28 +9209,123 @@ function createCpuMagiaAction(card){
     // 現在コスト
     //----------------------------------
 
-    const currentCost =
+    let currentCost =
         getCurrentCardCost(
             card,
             ENEMY
         );
 
 
-    //----------------------------------
-    // コスト支払い可能か
-    //----------------------------------
+    //==================================
+    // 対象によってコストが変わるマギア
+    //
+    // クレイクリエイト等
+    //==================================
+
+    let costCheckTarget =
+        null;
+
 
     if(
-        !canPayCost(
-            card,
-            ENEMY
+        card.effect?.type ===
+            "playSummonFromCool" &&
+        Array.isArray(
+            card.effect.target
+        ) &&
+        card.effect.target.includes(
+            "playerCoolSummon"
         )
+    ){
+
+        //----------------------------------
+        // 先に対象を決定
+        //----------------------------------
+
+        costCheckTarget =
+            selectCpuCoolSummonTarget(
+                card
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(!costCheckTarget){
+
+            console.log(
+                "CPUポイント評価：マギア候補外",
+                card.name,
+                "クールゾーンに対象なし"
+            );
+
+            return null;
+
+        }
+
+
+        //----------------------------------
+        // 対象を考慮したコスト
+        //----------------------------------
+
+        currentCost =
+            getCpuPlannedMagiaCost(
+                card,
+                costCheckTarget
+            );
+
+
+        console.log(
+            "CPU：対象決定後マギアコスト",
+            {
+                card:
+                    card.name,
+
+                target:
+                    costCheckTarget.name ??
+                    costCheckTarget.card?.name,
+
+                targetElement:
+                    costCheckTarget.elementType ??
+                    costCheckTarget.element ??
+                    costCheckTarget.card?.elementType ??
+                    costCheckTarget.card?.element,
+
+                currentCost:
+                    currentCost
+            }
+        );
+
+    }
+
+
+    //==================================
+    // コスト支払い可能確認
+    //==================================
+
+    const availableCostCards =
+        enemyHandCards.filter(
+            handCard =>
+                handCard !== card
+        ).length;
+
+
+    if(
+        availableCostCards <
+        currentCost
     ){
 
         console.log(
             "CPUポイント評価：マギア候補外",
             card.name,
-            "コスト不足"
+            "コスト不足",
+            {
+                required:
+                    currentCost,
+
+                available:
+                    availableCostCards
+            }
         );
 
         return null;
@@ -9333,10 +9793,54 @@ function createCpuMagiaAction(card){
 
     else{
 
-        target =
-            selectCpuMagiaTarget(
-                card
+        //----------------------------------
+        // コスト判定時に対象を決定済み
+        //
+        // クレイクリエイト等
+        //----------------------------------
+
+        if(costCheckTarget){
+
+            target =
+                costCheckTarget;
+
+
+            console.log(
+                "CPU：コスト判定時の対象を使用",
+                {
+                    card:
+                        card.name,
+
+                    target:
+                        target.name ??
+                        target.card?.name,
+
+                    element:
+                        target.elementType ??
+                        target.element ??
+                        target.card?.elementType ??
+                        target.card?.element,
+
+                    cost:
+                        currentCost
+                }
             );
+
+        }
+
+
+        //----------------------------------
+        // 通常の対象選択
+        //----------------------------------
+
+        else{
+
+            target =
+                selectCpuMagiaTarget(
+                    card
+                );
+
+        }
 
     }
 
@@ -9406,6 +9910,106 @@ function createCpuMagiaAction(card){
         currentCost * 3,
         "マギアコスト評価"
     );
+
+        //==================================
+    // クールゾーンからサモンを場に出す
+    //==================================
+
+    if(
+        card.effect?.type ===
+            "playSummonFromCool" &&
+        target &&
+        target.type ===
+            "サモン"
+    ){
+
+        //----------------------------------
+        // 対象サモンのパワー
+        //----------------------------------
+
+        const summonPower =
+            Number(
+                target.power
+            ) || 0;
+
+
+        //----------------------------------
+        // 基本評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            20,
+            "クールサモン復帰"
+        );
+
+
+        //----------------------------------
+        // パワー評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            summonPower * 10,
+            "復帰サモンパワー"
+        );
+
+
+        //----------------------------------
+        // コスト軽減評価
+        //----------------------------------
+
+        const targetElement =
+            target.elementType ??
+            target.element ??
+            null;
+
+
+        if(
+            card.effect.costDownElement &&
+            targetElement ===
+                card.effect.costDownElement
+        ){
+
+            const reduction =
+                Number(
+                    card.effect.costDownValue
+                ) || 0;
+
+
+            addCpuActionPoints(
+                action,
+                reduction * 10,
+                "対象によるコスト軽減"
+            );
+
+        }
+
+
+        console.log(
+            "CPU：クールサモン復帰評価",
+            {
+                magia:
+                    card.name,
+
+                target:
+                    target.name,
+
+                power:
+                    summonPower,
+
+                element:
+                    targetElement,
+
+                cost:
+                    currentCost,
+
+                score:
+                    action.score
+            }
+        );
+
+    }
 
     //==================================
 // ★追加

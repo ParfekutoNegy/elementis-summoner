@@ -585,6 +585,281 @@ case "damage":{
 
             break;
 
+        //==================================
+        // クールゾーンのサモンを場に出す
+        //==================================
+
+        case "playSummonFromCool":{
+
+            //----------------------------------
+            // 対象確認
+            //----------------------------------
+
+            if(
+                !target ||
+                target.type !== "サモン"
+            ){
+
+                console.log(
+                    "クールゾーンから場に出せません：",
+                    "対象がサモンではありません"
+                );
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // 使用者
+            //----------------------------------
+
+            const owner =
+                card.owner === ENEMY
+                    ? ENEMY
+                    : PLAYER;
+
+
+            //----------------------------------
+            // 対象クールゾーン
+            //----------------------------------
+
+            const coolCards =
+                owner === PLAYER
+                    ? board.playerCoolCards
+                    : enemyCoolCards;
+
+
+            //----------------------------------
+            // クールゾーン存在確認
+            //----------------------------------
+
+            if(
+                !coolCards.includes(
+                    target
+                )
+            ){
+
+                console.log(
+                    "クールゾーンから場に出せません：",
+                    target.name,
+                    "がクールゾーンにありません"
+                );
+
+                break;
+
+            }
+
+
+            //----------------------------------
+            // クールゾーンから削除
+            //----------------------------------
+
+            if(owner === PLAYER){
+
+                board.playerCoolCards =
+                    board.playerCoolCards.filter(
+                        coolCard =>
+                            coolCard !== target
+                    );
+
+            }
+            else{
+
+                enemyCoolCards =
+                    enemyCoolCards.filter(
+                        coolCard =>
+                            coolCard !== target
+                    );
+
+                board.enemyCoolCards =
+                    board.enemyCoolCards.filter(
+                        coolCard =>
+                            coolCard !== target
+                    );
+
+            }
+
+
+            //----------------------------------
+            // サモン生成
+            //----------------------------------
+
+            const summon =
+                new Summon(
+                    target,
+                    owner
+                );
+
+
+            //----------------------------------
+            // タテ向き
+            //----------------------------------
+
+            summon.isRest =
+                false;
+
+
+            //----------------------------------
+            // 召喚ターンは通常攻撃不可
+            //----------------------------------
+
+            summon.attackReady =
+                false;
+
+
+            //----------------------------------
+            // カードの所属ゾーン変更
+            //----------------------------------
+
+            target.area =
+                owner === PLAYER
+                    ? "field"
+                    : "enemyField";
+
+
+            if(
+                typeof target.refresh ===
+                    "function"
+            ){
+
+                target.refresh();
+
+            }
+
+
+            //----------------------------------
+            // 場へ追加
+            //----------------------------------
+
+            if(owner === PLAYER){
+
+                playerField.push(
+                    summon
+                );
+
+            }
+            else{
+
+                enemyField.push(
+                    summon
+                );
+
+            }
+
+
+            //----------------------------------
+            // 場に出たサモンの能力適用
+            //----------------------------------
+
+            applySummonAbility(
+                summon
+            );
+
+
+            //----------------------------------
+            // 場の表示更新
+            //----------------------------------
+
+            if(owner === PLAYER){
+
+                board.setPlayerCards(
+                    playerField.map(
+                        fieldSummon =>
+                            fieldSummon.view
+                    )
+                );
+
+            }
+            else{
+
+                board.setEnemyCards(
+                    enemyField.map(
+                        fieldSummon =>
+                            fieldSummon.view
+                    )
+                );
+
+            }
+
+
+            //----------------------------------
+            // クールゾーン表示更新
+            //----------------------------------
+
+            board.updateCoolCount();
+
+
+            //----------------------------------
+            // その他表示更新
+            //----------------------------------
+
+            updateEnemyZoneDisplay();
+
+            updateHandCostDisplay();
+
+
+            //----------------------------------
+            // 動的能力更新
+            //----------------------------------
+
+            if(
+                typeof refreshDynamicPowerSummons ===
+                    "function"
+            ){
+
+                refreshDynamicPowerSummons();
+
+            }
+
+
+            //----------------------------------
+            // カードプレイ制限更新
+            //----------------------------------
+
+            if(
+                typeof refreshCardPlayLimitState ===
+                    "function"
+            ){
+
+                refreshCardPlayLimitState();
+
+            }
+
+
+            //----------------------------------
+            // ログ
+            //----------------------------------
+
+            console.log(
+                "クールゾーンからサモンを場に出す",
+                {
+                    magia:
+                        card.name,
+
+                    summon:
+                        target.name,
+
+                    owner:
+                        owner
+                }
+            );
+
+
+            addBattleLog(
+                owner === PLAYER
+                    ?
+                    `PLAYER：${target.name}をクールゾーンから場に出した`
+                    :
+                    `CPU：${target.name}をクールゾーンから場に出した`
+            );
+
+
+            break;
+
+        }
+
+
 
         //==================================
         // ダメージ上昇

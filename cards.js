@@ -887,7 +887,17 @@ const CARD_LIST = [
         element: "土",
         cost: 4,
         series:"folklore",
-        image: "images/062-クレイクリエイト.jpg"
+        image: "images/062-クレイクリエイト.jpg",
+        tag:"自分のクールゾーンのサモン１枚",
+        text:"対象をタテ向きで自分の場に出す。このカードのコストは対象が【土】サモンなら－２される。",
+        effect: {
+        type: "playSummonFromCool",
+        target: [
+            "playerCoolSummon"
+        ],
+        costDownElement: "土",
+        costDownValue: 2
+    }
     },
     {
         id: 63,

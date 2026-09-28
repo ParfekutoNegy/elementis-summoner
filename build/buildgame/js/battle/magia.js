@@ -321,6 +321,21 @@ function startMagiaCost(){
 
 
     //----------------------------------
+    // 手札のコスト表示更新
+    //----------------------------------
+
+    if(
+        magiaCard &&
+        typeof magiaCard.refresh ===
+            "function"
+    ){
+
+        magiaCard.refresh();
+
+    }
+
+
+    //----------------------------------
     // 行動案内をコスト選択に変更
     //----------------------------------
 
@@ -333,7 +348,6 @@ function startMagiaCost(){
     }
 
 
-
     //----------------------------------
     // 0コストなら選択不要
     //----------------------------------
@@ -343,6 +357,7 @@ function startMagiaCost(){
         costConfirm = true;
 
     }
+
 
     //----------------------------------
     // ボタン更新
@@ -1759,7 +1774,9 @@ function canUseMagia(card){
     //----------------------------------
 
     if(
-        targets.includes("playerVerticalSummon")
+        targets.includes(
+            "playerVerticalSummon"
+        )
     ){
 
         if(
@@ -1781,7 +1798,9 @@ function canUseMagia(card){
     //----------------------------------
 
     if(
-        targets.includes("playerHorizontalSummon")
+        targets.includes(
+            "playerHorizontalSummon"
+        )
     ){
 
         if(
@@ -1803,7 +1822,9 @@ function canUseMagia(card){
     //----------------------------------
 
     if(
-        targets.includes("enemyVerticalSummon")
+        targets.includes(
+            "enemyVerticalSummon"
+        )
     ){
 
         if(
@@ -1825,7 +1846,9 @@ function canUseMagia(card){
     //----------------------------------
 
     if(
-        targets.includes("enemyHorizontalSummon")
+        targets.includes(
+            "enemyHorizontalSummon"
+        )
     ){
 
         if(
@@ -1868,24 +1891,175 @@ function canUseMagia(card){
     }
 
 
-//----------------------------------
-// 自分クールゾーンのカード
-//----------------------------------
+    //----------------------------------
+    // 自分クールゾーンのカード
+    //----------------------------------
 
-if(
-    targets.includes("playerCoolCard") &&
-    board.playerCoolCards.length > 0
-){
+    if(
+        targets.includes(
+            "playerCoolCard"
+        ) &&
+        board.playerCoolCards.length > 0
+    ){
 
-    return true;
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 自分クールゾーンのマギア
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "playerCoolMagia"
+        ) &&
+        board.playerCoolCards.some(
+            coolCard =>
+                coolCard.type ===
+                "マギア"
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 自分クールゾーンのサモン
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "playerCoolSummon"
+        )
+    ){
+
+        //----------------------------------
+        // コスト軽減対象を持つマギア
+        //----------------------------------
+
+        if(
+            card.effect.costDownElement &&
+            card.effect.costDownValue
+        ){
+
+            //----------------------------------
+            // 使用カード以外の手札枚数
+            //----------------------------------
+
+            const handCount =
+                board.handCards.filter(
+                    handCard =>
+                        handCard !== card
+                ).length;
+
+
+            //----------------------------------
+            // クールゾーンに
+            // 支払い可能な対象があるか
+            //----------------------------------
+
+            const canUseTarget =
+                board.playerCoolCards.some(
+                    coolCard => {
+
+                        if(
+                            coolCard.type !==
+                                "サモン"
+                        ){
+
+                            return false;
+
+                        }
+
+
+                        //----------------------------------
+                        // 通常の現在コスト
+                        //----------------------------------
+
+                        let requiredCost =
+                            getCurrentCardCost(
+                                card
+                            );
+
+
+                        //----------------------------------
+                        // 対象属性
+                        //----------------------------------
+
+                        const targetElement =
+                            coolCard.elementType ??
+                            coolCard.element ??
+                            null;
+
+
+                        //----------------------------------
+                        // 対象によるコスト軽減
+                        //----------------------------------
+
+                        if(
+                            targetElement ===
+                                card.effect.costDownElement
+                        ){
+
+                            requiredCost -=
+                                Number(
+                                    card.effect.costDownValue
+                                ) || 0;
+
+                        }
+
+
+                        requiredCost =
+                            Math.max(
+                                0,
+                                requiredCost
+                            );
+
+
+                        return (
+                            handCount >=
+                            requiredCost
+                        );
+
+                    }
+                );
+
+
+            if(canUseTarget){
+
+                return true;
+
+            }
+
+        }
+
+
+        //----------------------------------
+        // 通常のクールサモン対象
+        //----------------------------------
+
+        else if(
+            board.playerCoolCards.some(
+                coolCard =>
+                    coolCard.type ===
+                        "サモン"
+            )
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    return false;
 
 }
-
-
-return false;
-
-}
-
 
 
 //======================================
@@ -2582,26 +2756,12 @@ function startMagiaCoolTargetSelect(){
         );
 
 
-    const button =
-        document.getElementById(
-            "close-cool-x-button"
-        );
-
-
     //----------------------------------
     // タイトル
     //----------------------------------
 
     title.textContent =
         "対象カードを選択";
-
-
-    //----------------------------------
-    // 決定ボタン
-    //----------------------------------
-
-    button.textContent =
-        "キャンセル";
 
 
     //----------------------------------
@@ -2756,7 +2916,6 @@ function startMagiaCoolTargetSelect(){
     );
 
 }
-
 //======================================
 // マギア：クールゾーン対象判定
 //======================================
@@ -2812,7 +2971,9 @@ function isValidMagiaCoolTarget(
     ){
 
         if(
-            board.playerCoolCards.includes(target) &&
+            board.playerCoolCards.includes(
+                target
+            ) &&
             target.type === "マギア"
         ){
 
@@ -2833,14 +2994,103 @@ function isValidMagiaCoolTarget(
         )
     ){
 
+        //----------------------------------
+        // サモンか確認
+        //----------------------------------
+
         if(
-            board.playerCoolCards.includes(target) &&
-            target.type === "サモン"
+            !board.playerCoolCards.includes(
+                target
+            ) ||
+            target.type !== "サモン"
         ){
 
-            return true;
+            return false;
 
         }
+
+
+        //----------------------------------
+        // 対象によってコストが変化する場合
+        //----------------------------------
+
+        if(
+            card.effect.costDownElement &&
+            card.effect.costDownValue
+        ){
+
+            //----------------------------------
+            // 使用カード以外の手札枚数
+            //----------------------------------
+
+            const handCount =
+                board.handCards.filter(
+                    handCard =>
+                        handCard !== card
+                ).length;
+
+
+            //----------------------------------
+            // 通常の現在コスト
+            //----------------------------------
+
+            let requiredCost =
+                getCurrentCardCost(
+                    card
+                );
+
+
+            //----------------------------------
+            // 対象属性
+            //----------------------------------
+
+            const targetElement =
+                target.elementType ??
+                target.element ??
+                null;
+
+
+            //----------------------------------
+            // 対象によるコスト軽減
+            //----------------------------------
+
+            if(
+                targetElement ===
+                    card.effect.costDownElement
+            ){
+
+                requiredCost -=
+                    Number(
+                        card.effect.costDownValue
+                    ) || 0;
+
+            }
+
+
+            requiredCost =
+                Math.max(
+                    0,
+                    requiredCost
+                );
+
+
+            //----------------------------------
+            // 支払い可能なら対象にできる
+            //----------------------------------
+
+            return (
+                handCount >=
+                requiredCost
+            );
+
+        }
+
+
+        //----------------------------------
+        // 通常
+        //----------------------------------
+
+        return true;
 
     }
 
@@ -2848,7 +3098,6 @@ function isValidMagiaCoolTarget(
     return false;
 
 }
-
 //======================================
 // ウインドプレッシャー
 // 相手手札選択開始
