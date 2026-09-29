@@ -1,3 +1,70 @@
+//==================================================
+// オブリビオンレイン
+// サモン能力無効状態
+//==================================================
+
+let summonAbilitiesDisabledFor =
+    null;
+
+function clearSummonAbilityDisable(){
+
+    //----------------------------------
+    // 無効状態なし
+    //----------------------------------
+
+    if(
+        summonAbilitiesDisabledFor ===
+            null
+    ){
+
+        return;
+
+    }
+
+
+    console.log(
+        "オブリビオンレイン：能力無効解除",
+        summonAbilitiesDisabledFor
+    );
+
+
+    //----------------------------------
+    // 能力無効解除
+    //----------------------------------
+
+    summonAbilitiesDisabledFor =
+        null;
+
+
+    //----------------------------------
+    // ドッペルゲンガー状態確認
+    //----------------------------------
+
+    validateAllDoppelgangerAbilities();
+
+
+    //----------------------------------
+    // パワー・コスト表示更新
+    //----------------------------------
+
+    refreshDynamicPowerSummons();
+
+    updateHandCostDisplay();
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+}    
+
+
+
+
 class Summon{
 
     constructor(card, owner){
@@ -64,6 +131,23 @@ function getSummonAbilities(
     //----------------------------------
 
     if(!summon){
+
+        return [];
+
+    }
+
+
+    //----------------------------------
+    // オブリビオンレイン
+    // 対象側のサモンは能力を失う
+    //----------------------------------
+
+    if(
+        summonAbilitiesDisabledFor !==
+            null &&
+        summon.owner ===
+            summonAbilitiesDisabledFor
+    ){
 
         return [];
 
@@ -440,7 +524,7 @@ function refreshDynamicPowerSummons(){
 
 
     //----------------------------------
-    // 各サモンを確認
+    // 全サモンのパワー表示を再計算
     //----------------------------------
 
     allSummons.forEach(
@@ -457,67 +541,44 @@ function refreshDynamicPowerSummons(){
             }
 
 
+            console.log(
+                "サモンパワー表示更新",
+                summon.card.name,
+                "現在パワー=",
+                getPower(
+                    summon
+                )
+            );
+
+
             //----------------------------------
-            // 動的パワー能力確認
+            // 現在パワー表示
             //----------------------------------
-
-            const hasDynamicPowerAbility =
-                hasSummonAbility(
-                    summon,
-                    "powerUpByEnemyCool"
-                ) ||
-                hasSummonAbility(
-                    summon,
-                    "powerUpByOwnFireCool"
-                );
-
-
-            //==================================
-            // 動的パワー能力
-            //==================================
-            //
-            // ワーム
-            // powerUpByEnemyCool
-            //
-            // ミノタウロス
-            // powerUpByOwnFireCool
-            //
-            //==================================
 
             if(
-                hasDynamicPowerAbility
+                summon.view &&
+                typeof summon.view.updateCurrentPower ===
+                    "function"
             ){
 
-                console.log(
-                    "動的パワー更新",
-                    summon.card.name,
-                    "現在パワー=",
-                    getPower(summon)
+                summon.view.updateCurrentPower(
+                    summon
                 );
 
-
-                if(
-                    summon.view &&
-                    typeof summon.view.updateCurrentPower ===
-                        "function"
-                ){
-
-                    summon.view.updateCurrentPower(
-                        summon
-                    );
-
-                }
+            }
 
 
-                if(
-                    summon.view &&
-                    typeof summon.view.refresh ===
-                        "function"
-                ){
+            //----------------------------------
+            // カード表示更新
+            //----------------------------------
 
-                    summon.view.refresh();
+            if(
+                summon.view &&
+                typeof summon.view.refresh ===
+                    "function"
+            ){
 
-                }
+                summon.view.refresh();
 
             }
 

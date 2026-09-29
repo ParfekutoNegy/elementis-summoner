@@ -36,6 +36,7 @@ let cpuAttackQueue = [];
 
 let cpuAttackIndex = 0;
 
+
 //==================================================
 // ブレイクスルー使用後
 // 必ず攻撃するCPUサモン
@@ -884,7 +885,6 @@ function createCpuAttackQueue(){
 
                 }
 
-
                 //==================================
                 // ブロックされないサモン
                 //
@@ -1062,6 +1062,7 @@ function createCpuAttackQueue(){
 
             }
         );
+
     //==================================
     // ブレイクスルー予約サモンを
     // 攻撃キューの先頭へ移動
@@ -1109,7 +1110,8 @@ function createCpuAttackQueue(){
 
         }
 
-    }
+    }        
+
 
     //==================================
     // 最終ログ
@@ -1143,6 +1145,7 @@ function createCpuAttackQueue(){
     );
 
 }
+
 function cpuNextAttack(){
 
 
@@ -2237,7 +2240,6 @@ return true;
 
     }
 
-
 //==================================
 // 通常
 // ① 横向きサモン
@@ -2745,6 +2747,8 @@ function moveEnemyToCost(card){
     updateEnemyZoneDisplay();
 
 }
+
+
 
 //======================================
 // CPUマギア使用
@@ -3754,6 +3758,30 @@ function selectCpuMagiaTarget(card){
         card.effect.target;
 
     //==================================
+    // 相手サモン能力無効
+    //==================================
+
+    if(
+        card.effect.type ===
+            "disableEnemySummonAbilities" &&
+        targets.includes(
+            "enemy"
+        )
+    ){
+
+        console.log(
+            "CPU：サモン能力無効マギア対象",
+            "PLAYER"
+        );
+
+
+        return PLAYER;
+
+    }
+
+
+
+    //==================================
     // クールゾーンのサモンを場に出す
     //==================================
 
@@ -3772,6 +3800,228 @@ function selectCpuMagiaTarget(card){
         );
 
     }
+
+//==================================
+// ヨコ向きサモンをタテ向きにする
+// クイックアクション等
+//==================================
+
+if(
+    card.effect.type ===
+        "readySummon" &&
+    targets.includes(
+        "horizontalSummon"
+    )
+){
+
+    //----------------------------------
+    // CPU自身のヨコ向きサモンだけを
+    // 対象候補にする
+    //----------------------------------
+
+    const candidates =
+        enemyField.filter(
+            summon => {
+
+                //----------------------------------
+                // 無効なサモン
+                //----------------------------------
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // CPU自身のサモンのみ
+                //----------------------------------
+
+                if(
+                    summon.owner !==
+                        ENEMY
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // ヨコ向きのみ
+                //----------------------------------
+
+                if(
+                    !summon.isRest
+                ){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // マギア対象不可
+                //----------------------------------
+
+                if(
+                    isMagiaTargetBlocked(
+                        card,
+                        summon
+                    )
+                ){
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(
+        candidates.length === 0
+    ){
+
+        console.log(
+            "CPU：タテ向き変更マギア対象なし",
+            card.name
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 風サモンを取得
+    //----------------------------------
+
+    const windCandidates =
+        candidates.filter(
+            summon => {
+
+                const element =
+                    summon.card?.elementType ??
+                    summon.card?.element ??
+                    null;
+
+
+                return (
+                    element ===
+                    card.effect.costDownElement
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 風サモンがいれば
+    // コスト軽減対象を優先
+    //----------------------------------
+
+    const targetCandidates =
+        windCandidates.length > 0
+            ? windCandidates
+            : candidates;
+
+
+    //----------------------------------
+    // パワーが高い順
+    //----------------------------------
+
+    targetCandidates.sort(
+        (a,b) =>
+            getPower(b) -
+            getPower(a)
+    );
+
+
+    //----------------------------------
+    // 最大パワー
+    //----------------------------------
+
+    const maxPower =
+        getPower(
+            targetCandidates[0]
+        );
+
+
+    //----------------------------------
+    // 同じ最大パワーなら
+    // ランダム
+    //----------------------------------
+
+    const bestCandidates =
+        targetCandidates.filter(
+            summon =>
+                getPower(
+                    summon
+                ) ===
+                maxPower
+        );
+
+
+    const target =
+        bestCandidates[
+            Math.floor(
+                Math.random() *
+                bestCandidates.length
+            )
+        ];
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "CPU：タテ向き変更マギア対象決定",
+        card.name
+    );
+
+    console.log(
+        "対象=",
+        target.card?.name
+    );
+
+    console.log(
+        "属性=",
+        target.card?.elementType ??
+        target.card?.element
+    );
+
+    console.log(
+        "パワー=",
+        getPower(
+            target
+        )
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    return target;
+
+}    
 
 
 //==================================
@@ -3793,6 +4043,7 @@ if(
     );
 
 }
+
 
 
     //==================================
@@ -4445,36 +4696,47 @@ if(
 
 }
 
-    //==================================
-    // ダメージマギア専用優先順位
-    //==================================
 
-    if(
-        isDamageMagia
-    ){
+//----------------------------------
+// ダメージマギア専用対象
+//----------------------------------
 
-        const priorityTarget =
-            selectCpuDamageMagiaTarget(
-                card
-            );
+if(isDamageMagia){
 
-
-        if(
-            priorityTarget
-        ){
-
-            console.log(
-                "CPU：ダメージマギア優先対象",
-                card.name,
-                priorityTarget === PLAYER
-                    ? "PLAYER"
-                    : priorityTarget.card.name
-            );
+    const priorityTarget =
+        selectCpuDamageMagiaTarget(
+            card
+        );
 
 
-            return priorityTarget;
+    //----------------------------------
+    // 有効な対象あり
+    //----------------------------------
 
-        }
+    if(priorityTarget){
+
+        return priorityTarget;
+
+    }
+
+
+    //----------------------------------
+    // ダメージマギアなのに
+    // 有効な対象がない場合
+    //
+    // 通常の対象選択へ進ませない
+    //----------------------------------
+
+    console.log(
+        "CPU：ダメージマギア使用見送り",
+        card.name,
+        "有効なダメージ対象なし"
+    );
+
+
+    return null;
+
+
 
     }
 
@@ -4904,6 +5166,7 @@ if(
     ];
 
 }
+
 //======================================
 // CPUマギアコスト
 //======================================
@@ -5703,6 +5966,7 @@ function findCpuResistCards(event){
 //======================================
 // CPUレジスト使用判定
 //======================================
+
 function shouldCpuUseResist(event){
 
     console.log(
@@ -6568,6 +6832,7 @@ function selectCpuCostCards(
 
 }
 
+
 //======================================
 // アクアストリーム使用判定
 // CPU → PLAYERのサモンのみ
@@ -6796,6 +7061,7 @@ function cpuShouldUseAquaStream(){
     };
 
 }
+
 //======================================
 // CPU：フォローウィンド対象確認
 //======================================
@@ -6932,6 +7198,7 @@ function getCpuFollowWindTarget(){
     };
 
 }
+
 //======================================
 // ウィンドプレッシャー使用判定
 // 最初の攻撃前のみ
@@ -7603,6 +7870,7 @@ function cpuHasMeaningfulAttack(){
     return meaningful;
 
 }
+
 //======================================
 // 攻撃セットアップ用マギア判定
 //======================================
@@ -8367,7 +8635,6 @@ function selectCpuDamageMagiaTarget(card){
     return null;
 
 }
-
 
 //--------------------------------------
 // CPU行動候補
@@ -9179,10 +9446,109 @@ function getCpuPlannedMagiaCost(
 
 }
 
+//======================================
+// CPU：オブリビオンレイン使用判定
+//======================================
+
+function cpuShouldUseOblivionRain(){
+
+    //----------------------------------
+    // オブリビオンレインを使用する
+    // PLAYERサモン
+    //----------------------------------
+
+    const targetSummonIds = [
+        3,      // フェニックス
+        20,     // クラーケン
+        25,     // ノーム
+        26,     // バジリスク
+        27,     // ガーゴイル
+        28,     // ゴーレム
+        34,     // ファイアドレイク
+        49,     // マーフォーク
+        52,     // シーサーペント
+        57,     // マンドラゴラ
+        59,     // ワーム
+        60,     // トロール
+        65,     // ミノタウロス
+        66,     // ケルベロス
+        81,     // ネレイド
+        82,     // カリュブディス
+        90,     // ドライアド
+        91      // メデゥーサ
+    ];
+
+
+    //----------------------------------
+    // PLAYERの場を確認
+    //----------------------------------
+
+    const targetSummon =
+        playerField.find(
+            summon => {
+
+                if(
+                    !summon ||
+                    !summon.card ||
+                    summon.destroyed
+                ){
+
+                    return false;
+
+                }
+
+
+                const cardId =
+                    Number(
+                        summon.card.id
+                    );
+
+
+                return (
+                    targetSummonIds.includes(
+                        cardId
+                    )
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(!targetSummon){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 使用条件成立
+    //----------------------------------
+
+    console.log(
+        "CPU：オブリビオンレイン使用条件成立",
+        {
+            summon:
+                targetSummon.card.name,
+
+            id:
+                targetSummon.card.id
+        }
+    );
+
+
+    return true;
+
+}
 
 //======================================
 // CPU：マギア行動候補を作成・ポイント評価
 //======================================
+
 function createCpuMagiaAction(card){
 
     //----------------------------------
@@ -9204,6 +9570,50 @@ function createCpuMagiaAction(card){
 
     }
 
+        //----------------------------------
+    // CPUでは使用しないマギア
+    //----------------------------------
+
+    if(
+        card.effect?.type ===
+            "revealEnemyHand"
+    ){
+
+        console.log(
+            "CPUポイント評価：マギア候補外",
+            card.name,
+            "CPU使用対象外"
+        );
+
+        return null;
+
+    }
+
+        //==================================
+    // オブリビオンレイン
+    //==================================
+
+    if(
+        card.effect?.type ===
+            "disableEnemySummonAbilities"
+    ){
+
+        if(
+            !cpuShouldUseOblivionRain()
+        ){
+
+            console.log(
+                "CPUポイント評価：マギア候補外",
+                card.name,
+                "オブリビオンレイン使用条件なし"
+            );
+
+            return null;
+
+        }
+
+    }
+
 
     //----------------------------------
     // 現在コスト
@@ -9216,22 +9626,30 @@ function createCpuMagiaAction(card){
         );
 
 
-    //==================================
-    // 対象によってコストが変わるマギア
-    //
-    // クレイクリエイト等
-    //==================================
+let costCheckTarget =
+    null;
 
-    let costCheckTarget =
-        null;
 
+//==================================
+// 対象によってコストが変わるマギア
+//
+// クレイクリエイト
+// クイックアクション
+//==================================
+
+if(
+    Array.isArray(
+        card.effect?.target
+    )
+){
+
+    //----------------------------------
+    // クレイクリエイト
+    //----------------------------------
 
     if(
-        card.effect?.type ===
+        card.effect.type ===
             "playSummonFromCool" &&
-        Array.isArray(
-            card.effect.target
-        ) &&
         card.effect.target.includes(
             "playerCoolSummon"
         )
@@ -9263,10 +9681,57 @@ function createCpuMagiaAction(card){
 
         }
 
+    }
+
+
+    //----------------------------------
+    // クイックアクション
+    //----------------------------------
+
+    else if(
+        card.effect.type ===
+            "readySummon" &&
+        card.effect.target.includes(
+            "horizontalSummon"
+        )
+    ){
 
         //----------------------------------
-        // 対象を考慮したコスト
+        // selectCpuMagiaTarget()で
+        // CPU自身のヨコ向きサモンを選択
         //----------------------------------
+
+        costCheckTarget =
+            selectCpuMagiaTarget(
+                card
+            );
+
+
+        //----------------------------------
+        // 対象なし
+        //----------------------------------
+
+        if(!costCheckTarget){
+
+            console.log(
+                "CPUポイント評価：マギア候補外",
+                card.name,
+                "ヨコ向きサモンに対象なし"
+            );
+
+            return null;
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // 対象が先に決まった場合
+    // 対象を考慮したコストを計算
+    //----------------------------------
+
+    if(costCheckTarget){
 
         currentCost =
             getCpuPlannedMagiaCost(
@@ -9298,6 +9763,7 @@ function createCpuMagiaAction(card){
 
     }
 
+}
 
     //==================================
     // コスト支払い可能確認
@@ -10010,6 +10476,156 @@ function createCpuMagiaAction(card){
         );
 
     }
+
+//==================================
+// ヨコ向きサモンをタテ向きにする
+// クイックアクション等
+//==================================
+
+if(
+    card.effect?.type ===
+        "readySummon" &&
+    target &&
+    target.card &&
+    target.owner === ENEMY &&
+    target.isRest
+){
+
+    //----------------------------------
+    // 対象パワー
+    //----------------------------------
+
+    const targetPower =
+        getPower(
+            target
+        );
+
+
+    //----------------------------------
+    // タテ向きにしたあと
+    // 攻撃できるか確認
+    //----------------------------------
+
+    const canAttackAfterReady =
+        target.attackReady === true ||
+        hasSummonAbility(
+            target,
+            "summonTurnAttack"
+        );
+
+
+    //----------------------------------
+    // 攻撃できない場合
+    //----------------------------------
+
+    if(!canAttackAfterReady){
+
+        addCpuActionPoints(
+            action,
+            -100,
+            "タテ向きにしても攻撃不可"
+        );
+
+    }
+
+
+    //----------------------------------
+    // 再攻撃できる場合
+    //----------------------------------
+
+    else{
+
+        //----------------------------------
+        // 基本評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            30,
+            "再攻撃可能"
+        );
+
+
+        //----------------------------------
+        // パワー評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            targetPower * 10,
+            "再攻撃サモンパワー"
+        );
+
+
+        //----------------------------------
+        // 対象属性
+        //----------------------------------
+
+        const targetElement =
+            target.card?.elementType ??
+            target.card?.element ??
+            null;
+
+
+        //----------------------------------
+        // コスト軽減対象なら評価
+        //----------------------------------
+
+        if(
+            card.effect.costDownElement &&
+            targetElement ===
+                card.effect.costDownElement
+        ){
+
+            const reduction =
+                Number(
+                    card.effect.costDownValue
+                ) || 0;
+
+
+            addCpuActionPoints(
+                action,
+                reduction * 10,
+                "対象によるコスト軽減"
+            );
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "CPU：タテ向き変更マギア評価",
+        {
+            magia:
+                card.name,
+
+            target:
+                target.card?.name,
+
+            power:
+                targetPower,
+
+            attackReady:
+                target.attackReady,
+
+            canAttackAfterReady:
+                canAttackAfterReady,
+
+            cost:
+                currentCost,
+
+            points:
+                action.points
+        }
+    );
+
+}
+
 
     //==================================
 // ★追加
@@ -11076,6 +11692,7 @@ if(
 
 }
 
+
 //======================================
 // CPU：攻撃行動ポイント評価
 //======================================
@@ -11609,6 +12226,7 @@ else{
     );
 
 }
+
 
     //==================================
     // ★ ブロック不可サモン確認
@@ -12185,6 +12803,7 @@ if(
     return actions;
 
 }
+
 //======================================
 // CPU：ポイント方式で最善行動を取得
 //======================================
@@ -12516,6 +13135,7 @@ function cpuExecuteBestAction(){
         );
 
 
+
         //==================================
         // ★追加
         // ブレイクスルー等
@@ -12565,12 +13185,6 @@ function cpuExecuteBestAction(){
                 target,
                 ownSummon
             );
-
-
-        console.log(
-            "CPU：ポイント方式マギア結果",
-            result
-        );
 
 
         //----------------------------------
@@ -12938,6 +13552,7 @@ function cpuExecuteBestAction(){
     }
 
 }
+
 //==================================================
 // CPU
 // サモン能力使用可能判定
@@ -13778,6 +14393,7 @@ function cpuSelectSummonAbilityTarget(source){
     return null;
 
 }
+
 
 function cpuUseSummonAbility(
     source,
@@ -14885,6 +15501,7 @@ function cpuGetCurseSmokePlan(card){
     return null;
 
 }
+
 function getUsableCpuCatSithMagias(){
 
     console.log(
@@ -15600,7 +16217,6 @@ function getCpuMagiaDamageValue(
     return damage;
 
 }
-
 //==================================================
 // CPU
 // 自分サモンパワー参照ダメージマギア計画

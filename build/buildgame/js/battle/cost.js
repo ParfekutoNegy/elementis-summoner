@@ -127,40 +127,63 @@ function canPayCost(card){
         )
     ){
 
+        const targets =
+            card.effect.target;
+
+
+        const reduction =
+            Number(
+                card.effect.costDownValue
+            ) || 0;
+
+
         //----------------------------------
-        // 自分のクールゾーンのサモン対象
+        // 軽減後コスト
+        //----------------------------------
+
+        const reducedCost =
+            Math.max(
+                0,
+                currentCost -
+                reduction
+            );
+
+
+        //----------------------------------
+        // 軽減後でも払えない
         //----------------------------------
 
         if(
-            card.effect.target.includes(
+            handCount <
+            reducedCost
+        ){
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // 軽減対象が存在するか
+        //----------------------------------
+
+        let hasReducedTarget =
+            false;
+
+
+        //==================================
+        // 自分クールゾーンのサモン
+        //
+        // クレイクリエイト等
+        //==================================
+
+        if(
+            targets.includes(
                 "playerCoolSummon"
             )
         ){
 
-            const reduction =
-                Number(
-                    card.effect.costDownValue
-                ) || 0;
-
-
-            //----------------------------------
-            // 軽減後コスト
-            //----------------------------------
-
-            const reducedCost =
-                Math.max(
-                    0,
-                    currentCost -
-                    reduction
-                );
-
-
-            //----------------------------------
-            // 軽減対象となるサモンが
-            // クールゾーンに存在するか
-            //----------------------------------
-
-            const hasReducedTarget =
+            hasReducedTarget =
                 board.playerCoolCards.some(
                     coolCard => {
 
@@ -189,41 +212,157 @@ function canPayCost(card){
                     }
                 );
 
+        }
+
+
+        //==================================
+        // 自分・相手のヨコ向きサモン
+        //
+        // クイックアクション等
+        //==================================
+
+        if(
+            !hasReducedTarget &&
+            targets.includes(
+                "horizontalSummon"
+            )
+        ){
 
             //----------------------------------
-            // 軽減対象があり、
-            // 軽減後コストを払える
+            // 自分の場
             //----------------------------------
 
-            if(
-                hasReducedTarget &&
-                handCount >= reducedCost
-            ){
+            hasReducedTarget =
+                playerField.some(
+                    summon => {
 
-                console.log(
-                    "対象によるコスト軽減を考慮して使用可能",
-                    {
-                        card:
-                            card.name,
+                        if(
+                            !summon ||
+                            summon.destroyed ||
+                            !summon.isRest
+                        ){
 
-                        handCount:
-                            handCount,
+                            return false;
 
-                        normalCost:
-                            currentCost,
+                        }
 
-                        reducedCost:
-                            reducedCost,
 
-                        element:
+                        //----------------------------------
+                        // 実際に対象にできるか
+                        //----------------------------------
+
+                        if(
+                            !isValidMagiaTarget(
+                                card,
+                                summon
+                            )
+                        ){
+
+                            return false;
+
+                        }
+
+
+                        const targetElement =
+                            summon.card?.elementType ??
+                            summon.card?.element ??
+                            null;
+
+
+                        return (
+                            targetElement ===
                             card.effect.costDownElement
+                        );
+
                     }
                 );
 
 
-                return true;
+            //----------------------------------
+            // 相手の場
+            //----------------------------------
+
+            if(!hasReducedTarget){
+
+                hasReducedTarget =
+                    enemyField.some(
+                        summon => {
+
+                            if(
+                                !summon ||
+                                summon.destroyed ||
+                                !summon.isRest
+                            ){
+
+                                return false;
+
+                            }
+
+
+                            //----------------------------------
+                            // 実際に対象にできるか
+                            //----------------------------------
+
+                            if(
+                                !isValidMagiaTarget(
+                                    card,
+                                    summon
+                                )
+                            ){
+
+                                return false;
+
+                            }
+
+
+                            const targetElement =
+                                summon.card?.elementType ??
+                                summon.card?.element ??
+                                null;
+
+
+                            return (
+                                targetElement ===
+                                card.effect.costDownElement
+                            );
+
+                        }
+                    );
 
             }
+
+        }
+
+
+        //----------------------------------
+        // 軽減対象があり、
+        // 軽減後コストを払える
+        //----------------------------------
+
+        if(hasReducedTarget){
+
+            console.log(
+                "対象によるコスト軽減を考慮して使用可能",
+                {
+                    card:
+                        card.name,
+
+                    handCount:
+                        handCount,
+
+                    normalCost:
+                        currentCost,
+
+                    reducedCost:
+                        reducedCost,
+
+                    element:
+                        card.effect.costDownElement
+                }
+            );
+
+
+            return true;
 
         }
 

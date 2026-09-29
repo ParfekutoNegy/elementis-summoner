@@ -704,7 +704,19 @@ const CARD_LIST = [
         element: "風",
         cost: 4,
         series:"folklore",
-        image: "images/047-クイックアクション.jpg"
+        image: "images/047-クイックアクション.jpg",
+        tag: "ヨコ向きのサモン１体",
+        text:
+        "対象をタテ向きにする。このカードのコストは対象が【風】サモンなら－２される。",
+        effect: {
+            type: "readySummon",
+            target: [
+                "horizontalSummon"
+            ],
+            costDownElement: "風", 
+            costDownValue: 2
+
+        }
     },
     {
         id: 48,
@@ -780,17 +792,40 @@ const CARD_LIST = [
         element: "水",
         cost: 1,
         series:"folklore",
-        image: "images/053-オブリビオンレイン.jpg"
+        image: "images/053-オブリビオンレイン.jpg",
+        tag: "相手",
+        text:
+        "このターン中、相手のすべてのサモンは能力を失う。",
+        effect: {
+            type: "disableEnemySummonAbilities",
+            target: [
+                "enemy"
+            ]
+        }
     },
     {
-        id: 54,
-        name:"クリスタルピーピング",
-        type: "マギア",
-        element: "水",
-        cost: 1,
-        series:"folklore",
-        image: "images/054-クリスタルピーピング.jpg"
-    },
+    id: 54,
+    name: "クリスタルピーピング",
+    type: "マギア",
+    element: "水",
+    cost: 1,
+    series: "folklore",
+    image: "images/054-クリスタルピーピング.jpg",
+
+    tag: "相手",
+
+    text:
+        "相手は手札のカードを3枚選び公開する。その後、このカードを自分の手札に戻す。",
+
+    effect: {
+        type: "revealEnemyHand",
+        target: [
+            "enemy"
+        ],
+        value: 3,
+        returnToHand: true
+    }
+},
 {
     id: 55,
     name:"イリュージョンフォグ",

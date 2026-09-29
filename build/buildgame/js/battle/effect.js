@@ -1126,6 +1126,240 @@ case "damage":{
 
             break;
 
+                    //==================================
+        // サモンをタテ向きにする
+        //==================================
+
+case "readySummon": {
+
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
+    if(
+        !target ||
+        !target.card ||
+        target.destroyed
+    ){
+
+        console.warn(
+            "readySummon：対象が不正です",
+            target
+        );
+
+        break;
+
+    }
+
+
+    //----------------------------------
+    // 場に存在するか確認
+    //----------------------------------
+
+    const existsOnField =
+        playerField.includes(target) ||
+        enemyField.includes(target);
+
+
+    if(!existsOnField){
+
+        console.warn(
+            "readySummon：対象が場にいません",
+            target.card?.name
+        );
+
+        break;
+
+    }
+
+
+    //----------------------------------
+    // ヨコ向きのみ対象
+    //----------------------------------
+
+    if(!target.isRest){
+
+        console.warn(
+            "readySummon：対象はすでにタテ向きです",
+            target.card?.name
+        );
+
+        break;
+
+    }
+
+
+    //----------------------------------
+    // タテ向きにする
+    //----------------------------------
+
+    target.isRest = false;
+
+
+    //----------------------------------
+    // 表示もタテ向きにする
+    //----------------------------------
+
+    if(
+        target.view &&
+        typeof target.view.setHorizontal ===
+            "function"
+    ){
+
+        target.view.setHorizontal(
+            false
+        );
+
+    }
+
+
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
+    addBattleLog(
+        target.card.name +
+        "をタテ向きにした"
+    );
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+
+    break;
+
+}
+
+        //==================================
+        // 相手の手札を公開
+        //==================================
+
+        case "revealEnemyHand":{
+
+
+            //----------------------------------
+            // PLAYERが使用
+            //----------------------------------
+
+            if(
+                card.owner === PLAYER &&
+                (
+                    target === ENEMY ||
+                    target === "enemy"
+                )
+            ){
+
+                const started =
+                    startCrystalPeeping(
+                        card,
+                        PLAYER
+                    );
+
+
+                if(started){
+
+                    return "WAIT_CRYSTAL_PEEPING";
+
+                }
+
+            }
+
+
+            //----------------------------------
+            // CPU側は後で実装
+            //----------------------------------
+
+            break;
+
+        }
+
+                //==================================
+        // 相手サモンの能力を失わせる
+        //==================================
+
+        case "disableEnemySummonAbilities":{
+
+
+            //----------------------------------
+            // 能力を失う側を決定
+            //----------------------------------
+
+            const disabledOwner =
+                card.owner === PLAYER
+                    ? ENEMY
+                    : PLAYER;
+
+
+            //----------------------------------
+            // 能力無効状態を設定
+            //----------------------------------
+
+            summonAbilitiesDisabledFor =
+                disabledOwner;
+
+
+            console.log(
+                "オブリビオンレイン：サモン能力無効",
+                {
+                    card:
+                        card.name,
+
+                    user:
+                        card.owner,
+
+                    disabledOwner:
+                        disabledOwner
+                }
+            );
+
+
+            //----------------------------------
+            // バトルログ
+            //----------------------------------
+
+            addBattleLog(
+                disabledOwner === PLAYER
+                    ?
+                    "PLAYERのすべてのサモンはこのターン中、能力を失う"
+                    :
+                    "CPUのすべてのサモンはこのターン中、能力を失う"
+            );
+
+
+            //----------------------------------
+            // ドッペルゲンガー等の状態確認
+            //----------------------------------
+
+            validateAllDoppelgangerAbilities();
+
+
+            //----------------------------------
+            // パワー・コスト表示更新
+            //----------------------------------
+
+            refreshDynamicPowerSummons();
+
+            updateHandCostDisplay();
+
+
+            //----------------------------------
+            // 表示更新
+            //----------------------------------
+
+            updateGameState();
+
+            updateButtons();
+
+
+            break;
+
+        }
 
         //==================================
         // 手札へ戻す

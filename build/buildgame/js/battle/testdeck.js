@@ -29,14 +29,14 @@
 const CPU_DECK_LIST = [
 
 
-    /* {
+    /*{
         id: "cpu_test",
         name: "test用デッキ",
         strategy: "wind",
 
-        cards: [
-            25, 26, 27, 28, 62,
-            62, 6, 32, 10, 31
+ cards: [
+            4, 17, 17, 17, 53,
+            53, 16, 24, 23, 31
         ]
     },*/
 

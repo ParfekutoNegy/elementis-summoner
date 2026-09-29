@@ -1013,3 +1013,194 @@
         );
 
 }
+
+/* =========================================================
+クリスタルピーピング
+========================================================= */
+
+#crystal-peeping-modal {
+
+    display: none;
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    z-index: 3000;
+
+    background:
+        rgba(
+            0,
+            0,
+            0,
+            0.72
+        );
+
+    align-items: center;
+    justify-content: center;
+
+}
+
+
+/* =========================================================
+表示中
+========================================================= */
+
+#crystal-peeping-modal.active {
+
+    display: flex;
+
+}
+
+
+/* =========================================================
+パネル
+========================================================= */
+
+.crystal-peeping-panel {
+
+    width: 760px;
+
+    padding: 28px 32px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #2c2118,
+            #17100b
+        );
+
+    border:
+        3px solid #ffffff;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 0 30px
+        rgba(
+            0,
+            0,
+            0,
+            0.9
+        );
+
+    text-align: center;
+
+}
+
+
+/* =========================================================
+タイトル
+========================================================= */
+
+.crystal-peeping-title {
+
+    margin-bottom: 12px;
+
+    color: #ffffff;
+
+    font-size: 30px;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================================================
+メッセージ
+========================================================= */
+
+.crystal-peeping-message {
+
+    margin-bottom: 22px;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+}
+
+
+/* =========================================================
+公開カード一覧
+========================================================= */
+
+.crystal-peeping-card-list {
+
+    min-height: 260px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 24px;
+
+    margin-bottom: 24px;
+
+}
+
+
+/* =========================================================
+公開カード
+========================================================= */
+
+.crystal-peeping-card-list img {
+
+    width: 150px;
+
+    height: auto;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 0 14px
+        rgba(
+            255,
+            255,
+            255,
+            0.35
+        );
+
+}
+
+
+/* =========================================================
+確認ボタン
+========================================================= */
+
+#crystal-peeping-confirm-button {
+
+    min-width: 150px;
+
+    padding: 10px 28px;
+
+    border:
+        2px solid #ffffff;
+
+    border-radius: 10px;
+
+    background:
+        #33261b;
+
+    color: #ffffff;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+#crystal-peeping-confirm-button:hover {
+
+    background:
+        #55402d;
+
+}

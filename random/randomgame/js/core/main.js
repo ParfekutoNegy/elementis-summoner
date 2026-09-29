@@ -12356,6 +12356,21 @@ function finishMatch(winner){
 
 
     //----------------------------------
+    // クリスタルピーピング
+    // 公開履歴リセット
+    //----------------------------------
+
+    if(
+        typeof resetCrystalPeepingRevealedCards ===
+            "function"
+    ){
+
+        resetCrystalPeepingRevealedCards();
+
+    }
+
+
+    //----------------------------------
     // ゲーム終了
     //----------------------------------
 

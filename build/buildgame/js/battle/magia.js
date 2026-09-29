@@ -88,6 +88,34 @@ let resistWaitingMagiaTarget = null;
 let resistWaitingMagiaOwnSummon =
     null;
 
+//==================================================
+// クリスタルピーピング
+//==================================================
+
+let crystalPeepingWaiting =
+    false;
+
+let crystalPeepingMagia =
+    null;
+
+let crystalPeepingOwner =
+    null;   
+
+let crystalPeepingRevealedCards =
+    new Set();  
+
+function resetCrystalPeepingRevealedCards(){
+
+    crystalPeepingRevealedCards.clear();
+
+    console.log(
+        "クリスタルピーピング：公開履歴リセット"
+    );
+
+}
+
+
+
 
 //=========================
 // マギア効果処理
@@ -682,6 +710,76 @@ function resolveMagia(){
 
         nereidWaitingMagiaOwnSummon =
             resolvedOwnSummon;
+
+
+        return;
+
+    }
+
+ 
+    //==================================
+    // クリスタルピーピング待機
+    //==================================
+
+    if(
+        effectResult ===
+            "WAIT_CRYSTAL_PEEPING"
+    ){
+
+        console.log(
+            "マギア解決停止：",
+            resolvedMagia.name,
+            "→ 公開カード確認待ち"
+        );
+
+
+        //----------------------------------
+        // 使用したマギアを
+        // 一度手札から取り除く
+        //----------------------------------
+
+        if(
+            resolvedMagia.owner ===
+                PLAYER
+        ){
+
+            board.handCards =
+                board.handCards.filter(
+                    card =>
+                        card !==
+                        resolvedMagia
+                );
+
+        }
+        else{
+
+            enemyHandCards =
+                enemyHandCards.filter(
+                    card =>
+                        card !==
+                        resolvedMagia
+                );
+
+        }
+
+
+        //----------------------------------
+        // マギア状態リセット
+        //----------------------------------
+
+        resetMagiaState();
+
+        summonCard =
+            null;
+
+        selectedCostCards =
+            [];
+
+        costConfirm =
+            false;
+
+
+        updateButtons();
 
 
         return;
@@ -1465,6 +1563,66 @@ function highlightMagiaTargets(){
 
 
     //----------------------------------
+    // 自分・相手のヨコ向きサモン
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "horizontalSummon"
+        )
+    ){
+
+        //----------------------------------
+        // 自分の場
+        //----------------------------------
+
+        playerField.forEach(summon=>{
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    summon
+                )
+            ){
+
+                summon.view
+                    .getElement()
+                    .classList.add(
+                        "magia-target"
+                    );
+
+            }
+
+        });
+
+
+        //----------------------------------
+        // 相手の場
+        //----------------------------------
+
+        enemyField.forEach(summon=>{
+
+            if(
+                isValidMagiaTarget(
+                    magiaCard,
+                    summon
+                )
+            ){
+
+                summon.view
+                    .getElement()
+                    .classList.add(
+                        "magia-target"
+                    );
+
+            }
+
+        });
+
+    }
+
+
+    //----------------------------------
     // 相手タテ向きサモン
     //----------------------------------
 
@@ -1657,6 +1815,54 @@ function highlightMagiaTargetType(
 
 
         //----------------------------------
+        // 自分・相手のヨコ向きサモン
+        //----------------------------------
+
+        case "horizontalSummon":
+
+            playerField.forEach(
+                summon => {
+
+                    if(
+                        !summon.destroyed &&
+                        summon.isRest
+                    ){
+
+                        summon.view
+                            .getElement()
+                            .classList.add(
+                                "magia-target"
+                            );
+
+                    }
+
+                }
+            );
+
+
+            enemyField.forEach(
+                summon => {
+
+                    if(
+                        !summon.destroyed &&
+                        summon.isRest
+                    ){
+
+                        summon.view
+                            .getElement()
+                            .classList.add(
+                                "magia-target"
+                            );
+
+                    }
+
+                }
+            );
+
+            break;
+
+
+        //----------------------------------
         // 自分
         //----------------------------------
 
@@ -1691,10 +1897,12 @@ function highlightMagiaTargetType(
 
             break;
 
+
+            case "revealEnemyHand":
+
     }
 
 }
-
 
 //======================================
 // マギア対象表示解除
@@ -1782,6 +1990,7 @@ function canUseMagia(card){
         if(
             playerField.some(
                 summon =>
+                    !summon.destroyed &&
                     !summon.isRest
             )
         ){
@@ -1806,9 +2015,172 @@ function canUseMagia(card){
         if(
             playerField.some(
                 summon =>
+                    !summon.destroyed &&
                     summon.isRest
             )
         ){
+
+            return true;
+
+        }
+
+    }
+
+
+    //==================================
+    // 自分・相手のヨコ向きサモン
+    //==================================
+
+    if(
+        targets.includes(
+            "horizontalSummon"
+        )
+    ){
+
+        //----------------------------------
+        // 使用カード以外の手札枚数
+        //----------------------------------
+
+        const handCount =
+            board.handCards.filter(
+                handCard =>
+                    handCard !== card
+            ).length;
+
+
+        //----------------------------------
+        // 自分・相手の場をまとめる
+        //----------------------------------
+
+        const fieldSummons = [
+            ...playerField,
+            ...enemyField
+        ];
+
+
+        //----------------------------------
+        // 実際に使用可能な対象があるか
+        //----------------------------------
+
+        const canUseTarget =
+            fieldSummons.some(
+                summon => {
+
+                    //----------------------------------
+                    // 無効なサモン
+                    //----------------------------------
+
+                    if(
+                        !summon ||
+                        summon.destroyed ||
+                        !summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // マギアの対象にできるか
+                    //----------------------------------
+
+                    if(
+                        isMagiaTargetBlocked(
+                            card,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 対象による
+                    // コスト軽減がない場合
+                    //----------------------------------
+
+                    if(
+                        !card.effect.costDownElement ||
+                        !card.effect.costDownValue
+                    ){
+
+                        const requiredCost =
+                            getCurrentCardCost(
+                                card
+                            );
+
+
+                        return (
+                            handCount >=
+                            requiredCost
+                        );
+
+                    }
+
+
+                    //----------------------------------
+                    // 通常コスト
+                    //----------------------------------
+
+                    let requiredCost =
+                        getCurrentCardCost(
+                            card
+                        );
+
+
+                    //----------------------------------
+                    // 対象属性
+                    //----------------------------------
+
+                    const targetElement =
+                        summon.card?.elementType ??
+                        summon.card?.element ??
+                        summon.elementType ??
+                        summon.element ??
+                        null;
+
+
+                    //----------------------------------
+                    // 対象によるコスト軽減
+                    //----------------------------------
+
+                    if(
+                        targetElement ===
+                            card.effect.costDownElement
+                    ){
+
+                        requiredCost -=
+                            Number(
+                                card.effect.costDownValue
+                            ) || 0;
+
+                    }
+
+
+                    requiredCost =
+                        Math.max(
+                            0,
+                            requiredCost
+                        );
+
+
+                    //----------------------------------
+                    // この対象なら支払えるか
+                    //----------------------------------
+
+                    return (
+                        handCount >=
+                        requiredCost
+                    );
+
+                }
+            );
+
+
+        if(canUseTarget){
 
             return true;
 
@@ -1830,6 +2202,7 @@ function canUseMagia(card){
         if(
             enemyField.some(
                 summon =>
+                    !summon.destroyed &&
                     !summon.isRest
             )
         ){
@@ -1854,6 +2227,7 @@ function canUseMagia(card){
         if(
             enemyField.some(
                 summon =>
+                    !summon.destroyed &&
                     summon.isRest
             )
         ){
@@ -2081,6 +2455,7 @@ function canSelectMagiaTargetType(
             return playerField.some(
                 summon =>
                     summon.owner === PLAYER &&
+                    !summon.destroyed &&
                     !summon.isRest
             );
 
@@ -2094,7 +2469,28 @@ function canSelectMagiaTargetType(
             return playerField.some(
                 summon =>
                     summon.owner === PLAYER &&
+                    !summon.destroyed &&
                     summon.isRest
+            );
+
+
+        //----------------------------------
+        // 自分・相手のヨコ向きサモン
+        //----------------------------------
+
+        case "horizontalSummon":
+
+            return (
+                playerField.some(
+                    summon =>
+                        !summon.destroyed &&
+                        summon.isRest
+                ) ||
+                enemyField.some(
+                    summon =>
+                        !summon.destroyed &&
+                        summon.isRest
+                )
             );
 
 
@@ -2151,7 +2547,6 @@ function canSelectMagiaTargetType(
     }
 
 }
-
 //======================================
 // マギア対象タイプ取得
 //======================================
@@ -2537,8 +2932,6 @@ function isValidMagiaTarget(
             "horizontal"
         ){
 
-            // ヨコ向きでなければ対象外
-
             if(
                 !target.isRest
             ){
@@ -2554,8 +2947,6 @@ function isValidMagiaTarget(
             condition?.orientation ===
             "vertical"
         ){
-
-            // タテ向きでなければ対象外
 
             if(
                 target.isRest
@@ -2628,6 +3019,104 @@ function isValidMagiaTarget(
             target.owner === PLAYER &&
             target.isRest
         ){
+
+            return true;
+
+        }
+
+
+        //==================================
+        // 自分・相手のヨコ向き
+        //==================================
+
+        if(
+            targets.includes(
+                "horizontalSummon"
+            ) &&
+            target.isRest
+        ){
+
+            //----------------------------------
+            // 対象によってコストが変化する場合
+            //----------------------------------
+
+            if(
+                card.effect.costDownElement &&
+                card.effect.costDownValue
+            ){
+
+                //----------------------------------
+                // 使用カード以外の手札枚数
+                //----------------------------------
+
+                const handCount =
+                    board.handCards.filter(
+                        handCard =>
+                            handCard !== card
+                    ).length;
+
+
+                //----------------------------------
+                // 通常の現在コスト
+                //----------------------------------
+
+                let requiredCost =
+                    getCurrentCardCost(
+                        card
+                    );
+
+
+                //----------------------------------
+                // 対象属性
+                //----------------------------------
+
+                const targetElement =
+                    target.card?.elementType ??
+                    target.card?.element ??
+                    target.elementType ??
+                    target.element ??
+                    null;
+
+
+                //----------------------------------
+                // 対象によるコスト軽減
+                //----------------------------------
+
+                if(
+                    targetElement ===
+                        card.effect.costDownElement
+                ){
+
+                    requiredCost -=
+                        Number(
+                            card.effect.costDownValue
+                        ) || 0;
+
+                }
+
+
+                requiredCost =
+                    Math.max(
+                        0,
+                        requiredCost
+                    );
+
+
+                //----------------------------------
+                // 支払い可能なら対象にできる
+                //----------------------------------
+
+                return (
+                    handCount >=
+                    requiredCost
+                );
+
+            }
+
+
+            //----------------------------------
+            // コスト変化なし
+            //----------------------------------
 
             return true;
 
@@ -4678,5 +5167,465 @@ function resolveMagiaCoolOwnSummon(
     moveLamiaTargetToCool(
         selectedSummon
     );
+
+}
+
+//==================================================
+// クリスタルピーピング
+// 公開処理開始
+//==================================================
+
+function startCrystalPeeping(
+    card,
+    owner
+){
+
+    //----------------------------------
+    // PLAYER使用時のみ
+    //----------------------------------
+
+    if(owner !== PLAYER){
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // CPU手札
+    //----------------------------------
+
+    const enemyCards =
+        enemyHandCards.filter(
+            enemyCard =>
+                enemyCard &&
+                enemyCard !== card
+        );
+
+
+    //----------------------------------
+    // 公開枚数
+    //----------------------------------
+
+    const revealCount =
+        Math.min(
+            card.effect?.value ?? 3,
+            enemyCards.length
+        );
+
+
+    //----------------------------------
+    // 以前公開したカード
+    //----------------------------------
+
+    const alreadyRevealed =
+        enemyCards.filter(
+            enemyCard =>
+                crystalPeepingRevealedCards.has(
+                    enemyCard
+                )
+        );
+
+
+    //----------------------------------
+    // まだ公開していないカード
+    //----------------------------------
+
+    const notRevealed =
+        enemyCards.filter(
+            enemyCard =>
+                !crystalPeepingRevealedCards.has(
+                    enemyCard
+                )
+        );
+
+
+    //----------------------------------
+    // ランダム並び替え
+    //----------------------------------
+
+    const shuffleCards =
+        cards => {
+
+            const result =
+                [...cards];
+
+
+            for(
+                let i =
+                    result.length - 1;
+                i > 0;
+                i--
+            ){
+
+                const j =
+                    Math.floor(
+                        Math.random() *
+                        (i + 1)
+                    );
+
+
+                [
+                    result[i],
+                    result[j]
+                ] =
+                [
+                    result[j],
+                    result[i]
+                ];
+
+            }
+
+
+            return result;
+
+        };
+
+
+    //----------------------------------
+    // 公開済みカードを優先
+    //----------------------------------
+
+    const shuffledRevealed =
+        shuffleCards(
+            alreadyRevealed
+        );
+
+
+    const shuffledNotRevealed =
+        shuffleCards(
+            notRevealed
+        );
+
+
+    const revealedCards =
+        [
+            ...shuffledRevealed,
+            ...shuffledNotRevealed
+        ].slice(
+            0,
+            revealCount
+        );
+
+
+    //----------------------------------
+    // 今回公開したカードを記録
+    //----------------------------------
+
+    revealedCards.forEach(
+        revealedCard => {
+
+            crystalPeepingRevealedCards.add(
+                revealedCard
+            );
+
+        }
+    );
+
+
+    //----------------------------------
+    // 待機情報
+    //----------------------------------
+
+    crystalPeepingWaiting =
+        true;
+
+    crystalPeepingMagia =
+        card;
+
+    crystalPeepingOwner =
+        owner;
+
+
+    //----------------------------------
+    // 公開
+    //----------------------------------
+
+    showCrystalPeepingCards(
+        revealedCards
+    );
+
+
+    console.log(
+        "クリスタルピーピング：公開カード",
+        revealedCards.map(
+            revealedCard =>
+                revealedCard.name
+        )
+    );
+
+
+    return true;
+
+}
+
+//==================================================
+// クリスタルピーピング
+// 公開カード表示
+//==================================================
+
+function showCrystalPeepingCards(
+    cards
+){
+
+    const modal =
+        document.getElementById(
+            "crystal-peeping-modal"
+        );
+
+    const list =
+        document.getElementById(
+            "crystal-peeping-card-list"
+        );
+
+    const message =
+        document.getElementById(
+            "crystal-peeping-message"
+        );
+
+    const confirmButton =
+        document.getElementById(
+            "crystal-peeping-confirm-button"
+        );
+
+
+    if(
+        !modal ||
+        !list ||
+        !message ||
+        !confirmButton
+    ){
+
+        console.error(
+            "クリスタルピーピング：表示UIがありません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 初期化
+    //----------------------------------
+
+    list.innerHTML =
+        "";
+
+
+    //----------------------------------
+    // カードなし
+    //----------------------------------
+
+    if(cards.length === 0){
+
+        message.textContent =
+            "相手の手札はありません";
+
+    }
+
+
+    //----------------------------------
+    // 公開カードあり
+    //----------------------------------
+
+    else{
+
+        message.textContent =
+            `相手が公開したカード（${cards.length}枚）`;
+
+
+        cards.forEach(
+            card => {
+
+                const img =
+                    document.createElement(
+                        "img"
+                    );
+
+
+                img.src =
+                    card.image;
+
+                img.alt =
+                    card.name;
+
+
+                list.appendChild(
+                    img
+                );
+
+            }
+        );
+
+    }
+
+
+    //----------------------------------
+    // 確認ボタン
+    //----------------------------------
+
+    confirmButton.onclick =
+        finishCrystalPeeping;
+
+
+    //----------------------------------
+    // 表示
+    //----------------------------------
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    console.log(
+        "クリスタルピーピング：公開",
+        cards.map(
+            card =>
+                card.name
+        )
+    );
+
+}
+
+
+//==================================================
+// クリスタルピーピング
+// 公開終了
+//==================================================
+
+function finishCrystalPeeping(){
+
+    if(
+        !crystalPeepingWaiting ||
+        !crystalPeepingMagia
+    ){
+
+        return;
+
+    }
+
+
+    const card =
+        crystalPeepingMagia;
+
+    const owner =
+        crystalPeepingOwner;
+
+
+    //----------------------------------
+    // モーダルを閉じる
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "crystal-peeping-modal"
+        );
+
+
+    if(modal){
+
+        modal.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    //----------------------------------
+    // 使用したマギアを
+    // 手札へ戻す
+    //----------------------------------
+
+    if(owner === PLAYER){
+
+        card.area =
+            "hand";
+
+        card.setFaceDown(
+            false
+        );
+
+
+        if(
+            !board.handCards.includes(
+                card
+            )
+        ){
+
+            board.addHandCard(
+                card
+            );
+
+        }
+
+    }
+    else{
+
+        card.area =
+            "enemyHand";
+
+
+        if(
+            !enemyHandCards.includes(
+                card
+            )
+        ){
+
+            enemyHandCards.push(
+                card
+            );
+
+        }
+
+
+        updateEnemyZoneDisplay();
+
+    }
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "クリスタルピーピング：",
+        card.name,
+        "を手札へ戻しました"
+    );
+
+
+    addBattleLog(
+        owner === PLAYER
+            ?
+            "PLAYER：クリスタルピーピングを手札に戻した"
+            :
+            "CPU：クリスタルピーピングを手札に戻した"
+    );
+
+
+    //----------------------------------
+    // 待機状態解除
+    //----------------------------------
+
+    crystalPeepingWaiting =
+        false;
+
+    crystalPeepingMagia =
+        null;
+
+    crystalPeepingOwner =
+        null;
+
+
+    //----------------------------------
+    // 表示更新
+    //----------------------------------
+
+    updateHandCostDisplay();
+
+    updateGameState();
+
+    updateButtons();
 
 }
