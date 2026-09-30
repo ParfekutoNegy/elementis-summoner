@@ -111,8 +111,715 @@ function resetCrystalPeepingRevealedCards(){
 
 }
 
+//==================================================
+// アースクェイク
+// 全体ダメージ解決状態
+//==================================================
+
+let earthquakeResolving =
+    false;
+
+let earthquakeMagia =
+    null;
+
+let earthquakeTargets =
+    [];
+
+let earthquakeIndex =
+    0;
+
+let earthquakeCurrentTarget =
+    null;
 
 
+//==================================================
+// アースクェイク
+// 解決開始
+//==================================================
+
+function startEarthquakeResolution(
+    card
+){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ アースクェイク解決開始"
+    );
+
+
+    //----------------------------------
+    // 相手フィールド取得
+    //----------------------------------
+
+    const targetField =
+        card.owner === PLAYER
+            ? enemyField
+            : playerField;
+
+
+    //----------------------------------
+    // 解決状態保存
+    //----------------------------------
+
+    earthquakeResolving =
+        true;
+
+    earthquakeMagia =
+        card;
+
+    earthquakeTargets =
+        targetField.filter(
+            summon =>
+                summon &&
+                summon.card &&
+                !summon.destroyed
+        );
+
+    earthquakeIndex =
+        0;
+
+    earthquakeCurrentTarget =
+        null;
+
+
+    console.log(
+        "アースクェイク対象：",
+        earthquakeTargets.map(
+            summon =>
+                summon.card.name
+        )
+    );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(
+        earthquakeTargets.length === 0
+    ){
+
+        console.log(
+            "アースクェイク：対象サモンなし"
+        );
+
+
+        finishEarthquakeResolution();
+
+        return "DONE";
+
+    }
+
+
+    //----------------------------------
+    // 最初の1体へ
+    //----------------------------------
+
+    return resolveNextEarthquakeTarget();
+
+}
+
+
+//==================================================
+// アースクェイク
+// 次のサモンを解決
+//==================================================
+
+function resolveNextEarthquakeTarget(){
+
+    //----------------------------------
+    // 解決中でなければ終了
+    //----------------------------------
+
+    if(
+        !earthquakeResolving ||
+        !earthquakeMagia
+    ){
+
+        return "DONE";
+
+    }
+
+
+    //----------------------------------
+    // 全対象終了
+    //----------------------------------
+
+    if(
+        earthquakeIndex >=
+        earthquakeTargets.length
+    ){
+
+        finishEarthquakeResolution();
+
+        return "DONE";
+
+    }
+
+
+    //----------------------------------
+    // 今回の対象
+    //----------------------------------
+
+    const target =
+        earthquakeTargets[
+            earthquakeIndex
+        ];
+
+
+    earthquakeIndex++;
+
+
+    //----------------------------------
+    // すでに場を離れている場合
+    // 次の対象へ
+    //----------------------------------
+
+    const currentField =
+        target?.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+
+    if(
+        !target ||
+        target.destroyed ||
+        !currentField.includes(target)
+    ){
+
+        console.log(
+            "アースクェイク：対象が場にいないためスキップ",
+            target?.card?.name
+        );
+
+
+        return resolveNextEarthquakeTarget();
+
+    }
+
+
+    //----------------------------------
+    // 現在の対象を保存
+    //----------------------------------
+
+    earthquakeCurrentTarget =
+        target;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ アースクェイク ダメージ対象",
+        target.card.name,
+        `${earthquakeIndex}/${earthquakeTargets.length}`
+    );
+
+
+    //----------------------------------
+    // 1ダメージ
+    //----------------------------------
+
+const damage =
+    Number(
+        earthquakeMagia.effect?.value
+    ) || 0;
+
+
+const damageResult =
+    dealDamage(
+        target,
+        damage,
+        earthquakeMagia
+    );
+
+
+    //----------------------------------
+    // ヒュドラ待ち
+    //----------------------------------
+
+    if(
+        damageResult ===
+        "WAIT_HYDRA"
+    ){
+
+        console.log(
+            "アースクェイク：ヒュドラ能力待ち"
+        );
+
+        return "WAIT_HYDRA";
+
+    }
+
+
+    //----------------------------------
+    // レジスト待ち
+    //----------------------------------
+
+    if(
+        damageResult ===
+        "WAIT_RESIST"
+    ){
+
+        console.log(
+            "アースクェイク：レジスト待ち"
+        );
+
+        return "WAIT_RESIST";
+
+    }
+
+
+    //----------------------------------
+    // 通常ダメージ完了
+    //----------------------------------
+
+    return finishEarthquakeTargetDamage();
+
+}
+
+
+//==================================================
+// アースクェイク
+// 1体分のダメージ後処理
+//==================================================
+
+function finishEarthquakeTargetDamage(){
+
+    if(
+        !earthquakeResolving
+    ){
+
+        return "DONE";
+
+    }
+
+
+    console.log(
+        "★ アースクェイク 1体分ダメージ完了",
+        earthquakeCurrentTarget?.card?.name
+    );
+
+
+    //----------------------------------
+    // 破壊判定
+    //
+    // resolveBattle 内で
+    //
+    // resolveDestroy
+    // removeDestroyedSummons
+    // sortCoolTriggerQueue
+    // clearDamage
+    // startCoolTriggerResolution
+    //
+    // まで処理される
+    //----------------------------------
+
+    resolveBattle();
+
+
+    //----------------------------------
+    // クール時誘発能力が開始した場合
+    //
+    // マンドラゴラ等の能力が
+    // 完全に終わるまでここで停止
+    //----------------------------------
+
+    if(
+        typeof coolTriggerResolving !==
+            "undefined" &&
+        coolTriggerResolving
+    ){
+
+        console.log(
+            "アースクェイク：クール時誘発能力待ち"
+        );
+
+        return "WAIT_COOL_TRIGGER";
+
+    }
+
+
+    //----------------------------------
+    // 誘発なし
+    // 次のサモンへ
+    //----------------------------------
+
+    earthquakeCurrentTarget =
+        null;
+
+
+    return resolveNextEarthquakeTarget();
+
+}
+
+
+//==================================================
+// アースクェイク
+// 全対象解決完了
+//==================================================
+
+function finishEarthquakeResolution(){
+
+    //==================================
+    // アースクェイク
+    // 全対象解決完了
+    //==================================
+
+    if(
+        !earthquakeResolving ||
+        !earthquakeMagia
+    ){
+
+        console.warn(
+            "finishEarthquakeResolution：",
+            "アースクェイク解決状態がありません"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 終了するマギアを保存
+    //----------------------------------
+
+    const resolvedMagia =
+        earthquakeMagia;
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+            ENEMY;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ アースクェイク 全対象解決完了"
+    );
+
+    console.log(
+        "使用者：",
+        resolvedMagia.owner
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //==================================
+    // アースクェイク状態を先に解除
+    //==================================
+    //
+    // この後 board.addCoolCard() によって
+    // クール時能力などが発生しても、
+    // アースクェイク本体の処理として
+    // 再開されないようにする
+    //==================================
+
+    earthquakeResolving =
+        false;
+
+    earthquakeMagia =
+        null;
+
+    earthquakeTargets =
+        [];
+
+    earthquakeIndex =
+        0;
+
+    earthquakeCurrentTarget =
+        null;
+
+
+    //==================================
+    // 各種待機状態を念のため解除
+    //==================================
+
+    if(
+        typeof hydraMagiaWaiting !==
+            "undefined"
+    ){
+
+        hydraMagiaWaiting =
+            false;
+
+    }
+
+
+    if(
+        typeof hydraWaitingMagia !==
+            "undefined" &&
+        hydraWaitingMagia ===
+            resolvedMagia
+    ){
+
+        hydraWaitingMagia =
+            null;
+
+        hydraWaitingMagiaTarget =
+            null;
+
+        hydraWaitingMagiaOwnSummon =
+            null;
+
+    }
+
+
+    if(
+        typeof resistMagiaWaiting !==
+            "undefined"
+    ){
+
+        resistMagiaWaiting =
+            false;
+
+    }
+
+
+    if(
+        typeof resistWaitingMagia !==
+            "undefined" &&
+        resistWaitingMagia ===
+            resolvedMagia
+    ){
+
+        resistWaitingMagia =
+            null;
+
+        resistWaitingMagiaTarget =
+            null;
+
+        resistWaitingMagiaOwnSummon =
+            null;
+
+    }
+
+
+    //==================================
+    // マギアを手札から削除
+    //==================================
+
+    if(
+        resolvedMagia.owner ===
+        PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+
+
+    //==================================
+    // 通常マギア状態リセット
+    //==================================
+
+    resetMagiaState();
+
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    updateButtons();
+
+
+    //==================================
+    // アースクェイク本体をクールへ
+    //==================================
+    //
+    // 各サモンについては
+    // finishEarthquakeTargetDamage()
+    // 内ですでに resolveBattle() 済み。
+    //
+    // そのためここでは
+    // resolveBattle() を呼ばない。
+    //==================================
+
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // ゲーム終了済みでも
+            // 使用したマギア自体は
+            // クールへ送る
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "アースクェイク効果解決完了 → クールへ",
+                resolvedMagia.name
+            );
+
+
+            //----------------------------------
+            // CPU対象発光解除
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof clearCpuMagiaTargetHighlight ===
+                    "function"
+            ){
+
+                clearCpuMagiaTargetHighlight();
+
+            }
+
+
+            //----------------------------------
+            // UI更新
+            //----------------------------------
+
+            if(
+                typeof updateGameState ===
+                    "function"
+            ){
+
+                updateGameState();
+
+            }
+
+
+            if(
+                typeof updateButtons ===
+                    "function"
+            ){
+
+                updateButtons();
+
+            }
+
+
+            //----------------------------------
+            // CPUマギアの場合
+            // 次のCPU行動へ
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof runCpuTurnStep ===
+                    "function"
+            ){
+
+                setTimeout(
+                    () => {
+
+                        //----------------------------------
+                        // ゲーム終了中
+                        //----------------------------------
+
+                        if(
+                            typeof battleGameEnding !==
+                                "undefined" &&
+                            battleGameEnding
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // 投了処理中
+                        //----------------------------------
+
+                        if(
+                            typeof battleGameConceded !==
+                                "undefined" &&
+                            battleGameConceded
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // CPUターンでなければ
+                        // 再開しない
+                        //----------------------------------
+
+                        if(
+                            typeof game !==
+                                "undefined" &&
+                            game.currentPlayer !==
+                                ENEMY
+                        ){
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // クール時誘発処理中なら
+                        // 再開しない
+                        //----------------------------------
+
+                        if(
+                            typeof coolTriggerResolving !==
+                                "undefined" &&
+                            coolTriggerResolving
+                        ){
+
+                            return;
+
+                        }
+
+
+                        runCpuTurnStep();
+
+                    },
+                    500
+                );
+
+            }
+
+        },
+        500
+    );
+
+}
     
 //=========================
 // マギア効果処理
@@ -415,11 +1122,15 @@ function resolveMagia(){
 
     if(
         magiaCard.effect &&
-        magiaCard.effect.type === "forceCost"
+        magiaCard.effect.type ===
+            "forceCost"
     ){
 
         //----------------------------------
         // PLAYER → CPU
+        //----------------------------------
+        // CPU手札が0枚なら
+        // 効果なしで終了
         //----------------------------------
 
         if(
@@ -434,17 +1145,24 @@ function resolveMagia(){
             );
 
 
+            //----------------------------------
+            // マギア情報保存
+            //----------------------------------
+
             const resolvedMagia =
                 magiaCard;
 
             const resolvedTarget =
                 magiaTarget;
 
-
             const isCpuMagia =
                 resolvedMagia.owner ===
                     ENEMY;
 
+
+            //==================================
+            // マギアプレイ時サモン能力
+            //==================================
 
             triggerSummonAbilitiesOnMagiaPlay(
                 resolvedMagia.owner
@@ -456,7 +1174,8 @@ function resolveMagia(){
             //----------------------------------
 
             if(
-                resolvedMagia.owner === PLAYER
+                resolvedMagia.owner ===
+                PLAYER
             ){
 
                 board.handCards =
@@ -479,6 +1198,10 @@ function resolveMagia(){
             }
 
 
+            //----------------------------------
+            // 効果解決完了
+            //----------------------------------
+
             setTimeout(
                 () => {
 
@@ -486,7 +1209,11 @@ function resolveMagia(){
                     // CPU対象発光解除
                     //----------------------------------
 
-                    if(isCpuMagia){
+                    if(
+                        isCpuMagia &&
+                        typeof clearCpuMagiaTargetHighlight ===
+                            "function"
+                    ){
 
                         clearCpuMagiaTargetHighlight(
                             resolvedTarget
@@ -526,13 +1253,20 @@ function resolveMagia(){
             );
 
 
+            //----------------------------------
+            // 状態リセット
+            //----------------------------------
+
             resetMagiaState();
 
-            summonCard = null;
+            summonCard =
+                null;
 
-            selectedCostCards = [];
+            selectedCostCards =
+                [];
 
-            costConfirm = false;
+            costConfirm =
+                false;
 
 
             updateButtons();
@@ -567,7 +1301,6 @@ function resolveMagia(){
 
     const resolvedMagia =
         magiaCard;
-
 
     const resolvedTarget =
         magiaTarget;
@@ -611,34 +1344,18 @@ function resolveMagia(){
 
 
     //==================================
-    // マギア解決中にゲーム終了
+    // GAME OVER
     //==================================
 
     if(
         effectResult ===
-            "GAME_OVER"
+        "GAME_OVER"
     ){
 
         console.log(
-            "マギア解決中にゲーム終了",
+            "マギア解決中にゲーム終了：",
             resolvedMagia.name
         );
-
-
-        resetMagiaState();
-
-        summonCard =
-            null;
-
-        selectedCostCards =
-            [];
-
-        costConfirm =
-            false;
-
-
-        updateButtons();
-
 
         return;
 
@@ -646,18 +1363,18 @@ function resolveMagia(){
 
 
     //==================================
-    // ヒュドラ待機
+    // ヒュドラ待ち
     //==================================
 
     if(
         effectResult ===
-            "WAIT_HYDRA"
+        "WAIT_HYDRA"
     ){
 
         console.log(
             "マギア解決停止：",
             resolvedMagia.name,
-            "→ ヒュドラ能力待ち"
+            "→ ヒュドラ待ち"
         );
 
 
@@ -680,23 +1397,20 @@ function resolveMagia(){
 
 
     //==================================
-    // ネレイド待機
+    // ネレイド待ち
     //==================================
 
     if(
         effectResult ===
-            "WAIT_NEREID"
+        "WAIT_NEREID"
     ){
 
         console.log(
             "マギア解決停止：",
             resolvedMagia.name,
-            "→ ネレイド能力待ち"
+            "→ ネレイド待ち"
         );
 
-
-        nereidMagiaWaiting =
-            true;
 
         nereidWaitingMagia =
             resolvedMagia;
@@ -714,68 +1428,19 @@ function resolveMagia(){
 
 
     //==================================
-    // クリスタルピーピング待機
+    // クリスタルピーキング待ち
     //==================================
 
     if(
         effectResult ===
-            "WAIT_CRYSTAL_PEEPING"
+        "WAIT_CRYSTAL_PEEPING"
     ){
 
         console.log(
             "マギア解決停止：",
             resolvedMagia.name,
-            "→ 公開カード確認待ち"
+            "→ クリスタルピーキング待ち"
         );
-
-
-        //----------------------------------
-        // 使用したマギアを
-        // 一度手札から取り除く
-        //----------------------------------
-
-        if(
-            resolvedMagia.owner ===
-                PLAYER
-        ){
-
-            board.handCards =
-                board.handCards.filter(
-                    card =>
-                        card !==
-                        resolvedMagia
-                );
-
-        }
-        else{
-
-            enemyHandCards =
-                enemyHandCards.filter(
-                    card =>
-                        card !==
-                        resolvedMagia
-                );
-
-        }
-
-
-        //----------------------------------
-        // マギア状態リセット
-        //----------------------------------
-
-        resetMagiaState();
-
-        summonCard =
-            null;
-
-        selectedCostCards =
-            [];
-
-        costConfirm =
-            false;
-
-
-        updateButtons();
 
 
         return;
@@ -784,12 +1449,12 @@ function resolveMagia(){
 
 
     //==================================
-    // レジスト待機
+    // レジスト待ち
     //==================================
 
     if(
         effectResult ===
-            "WAIT_RESIST"
+        "WAIT_RESIST"
     ){
 
         console.log(
@@ -817,12 +1482,76 @@ function resolveMagia(){
     }
 
 
+    //==================================
+    // アースクェイク
+    // クール時誘発能力待ち
+    //==================================
+
+    if(
+        effectResult ===
+        "WAIT_COOL_TRIGGER"
+    ){
+
+        console.log(
+            "マギア解決停止：",
+            resolvedMagia.name,
+            "→ クール時誘発能力待ち"
+        );
+
+
+        //----------------------------------
+        // アースクェイク側が
+        // マギア情報・対象進行状態を
+        // 保持している
+        //----------------------------------
+
+        return;
+
+    }
+
+
+    //==================================
+    // アースクェイク
+    //==================================
+    //
+    // 待機が発生しなかった場合でも、
+    // startEarthquakeResolution() 内で
+    // 全対象を最後まで解決し、
+    // finishEarthquakeResolution() が
+    // マギア終了処理を担当する。
+    //
+    // そのため通常マギア終了処理へ
+    // 二重に入らない。
+    //==================================
+
+    if(
+        resolvedMagia.effect?.type ===
+            "damageAllEnemySummons"
+    ){
+
+        console.log(
+            "アースクェイク：",
+            "専用解決処理へ移行"
+        );
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // ここから通常マギア
+    //==================================
+
+
     //----------------------------------
     // 手札から削除
     //----------------------------------
 
     if(
-        resolvedMagia.owner === PLAYER
+        resolvedMagia.owner ===
+        PLAYER
     ){
 
         board.handCards =
@@ -986,6 +1715,42 @@ function resumeMagiaAfterHydra(){
 
     hydraWaitingMagiaOwnSummon =
         null;
+
+    //==================================
+    // アースクェイク解決中
+    //==================================
+    //
+    // 通常マギアのように
+    // マギア全体を終了させず、
+    // 現在の1体分を完了して
+    // 次の対象へ進む
+    //==================================
+
+    if(
+        typeof earthquakeResolving !==
+            "undefined" &&
+        earthquakeResolving &&
+        earthquakeMagia ===
+            resolvedMagia
+    ){
+
+        console.log(
+            "ヒュドラ後：アースクェイク再開",
+            earthquakeCurrentTarget?.card?.name
+        );
+
+
+        //----------------------------------
+        // ヒュドラ割り込み後なので
+        // dealDamage() は再実行しない
+        //----------------------------------
+
+        finishEarthquakeTargetDamage();
+
+
+        return true;
+
+    }
 
 
     //==================================
@@ -5316,6 +6081,46 @@ function resumeMagiaAfterResist(){
 
     resistWaitingMagiaOwnSummon =
         null;
+
+    //==================================
+    // アースクェイク解決中
+    //==================================
+    //
+    // 通常マギアのようにここで
+    // マギア全体を終了させず、
+    // 今回の1体分のダメージ処理を
+    // 完了させてから次の対象へ進む
+    //==================================
+
+    if(
+        typeof earthquakeResolving !==
+            "undefined" &&
+        earthquakeResolving &&
+        earthquakeMagia ===
+            resolvedMagia
+    ){
+
+        console.log(
+            "レジスト後：アースクェイク再開",
+            earthquakeCurrentTarget?.card?.name
+        );
+
+
+        //----------------------------------
+        // 今回の1体分のダメージは
+        // レジスト処理側ですでに確定済み
+        //
+        // activateCardEffect() や
+        // dealDamage() は再実行しない
+        //----------------------------------
+
+        finishEarthquakeTargetDamage();
+
+
+        return true;
+
+    }
+
 
 
     //----------------------------------

@@ -2604,6 +2604,50 @@ function resumeBattleAfterHydra(){
         "================================"
     );
 
+    //==================================================
+    // レジスト処理中に発生したヒュドラ
+    //==================================================
+    //
+    // マギア
+    // ↓
+    // レジスト
+    // ↓
+    // ヒュドラ
+    //
+    // の順で停止していた場合。
+    //==================================================
+
+    if(
+        typeof resistMagiaWaiting !==
+            "undefined" &&
+        resistMagiaWaiting &&
+        typeof currentResistEvent !==
+            "undefined" &&
+        currentResistEvent &&
+        currentResistEvent.type ===
+            GAME_EVENT.BEFORE_SUMMON_DAMAGE
+    ){
+
+        console.log(
+            "ヒュドラ終了：",
+            "レジスト中マギアの処理へ戻る"
+        );
+
+
+        if(
+            typeof finishResistAfterHydra ===
+                "function"
+        ){
+
+            finishResistAfterHydra();
+
+        }
+
+
+        return;
+
+    }
+
 
     //==================================================
     // マギアによるヒュドラ待機

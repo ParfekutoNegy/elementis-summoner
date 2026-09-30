@@ -9614,6 +9614,129 @@ function createCpuMagiaAction(card){
 
     }
 
+    //==================================
+// アースクェイク専用使用条件
+//
+// PLAYERサモンを1体以上
+// 破壊できる場合のみ使用候補にする
+//==================================
+
+if(
+    card.effect?.type ===
+        "damageAllEnemySummons"
+){
+
+    //----------------------------------
+    // アースクェイクのダメージ
+    //----------------------------------
+
+    const earthquakeDamage =
+        Number(
+            card.effect?.value
+        ) || 0;
+
+
+    //----------------------------------
+    // 破壊可能なPLAYERサモンがいるか
+    //----------------------------------
+
+    const canDestroySummon =
+        playerField.some(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed
+                ){
+                    return false;
+                }
+
+
+                //----------------------------------
+                // 現在パワー
+                //----------------------------------
+
+                const power =
+                    getPower(
+                        summon
+                    );
+
+
+                //----------------------------------
+                // 現在受けているダメージ
+                //----------------------------------
+
+                const currentDamage =
+                    Number(
+                        summon.damage
+                    ) || 0;
+
+
+                //----------------------------------
+                // アースクェイク後の
+                // 合計ダメージ
+                //----------------------------------
+
+                const afterDamage =
+                    currentDamage +
+                    earthquakeDamage;
+
+
+                console.log(
+                    "CPU：アースクェイク破壊判定",
+                    summon.card?.name,
+                    "power=",
+                    power,
+                    "currentDamage=",
+                    currentDamage,
+                    "earthquakeDamage=",
+                    earthquakeDamage,
+                    "afterDamage=",
+                    afterDamage
+                );
+
+
+                //----------------------------------
+                // 破壊可能
+                //----------------------------------
+
+                return (
+                    afterDamage >=
+                    power
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 1体も破壊できない
+    //----------------------------------
+
+    if(!canDestroySummon){
+
+        console.log(
+            "CPUポイント評価：マギア候補外",
+            card.name,
+            "アースクェイクで破壊可能なサモンなし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 1体以上破壊可能
+    //----------------------------------
+
+    console.log(
+        "CPU：アースクェイク使用条件成立",
+        "破壊可能なPLAYERサモンあり"
+    );
+
+}
+
 
     //----------------------------------
     // 現在コスト

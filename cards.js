@@ -913,7 +913,17 @@ const CARD_LIST = [
         element: "土",
         cost: 1,
         series:"folklore",
-        image: "images/061-アースクェイク.jpg"
+        image: "images/061-アースクェイク.jpg",
+        text:"相手のすべてのサモンに１ダメージを与える。",
+        tag:"相手",
+        effect: {
+            type: "damageAllEnemySummons",
+            target: ["enemy"],
+            value: 1
+}
+
+
+
     },
     {
         id: 62,

@@ -972,11 +972,14 @@ function finishResist(){
                         // 追加レジスト判定へ
                         //----------------------------------
 
-                        setTimeout(()=>{
+                        setTimeout(
+                            () => {
 
-                            finishResist();
+                                finishResist();
 
-                        },2000);
+                            },
+                            2000
+                        );
 
 
                         return;
@@ -1006,16 +1009,11 @@ function finishResist(){
                     );
 
 
-                //----------------------------------
-                // ネレイド使用
-                //----------------------------------
-
                 if(nereidUsed){
 
                     console.log(
                         "CPUネレイド：ダメージ0"
                     );
-
 
                     currentResistEvent.damage =
                         0;
@@ -1035,10 +1033,10 @@ function finishResist(){
             currentResistEvent.player === PLAYER
         ){
 
-            //==================================
-            // 「プレイしない」を選んでいない場合だけ
-            // 追加レジストを確認する
-            //==================================
+            //----------------------------------
+            // 「プレイしない」を選んでいない
+            // 場合だけ追加レジスト確認
+            //----------------------------------
 
             if(
                 !resistPassedThisEvent
@@ -1170,11 +1168,55 @@ function finishResist(){
             );
 
 
-            //----------------------------------
-            // dealDamage() は使用しない
+            //==================================
+            // レジスト後のヒュドラ判定
+            //==================================
             //
-            // 再びレジストイベントを
-            // 発生させないため
+            // dealDamage() は再実行しない。
+            //
+            // BEFORE_SUMMON_DAMAGEを
+            // 再発生させず、
+            // ヒュドラ判定だけ行う。
+            //==================================
+
+            const waitHydra =
+                startHydraDamageAbility(
+                    currentResistEvent
+                );
+
+
+            //----------------------------------
+            // ヒュドラ能力待ち
+            //----------------------------------
+
+            if(waitHydra){
+
+                console.log(
+                    "レジスト後：ヒュドラ能力待機",
+                    currentResistEvent.target?.card?.name,
+                    "damage=",
+                    currentResistEvent.damage
+                );
+
+
+                //==================================
+                // 重要
+                //
+                // currentResistEvent は
+                // ヒュドラ側が使用するため
+                // ここでは消さない。
+                //
+                // またマギアもまだ再開しない。
+                //==================================
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // ヒュドラなし
+            // 最終ダメージ適用
             //----------------------------------
 
             applyHydraResolvedDamage(
@@ -1184,6 +1226,12 @@ function finishResist(){
         }
 
     }
+
+
+    //==================================
+    // ここから
+    // レジストイベント終了処理
+    //==================================
 
 
     //----------------------------------
@@ -1196,20 +1244,22 @@ function finishResist(){
 
         card.setSelected(false);
 
-        card.usedThisEvent = false;
+        card.usedThisEvent =
+            false;
 
     }
 
 
     //----------------------------------
-    // CPUレジストの使用済み解除
+    // CPUレジスト使用済み解除
     //----------------------------------
 
     for(
         const card of enemyHandCards
     ){
 
-        card.usedThisEvent = false;
+        card.usedThisEvent =
+            false;
 
     }
 
@@ -1218,7 +1268,8 @@ function finishResist(){
         const card of enemyCoolCards
     ){
 
-        card.usedThisEvent = false;
+        card.usedThisEvent =
+            false;
 
     }
 
@@ -1239,7 +1290,7 @@ function finishResist(){
 
 
     //----------------------------------
-    // レジスト状態保存
+    // 後続処理用情報保存
     //----------------------------------
 
     const wasPlayerDamage =
@@ -1255,26 +1306,28 @@ function finishResist(){
     // レジスト状態解除
     //----------------------------------
 
-    currentResistEvent = null;
+    currentResistEvent =
+        null;
 
-    resistMode = false;
+    resistMode =
+        false;
 
-    selectableResistCards = [];
+    selectableResistCards =
+        [];
 
-    resistUsingCard = null;
+    resistUsingCard =
+        null;
 
-    resistCostConfirm = false;
+    resistCostConfirm =
+        false;
 
-    selectedResistCostCards = [];
+    selectedResistCostCards =
+        [];
 
 
-    //==================================
+    //----------------------------------
     // 「プレイしない」状態解除
-    //
-    // ここで解除するため、
-    // 次のマギア・次の攻撃では
-    // 再びレジストできる
-    //==================================
+    //----------------------------------
 
     resistPassedThisEvent =
         false;
@@ -1286,9 +1339,6 @@ function finishResist(){
     //==================================
     // マギアによるダメージへの
     // レジストだった場合
-    //
-    // 停止していたマギアの
-    // 終了処理へ戻す
     //==================================
 
     if(
@@ -1332,11 +1382,14 @@ function finishResist(){
         );
 
 
-        setTimeout(()=>{
+        setTimeout(
+            () => {
 
-            continueCpuTurn();
+                continueCpuTurn();
 
-        },500);
+            },
+            500
+        );
 
 
         return;
@@ -1349,6 +1402,158 @@ function finishResist(){
     //==================================
 
     if(
+        isAttacking()
+    ){
+
+        finishAttack();
+
+    }
+
+}
+
+//==================================================
+// レジスト
+// ↓
+// ヒュドラ
+//
+// ヒュドラ解決後のレジスト終了処理
+//==================================================
+
+function finishResistAfterHydra(){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ レジスト → ヒュドラ",
+        "終了処理"
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // 使用済みフラグ解除
+    //----------------------------------
+
+    for(
+        const card of selectableResistCards
+    ){
+
+        card.setSelected(false);
+
+        card.usedThisEvent =
+            false;
+
+    }
+
+
+    //----------------------------------
+    // CPUレジスト使用済み解除
+    //----------------------------------
+
+    for(
+        const card of enemyHandCards
+    ){
+
+        card.usedThisEvent =
+            false;
+
+    }
+
+
+    for(
+        const card of enemyCoolCards
+    ){
+
+        card.usedThisEvent =
+            false;
+
+    }
+
+
+    //----------------------------------
+    // レジスト表示解除
+    //----------------------------------
+
+    for(
+        const card of selectableResistCards
+    ){
+
+        card.setSelected(false);
+
+        card.setHighlight(false);
+
+    }
+
+
+    //==================================
+    // レジスト状態解除
+    //==================================
+
+    currentResistEvent =
+        null;
+
+    resistMode =
+        false;
+
+    selectableResistCards =
+        [];
+
+    resistUsingCard =
+        null;
+
+    resistCostConfirm =
+        false;
+
+    selectedResistCostCards =
+        [];
+
+    resistPassedThisEvent =
+        false;
+
+
+    updateButtons();
+
+
+    //==================================
+    // マギアへ戻る
+    //==================================
+
+    if(
+        typeof resistMagiaWaiting !==
+            "undefined" &&
+        resistMagiaWaiting
+    ){
+
+        console.log(
+            "レジスト → ヒュドラ終了：",
+            "停止中マギアを再開"
+        );
+
+
+        resumeMagiaAfterResist();
+
+
+        return;
+
+    }
+
+
+    //==================================
+    // 念のため
+    // 通常戦闘へ戻る
+    //==================================
+
+    resolveBattle();
+
+
+    if(
+        typeof isAttacking ===
+            "function" &&
         isAttacking()
     ){
 
