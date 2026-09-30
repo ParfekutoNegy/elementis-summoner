@@ -16,6 +16,8 @@ let attackTarget = null;
 
 let waitingAttackAfterResist = false;
 
+let attackResolving = false;
+
 //----------------------------------
 // 強制アタック
 //----------------------------------
@@ -1650,6 +1652,9 @@ function executeAttack(
     // 攻撃者をヨコ向きにする
     //==================================
 
+    attackResolving =
+    true;
+
     attackingSummon.isRest =
         true;
 
@@ -1956,6 +1961,70 @@ function continueAttackAfterAttackAbility(
     attacker,
     target
 ){
+
+    //==================================
+// 攻撃情報確認
+//==================================
+
+if(
+    !attacker ||
+    target == null
+){
+
+    console.warn(
+        "攻撃再開：",
+        "攻撃情報がありません"
+    );
+
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return false;
+
+}
+
+
+//==================================
+// 攻撃者がまだ場にいるか確認
+//==================================
+
+const attackerField =
+    attacker.owner === PLAYER
+        ?
+        playerField
+        :
+        enemyField;
+
+
+if(
+    !attackerField.includes(
+        attacker
+    ) ||
+    attacker.destroyed
+){
+
+    console.log(
+        "攻撃再開：",
+        "攻撃者が場にいないため攻撃終了",
+        attacker.card?.name
+    );
+
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return false;
+
+}
 
     //----------------------------------
     // 攻撃者を保証
@@ -2535,35 +2604,36 @@ function resumeBattleAfterHydra(){
         "================================"
     );
 
+
     //==================================================
-// マギアによるヒュドラ待機
-//==================================================
-
-if(
-    typeof hydraMagiaWaiting !==
-        "undefined" &&
-    hydraMagiaWaiting
-){
-
-    console.log(
-        "ヒュドラ：",
-        "停止中のマギアを再開"
-    );
-
+    // マギアによるヒュドラ待機
+    //==================================================
 
     if(
-        typeof resumeMagiaAfterHydra ===
-        "function"
+        typeof hydraMagiaWaiting !==
+            "undefined" &&
+        hydraMagiaWaiting
     ){
 
-        resumeMagiaAfterHydra();
+        console.log(
+            "ヒュドラ：",
+            "停止中のマギアを再開"
+        );
+
+
+        if(
+            typeof resumeMagiaAfterHydra ===
+                "function"
+        ){
+
+            resumeMagiaAfterHydra();
+
+        }
+
+
+        return;
 
     }
-
-
-    return;
-
-}
 
 
     //==================================================
@@ -2585,32 +2655,40 @@ if(
         const step =
             hydraBlockStep;
 
-        const wasForcedAttack =
-            hydraBlockWasForcedAttack;
-
 
         //----------------------------------
         // 必要情報確認
         //----------------------------------
 
-        if(
-            !attacker ||
-            !blocker
-        ){
+if(
+    !attacker ||
+    !blocker
+){
 
-            console.warn(
-                "ヒュドラ：",
-                "ブロック戦闘再開情報がありません"
-            );
-
-
-            resetHydraBlockBattleState();
+    console.warn(
+        "ヒュドラ：",
+        "ブロック戦闘再開情報がありません"
+    );
 
 
-            return;
+    resetHydraBlockBattleState();
 
-        }
 
+    //==================================
+    // 攻撃処理が開始済みなら
+    // 必ず攻撃終了処理を通す
+    //==================================
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return;
+
+}
 
         console.log(
             "ヒュドラ：ブロック戦闘再開",
@@ -2746,54 +2824,19 @@ if(
 
         //----------------------------------
         // 攻撃終了
-        //----------------------------------
+        //
+        // 通常CPU攻撃の場合
+        // → finishAttack() が次の攻撃へ
+        //
+        // 強制アタックの場合
+        // → finishAttack() が次の
+        //   強制アタックへ
+        //================================--
 
         finishAttack();
 
+
         hideActionGuide();
-
-
-        //==================================
-        // 強制アタック
-        //
-        // finishAttack() 側で
-        // 次の強制アタックへ進む
-        //==================================
-
-        if(wasForcedAttack){
-
-            console.log(
-                "CPU強制アタック：",
-                "ヒュドラ解決後の通常CPU攻撃継続をスキップ"
-            );
-
-
-            return;
-
-        }
-
-
-        //==================================
-        // 通常CPU攻撃
-        //==================================
-
-        if(
-            game.currentPlayer ===
-            ENEMY
-        ){
-
-            console.log(
-                "CPU：",
-                "ヒュドラ解決後、次の攻撃へ"
-            );
-
-
-            setTimeout(
-                cpuNextAttack,
-                2000
-            );
-
-        }
 
 
         return;
@@ -2825,23 +2868,35 @@ if(
         // 必要情報確認
         //----------------------------------
 
-        if(
-            !attacker ||
-            !target
-        ){
+if(
+    !attacker ||
+    !target
+){
 
-            console.warn(
-                "ヒュドラ：",
-                "通常戦闘再開情報がありません"
-            );
-
-
-            resetHydraNormalBattleState();
+    console.warn(
+        "ヒュドラ：",
+        "通常戦闘再開情報がありません"
+    );
 
 
-            return;
+    resetHydraNormalBattleState();
 
-        }
+
+    //==================================
+    // 攻撃処理が開始済みなら
+    // 必ず攻撃終了処理を通す
+    //==================================
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return;
+
+}
 
 
         console.log(
@@ -2964,7 +3019,6 @@ if(
     );
 
 }
-
 //==================================================
 // ヒュドラ
 // 通常戦闘待機状態リセット
@@ -3052,6 +3106,8 @@ function finishAttack(){
 
     attackMode = false;
 
+    attackResolving =
+    false;
 
     //----------------------------------
     // 攻撃終了ログ
@@ -4016,15 +4072,42 @@ function finishNereidDamagePrevent(
         nereidDamageEvent;
 
 
-    if(!data){
+if(!data){
 
-        console.warn(
-            "ネレイド：ダメージ待機情報なし"
-        );
+    console.warn(
+        "ネレイド：ダメージ待機情報なし"
+    );
 
-        return;
+
+    //----------------------------------
+    // ネレイド待機状態解除
+    //----------------------------------
+
+    nereidDamageWaiting =
+        false;
+
+    nereidDamageEvent =
+        null;
+
+    nereidSelectableSummons =
+        [];
+
+
+    //==================================
+    // 攻撃処理中だった場合
+    // 必ず攻撃終了処理を通す
+    //==================================
+
+    if(attackResolving){
+
+        finishAttack();
 
     }
+
+
+    return;
+
+}
 
 
     //----------------------------------
@@ -4171,6 +4254,18 @@ function finishNereidDamagePrevent(
         resolveBattle();
 
 
+        //==================================
+        // 攻撃終了
+        //
+        // CPU通常攻撃の場合の
+        //
+        // ・cpuWaiting解除
+        // ・cpuAttackIndex++
+        // ・cpuNextAttack()
+        //
+        // はすべて finishAttack() に任せる
+        //==================================
+
         finishAttack();
 
 
@@ -4212,47 +4307,6 @@ function finishNereidDamagePrevent(
         updateGameState();
 
 
-        //==================================
-        // CPUターン中なら再開
-        //==================================
-
-        if(
-            game.currentPlayer === ENEMY &&
-            game.state === TURN_STATE.PLAYING
-        ){
-
-            console.log(
-                "ネレイド処理完了：CPU攻撃再開"
-            );
-
-
-            cpuWaiting =
-                false;
-
-
-            //----------------------------------
-            // 今回の攻撃完了
-            //----------------------------------
-
-            cpuAttackIndex++;
-
-
-            //----------------------------------
-            // 次の攻撃へ
-            //----------------------------------
-
-            setTimeout(
-                () => {
-
-                    cpuNextAttack();
-
-                },
-                2000
-            );
-
-        }
-
-
         return;
 
     }
@@ -4267,7 +4321,6 @@ function finishNereidDamagePrevent(
     );
 
 }
-
 //==================================================
 // ネレイド
 // 選択発光解除
@@ -5197,6 +5250,9 @@ function resetAttackState(){
     attackMode =
         false;
 
+    attackResolving =
+        false;
+
 
     //----------------------------------
     // ブロック状態解除
@@ -5487,20 +5543,6 @@ function skipBlock(){
     }
 
 
-    //==================================
-    // 今回が強制アタックか保存
-    //
-    // finishAttack() 内で
-    // forcedAttackMode が false に
-    // 戻るため、先に保存する
-    //==================================
-
-    const wasForcedAttack =
-        typeof forcedAttackMode !==
-            "undefined" &&
-        forcedAttackMode;
-
-
     //----------------------------------
     // プレイヤーへのダメージ
     //----------------------------------
@@ -5547,68 +5589,59 @@ function skipBlock(){
     resolveBattle();
 
 
+    //==================================
+    // 攻撃終了
+    //
+    // 通常CPU攻撃の場合
+    // → finishAttack() が次の攻撃へ
+    //
+    // 強制アタックの場合
+    // → finishAttack() が次の
+    //   強制アタックへ
+    //==================================
+
     finishAttack();
 
 
-    //==================================
-    // 強制アタックだった場合
-    //
-    // finishAttack() →
-    // startNextForcedAttack()
-    //
-    // に任せる。
-    //
-    // cpuNextAttack() は呼ばない。
-    //==================================
-
-    if(wasForcedAttack){
-
-        console.log(
-            "CPU強制アタック：",
-            "通常攻撃継続処理をスキップ"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 通常CPU攻撃なら次へ
-    //----------------------------------
-
-    if(
-        game.currentPlayer === ENEMY
-    ){
-
-        cpuAttackIndex++;
-
-
-        setTimeout(
-            cpuNextAttack,
-            2000
-        );
-
-    }
+    return;
 
 }
 
 //======================================
 // レジスト終了後に攻撃再開
 //======================================
-
 function resumePlayerDamage(){
 
-    if(!currentResistEvent){
+if(!currentResistEvent){
 
-        console.log(
-            "レジスト後ダメージ：イベントなし"
-        );
+    console.log(
+        "レジスト後ダメージ：イベントなし"
+    );
 
-        return;
+
+    //----------------------------------
+    // 攻撃レジスト待機解除
+    //----------------------------------
+
+    waitingAttackAfterResist =
+        false;
+
+
+    //==================================
+    // 攻撃処理中だった場合
+    // 必ず攻撃終了処理を通す
+    //==================================
+
+    if(attackResolving){
+
+        finishAttack();
 
     }
 
+
+    return;
+
+}
 
     //----------------------------------
     // イベント取得
@@ -5616,6 +5649,14 @@ function resumePlayerDamage(){
 
     const event =
         currentResistEvent;
+
+
+    //----------------------------------
+    // 攻撃レジスト待機解除
+    //----------------------------------
+
+    waitingAttackAfterResist =
+        false;
 
 
     //----------------------------------
@@ -5651,6 +5692,18 @@ function resumePlayerDamage(){
 
 
         resolveBattle();
+
+
+        //==================================
+        // 攻撃終了
+        //
+        // 通常CPU攻撃
+        // → finishAttack() が次の攻撃へ
+        //
+        // 強制アタック
+        // → finishAttack() が次の
+        //   強制アタックへ
+        //==================================
 
         finishAttack();
 
@@ -5726,6 +5779,11 @@ function resumePlayerDamage(){
     //----------------------------------
 
     resolveBattle();
+
+
+    //==================================
+    // 攻撃終了
+    //==================================
 
     finishAttack();
 
@@ -6504,15 +6562,15 @@ function executeBlock(blocker){
     // ① ブロッカーから攻撃者へのダメージ
     //==================================
 
-const attackerDamageResult =
-    dealDamage(
-        attackingSummon,
-        getPower(
-            blocker
-        ),
-        blocker.card,
-        true
-    );
+    const attackerDamageResult =
+        dealDamage(
+            attackingSummon,
+            getPower(
+                blocker
+            ),
+            blocker.card,
+            true
+        );
 
 
     //----------------------------------
@@ -6596,15 +6654,15 @@ const attackerDamageResult =
     }
     else{
 
-const blockerDamageResult =
-    dealDamage(
-        blocker,
-        getPower(
-            attackingSummon
-        ),
-        attackingSummon.card,
-        true
-    );
+        const blockerDamageResult =
+            dealDamage(
+                blocker,
+                getPower(
+                    attackingSummon
+                ),
+                attackingSummon.card,
+                true
+            );
 
 
         //----------------------------------
@@ -6673,50 +6731,24 @@ const blockerDamageResult =
     resolveBattle();
 
 
-    //----------------------------------
+    //==================================
     // 攻撃終了
-    //----------------------------------
+    //
+    // 通常CPU攻撃の場合
+    // → finishAttack() が次の攻撃へ
+    //
+    // 強制アタックの場合
+    // → finishAttack() が次の
+    //   強制アタックへ
+    //==================================
 
     finishAttack();
+
 
     hideActionGuide();
 
 
-    //==================================
-    // 強制アタックだった場合
-    //==================================
-
-    if(wasForcedAttack){
-
-        console.log(
-            "CPU強制アタック：",
-            "ブロック後の通常攻撃継続処理をスキップ"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 通常CPU攻撃なら次へ
-    //----------------------------------
-
-    if(
-        game.currentPlayer === ENEMY
-    ){
-
-        console.log(
-            "CPU：ブロック処理完了、次の攻撃へ"
-        );
-
-
-        setTimeout(
-            cpuNextAttack,
-            2000
-        );
-
-    }
+    return;
 
 }
 
@@ -6861,6 +6893,9 @@ function executeCpuBlock(
 
     //==================================
     // 今回が強制アタックか保存
+    //
+    // ヒュドラ・レジストで戦闘が
+    // 一時停止した場合に使用する
     //==================================
 
     const wasForcedAttack =
@@ -6873,15 +6908,16 @@ function executeCpuBlock(
     // ① ブロッカー → 攻撃者
     //==================================
 
-const attackerDamageResult =
-    dealDamage(
-        attacker,
-        getPower(
-            blocker
-        ),
-        blocker.card,
-        true
-    );
+    const attackerDamageResult =
+        dealDamage(
+            attacker,
+            getPower(
+                blocker
+            ),
+            blocker.card,
+            true
+        );
+
 
     //==================================
     // ヒュドラ待機
@@ -7001,15 +7037,15 @@ const attackerDamageResult =
     }
     else{
 
-const blockerDamageResult =
-    dealDamage(
-        blocker,
-        getPower(
-            attacker
-        ),
-        attacker.card,
-        true
-    );
+        const blockerDamageResult =
+            dealDamage(
+                blocker,
+                getPower(
+                    attacker
+                ),
+                attacker.card,
+                true
+            );
 
 
         //==================================
@@ -7134,28 +7170,17 @@ const blockerDamageResult =
                 null;
 
 
-            //----------------------------------
+            //==================================
             // 攻撃終了
-            //----------------------------------
+            //
+            // 通常CPU攻撃
+            // → finishAttack() が処理
+            //
+            // 強制アタック
+            // → finishAttack() が処理
+            //==================================
 
             finishAttack();
-
-
-            //----------------------------------
-            // 強制アタックの場合は
-            // finishAttack() 側に任せる
-            //----------------------------------
-
-            if(wasForcedAttack){
-
-                console.log(
-                    "CPU強制アタック：",
-                    "ブロック後の通常継続処理をスキップ"
-                );
-
-                return;
-
-            }
 
         },
         1000
@@ -7799,11 +7824,21 @@ function finishCharybdisTriggers(){
         );
 
 
-        //----------------------------------
-        // CPU待機解除
-        //----------------------------------
+        //==================================
+        // 攻撃処理自体は開始済みなので
+        // 必ず終了処理を通す
+        //==================================
 
         if(
+            typeof attackResolving !==
+                "undefined" &&
+            attackResolving
+        ){
+
+            finishAttack();
+
+        }
+        else if(
             game.currentPlayer === ENEMY
         ){
 
@@ -7844,26 +7879,21 @@ function finishCharybdisTriggers(){
         );
 
 
-        //----------------------------------
-        // CPUアタックなら次へ
-        //----------------------------------
+        //==================================
+        // 攻撃終了
+        //
+        // ここで直接
+        //
+        // cpuAttackIndex++
+        // cpuNextAttack()
+        //
+        // は行わない。
+        //
+        // finishAttack() に
+        // すべて任せる。
+        //==================================
 
-        if(
-            attacker.owner === ENEMY
-        ){
-
-            cpuWaiting =
-                false;
-
-            cpuAttackIndex++;
-
-
-            setTimeout(
-                cpuNextAttack,
-                1000
-            );
-
-        }
+        finishAttack();
 
 
         return;

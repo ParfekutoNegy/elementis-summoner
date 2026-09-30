@@ -1,4 +1,3 @@
-
 // マギア使用中
 let magiaCard = null;
 
@@ -22,7 +21,6 @@ let magiaOwnSummonSelectMode =
 
 let magiaSelectedOwnSummon =
     null;
-
 
 
 let forceCostMode = false;
@@ -57,7 +55,6 @@ let charybdisTriggerQueue =
 
 let charybdisCurrentTrigger =
     null;   
-
 //======================================
 // ヒュドラ
 // マギアダメージ待機
@@ -73,9 +70,9 @@ let hydraWaitingMagiaTarget =
     null;
 
 let hydraWaitingMagiaOwnSummon =
-    null;
+    null;    
 
- //==================================================
+//==================================================
 // レジストによって停止中のマギア
 //==================================================
 
@@ -99,10 +96,10 @@ let crystalPeepingMagia =
     null;
 
 let crystalPeepingOwner =
-    null;   
+    null;
 
 let crystalPeepingRevealedCards =
-    new Set();  
+    new Set();
 
 function resetCrystalPeepingRevealedCards(){
 
@@ -116,7 +113,7 @@ function resetCrystalPeepingRevealedCards(){
 
 
 
-
+    
 //=========================
 // マギア効果処理
 //=========================
@@ -394,7 +391,6 @@ function startMagiaCost(){
     updateButtons();
 
 }
-
 
 function resolveMagia(){
 
@@ -716,7 +712,7 @@ function resolveMagia(){
 
     }
 
- 
+
     //==================================
     // クリスタルピーピング待機
     //==================================
@@ -919,6 +915,7 @@ function resolveMagia(){
     updateButtons();
 
 }
+
 //==================================================
 // ヒュドラ
 // 停止していたマギア解決を再開
@@ -1747,7 +1744,6 @@ function highlightMagiaTargets(){
 
 }
 
-
 //======================================
 // マギア対象タイプ ハイライト
 //======================================
@@ -1815,54 +1811,6 @@ function highlightMagiaTargetType(
 
 
         //----------------------------------
-        // 自分・相手のヨコ向きサモン
-        //----------------------------------
-
-        case "horizontalSummon":
-
-            playerField.forEach(
-                summon => {
-
-                    if(
-                        !summon.destroyed &&
-                        summon.isRest
-                    ){
-
-                        summon.view
-                            .getElement()
-                            .classList.add(
-                                "magia-target"
-                            );
-
-                    }
-
-                }
-            );
-
-
-            enemyField.forEach(
-                summon => {
-
-                    if(
-                        !summon.destroyed &&
-                        summon.isRest
-                    ){
-
-                        summon.view
-                            .getElement()
-                            .classList.add(
-                                "magia-target"
-                            );
-
-                    }
-
-                }
-            );
-
-            break;
-
-
-        //----------------------------------
         // 自分
         //----------------------------------
 
@@ -1897,12 +1845,10 @@ function highlightMagiaTargetType(
 
             break;
 
-
-            case "revealEnemyHand":
-
     }
 
 }
+
 
 //======================================
 // マギア対象表示解除
@@ -1931,7 +1877,6 @@ function clearMagiaHighlight(){
 //======================================
 // マギア使用可能判定
 //======================================
-
 function canUseMagia(card){
 
     if(
@@ -2435,7 +2380,6 @@ function canUseMagia(card){
 
 }
 
-
 //======================================
 // マギア対象タイプ 使用可能判定
 //======================================
@@ -2455,7 +2399,6 @@ function canSelectMagiaTargetType(
             return playerField.some(
                 summon =>
                     summon.owner === PLAYER &&
-                    !summon.destroyed &&
                     !summon.isRest
             );
 
@@ -2469,28 +2412,7 @@ function canSelectMagiaTargetType(
             return playerField.some(
                 summon =>
                     summon.owner === PLAYER &&
-                    !summon.destroyed &&
                     summon.isRest
-            );
-
-
-        //----------------------------------
-        // 自分・相手のヨコ向きサモン
-        //----------------------------------
-
-        case "horizontalSummon":
-
-            return (
-                playerField.some(
-                    summon =>
-                        !summon.destroyed &&
-                        summon.isRest
-                ) ||
-                enemyField.some(
-                    summon =>
-                        !summon.destroyed &&
-                        summon.isRest
-                )
             );
 
 
@@ -2547,6 +2469,7 @@ function canSelectMagiaTargetType(
     }
 
 }
+
 //======================================
 // マギア対象タイプ取得
 //======================================
@@ -3405,6 +3328,7 @@ function startMagiaCoolTargetSelect(){
     );
 
 }
+
 //======================================
 // マギア：クールゾーン対象判定
 //======================================
@@ -3587,6 +3511,7 @@ function isValidMagiaCoolTarget(
     return false;
 
 }
+
 //======================================
 // ウインドプレッシャー
 // 相手手札選択開始
@@ -3878,23 +3803,143 @@ function startForceCostSelect(target){
     }
 
 
-    //==================================
-    // 想定外
-    //==================================
+//----------------------------------
+// 想定外
+//----------------------------------
+
+console.warn(
+    "強制コスト：",
+    "対象プレイヤーが不正",
+    target
+);
+
+
+//----------------------------------
+// 発生元を保存
+//----------------------------------
+
+const resolvedSource =
+    forceCostSource;
+
+
+//----------------------------------
+// 強制コスト状態解除
+//----------------------------------
+
+forceCostMode =
+    false;
+
+
+forceCostPlayer =
+    null;
+
+
+selectedForceCostCard =
+    null;
+
+
+forceCostSource =
+    null;
+
+
+//==================================
+// スフィンクス
+//==================================
+
+if(
+    resolvedSource ===
+        "sphinx"
+){
 
     console.warn(
-        "強制コスト：",
-        "対象プレイヤーが不正",
-        target
+        "スフィンクス：",
+        "強制コスト対象が不正のため攻撃終了"
     );
 
 
-    forceCostMode =
+    sphinxAttackWaiting =
         false;
 
 
-    forceCostPlayer =
+    sphinxAttackAttacker =
         null;
+
+
+    sphinxAttackTarget =
+        null;
+
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return;
+
+}
+
+
+//==================================
+// カリュブディス
+//==================================
+
+if(
+    resolvedSource ===
+        "charybdis"
+){
+
+    console.warn(
+        "カリュブディス：",
+        "強制コスト対象が不正のため攻撃終了"
+    );
+
+
+    charybdisAttackWaiting =
+        false;
+
+
+    charybdisAttackAttacker =
+        null;
+
+
+    charybdisAttackTarget =
+        null;
+
+
+    charybdisTriggerQueue =
+        [];
+
+
+    charybdisCurrentTrigger =
+        null;
+
+
+    if(attackResolving){
+
+        finishAttack();
+
+    }
+
+
+    return;
+
+}
+
+
+//==================================
+// ウインドプレッシャー等
+//==================================
+
+if(
+    typeof resolveMagiaAfterForceCost ===
+        "function"
+){
+
+    resolveMagiaAfterForceCost();
+
+}
 
 }
 
@@ -3979,7 +4024,6 @@ function selectForceCostCard(card){
     );
 
 }
-
 
 
 function cancelForceCostCard(){
@@ -4554,16 +4598,46 @@ function cpuForceCostSelect(){
     // マギア確認
     //----------------------------------
 
-    if(!magiaCard){
+if(!magiaCard){
 
-        console.error(
-            "cpuForceCostSelect：magiaCardがありません"
-        );
+    console.error(
+        "cpuForceCostSelect：magiaCardがありません"
+    );
 
 
-        return;
+    //----------------------------------
+    // 強制コスト状態解除
+    //----------------------------------
 
-    }
+    forceCostMode =
+        false;
+
+
+    forceCostPlayer =
+        null;
+
+
+    selectedForceCostCard =
+        null;
+
+
+    forceCostSource =
+        null;
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+
+    updateButtons();
+
+
+    return;
+
+}
 
 
     //----------------------------------
@@ -4687,6 +4761,281 @@ function cpuForceCostSelect(){
 }
 
 //======================================
+// ウインドプレッシャー
+// 強制コスト後のマギア解決
+//======================================
+
+function resolveMagiaAfterForceCost(
+    resolvedMagia = null,
+    selectedForceCostPlayer = null
+){
+
+    //----------------------------------
+    // 引数がない場合
+    // 現在使用中のマギアを取得
+    //----------------------------------
+
+    if(!resolvedMagia){
+
+        resolvedMagia =
+            magiaCard;
+
+    }
+
+
+    //----------------------------------
+    // マギア確認
+    //----------------------------------
+
+    if(!resolvedMagia){
+
+        console.error(
+            "resolveMagiaAfterForceCost：マギアがありません"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // CPUマギアか確認
+    //----------------------------------
+
+    const isCpuMagia =
+        resolvedMagia.owner ===
+            ENEMY;
+
+
+    //----------------------------------
+    // 対象保存
+    //----------------------------------
+
+    const resolvedTarget =
+        magiaTarget;
+
+
+    console.log(
+        "ウインドプレッシャー：強制コスト後の解決",
+        {
+            magia:
+                resolvedMagia.name,
+
+            owner:
+                resolvedMagia.owner,
+
+            target:
+                resolvedTarget,
+
+            selectedForceCostPlayer:
+                selectedForceCostPlayer
+        }
+    );
+
+
+    //----------------------------------
+    // 強制コスト状態を完全解除
+    //----------------------------------
+
+    forceCostMode =
+        false;
+
+    forceCostPlayer =
+        null;
+
+    selectedForceCostCard =
+        null;
+
+    forceCostSource =
+        null;
+
+
+    //----------------------------------
+    // マギアプレイ時能力
+    //----------------------------------
+
+    triggerSummonAbilitiesOnMagiaPlay(
+        resolvedMagia.owner
+    );
+
+
+    //----------------------------------
+    // 使用したマギアを手札から削除
+    //----------------------------------
+
+    if(
+        resolvedMagia.owner ===
+            PLAYER
+    ){
+
+        board.handCards =
+            board.handCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card =>
+                    card !==
+                    resolvedMagia
+            );
+
+    }
+
+
+    //----------------------------------
+    // マギア状態解除
+    //----------------------------------
+
+    resetMagiaState();
+
+    summonCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    //----------------------------------
+    // 案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //----------------------------------
+    // UI更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+
+    //==================================
+    // マギア解決完了
+    //==================================
+
+    setTimeout(
+        () => {
+
+            //----------------------------------
+            // CPU対象発光解除
+            //----------------------------------
+
+            if(
+                isCpuMagia &&
+                typeof clearCpuMagiaTargetHighlight ===
+                    "function"
+            ){
+
+                clearCpuMagiaTargetHighlight(
+                    resolvedTarget
+                );
+
+            }
+
+
+            //----------------------------------
+            // 戦闘解決
+            //----------------------------------
+
+            resolveBattle();
+
+
+            //----------------------------------
+            // ウインドプレッシャーをクールへ
+            //----------------------------------
+
+            resolvedMagia.area =
+                "cool";
+
+
+            board.addCoolCard(
+                resolvedMagia,
+                resolvedMagia.owner
+            );
+
+
+            console.log(
+                "ウインドプレッシャー：効果解決完了 → クールへ"
+            );
+
+
+            //==================================
+            // CPU使用時
+            // CPU行動を再開
+            //==================================
+
+            if(
+                isCpuMagia &&
+                game.currentPlayer === ENEMY &&
+                game.state === TURN_STATE.PLAYING
+            ){
+
+                console.log(
+                    "CPU：ウインドプレッシャー解決後の行動再開"
+                );
+
+
+                cpuWaiting =
+                    false;
+
+
+                if(
+                    typeof runCpuTurnStep ===
+                        "function"
+                ){
+
+                    setTimeout(
+                        () => {
+
+                            runCpuTurnStep();
+
+                        },
+                        500
+                    );
+
+                }
+
+            }
+
+
+            //==================================
+            // PLAYER使用時
+            //==================================
+
+            if(
+                !isCpuMagia &&
+                game.currentPlayer === PLAYER
+            ){
+
+                updateGameState();
+
+                updateButtons();
+
+                updateUsableCardHighlight();
+
+            }
+
+        },
+        1000
+    );
+
+
+    return true;
+
+}
+
+//======================================
 // スフィンクス
 // 強制コスト効果解決完了
 //======================================
@@ -4708,6 +5057,19 @@ function resolveSphinxForceCost(){
 
         forceCostSource =
             null;
+
+
+        //==================================
+        // 攻撃処理中だった場合
+        // 攻撃終了処理を通す
+        //==================================
+
+        if(attackResolving){
+
+            finishAttack();
+
+        }
+
 
         return;
 
@@ -4778,6 +5140,53 @@ function resolveSphinxForceCost(){
             "スフィンクス：",
             "攻撃再開情報がありません"
         );
+
+
+        //==================================
+        // 攻撃処理自体は開始済みなので
+        // 必ず終了処理を通す
+        //==================================
+
+        if(attackResolving){
+
+            finishAttack();
+
+        }
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 攻撃者がすでに場にいない
+    //----------------------------------
+
+    const attackerField =
+        attacker.owner === PLAYER
+            ?
+            playerField
+            :
+            enemyField;
+
+
+    if(
+        !attackerField.includes(
+            attacker
+        ) ||
+        attacker.destroyed
+    ){
+
+        console.log(
+            "スフィンクス：",
+            "攻撃者が場にいないため攻撃終了",
+            attacker.card?.name
+        );
+
+
+        finishAttack();
+
 
         return;
 

@@ -3986,6 +3986,32 @@ if(
 
     }
 
+//==================================
+// 攻撃解決中
+//
+// 攻撃対象決定後から
+// finishAttack() までは
+// 通常のカード操作を禁止する
+//
+// ブロック・レジスト・ヒュドラなど
+// 攻撃解決に必要な特殊操作は
+// この位置より前で処理される
+//==================================
+
+if(
+    typeof attackResolving !==
+        "undefined" &&
+    attackResolving
+){
+
+    console.log(
+        "通常カード操作停止：攻撃解決中"
+    );
+
+    return;
+
+}
+
 
     //----------------------------------
     // 場サモン
@@ -5840,6 +5866,11 @@ const actionRunning =
     resistMode ||
     blockMode ||
     attackMode ||
+    (
+        typeof attackResolving !==
+            "undefined" &&
+        attackResolving
+    ) ||
     coolRecoveryMode ||
     magiaTargetMode ||
     summonAbilityTargetMode ||
@@ -11233,22 +11264,27 @@ function updateCardAction(card){
     }
 
 
-    //----------------------------------
-    // 他の行動中は禁止
-    //----------------------------------
+//----------------------------------
+// 他の行動中は禁止
+//----------------------------------
 
-    if(
-        summonCard ||
-        resistUsingCard ||
-        magiaCard ||
-        coolRecoveryMode ||
-        resistMode ||
-        blockMode
-    ){
+if(
+    summonCard ||
+    resistUsingCard ||
+    magiaCard ||
+    coolRecoveryMode ||
+    resistMode ||
+    blockMode ||
+    (
+        typeof attackResolving !==
+            "undefined" &&
+        attackResolving
+    )
+){
 
-        return;
+    return;
 
-    }
+}
 
 
     //----------------------------------
