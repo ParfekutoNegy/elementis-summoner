@@ -251,19 +251,16 @@ function beginPlaying(){
 
 function endTurn(){
 
-    if(
-        game.currentPlayer !== PLAYER
-    ){
+    if(game.currentPlayer !== PLAYER){
 
-        return;
+    return;
 
     }
 
 
     resetMagiaState();
 
-
-    //----------------------------------
+        //----------------------------------
     // モーダルを閉じる
     //----------------------------------
 
@@ -275,8 +272,8 @@ function endTurn(){
 
     closeEnemyCoolModal();
 
+    // コストモーダルを開いたままにできるなら
     closeCostView();
-
 
     //----------------------------------
     // クール回収中はターン終了不可
@@ -292,160 +289,99 @@ function endTurn(){
 
     }
 
-
     //----------------------------------
     // 攻撃状態リセット
     //----------------------------------
-
     resetAttackState();
-
 
     //----------------------------------
     // 選択カード解除
     //----------------------------------
 
     selectedHandCard = null;
-
     selectedSummon = null;
 
 
     //----------------------------------
     // 行動ボタン解除
     //----------------------------------
-
     resetActionButtons();
-
     updateButtons();
 
 
-    game.state =
-        TURN_STATE.END;
-
+    game.state = TURN_STATE.END;
 
     console.log(
         "ターン終了：" +
         game.currentPlayer
     );
 
+//----------------------------------
+// 一時効果解除
+// 両プレイヤー分確認
+//----------------------------------
 
-    //----------------------------------
-    // 一時効果解除
-    // 両プレイヤー分確認
-    //----------------------------------
-
-    resetTemporaryPower(
-        PLAYER
-    );
-
-
-    resetTemporaryPower(
-        ENEMY
-    );
+resetTemporaryPower(
+    PLAYER
+);
 
 
-    //==================================
+resetTemporaryPower(
+    ENEMY
+);
+
+
+    //-------------------------
     // ターン終了効果
-    //
-    // ここから先は
-    // onTurnEnd() の完了後に進む
-    //==================================
+    //-------------------------
 
-    onTurnEnd(
-        finishTurnEnd
-    );
+    onTurnEnd();
 
-}
+//----------------------------------
+// カード表示状態を全解除
+//----------------------------------
 
-function finishTurnEnd(){
+board.handCards.forEach(card=>{
 
-    console.log(
-        "すべてのターン終了時能力の解決完了"
-    );
+    card.clearEffects();
 
+});
 
-    //==================================
-    // カーススモーク
-    // ターン終了で効果解除
-    //==================================
+playerField.forEach(summon=>{
 
-    clearTemporaryTurnStatus();
+    summon.view.clearEffects();
 
+});
 
-    //----------------------------------
-    // カード表示状態を全解除
-    //----------------------------------
+enemyField.forEach(summon=>{
 
-    board.handCards.forEach(
-        card => {
+    summon.view.clearEffects();
 
-            card.clearEffects();
+});
 
-        }
-    );
-
-
-    playerField.forEach(
-        summon => {
-
-            summon.view.clearEffects();
-
-        }
-    );
-
-
-    enemyField.forEach(
-        summon => {
-
-            summon.view.clearEffects();
-
-        }
-    );
-
-
-    //----------------------------------
-    // ゲーム終了している場合
-    // 次のターンへ進まない
-    //----------------------------------
-
-    if(
-        game.playerLife <= 0 ||
-        game.enemyLife <= 0
-    ){
-
-        console.log(
-            "ゲーム終了のため次のターンへ進まない"
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
+    //-------------------------
     // プレイヤー交代
-    //----------------------------------
+    //-------------------------
 
     switchPlayer();
 
-
-    //----------------------------------
+    //-------------------------
     // 次のターン
-    //----------------------------------
+    //-------------------------
 
-    if(
-        game.currentPlayer === PLAYER
-    ){
+    if(game.currentPlayer === PLAYER){
 
         startTurn();
 
-    }
-    else{
+    }else{
 
         startCpuTurn();
 
     }
 
-}
+
+}    
+
 
 //======================================
 // サモンを起こす
@@ -460,23 +396,7 @@ function readySummons(owner){
         enemyField;
 
 
-    //----------------------------------
-    // 今回アタック可能になった
-    // ワーウルフを保存
-    //----------------------------------
-
-    const forcedAttackSummons = [];
-
-
     for(const summon of field){
-
-        //----------------------------------
-        // 以前の攻撃可能状態を保存
-        //----------------------------------
-
-        const wasAttackReady =
-            summon.attackReady;
-
 
         //----------------------------------
         // 一時パワーをリセット
@@ -509,111 +429,17 @@ function readySummons(owner){
 
 
         //----------------------------------
-        // ターン毎の能力使用状態をリセット
-        //----------------------------------
-
-        summon.abilityUsedThisTurn =
-            false;
-
-
-        //----------------------------------
-        // 現在持っている能力
-        //----------------------------------
-
-        const ability =
-            summon.ability;
-
-
-        //----------------------------------
         // サモン能力
-        //
-        // copySummonAbility は
-        // 「場に出たとき」だけ発動するため
-        // ターン開始時には再発動させない
         //----------------------------------
 
-        if(
-            !hasSummonAbility(
-                summon,
-                "copySummonAbility"
-            )
-        ){
-
-            applySummonAbility(
-                summon
-            );
-
-        }
-
-
-        //==================================
-        // ワーウルフ
-        //
-        // 今回
-        // attackReady false → true
-        // になった場合に強制アタック
-        //==================================
-
-        if(
-            !wasAttackReady &&
-            summon.attackReady &&
-            hasSummonAbility(
-                summon,
-                "forceAttackWhenReady"
-            )
-        ){
-
-            forcedAttackSummons.push(
-                summon
-            );
-
-
-            console.log(
-                "ワーウルフ：アタック可能になった",
-                summon.card.name,
-                "owner=",
-                summon.owner
-            );
-
-        }
-
-    }
-
-
-    //==================================
-    // 強制アタック予約
-    //
-    // readySummonsの全処理が
-    // 完了してから開始する
-    //==================================
-
-    if(
-        forcedAttackSummons.length > 0
-    ){
-
-        console.log(
-            "強制アタック対象：",
-            forcedAttackSummons.map(
-                summon =>
-                    summon.card.name
-            )
+        applySummonAbility(
+            summon
         );
-
-
-        if(
-            typeof queueForcedAttacks ===
-                "function"
-        ){
-
-            queueForcedAttacks(
-                forcedAttackSummons
-            );
-
-        }
 
     }
 
 }
+
 
 
 //======================================

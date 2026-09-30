@@ -1142,20 +1142,68 @@ if(step1State.screenLocked){
     }
 
 
-    //----------------------------------
-    // 通常ゲーム側の選択処理を先に動かす
-    //----------------------------------
+//----------------------------------
+// STEP1専用カード選択
+//----------------------------------
 
-    setTimeout(
-        () => {
+console.log(
+    "STEP1：手札カードクリック",
+    card.name
+);
 
-            tutorialStep1AfterCardClick(
-                card
-            );
 
-        },
-        60
+//----------------------------------
+// 通常ゲーム側の操作には渡さない
+//----------------------------------
+
+event.preventDefault();
+
+event.stopPropagation();
+
+event.stopImmediatePropagation();
+
+
+//----------------------------------
+// STEP1用の選択状態にする
+//----------------------------------
+
+if(
+    selectedHandCard &&
+    selectedHandCard !== card &&
+    typeof selectedHandCard.setSelected ===
+        "function"
+){
+
+    selectedHandCard.setSelected(
+        false
     );
+
+}
+
+
+selectedHandCard =
+    card;
+
+
+if(
+    typeof card.setSelected ===
+        "function"
+){
+
+    card.setSelected(
+        true
+    );
+
+}
+
+
+//----------------------------------
+// STEP1処理へ
+//----------------------------------
+
+tutorialStep1AfterCardClick(
+    card
+);
 
 }
 

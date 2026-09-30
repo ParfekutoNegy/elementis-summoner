@@ -45,131 +45,6 @@ class Summon{
 
 }
 
-//==================================================
-// サモン能力一覧取得
-//
-// ability が
-// ・単一オブジェクト
-// ・配列
-//
-// どちらの場合でも配列として返す
-//==================================================
-
-function getSummonAbilities(
-    summon
-){
-
-    //----------------------------------
-    // サモンなし
-    //----------------------------------
-
-    if(!summon){
-
-        return [];
-
-    }
-
-
-    //----------------------------------
-    // 能力なし
-    //----------------------------------
-
-    if(!summon.ability){
-
-        return [];
-
-    }
-
-
-    //----------------------------------
-    // 複数能力
-    //----------------------------------
-
-    if(
-        Array.isArray(
-            summon.ability
-        )
-    ){
-
-        return summon.ability;
-
-    }
-
-
-    //----------------------------------
-    // 単一能力
-    //----------------------------------
-
-    return [
-        summon.ability
-    ];
-
-}
-
-
-
-//==================================================
-// 指定したサモン能力を取得
-//
-// 見つからない場合は null
-//==================================================
-
-function getSummonAbility(
-    summon,
-    abilityType
-){
-
-    //----------------------------------
-    // 能力一覧取得
-    //----------------------------------
-
-    const abilities =
-        getSummonAbilities(
-            summon
-        );
-
-
-    //----------------------------------
-    // 指定能力を検索
-    //----------------------------------
-
-    const ability =
-        abilities.find(
-            ability =>
-                ability &&
-                ability.type ===
-                    abilityType
-        );
-
-
-    //----------------------------------
-    // 結果
-    //----------------------------------
-
-    return ability ?? null;
-
-}
-
-
-
-//==================================================
-// 指定したサモン能力を持っているか
-//==================================================
-
-function hasSummonAbility(
-    summon,
-    abilityType
-){
-
-    return (
-        getSummonAbility(
-            summon,
-            abilityType
-        ) !== null
-    );
-
-}
-
 function dealDamage(
     target,
     damage,
@@ -313,20 +188,22 @@ function getPower(summon){
         summon.powerBonus;
 
 
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
     //==================================
     // ワーム
     // 相手クール1枚につきパワー＋1
     //==================================
 
-    const enemyCoolPowerAbility =
-        getSummonAbility(
-            summon,
-            "powerUpByEnemyCool"
-        );
-
-
     if(
-        enemyCoolPowerAbility
+        ability?.type ===
+        "powerUpByEnemyCool"
     ){
 
         const opponentCoolCards =
@@ -336,7 +213,7 @@ function getPower(summon){
 
 
         const value =
-            enemyCoolPowerAbility.value ?? 1;
+            ability.value ?? 1;
 
 
         power +=
@@ -351,15 +228,9 @@ function getPower(summon){
     // 自分のクールの【火】1枚につき＋1
     //==================================
 
-    const ownFireCoolPowerAbility =
-        getSummonAbility(
-            summon,
-            "powerUpByOwnFireCool"
-        );
-
-
     if(
-        ownFireCoolPowerAbility
+        ability?.type ===
+        "powerUpByOwnFireCool"
     ){
 
         const ownCoolCards =
@@ -377,7 +248,7 @@ function getPower(summon){
 
 
         const value =
-            ownFireCoolPowerAbility.value ?? 1;
+            ability.value ?? 1;
 
 
         power +=
@@ -596,18 +467,30 @@ function applySummonAbility(summon){
     }
 
 
+    //----------------------------------
+    // 現在持っている能力
+    //----------------------------------
+
+    const ability =
+        summon.ability;
+
+
+    if(!ability){
+
+        return;
+
+    }
+
+
     //==================================
     // ドッペルゲンガー
+    // 場に出たとき能力コピー
     //==================================
 
-    const copyAbility =
-        getSummonAbility(
-            summon,
-            "copySummonAbility"
-        );
-
-
-    if(copyAbility){
+    if(
+        ability.type ===
+        "copySummonAbility"
+    ){
 
         startDoppelgangerTargetSelect(
             summon
@@ -618,22 +501,17 @@ function applySummonAbility(summon){
     }
 
 
-    //==================================
-    // ドラゴン
+    //----------------------------------
     // ターン中パワーアップ
-    //==================================
+    //----------------------------------
 
-    const turnPowerUpAbility =
-        getSummonAbility(
-            summon,
-            "turnPowerUp"
-        );
-
-
-    if(turnPowerUpAbility){
+    if(
+        ability.type ===
+        "turnPowerUp"
+    ){
 
         summon.powerBonus =
-            turnPowerUpAbility.value;
+            ability.value;
 
 
         console.log(
@@ -646,6 +524,10 @@ function applySummonAbility(summon){
         );
 
 
+        //----------------------------------
+        // 現在パワー表示更新
+        //----------------------------------
+
         if(summon.view){
 
             summon.view.updateCurrentPower(
@@ -657,80 +539,23 @@ function applySummonAbility(summon){
     }
 
 
-    //==================================
-    // ユニコーン等
-    //
-    // 召喚ターンからアタック可能
-    //
-    // attackReady は変更しない。
-    //
-    // summonTurnAttack を持っていること自体を
-    // startAttack / canAttack 側で確認して
-    // 召喚ターンのアタックを許可する。
-    //
-    // これによりメドゥーサがいる場合は
-    // summonTurnAttack より優先して
-    // アタックを禁止できる。
-    //==================================
+    //----------------------------------
+    // 召喚ターン攻撃可能
+    //----------------------------------
 
     if(
-        hasSummonAbility(
-            summon,
-            "summonTurnAttack"
-        )
+        ability.type ===
+        "summonTurnAttack"
     ){
 
-        console.log(
-            "召喚ターン攻撃能力あり",
-            summon.card.name,
-            "attackReady=",
-            summon.attackReady
-        );
+        summon.attackReady =
+            true;
 
-    }
-
-
-    //==================================
-    // ジャックフロスト
-    //
-    // 相手は1ターンに指定枚数までしか
-    // カードをプレイできない
-    //
-    // 場に出た瞬間から制限を有効化
-    //==================================
-
-    const cardPlayLimitAbility =
-        getSummonAbility(
-            summon,
-            "limitEnemyCardPlay"
-        );
-
-
-    if(cardPlayLimitAbility){
 
         console.log(
-            "カードプレイ制限能力適用",
-            summon.card.name,
-            "owner=",
-            summon.owner,
-            "limit=",
-            cardPlayLimitAbility.value
+            "召喚ターン攻撃可能",
+            summon.card.name
         );
-
-
-        //----------------------------------
-        // 現在のプレイ枚数を維持したまま
-        // 制限だけを再評価する
-        //----------------------------------
-
-        if(
-            typeof refreshCardPlayLimitState ===
-                "function"
-        ){
-
-            refreshCardPlayLimitState();
-
-        }
 
     }
 

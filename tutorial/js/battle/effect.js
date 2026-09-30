@@ -86,14 +86,11 @@ function activateCardEffect(
 
 
                         //----------------------------------
-                        // 火マギアダメージ上昇能力取得
+                        // 現在持っている能力
                         //----------------------------------
 
                         const ability =
-                            getSummonAbility(
-                                summon,
-                                "fireMagiaDamageUp"
-                            );
+                            summon.ability;
 
 
                         if(!ability){
@@ -103,26 +100,23 @@ function activateCardEffect(
                         }
 
 
-                        //----------------------------------
-                        // ダメージ加算
-                        //----------------------------------
+                        if(
+                            ability.type ===
+                            "fireMagiaDamageUp"
+                        ){
 
-                        const value =
-                            Number(
+                            damage +=
+                                ability.value;
+
+
+                            console.log(
+                                "火マギアダメージ上昇",
+                                summon.card.name,
+                                "+",
                                 ability.value
-                            ) || 0;
+                            );
 
-
-                        damage +=
-                            value;
-
-
-                        console.log(
-                            "火マギアダメージ上昇",
-                            summon.card.name,
-                            "+",
-                            value
-                        );
+                        }
 
                     }
                 );
@@ -842,19 +836,11 @@ function canActionSummon(summon){
 
 
     //----------------------------------
-    // オーガ等
-    // 強敵存在時の戦闘不可確認
+    // 現在持っている能力
     //----------------------------------
 
-    const battleLocked =
-        typeof isOgreBattleLocked ===
-            "function"
-            ?
-            isOgreBattleLocked(
-                summon
-            )
-            :
-            false;
+    const ability =
+        summon.ability;
 
 
     //----------------------------------
@@ -862,10 +848,8 @@ function canActionSummon(summon){
     //----------------------------------
 
     const canAttackOnSummonTurn =
-        hasSummonAbility(
-            summon,
-            "summonTurnAttack"
-        );
+        ability?.type ===
+        "summonTurnAttack";
 
 
     //----------------------------------
@@ -877,8 +861,7 @@ function canActionSummon(summon){
             summon.attackReady ||
             canAttackOnSummonTurn
         ) &&
-        !summon.isRest &&
-        !battleLocked
+        !summon.isRest
     ){
 
         return true;
@@ -888,8 +871,6 @@ function canActionSummon(summon){
 
     //----------------------------------
     // 起動能力使用可能
-    //
-    // 戦闘不可でも起動能力は使用可能
     //----------------------------------
 
     if(

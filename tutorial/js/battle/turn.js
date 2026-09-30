@@ -67,9 +67,7 @@ function wakeupSummons(player){
 // ターン終了効果
 //======================================
 
-function onTurnEnd(
-    onComplete
-){
+function onTurnEnd(){
 
     //----------------------------------
     // 現在のターンプレイヤー
@@ -80,7 +78,7 @@ function onTurnEnd(
 
 
     //----------------------------------
-    // ターンプレイヤーの場
+    // 現在のターンプレイヤーの場
     //----------------------------------
 
     const turnPlayerField =
@@ -89,596 +87,242 @@ function onTurnEnd(
             : enemyField;
 
 
-    //----------------------------------
-    // 非ターンプレイヤーの場
-    //----------------------------------
-
-    const nonTurnPlayerField =
-        turnPlayer === PLAYER
-            ? enemyField
-            : playerField;
-
-
     //==================================
-    // ターン終了時能力キュー
+    // フェアリー
     //==================================
 
-    const abilityQueue = [];
+    //----------------------------------
+    // フェアリー能力確認
+    //
+    // 現在持っている能力を見る
+    //----------------------------------
+
+    const fairy =
+        turnPlayerField.find(
+            summon =>
+                summon &&
+                summon.card &&
+                !summon.destroyed &&
+                summon.ability?.type ===
+                    "fairyTurnEndReady"
+        );
 
 
     //----------------------------------
-    // 能力をキューへ追加する
+    // フェアリー効果
     //----------------------------------
 
-    const addAbilitiesToQueue =
-        field => {
+    if(fairy){
 
-            for(
-                const summon
-                of field
+        console.log(
+            "フェアリー能力：ターン終了効果発動",
+            "能力保持サモン=",
+            fairy.card.name
+        );
+
+
+        //----------------------------------
+        // すべてのサモンをタテ向きにする
+        //----------------------------------
+
+        for(
+            const summon
+            of turnPlayerField
+        ){
+
+            if(
+                !summon ||
+                summon.destroyed
             ){
 
-                if(
-                    !summon ||
-                    !summon.card ||
-                    summon.destroyed
-                ){
-
-                    continue;
-
-                }
-
-
-                //==================================
-                // フェアリー
-                //==================================
-
-                const fairyAbility =
-                    getSummonAbility(
-                        summon,
-                        "fairyTurnEndReady"
-                    );
-
-
-                if(fairyAbility){
-
-                    abilityQueue.push({
-
-                        summon:
-                            summon,
-
-                        ability:
-                            fairyAbility,
-
-                        type:
-                            "fairyTurnEndReady"
-
-                    });
-
-                }
-
-
-                //==================================
-                // ファイアドレイク
-                //==================================
-
-                const fireDrakeAbility =
-                    getSummonAbility(
-                        summon,
-                        "turnEndDamageCurrentPlayer"
-                    );
-
-
-                if(fireDrakeAbility){
-
-                    abilityQueue.push({
-
-                        summon:
-                            summon,
-
-                        ability:
-                            fireDrakeAbility,
-
-                        type:
-                            "turnEndDamageCurrentPlayer"
-
-                    });
-
-                }
-
-
-                //==================================
-                // ヒッポグリフ
-                //
-                // 自分のターン終了時のみ
-                // 場から手札へ戻る
-                //==================================
-
-                const returnAbility =
-                    getSummonAbility(
-                        summon,
-                        "returnToHandOnOwnTurnEnd"
-                    );
-
-
-                if(
-                    returnAbility &&
-                    summon.owner === turnPlayer
-                ){
-
-                    abilityQueue.push({
-
-                        summon:
-                            summon,
-
-                        ability:
-                            returnAbility,
-
-                        type:
-                            "returnToHandOnOwnTurnEnd"
-
-                    });
-
-                }
+                continue;
 
             }
 
-        };
+
+            summon.isRest =
+                false;
 
 
-    //==================================
-    // 解決順
-    //
-    // 1. ターンプレイヤー
-    // 2. 非ターンプレイヤー
-    //==================================
-
-    addAbilitiesToQueue(
-        turnPlayerField
-    );
-
-    addAbilitiesToQueue(
-        nonTurnPlayerField
-    );
+            summon.view.setHorizontal(
+                false
+            );
 
 
-    console.log(
-        "ターン終了時能力キュー",
-        abilityQueue.map(
-            item => ({
-                card:
-                    item.summon.card.name,
-                type:
-                    item.type
-            })
-        )
-    );
-
-
-    //----------------------------------
-    // キューが空
-    //----------------------------------
-
-    if(
-        abilityQueue.length === 0
-    ){
-
-        if(
-            typeof onComplete ===
-            "function"
-        ){
-
-            onComplete();
+            summon.attackReady =
+                true;
 
         }
-
-        return;
 
     }
 
 
     //==================================
-    // 1つずつ解決
+    // ファイアドレイク
+    //
+    // ターン終了時
+    // 現在のターンプレイヤーにダメージ
     //==================================
 
-    let queueIndex = 0;
+    //----------------------------------
+    // PLAYER・CPU両方の場を確認
+    //----------------------------------
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
 
 
-    const resolveNextAbility =
-        () => {
+    //----------------------------------
+    // ターン終了時ダメージ能力を
+    // 現在持っているサモンを取得
+    //----------------------------------
 
-
-            //----------------------------------
-            // 全能力解決完了
-            //----------------------------------
-
-            if(
-                queueIndex >=
-                abilityQueue.length
-            ){
+    const damageSummons =
+        allSummons.filter(
+            summon => {
 
                 if(
-                    typeof onComplete ===
-                    "function"
+                    !summon ||
+                    !summon.card
                 ){
 
-                    onComplete();
+                    return false;
 
                 }
 
-                return;
 
-            }
+                if(summon.destroyed){
 
-
-            //----------------------------------
-            // 今回解決する能力
-            //----------------------------------
-
-            const item =
-                abilityQueue[
-                    queueIndex
-                ];
-
-
-            queueIndex++;
-
-
-            const summon =
-                item.summon;
-
-
-            //----------------------------------
-            // 解決時点で
-            // そのサモンが場にいるか確認
-            //----------------------------------
-
-            const stillOnField =
-                !summon.destroyed &&
-                (
-                    playerField.includes(
-                        summon
-                    ) ||
-                    enemyField.includes(
-                        summon
-                    )
-                );
-
-
-            //----------------------------------
-            // 場から離れている場合
-            // その能力は飛ばす
-            //----------------------------------
-
-            if(!stillOnField){
-
-                setTimeout(
-                    resolveNextAbility,
-                    1500
-                );
-
-                return;
-
-            }
-
-
-            //----------------------------------
-            // 解決時点でも
-            // その能力を持っているか確認
-            //
-            // ドッペルゲンガーのコピー元が
-            // 場を離れた場合などに対応
-            //----------------------------------
-
-            const currentAbility =
-                getSummonAbility(
-                    summon,
-                    item.type
-                );
-
-
-            if(!currentAbility){
-
-                console.log(
-                    "ターン終了時能力消失：",
-                    summon.card.name,
-                    item.type
-                );
-
-
-                setTimeout(
-                    resolveNextAbility,
-                    1500
-                );
-
-                return;
-
-            }
-
-
-            //==================================
-            // フェアリー
-            //==================================
-
-            if(
-                item.type ===
-                "fairyTurnEndReady"
-            ){
-
-                console.log(
-                    "フェアリー能力：ターン終了効果発動",
-                    "能力保持サモン=",
-                    summon.card.name
-                );
-
-
-                //----------------------------------
-                // この能力のコントローラー
-                //----------------------------------
-
-                const ownerField =
-                    summon.owner === PLAYER
-                        ? playerField
-                        : enemyField;
-
-
-                //----------------------------------
-                // 自分のサモンをすべて
-                // タテ向きにする
-                //----------------------------------
-
-                for(
-                    const target
-                    of ownerField
-                ){
-
-                    if(
-                        !target ||
-                        target.destroyed
-                    ){
-
-                        continue;
-
-                    }
-
-
-                    target.isRest =
-                        false;
-
-
-                    target.view.setHorizontal(
-                        false
-                    );
-
-
-                    target.attackReady =
-                        true;
+                    return false;
 
                 }
 
 
                 //----------------------------------
-                // 次の能力へ
+                // 現在持っている能力
                 //----------------------------------
 
-                setTimeout(
-                    resolveNextAbility,
-                    1500
+                return (
+                    summon.ability?.type ===
+                        "turnEndDamageCurrentPlayer"
                 );
 
-                return;
-
             }
+        );
 
 
-            //==================================
-            // ファイアドレイク
-            //==================================
+    //----------------------------------
+    // 1体ずつ能力発動
+    //----------------------------------
 
-            if(
-                item.type ===
+    for(
+        const summon
+        of damageSummons
+    ){
+
+        //----------------------------------
+        // 現在持っている能力
+        //----------------------------------
+
+        const ability =
+            summon.ability;
+
+
+        //----------------------------------
+        // 念のため確認
+        //----------------------------------
+
+        if(
+            !ability ||
+            ability.type !==
                 "turnEndDamageCurrentPlayer"
-            ){
+        ){
 
-                //----------------------------------
-                // ダメージ値
-                //----------------------------------
+            continue;
 
-                const damage =
-                    Number(
-                        currentAbility.value
-                    ) || 1;
+        }
 
 
-                //----------------------------------
-                // 対象
-                //----------------------------------
+        //----------------------------------
+        // ダメージ値
+        //----------------------------------
 
-                const targetName =
-                    turnPlayer === PLAYER
-                        ? "PLAYER"
-                        : "CPU";
-
-
-                console.log(
-                    "ターン終了時ダメージ能力発動",
-                    "能力保持サモン=",
-                    summon.card.name,
-                    "対象=",
-                    targetName,
-                    "ダメージ=",
-                    damage
-                );
+        const damage =
+            Number(
+                ability.value
+            ) || 1;
 
 
-                //----------------------------------
-                // バトルログ
-                //----------------------------------
+        //----------------------------------
+        // 対象表示
+        //----------------------------------
 
-                addBattleLog(
-                    `${summon.card.name}：${targetName}に${damage}ダメージ`
-                );
-
-
-                //----------------------------------
-                // ダメージ
-                //
-                // ファイアドレイクの能力には
-                // レジストが発生しない仕様
-                //----------------------------------
-
-                damagePlayer(
-                    turnPlayer,
-                    damage,
-                    true,
-                    summon.card
-                );
+        const targetName =
+            turnPlayer === PLAYER
+                ? "PLAYER"
+                : "CPU";
 
 
-                //----------------------------------
-                // ゲーム終了確認
-                //----------------------------------
-
-                if(
-                    game.playerLife <= 0 ||
-                    game.enemyLife <= 0
-                ){
-
-                    console.log(
-                        "ターン終了時ダメージによりゲーム終了"
-                    );
+        console.log(
+            "ターン終了時ダメージ能力発動",
+            "能力保持サモン=",
+            summon.card.name,
+            "対象=",
+            targetName,
+            "ダメージ=",
+            damage
+        );
 
 
-                    if(
-                        typeof onComplete ===
-                        "function"
-                    ){
+        //----------------------------------
+        // バトルログ
+        //----------------------------------
 
-                        onComplete();
-
-                    }
-
-                    return;
-
-                }
+        addBattleLog(
+            `${summon.card.name}：${targetName}に${damage}ダメージ`
+        );
 
 
-                //----------------------------------
-                // 次の能力へ
-                //----------------------------------
+        //----------------------------------
+        // 通常のプレイヤーダメージ処理
+        //
+        // ガーゴイル等の軽減
+        // レジスト
+        // も通常処理に任せる
+        //----------------------------------
 
-                setTimeout(
-                    resolveNextAbility,
-                    1500
-                );
-
-                return;
-
-            }
-
-
-            //==================================
-            // ヒッポグリフ
-            //
-            // 自分のターン終了時
-            // 場から手札へ戻る
-            //==================================
-
-            if(
-                item.type ===
-                "returnToHandOnOwnTurnEnd"
-            ){
-
-                //----------------------------------
-                // 念のため
-                // 自分のターン終了時か再確認
-                //----------------------------------
-
-                if(
-                    summon.owner !== turnPlayer
-                ){
-
-                    setTimeout(
-                        resolveNextAbility,
-                        1500
-                    );
-
-                    return;
-
-                }
+        damagePlayer(
+            turnPlayer,
+            damage,
+            false,
+            summon.card
+        );
 
 
-                console.log(
-                    "ターン終了時手札戻し能力発動",
-                    "能力保持サモン=",
-                    summon.card.name
-                );
+        //----------------------------------
+        // ゲーム終了確認
+        //----------------------------------
 
+        if(
+            game.playerLife <= 0 ||
+            game.enemyLife <= 0
+        ){
 
-                //----------------------------------
-                // バトルログ
-                //----------------------------------
-
-                addBattleLog(
-                    `${summon.card.name}の能力：手札に戻る`
-                );
-
-
-                //----------------------------------
-                // 場から手札へ戻す
-                //
-                // PLAYER / CPUの両方に対応
-                // ドッペルゲンガー再判定も
-                // 既存処理内で行われる
-                //----------------------------------
-
-                moveLamiaTargetToHand(
-                    summon
-                );
-
-
-                //----------------------------------
-                // UI更新
-                //----------------------------------
-
-                updateGameState();
-
-                updateButtons();
-
-
-                //----------------------------------
-                // 次の能力へ
-                //----------------------------------
-
-                setTimeout(
-                    resolveNextAbility,
-                    1500
-                );
-
-                return;
-
-            }
-
-
-            //----------------------------------
-            // 未対応能力
-            //----------------------------------
-
-            setTimeout(
-                resolveNextAbility,
-                1500
+            console.log(
+                "ターン終了時ダメージによりゲーム終了"
             );
 
-        };
 
+            return;
 
-    //----------------------------------
-    // 最初の能力を解決
-    //----------------------------------
+        }
 
-    resolveNextAbility();
+    }
 
 }
+
 //======================================
 // 一時パワー補正
 //======================================

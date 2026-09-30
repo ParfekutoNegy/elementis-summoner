@@ -14,12 +14,11 @@ function setBasiliskBattleTarget(
 ){
 
     //----------------------------------
-    // 攻撃側が
-    // coolAfterBattle能力を持つ
+    // 攻撃側がバジリスク
     //----------------------------------
 
     if(
-        attacker?.ability?.type ===
+        attacker?.card?.ability?.type ===
         "coolAfterBattle"
     ){
 
@@ -27,24 +26,20 @@ function setBasiliskBattleTarget(
             defender;
 
         console.log(
-            "バジリスク系能力：攻撃側として戦闘相手を記録",
-            attacker?.card?.name,
-            "→",
+            "バジリスク：攻撃側として戦闘相手を記録",
             defender?.card?.name
         );
 
         return;
-
     }
 
 
     //----------------------------------
-    // 防御側が
-    // coolAfterBattle能力を持つ
+    // 防御側がバジリスク
     //----------------------------------
 
     if(
-        defender?.ability?.type ===
+        defender?.card?.ability?.type ===
         "coolAfterBattle"
     ){
 
@@ -52,17 +47,15 @@ function setBasiliskBattleTarget(
             attacker;
 
         console.log(
-            "バジリスク系能力：防御側として戦闘相手を記録",
-            defender?.card?.name,
-            "→",
+            "バジリスク：防御側として戦闘相手を記録",
             attacker?.card?.name
         );
 
         return;
-
     }
 
 }
+
 
 //==================================================
 // resolve.js
@@ -70,14 +63,6 @@ function setBasiliskBattleTarget(
 //==================================================
 
 function resolveBattle(){
-
-    //----------------------------------
-    // 今回の同時タイミング用に
-    // クール時誘発キューを初期化
-    //----------------------------------
-
-    coolTriggerQueue = [];
-
 
     //----------------------------------
     // バトルによる破壊判定
@@ -88,30 +73,9 @@ function resolveBattle(){
 
     //----------------------------------
     // 破壊されたサモンをクールへ
-    //
-    // この処理中に
-    // ヴァンパイア・マンドラゴラ等の
-    // 誘発能力がキューへ登録される
     //----------------------------------
 
     removeDestroyedSummons();
-
-
-    //----------------------------------
-    // クール時誘発能力を
-    // ターンプレイヤー優先で並べる
-    //----------------------------------
-
-    sortCoolTriggerQueue();
-
-
-    //----------------------------------
-    // 今回はまだ能力を解決しない
-    //
-    // 次段階で
-    // resolveCoolTriggerQueue()
-    // をここへ接続する
-    //----------------------------------
 
 
     //----------------------------------
@@ -216,17 +180,6 @@ function removeDestroyedFromField(field){
         if(summon.destroyed){
 
             //----------------------------------
-            // 場を離れる直前の能力を保存
-            //----------------------------------
-            // ドッペルゲンガーの場合も
-            // 現在コピーしている能力を保持する
-            //----------------------------------
-
-            const abilityBeforeLeaving =
-                summon.ability;
-
-
-            //----------------------------------
             // クールゾーンへ送る前に状態リセット
             //----------------------------------
 
@@ -243,8 +196,7 @@ function removeDestroyedFromField(field){
 
                 board.addCoolCard(
                     summon.card,
-                    summon.owner,
-                    abilityBeforeLeaving
+                    summon.owner
                 );
 
                 refreshCoolModal();
@@ -287,39 +239,17 @@ function removeDestroyedFromField(field){
 
 
             //----------------------------------
-            // ドッペルゲンガー能力の再確認
-            //----------------------------------
-            // 今離れたサモンをコピー元にしている
-            // ドッペルゲンガーがいれば能力を失わせる
+            // プレイヤー側の場が変化したので
+            // 手札コスト表示を更新
             //----------------------------------
 
             if(
-                typeof validateAllDoppelgangerAbilities ===
-                "function"
+                summon.owner === PLAYER
             ){
 
-                validateAllDoppelgangerAbilities();
+                updateHandCostDisplay();
 
             }
-
-
-//----------------------------------
-// 場のコスト関連能力が変化したので
-// PLAYER手札の現在コストを再表示
-//
-// サラマンダー等：自分のコスト軽減
-// セイレーン等　：相手のマギアコスト増加
-// ハーピー等　　：相手のレジストコスト増加
-//----------------------------------
-
-if(
-    typeof updateHandCostDisplay ===
-        "function"
-){
-
-    updateHandCostDisplay();
-
-}
 
         }
 
@@ -407,14 +337,6 @@ function resolveBasiliskBattle(){
 
 
     //----------------------------------
-    // 場を離れる直前の能力を保存
-    //----------------------------------
-
-    const abilityBeforeLeaving =
-        target.ability;
-
-
-    //----------------------------------
     // クールゾーンへ
     //----------------------------------
 
@@ -424,41 +346,31 @@ function resolveBasiliskBattle(){
         "→ クールゾーン"
     );
 
-
     //----------------------------------
-    // バトルログ
-    //----------------------------------
+// バトルログ
+//----------------------------------
 
-    const owner =
-        target.owner === PLAYER
-        ?
-        "PLAYER"
-        :
-        "CPU";
-
-
-    addBattleLog(
-        `${owner}：${target.card.name}が破壊された`
-    );
+const owner =
+    target.owner === PLAYER
+    ?
+    "PLAYER"
+    :
+    "CPU";
 
 
-    //----------------------------------
-    // サモン状態リセット
-    //----------------------------------
+addBattleLog(
+    `${owner}：${target.card.name}が破壊された`
+);
+
 
     resetSummonState(
         target
     );
 
 
-    //----------------------------------
-    // クールゾーンへ追加
-    //----------------------------------
-
     board.addCoolCard(
         target.card,
-        target.owner,
-        abilityBeforeLeaving
+        target.owner
     );
 
 
@@ -503,20 +415,6 @@ function resolveBasiliskBattle(){
             index,
             1
         );
-
-    }
-
-
-    //----------------------------------
-    // ドッペルゲンガー能力を即時確認
-    //----------------------------------
-
-    if(
-        typeof validateAllDoppelgangerAbilities ===
-        "function"
-    ){
-
-        validateAllDoppelgangerAbilities();
 
     }
 

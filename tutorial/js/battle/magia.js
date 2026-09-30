@@ -1517,18 +1517,11 @@ function isMagiaTargetBlocked(
 
     //----------------------------------
     // 相手のマギア対象にならない
-    //
-    // card.ability ではなく
-    // 現在Summonが持っている能力を確認
-    //
-    // ドッペルゲンガーのコピーにも対応
     //----------------------------------
 
     if(
-        hasSummonAbility(
-            target,
-            "cannotBeMagiaTarget"
-        )
+        target.card?.ability?.type ===
+        "cannotBeMagiaTarget"
     ){
 
         //----------------------------------
@@ -1536,8 +1529,7 @@ function isMagiaTargetBlocked(
         //----------------------------------
 
         if(
-            target.owner !==
-            card.owner
+            target.owner !== card.owner
         ){
 
             console.log(
@@ -1546,11 +1538,8 @@ function isMagiaTargetBlocked(
                 "cardOwner=",
                 card.owner,
                 "targetOwner=",
-                target.owner,
-                "ability=",
-                "cannotBeMagiaTarget"
+                target.owner
             );
-
 
             return true;
 
@@ -1562,6 +1551,7 @@ function isMagiaTargetBlocked(
     return false;
 
 }
+
 
 
 
@@ -2186,32 +2176,16 @@ function startForceCostSelect(target){
         // プレイヤーに手札選択を要求
         //----------------------------------
 
-//----------------------------------
-// PLAYERが選択する場合の案内
-//----------------------------------
+        if(
+            magiaCard &&
+            magiaCard.owner === ENEMY
+        ){
 
-if(
-    forceCostSource === "sphinx"
-){
+            showActionGuide(
+                "手札を1枚コストゾーンに置いてください"
+            );
 
-    showActionGuide(
-        "スフィンクスの能力が発動。<br>" +
-        "コストゾーンに置くカードを<br>" +
-        "1枚選んでください"
-    );
-
-}
-else if(
-    magiaCard &&
-    magiaCard.owner === ENEMY
-){
-
-    showActionGuide(
-        "コストゾーンに置くカードを<br>" +
-        "1枚選んでください"
-    );
-
-}
+        }
 
 
         //----------------------------------

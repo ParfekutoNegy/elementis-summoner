@@ -432,7 +432,8 @@ updateCostCount(){
 //=========================
 // クールゾーン
 //=========================
-addCoolCard(card, owner, summonAbility = null){
+
+addCoolCard(card, owner){
 
     console.log(
         "★ addCoolCard",
@@ -445,26 +446,79 @@ addCoolCard(card, owner, summonAbility = null){
 
 
     //----------------------------------
-    // クールへ送られる時点での能力
-    //----------------------------------
-    // 場のサモンから送られた場合は
-    // 現在持っている能力を優先
-    //
-    // 通常のカードの場合は
-    // カード本来の能力を使用
+    // フェニックス能力
     //----------------------------------
 
-    const ability =
-        summonAbility ??
-        card.ability;
+    if(
+        card.ability?.type ===
+        "returnToHandOnCool"
+    ){
+
+        console.log(
+            "★フェニックス手札戻し前",
+            "CPU手札=",
+            enemyHandCards.length,
+            enemyHandCards.map(c => c.name)
+        );
 
 
-    //==================================
-    // まずクールゾーンに置く
-    //==================================
+        card.area = "hand";
 
-    card.area =
-        "cool";
+
+        if(owner === PLAYER){
+
+            this.addHandCard(card);
+
+        }
+        else{
+
+            enemyHandCards.push(card);
+
+            updateEnemyZoneDisplay();
+
+
+            console.log(
+                "★ CPU手札実数",
+                enemyHandCards.length,
+                enemyHandCards.map(c => c.name)
+            );
+
+        }
+
+
+        console.log(
+            "★フェニックス手札戻し後",
+            "CPU手札=",
+            enemyHandCards.length,
+            enemyHandCards.map(c => c.name)
+        );
+
+
+        console.log(
+            "★フェニックス追加カード",
+            card.name,
+            "area=",
+            card.area
+        );
+
+
+        console.log(
+            "★フェニックス能力発動",
+            card.name,
+            "クールゾーンに入らず手札へ"
+        );
+
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // クールゾーン設定
+    //----------------------------------
+
+    card.area = "cool";
 
 
     //----------------------------------
@@ -473,48 +527,30 @@ addCoolCard(card, owner, summonAbility = null){
 
     if(owner === PLAYER){
 
-        card.owner =
-            PLAYER;
+        card.owner = PLAYER;
 
 
         //----------------------------------
-        // PLAYERクール
+        // Board側
         //----------------------------------
 
-        if(
-            !this.playerCoolCards.includes(
-                card
-            )
-        ){
-
-            this.playerCoolCards.push(
-                card
-            );
-
-        }
+        this.playerCoolCards.push(
+            card
+        );
 
     }
     else{
 
-        card.owner =
-            ENEMY;
+        card.owner = ENEMY;
 
 
         //----------------------------------
-        // Board側CPUクール
+        // Board側
         //----------------------------------
 
-        if(
-            !this.enemyCoolCards.includes(
-                card
-            )
-        ){
-
-            this.enemyCoolCards.push(
-                card
-            );
-
-        }
+        this.enemyCoolCards.push(
+            card
+        );
 
 
         //----------------------------------
@@ -522,9 +558,7 @@ addCoolCard(card, owner, summonAbility = null){
         //----------------------------------
 
         if(
-            !enemyCoolCards.includes(
-                card
-            )
+            !enemyCoolCards.includes(card)
         ){
 
             enemyCoolCards.push(
@@ -539,167 +573,7 @@ addCoolCard(card, owner, summonAbility = null){
     }
 
 
-    //----------------------------------
-    // クール表示更新
-    //----------------------------------
-
     this.updateCoolCount();
-
-
-    //==================================
-    // ヴァンパイア系能力
-    //
-    // 相手のサモンがクールゾーンに
-    // 置かれたときタテ向きになる
-    //==================================
-
-    if(
-        card.type ===
-            "サモン" &&
-        typeof triggerReadyWhenEnemySummonCooled ===
-            "function"
-    ){
-
-        triggerReadyWhenEnemySummonCooled(
-            card,
-            owner
-        );
-
-    }
-
-
-    //==================================
-    // フェニックス系能力
-    //
-    // クールゾーンに置かれたあと
-    // 手札へ戻す
-    //==================================
-
-    const abilities =
-        Array.isArray(
-            ability
-        )
-            ? ability
-            : ability
-                ? [ability]
-                : [];
-
-
-    const returnToHandAbility =
-        abilities.find(
-            currentAbility =>
-                currentAbility &&
-                currentAbility.type ===
-                    "returnToHandOnCool"
-        );
-
-
-    if(
-        returnToHandAbility
-    ){
-
-        console.log(
-            "★フェニックス手札戻し前",
-            "CPU手札=",
-            enemyHandCards.length,
-            enemyHandCards.map(
-                c => c.name
-            )
-        );
-
-
-        //----------------------------------
-        // 一度入ったクールゾーンから外す
-        //----------------------------------
-
-        if(owner === PLAYER){
-
-            this.playerCoolCards =
-                this.playerCoolCards.filter(
-                    coolCard =>
-                        coolCard !== card
-                );
-
-        }
-        else{
-
-            this.enemyCoolCards =
-                this.enemyCoolCards.filter(
-                    coolCard =>
-                        coolCard !== card
-                );
-
-
-            enemyCoolCards =
-                enemyCoolCards.filter(
-                    coolCard =>
-                        coolCard !== card
-                );
-
-        }
-
-
-        //----------------------------------
-        // 手札へ移動
-        //----------------------------------
-
-        card.area =
-            "hand";
-
-
-        if(owner === PLAYER){
-
-            this.addHandCard(
-                card
-            );
-
-        }
-        else{
-
-            enemyHandCards.push(
-                card
-            );
-
-            updateEnemyZoneDisplay();
-
-        }
-
-
-        //----------------------------------
-        // クール表示を再更新
-        //----------------------------------
-
-        this.updateCoolCount();
-
-
-        console.log(
-            "★フェニックス手札戻し後",
-            "CPU手札=",
-            enemyHandCards.length,
-            enemyHandCards.map(
-                c => c.name
-            )
-        );
-
-
-        console.log(
-            "★フェニックス追加カード",
-            card.name,
-            "area=",
-            card.area
-        );
-
-
-        console.log(
-            "★フェニックス系能力発動",
-            card.name,
-            "クールゾーンに置かれた後、手札へ"
-        );
-
-
-        return;
-
-    }
 
 }
 
@@ -931,11 +805,8 @@ function clickEnemyPlayer(){
     //----------------------------------
 
     if(blockMode){
-
         return;
-
     }
-
 
     //----------------------------------
     // 攻撃中
@@ -952,162 +823,46 @@ function clickEnemyPlayer(){
 
     }
 
+//----------------------------------
+// マギア対象選択中
+//----------------------------------
 
-    //==================================================
-    // サモン能力対象選択中
-    //==================================================
+if(magiaTargetMode){
 
-    if(summonAbilityTargetMode){
+    //----------------------------------
+    // このマギアが相手プレイヤーを
+    // 対象にできるか確認
+    //----------------------------------
 
-        //----------------------------------
-        // 使用サモン確認
-        //----------------------------------
-
-        if(
-            !summonAbilitySource ||
-            !summonAbilitySource.card
-        ){
-
-            return;
-
-        }
+    const targets =
+        magiaCard?.effect?.target || [];
 
 
-        //----------------------------------
-        // 現在持っている能力を取得
-        //
-        // ドッペルゲンガーの
-        // コピー能力もここに入る
-        //----------------------------------
-
-        const ability =
-            summonAbilitySource.ability;
-
-
-        if(!ability){
-
-            return;
-
-        }
-
-
-        //==================================
-        // キマイラ系
-        //
-        // 相手プレイヤーを対象
-        //==================================
-
-        if(
-            ability.type ===
-            "oncePerTurnPlayerDamageWithCost"
-        ){
-
-            //----------------------------------
-            // 対象決定
-            //----------------------------------
-
-            summonAbilityTarget =
-                ENEMY;
-
-
-            console.log(
-                "サモン能力対象決定：",
-                summonAbilitySource.card.name,
-                "→ ENEMY"
-            );
-
-
-            //----------------------------------
-            // 対象選択終了
-            //----------------------------------
-
-            summonAbilityTargetMode =
-                false;
-
-
-            //----------------------------------
-            // 対象発光解除
-            //----------------------------------
-
-            clearSummonAbilityTargetHighlight();
-
-
-            //----------------------------------
-            // ここから能力コスト選択へ
-            //----------------------------------
-
-            startSummonAbilityCost();
-
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // この能力では
-        // 相手プレイヤーを対象にできない
-        //----------------------------------
+    if(!targets.includes("enemy")){
 
         console.log(
-            "このサモン能力は相手プレイヤーを対象にできません"
+            "このマギアは相手プレイヤーを対象にできません"
         );
 
-
         return;
 
     }
 
 
-    //==================================================
-    // マギア対象選択中
-    //==================================================
+    //----------------------------------
+    // 対象決定
+    //----------------------------------
 
-    if(magiaTargetMode){
+    magiaTarget = ENEMY;
 
-        //----------------------------------
-        // このマギアが相手プレイヤーを
-        // 対象にできるか確認
-        //----------------------------------
+    magiaTargetMode = false;
 
-        const targets =
-            magiaCard?.effect?.target || [];
+    clearMagiaHighlight();
 
+    startMagiaCost();
 
-        if(
-            !targets.includes("enemy")
-        ){
-
-            console.log(
-                "このマギアは相手プレイヤーを対象にできません"
-            );
-
-            return;
-
-        }
-
-
-        //----------------------------------
-        // 対象決定
-        //----------------------------------
-
-        magiaTarget =
-            ENEMY;
-
-
-        magiaTargetMode =
-            false;
-
-
-        clearMagiaHighlight();
-
-
-        startMagiaCost();
-
-
-        return;
-
-    }
+    return;
+}
 
 }
 //======================================
