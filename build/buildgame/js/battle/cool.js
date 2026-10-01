@@ -174,12 +174,79 @@ function recoverEnemyCoolCard(){
     }
 
 
+    //==================================
+    // 回収可能カードを取得
+    //
+    // インフェルノは
+    // ターン開始時に回収できない
+    //==================================
+
+    const recoverableCards =
+        board.enemyCoolCards.filter(
+            card=>{
+
+                if(!card){
+
+                    return false;
+
+                }
+
+
+                //----------------------------------
+                // インフェルノ
+                //----------------------------------
+
+                if(
+                    Number(card.id) === 38
+                ){
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
+
+
+    console.log(
+        "CPUクール回収可能カード",
+        recoverableCards.map(
+            card =>
+                card.name
+        )
+    );
+
+
+    //----------------------------------
+    // 回収可能カードがない
+    //
+    // インフェルノしかない場合など
+    //----------------------------------
+
+    if(
+        recoverableCards.length === 0
+    ){
+
+        console.log(
+            "CPU：回収可能なクールカードなし"
+        );
+
+        return;
+
+    }
+
+
     //----------------------------------
     // 回収するカード
+    //
+    // 回収可能カードの先頭
     //----------------------------------
 
     const card =
-        board.enemyCoolCards[0];
+        recoverableCards[0];
 
 
     if(!card){
@@ -260,7 +327,6 @@ function recoverEnemyCoolCard(){
     board.updateCoolCount();
 
 
-
     //----------------------------------
     // 回収後確認
     //----------------------------------
@@ -269,6 +335,7 @@ function recoverEnemyCoolCard(){
         "CPUクール回収後",
         board.enemyCoolCards
     );
+
 
     console.log(
         "CPU手札",
@@ -456,6 +523,14 @@ function openCoolRecoveryModal(){
 
 
             //----------------------------------
+            // インフェルノ判定
+            //----------------------------------
+
+            const isInferno =
+                Number(card.id) === 38;
+
+
+            //----------------------------------
             // カード画像
             //----------------------------------
 
@@ -471,6 +546,45 @@ function openCoolRecoveryModal(){
 
             image.className =
                 "cool-card";
+
+
+            //==================================
+            // クール回収時の発光
+            //==================================
+
+            if(isInferno){
+
+                //----------------------------------
+                // インフェルノ
+                //
+                // 選択はできるが
+                // 回収不可なので発光しない
+                //----------------------------------
+
+                console.log(
+                    "クール回収発光なし：",
+                    card.name
+                );
+
+            }else{
+
+                //----------------------------------
+                // 通常カード
+                //
+                // 回収可能なので発光
+                //----------------------------------
+
+                image.classList.add(
+                    "cool-recovery-available"
+                );
+
+
+                console.log(
+                    "クール回収発光あり：",
+                    card.name
+                );
+
+            }
 
 
             //----------------------------------
@@ -498,6 +612,7 @@ function openCoolRecoveryModal(){
             wrapper.appendChild(
                 image
             );
+
 
             wrapper.appendChild(
                 marker
@@ -578,6 +693,8 @@ function openCoolRecoveryModal(){
 
                 //----------------------------------
                 // 選択カード設定
+                //
+                // インフェルノも選択可能
                 //----------------------------------
 
                 selectedCoolCard =
@@ -594,6 +711,8 @@ function openCoolRecoveryModal(){
 
                 //----------------------------------
                 // 今回の〇を表示
+                //
+                // インフェルノにも表示
                 //----------------------------------
 
                 marker.style.display =
@@ -607,6 +726,20 @@ function openCoolRecoveryModal(){
                 showCardInfo(
                     card
                 );
+
+
+                //----------------------------------
+                // インフェルノ
+                //----------------------------------
+
+                if(isInferno){
+
+                    console.log(
+                        "クール回収不可：",
+                        card.name
+                    );
+
+                }
 
 
                 //----------------------------------

@@ -18,11 +18,14 @@
 
 
 .card{
+
     filter:
         drop-shadow(
             0 4px 5px rgba(0,0,0,0.45)
         );
+
 }
+
 
 .card-image{
 
@@ -38,32 +41,38 @@
 
 
 
-/* 選択状態 */
+/*======================================
+ 選択状態
+======================================*/
 
 .card.selected{
 
     transform:
-    translateY(-15px);
+        translateY(-15px);
 
     outline:
-    2px solid rgb(255, 255, 252);
+        2px solid rgb(255,255,252);
 
 }
 
 
 
-/* 横向きカード */
+/*======================================
+ 横向きカード
+======================================*/
 
 .card.horizontal{
 
     transform:
-    rotate(90deg);
+        rotate(90deg);
 
 }
 
 
 
-/* 手札 */
+/*======================================
+ 手札
+======================================*/
 
 #hand-area{
 
@@ -80,11 +89,9 @@
     width:100%;
 
     background:
-    rgba(0,0,0,0.15);
+        rgba(0,0,0,0.15);
 
 }
-
-
 
 
 #hand-area .card{
@@ -99,6 +106,9 @@
 
 
 
+/*======================================
+ カードコスト
+======================================*/
 
 .card-cost{
 
@@ -108,19 +118,15 @@
 
     left:1px;
 
-
     width:24px;
 
     height:24px;
 
-
     border-radius:50%;
-
 
     background:#222;
 
     color:white;
-
 
     display:flex;
 
@@ -128,12 +134,17 @@
 
     align-items:center;
 
-
     font-weight:bold;
 
     z-index:2;
 
 }
+
+
+
+/*======================================
+ 攻撃対象マーカー
+======================================*/
 
 .card-marker.marker-target{
 
@@ -163,6 +174,7 @@
         infinite;
 
 }
+
 
 @keyframes attackTargetFlash{
 
@@ -198,8 +210,10 @@
 
 }
 
+
+
 /*==================================================
-  攻撃対象プレイヤー
+ 攻撃対象プレイヤー
 ==================================================*/
 
 .attack-target{
@@ -222,6 +236,7 @@
         infinite;
 
 }
+
 
 @keyframes attackTargetPlayerFlash{
 
@@ -257,8 +272,10 @@
 
 }
 
+
+
 /*----------------------------------
-  剣マーク
+ 剣マーク
 ----------------------------------*/
 
 .attack-target::after{
@@ -284,24 +301,22 @@
 
 }
 
+
+
 /*================================
  使用カード選択
 ================================*/
 
 .card.selected-use{
 
-
     transform:
-    translateY(-20px);
-
+        translateY(-20px);
 
     border:
-    3px solid gold;
-
+        3px solid gold;
 
     box-shadow:
-    0 0 15px gold;
-
+        0 0 15px gold;
 
 }
 
@@ -311,26 +326,23 @@
  コストカード選択
 ================================*/
 
-
 .card.selected-cost{
 
-
     border:
-    3px solid cyan;
-
+        3px solid cyan;
 
     box-shadow:
-    0 0 15px cyan;
-
+        0 0 15px cyan;
 
     filter:
-    brightness(0.7);
-
+        brightness(0.7);
 
 }
 
+
+
 /*======================================
-  場カード選択
+ 場カード選択
 ======================================*/
 
 .card.field-selected{
@@ -344,13 +356,15 @@
 }
 
 
+
 /*=========================
-  マギア対象
+ マギア対象
 =========================*/
 
 .magia-target{
 
     outline:4px solid #00d8ff;
+
     outline-offset:2px;
 
     cursor:pointer;
@@ -361,6 +375,7 @@
         infinite;
 
 }
+
 
 @keyframes magiaTargetFlash{
 
@@ -386,7 +401,6 @@
 
 
 
-
 /*======================================
  発光
 ======================================*/
@@ -401,6 +415,7 @@
 }
 
 
+
 /*======================================
  マーカー
 ======================================*/
@@ -410,6 +425,7 @@
     position:relative;
 
 }
+
 
 .card-marker{
 
@@ -436,6 +452,7 @@
 
 }
 
+
 .cool-card-wrapper{
 
     position:relative;
@@ -444,6 +461,8 @@
 
 }
 
+
+
 /*======================================
  選択中
 ======================================*/
@@ -451,39 +470,19 @@
 .marker-selected{
 
     border:
-    6px solid white;
+        6px solid white;
 
 }
+
+
+
+/*======================================
+ 現在パワー
+======================================*/
 
 .card-current-power{
 
     position:absolute;
-
-    left:4px;
-    bottom:4px;
-
-    width:30px;
-    height:30px;
-
-    border-radius:50%;
-
-    background:#e9e7da;
-
-    color:#440ae4;
-
-    font-size:30px;
-
-    font-weight:bold;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    pointer-events:none;
-
-     position:absolute;
 
     left:4px;
     bottom:4px;
@@ -513,12 +512,21 @@
 
     box-shadow:
         0 0 6px rgba(255,140,0,0.8);
+
 }
 
 
-#cool-modal.cool-recovery-mode .cool-card{
+
+/*========================================
+ クール回収
+ 回収可能カードだけ発光
+========================================*/
+
+#cool-modal.cool-recovery-mode
+.cool-card.cool-recovery-available{
 
     outline:4px solid #00d8ff;
+
     outline-offset:2px;
 
     cursor:pointer;
@@ -530,18 +538,70 @@
 
 }
 
+
+
+/*========================================
+ クール回収
+ 回収不可カード
+
+ インフェルノ等
+========================================*/
+
+#cool-modal.cool-recovery-mode
+.cool-card:not(.cool-recovery-available){
+
+    outline:none !important;
+
+    outline-offset:0 !important;
+
+    animation:none !important;
+
+    box-shadow:none !important;
+
+    cursor:pointer;
+
+}
+
+
+
+/*========================================
+ クール回収発光アニメーション
+========================================*/
+
 @keyframes coolRecoveryTargetFlash{
 
     0%{
+
         outline-color:#00d8ff;
+
     }
 
     50%{
+
         outline-color:#ffffff;
+
     }
 
     100%{
+
         outline-color:#00d8ff;
+
     }
+
+}
+
+
+
+/*========================================
+ クールゾーンからプレイ可能
+========================================*/
+
+.cool-card-playable{
+
+    cursor:pointer;
+
+    filter:
+        drop-shadow(0 0 6px #ffd84a)
+        drop-shadow(0 0 12px #ffd84a);
 
 }

@@ -6708,7 +6708,16 @@ function showCrystalPeepingCards(
 // 公開終了
 //==================================================
 
+//==================================================
+// クリスタルピーピング
+// 公開終了
+//==================================================
+
 function finishCrystalPeeping(){
+
+    //----------------------------------
+    // 待機確認
+    //----------------------------------
 
     if(
         !crystalPeepingWaiting ||
@@ -6720,11 +6729,41 @@ function finishCrystalPeeping(){
     }
 
 
+    //----------------------------------
+    // 使用カード情報保存
+    //----------------------------------
+
     const card =
         crystalPeepingMagia;
 
     const owner =
         crystalPeepingOwner;
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ クリスタルピーピング終了処理",
+        {
+            card:
+                card.name,
+
+            owner:
+                owner,
+
+            magiaCard:
+                magiaCard?.name,
+
+            summonCard:
+                summonCard?.name
+        }
+    );
+
+    console.log(
+        "================================"
+    );
 
 
     //----------------------------------
@@ -6746,20 +6785,40 @@ function finishCrystalPeeping(){
     }
 
 
-    //----------------------------------
-    // 使用したマギアを
-    // 手札へ戻す
-    //----------------------------------
+    //==================================
+    // 使用したマギアを手札へ戻す
+    //==================================
 
     if(owner === PLAYER){
 
         card.area =
             "hand";
 
+
         card.setFaceDown(
             false
         );
 
+
+        //----------------------------------
+        // 選択状態解除
+        //----------------------------------
+
+        if(
+            typeof card.setSelected ===
+                "function"
+        ){
+
+            card.setSelected(
+                false
+            );
+
+        }
+
+
+        //----------------------------------
+        // 手札に存在しなければ戻す
+        //----------------------------------
 
         if(
             !board.handCards.includes(
@@ -6818,9 +6877,9 @@ function finishCrystalPeeping(){
     );
 
 
-    //----------------------------------
-    // 待機状態解除
-    //----------------------------------
+    //==================================
+    // クリスタルピーピング待機解除
+    //==================================
 
     crystalPeepingWaiting =
         false;
@@ -6832,14 +6891,99 @@ function finishCrystalPeeping(){
         null;
 
 
+    //==================================
+    // 通常マギア状態を完全解除
+    //==================================
+    //
+    // resolveMagia() は
+    // WAIT_CRYSTAL_PEEPING で停止しているため、
+    // 通常マギア側の終了処理には到達しない。
+    //
+    // そのためここで明示的に解除する。
+    //==================================
+
+    resetMagiaState();
+
+
     //----------------------------------
-    // 表示更新
+    // サモン・マギア共通コスト状態解除
     //----------------------------------
+
+    summonCard =
+        null;
+
+    costTargetCard =
+        null;
+
+    selectedCostCards =
+        [];
+
+    costConfirm =
+        false;
+
+
+    //----------------------------------
+    // 手札選択状態解除
+    //----------------------------------
+
+    if(
+        typeof selectedHandCard !==
+            "undefined"
+    ){
+
+        selectedHandCard =
+            null;
+
+    }
+
+
+    //----------------------------------
+    // 操作案内解除
+    //----------------------------------
+
+    hideActionGuide();
+
+
+    //==================================
+    // UIを通常状態へ戻す
+    //==================================
 
     updateHandCostDisplay();
 
     updateGameState();
 
     updateButtons();
+
+
+    //----------------------------------
+    // 使用可能カード発光を再計算
+    //----------------------------------
+
+    if(
+        typeof updateUsableCardHighlight ===
+            "function"
+    ){
+
+        updateUsableCardHighlight();
+
+    }
+
+
+    console.log(
+        "★ クリスタルピーピング終了",
+        {
+            magiaCard:
+                magiaCard,
+
+            summonCard:
+                summonCard,
+
+            selectedCostCards:
+                selectedCostCards.length,
+
+            costConfirm:
+                costConfirm
+        }
+    );
 
 }

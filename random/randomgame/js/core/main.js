@@ -5367,6 +5367,7 @@ if(
 
 }
 
+
     //----------------------------------
     // レジスト待機中
     //----------------------------------
@@ -5610,8 +5611,44 @@ if(coolRecoveryMode){
     }
 
 
+    //==================================
+    // インフェルノ
+    //==================================
+
+    if(
+        Number(selectedCoolCard.id) === 38
+    ){
+
+        //----------------------------------
+        // 選択自体は可能
+        //
+        // 〇マーカーもそのまま表示
+        //----------------------------------
+
+
+        //----------------------------------
+        // 回収用ボタンは表示しない
+        //----------------------------------
+
+        cancelButton.style.display =
+            "none";
+
+        confirmButton.style.display =
+            "none";
+
+
+        console.log(
+            "インフェルノ：ターン開始時回収不可"
+        );
+
+
+        return;
+
+    }
+
+
     //----------------------------------
-    // カード選択済み
+    // 通常の回収可能カード
     //----------------------------------
 
     confirmButton.style.display =
@@ -5775,7 +5812,6 @@ if(summonAbilityTargetMode){
     return;
 
 }
-
 
 //----------------------------------
 // マギア対象選択中
@@ -6096,7 +6132,6 @@ if(
     }
 
 }
-
 
 
 //----------------------------------
@@ -6459,7 +6494,9 @@ function openCoolModal(
 
 
     const title =
-        modal.querySelector("h2");
+        modal.querySelector(
+            "h2"
+        );
 
 
     const list =
@@ -6519,7 +6556,8 @@ function openCoolModal(
     // カード一覧クリア
     //----------------------------------
 
-    list.innerHTML = "";
+    list.innerHTML =
+        "";
 
 
     //----------------------------------
@@ -6544,7 +6582,9 @@ function openCoolModal(
     //----------------------------------
 
     const coolCards =
-        getCoolCards(owner);
+        getCoolCards(
+            owner
+        );
 
 
     //----------------------------------
@@ -6558,190 +6598,273 @@ function openCoolModal(
 
     }else{
 
-        coolCards.forEach(card=>{
+        coolCards.forEach(
+            card=>{
 
-            //----------------------------------
-            // カードを包む要素
-            //----------------------------------
-
-            const wrapper =
-                document.createElement(
-                    "div"
-                );
-
-
-            wrapper.className =
-                "cool-card-wrapper";
-
-
-            //----------------------------------
-            // カード画像
-            //----------------------------------
-
-            const img =
-                document.createElement(
-                    "img"
-                );
-
-
-            img.src =
-                card.image;
-
-
-            img.className =
-                "cool-card";
-
-
-            //----------------------------------
-            // 〇マーカー
-            //----------------------------------
-
-            const marker =
-                document.createElement(
-                    "div"
-                );
-
-
-            marker.className =
-                "card-marker";
-
-
-            marker.style.display =
-                "none";
-
-
-            //----------------------------------
-            // カードをラッパーへ追加
-            //----------------------------------
-
-            wrapper.appendChild(
-                img
-            );
-
-
-            wrapper.appendChild(
-                marker
-            );
-
-
-            //----------------------------------
-            // クールカードクリック
-            //----------------------------------
-
-            img.onclick = ()=>{
 
                 //----------------------------------
-                // 通常閲覧モード
+                // カードを包む要素
                 //----------------------------------
 
-                if(!coolRecoveryMode){
-
-                    showCardInfo(
-                        card
+                const wrapper =
+                    document.createElement(
+                        "div"
                     );
 
-                    return;
+
+                wrapper.className =
+                    "cool-card-wrapper";
+
+
+                //----------------------------------
+                // インフェルノ判定
+                //----------------------------------
+
+                const isInferno =
+                    Number(card.id) === 38;
+
+
+                //----------------------------------
+                // カード画像
+                //----------------------------------
+
+                const img =
+                    document.createElement(
+                        "img"
+                    );
+
+
+                img.src =
+                    card.image;
+
+
+                img.className =
+                    "cool-card";
+
+
+                //==================================
+                // クール回収時の発光設定
+                //==================================
+
+                if(coolRecoveryMode){
+
+                    //----------------------------------
+                    // インフェルノ
+                    //
+                    // 回収不可なので
+                    // 発光させない
+                    //----------------------------------
+
+                    if(isInferno){
+
+                        console.log(
+                            "クール回収発光なし：",
+                            card.name
+                        );
+
+                    }
+
+
+                    //----------------------------------
+                    // その他のカード
+                    //
+                    // 回収可能なので
+                    // 発光させる
+                    //----------------------------------
+
+                    else{
+
+                        img.classList.add(
+                            "cool-recovery-available"
+                        );
+
+                        console.log(
+                            "クール回収発光あり：",
+                            card.name
+                        );
+
+                    }
 
                 }
 
 
                 //----------------------------------
-                // 以前の通常カードの〇を解除
+                // 〇マーカー
                 //----------------------------------
 
-                if(selectedInfoCard){
-
-                    selectedInfoCard.setSelected(
-                        false
-                    );
-
-                }
-
-
-                if(selectedHandCard){
-
-                    selectedHandCard.setSelected(
-                        false
-                    );
-
-                }
-
-
-                //----------------------------------
-                // 以前のクールカードの〇を解除
-                //----------------------------------
-
-                document
-                    .querySelectorAll(
-                        ".card-marker"
-                    )
-                    .forEach(
-                        oldMarker=>{
-
-                            oldMarker.style.display =
-                                "none";
-
-                        }
+                const marker =
+                    document.createElement(
+                        "div"
                     );
 
 
-                //----------------------------------
-                // 今回のカードを選択
-                //----------------------------------
+                marker.className =
+                    "card-marker";
 
-                selectedInfoCard =
-                    card;
-
-
-                //----------------------------------
-                // クール回収対象
-                //----------------------------------
-
-                selectedCoolCard =
-                    card;
-
-
-                //----------------------------------
-                // 今回の〇を表示
-                //----------------------------------
 
                 marker.style.display =
-                    "block";
+                    "none";
 
 
                 //----------------------------------
-                // カード詳細表示
+                // カードをラッパーへ追加
                 //----------------------------------
 
-                showCardInfo(
-                    card
+                wrapper.appendChild(
+                    img
+                );
+
+
+                wrapper.appendChild(
+                    marker
                 );
 
 
                 //----------------------------------
-                // アクションボタン更新
+                // クールカードクリック
                 //----------------------------------
 
-                updateButtons();
+                img.onclick =
+                    ()=>{
 
 
-                console.log(
-                    "クール回収選択:",
-                    selectedCoolCard
+                        console.log(
+                            "クールカードクリック：",
+                            card.name
+                        );
+
+
+                        //----------------------------------
+                        // 通常閲覧モード
+                        //----------------------------------
+
+                        if(!coolRecoveryMode){
+
+                            showCardInfo(
+                                card
+                            );
+
+                            return;
+
+                        }
+
+
+                        //----------------------------------
+                        // 以前の通常カードの〇を解除
+                        //----------------------------------
+
+                        if(selectedInfoCard){
+
+                            selectedInfoCard.setSelected(
+                                false
+                            );
+
+                        }
+
+
+                        if(selectedHandCard){
+
+                            selectedHandCard.setSelected(
+                                false
+                            );
+
+                        }
+
+
+                        //----------------------------------
+                        // 以前のクールカードの〇を解除
+                        //----------------------------------
+
+                        document
+                            .querySelectorAll(
+                                "#cool-list .card-marker"
+                            )
+                            .forEach(
+                                oldMarker=>{
+
+                                    oldMarker.style.display =
+                                        "none";
+
+                                }
+                            );
+
+
+                        //----------------------------------
+                        // 今回のカードを選択
+                        //----------------------------------
+
+                        selectedInfoCard =
+                            card;
+
+
+                        //----------------------------------
+                        // クール回収対象として選択
+                        //
+                        // インフェルノも選択可能
+                        //----------------------------------
+
+                        selectedCoolCard =
+                            card;
+
+
+                        //----------------------------------
+                        // 〇を表示
+                        //
+                        // インフェルノにも表示する
+                        //----------------------------------
+
+                        marker.style.display =
+                            "block";
+
+
+                        //----------------------------------
+                        // カード詳細表示
+                        //----------------------------------
+
+                        showCardInfo(
+                            card
+                        );
+
+
+                        //----------------------------------
+                        // インフェルノ
+                        //----------------------------------
+
+                        if(isInferno){
+
+                            console.log(
+                                "クール回収不可：",
+                                card.name
+                            );
+
+                        }
+
+
+                        //----------------------------------
+                        // アクションボタン更新
+                        //----------------------------------
+
+                        updateButtons();
+
+
+                        console.log(
+                            "クール回収選択:",
+                            selectedCoolCard
+                        );
+
+                    };
+
+
+                //----------------------------------
+                // リストへ追加
+                //----------------------------------
+
+                list.appendChild(
+                    wrapper
                 );
 
-            };
-
-
-            //----------------------------------
-            // リストへ追加
-            //----------------------------------
-
-            list.appendChild(
-                wrapper
-            );
-
-        });
+            }
+        );
 
     }
 
@@ -7345,6 +7468,32 @@ function recoverCoolCards(owner){
 
     const card =
         selectedCoolCard;
+
+            //==================================
+    // インフェルノ
+    // ターン開始時のクール回収不可
+    //==================================
+
+    if(
+        card.id === 38
+    ){
+
+        console.log(
+            "クール回収不可：",
+            card.name
+        );
+
+
+        selectedCoolCard =
+            null;
+
+
+        updateButtons();
+
+
+        return false;
+
+    }
 
 
     //----------------------------------

@@ -568,16 +568,22 @@ const CARD_LIST = [
     text:
         "対象に自分のクールゾーンにある【火】カードの枚数分のダメージを与える。"
 },
-    {
-        id: 38,
-        name:"インフェルノ",
-        type: "マギア",
-        element: "火",
-        cost: 3,
-        series:"folklore",
-        image: "images/038-インフェルノ.jpg",
-        tag:"サモン１体",
-    },
+{
+    id: 38,
+    name: "インフェルノ",
+    type: "マギア",
+    element: "火",
+    cost: 3,
+    series: "folklore",
+    image: "images/038-インフェルノ.jpg",
+    tag: "サモン１体",
+    text: "対象をクールゾーンに置く。『インフェルノ』はターン開始時にクールゾーンから手札に加えられない。",
+
+    effect: {
+        type: "sendSummonToCool",
+        target: ["enemySummon" ,"playerSummon"]
+    }
+},
     {
         id: 39,
         name:"ヒートストレングス",

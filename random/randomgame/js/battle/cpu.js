@@ -9738,6 +9738,116 @@ if(
 }
 
 
+//==================================
+// インフェルノ専用使用条件
+//
+// PLAYERのコスト3以上のサモンにのみ使用
+//==================================
+
+let infernoTarget =
+    null;
+
+
+if(
+    card.effect?.type ===
+        "sendSummonToCool"
+){
+
+    //----------------------------------
+    // コスト3以上のPLAYERサモン
+    //----------------------------------
+
+    const infernoTargets =
+        playerField.filter(
+            summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed ||
+                    !summon.card
+                ){
+
+                    return false;
+
+                }
+
+
+                const summonCost =
+                    Number(
+                        summon.card.cost
+                    ) || 0;
+
+
+                return (
+                    summonCost >= 3
+                );
+
+            }
+        );
+
+
+    //----------------------------------
+    // 対象なし
+    //----------------------------------
+
+    if(
+        infernoTargets.length === 0
+    ){
+
+        console.log(
+            "CPUポイント評価：マギア候補外",
+            card.name,
+            "コスト3以上のPLAYERサモンなし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 対象決定
+    //
+    // 最もコストが高いサモンを優先
+    //----------------------------------
+
+    infernoTargets.sort(
+        (a, b) => {
+
+            const costA =
+                Number(
+                    a.card?.cost
+                ) || 0;
+
+            const costB =
+                Number(
+                    b.card?.cost
+                ) || 0;
+
+            return costB - costA;
+
+        }
+    );
+
+
+    infernoTarget =
+        infernoTargets[0];
+
+
+    console.log(
+        "CPU：インフェルノ使用条件成立",
+        {
+            target:
+                infernoTarget.card?.name,
+
+            cost:
+                infernoTarget.card?.cost
+        }
+    );
+
+}
+
+
     //----------------------------------
     // 現在コスト
     //----------------------------------
@@ -10247,21 +10357,43 @@ if(
     }
 
 
-    //======================================
-    // 対象取得
-    //======================================
+//======================================
+// 対象取得
+//======================================
 
-    let target;
+let target;
 
 
-    //======================================
-    // アクアストリーム
-    //======================================
+//======================================
+// インフェルノ
+//======================================
 
-    if(
-        card.name ===
+if(
+    infernoTarget
+){
+
+    target =
+        infernoTarget;
+
+
+    console.log(
+        "CPU：インフェルノ対象決定",
+        target.card?.name,
+        "cost=",
+        target.card?.cost
+    );
+
+}
+
+
+//======================================
+// アクアストリーム
+//======================================
+
+else if(
+    card.name ===
         "アクアストリーム"
-    ){
+){
 
         const targets =
             aquaStreamInfo.targets;

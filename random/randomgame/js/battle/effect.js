@@ -1200,6 +1200,108 @@ case "damageAllEnemySummons":
 
         }
 
+        //==================================
+// サモンをクールゾーンに置く
+//
+// インフェルノ
+//==================================
+
+case "sendSummonToCool":{
+
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
+    if(
+        !target ||
+        !(target instanceof Summon) ||
+        !target.card ||
+        target.destroyed
+    ){
+
+        console.warn(
+            "sendSummonToCool：対象が不正です",
+            target
+        );
+
+        return "INVALID";
+
+    }
+
+
+    //----------------------------------
+    // 場に存在するか確認
+    //----------------------------------
+
+    const existsOnField =
+        playerField.includes(
+            target
+        ) ||
+        enemyField.includes(
+            target
+        );
+
+
+    if(!existsOnField){
+
+        console.warn(
+            "sendSummonToCool：対象が場にいません",
+            target.card?.name
+        );
+
+        return "INVALID";
+
+    }
+
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "★ インフェルノ効果",
+        {
+            magia:
+                card.name,
+
+            target:
+                target.card.name,
+
+            owner:
+                target.owner
+        }
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //----------------------------------
+    // サモンをクールゾーンへ
+    //
+    // ラミアで使用している
+    // 既存の移動処理を利用
+    //----------------------------------
+
+    moveLamiaTargetToCool(
+        target
+    );
+
+
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
+
+    addBattleLog(
+        `${card.name}：${target.card.name}をクールゾーンに置いた`
+    );
+
+
+    return "DONE";
+
+}
+
 
         //==================================
         // サモンをヨコ向き
