@@ -144,14 +144,13 @@ closeCostView();
                         //----------------------------------
                         // インフェルノ
                         //----------------------------------
-
-                        if(
-                            Number(card.id) === 38
-                        ){
-
-                            return false;
-
-                        }
+if(
+    [38, 48, 56, 64].includes(
+        Number(card.id)
+    )
+){
+    return false;
+}
 
 
                         return true;
