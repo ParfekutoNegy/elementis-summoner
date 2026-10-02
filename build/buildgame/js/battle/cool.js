@@ -196,13 +196,13 @@ function recoverEnemyCoolCard(){
                 // インフェルノ
                 //----------------------------------
 
-                if(
-                    Number(card.id) === 38
-                ){
-
-                    return false;
-
-                }
+if(
+    [38, 48,56,64].includes(
+        Number(card.id)
+    )
+){
+    return false;
+}
 
 
                 return true;
@@ -416,24 +416,39 @@ function resetSummonState(summon){
 // クール回収開始
 //======================================
 
+
 function startCoolRecovery(){
 
     //----------------------------------
-    // クールカードがない
+    // 回収可能なカードを取得
     //----------------------------------
 
-    if(
-        board.playerCoolCards.length === 0
-    ){
+    const recoverableCards =
+        board.playerCoolCards.filter(
+            card =>
+                card &&
+                ![38, 48,56,64].includes(
+                    Number(card.id)
+                )
+        );
+
+    //----------------------------------
+    // 回収可能なカードがない場合
+    //----------------------------------
+
+    if(recoverableCards.length === 0){
 
         console.log(
-            "クールゾーンが空なので回収不要"
+            "回収可能なクールカードなし"
         );
+
+        selectedCoolCard = null;
+
+        coolRecoveryMode = false;
 
         return;
 
     }
-
 
     //----------------------------------
     // 回収モード開始
@@ -443,7 +458,6 @@ function startCoolRecovery(){
 
     selectedCoolCard = null;
 
-
     //----------------------------------
     // アクション案内
     //----------------------------------
@@ -452,14 +466,14 @@ function startCoolRecovery(){
         "手札に戻すカードを選んでください"
     );
 
-
     //----------------------------------
-    // モーダルを作り直す
+    // 回収モーダル表示
     //----------------------------------
 
     openCoolRecoveryModal();
 
 }
+
 
 //======================================
 // クール回収モーダル
@@ -522,12 +536,18 @@ function openCoolRecoveryModal(){
                 "cool-card-wrapper";
 
 
-            //----------------------------------
-            // インフェルノ判定
-            //----------------------------------
+//======================================
+// ターン開始時に回収できないカード
+// 38：インフェルノ
+// 48：ファストコール
+// 56：キャンセレーション
+// 64：ダイヤスキン
+//======================================
 
-            const isInferno =
-                Number(card.id) === 38;
+const isRecoveryBlocked =
+    [38, 48,56,64].includes(
+        Number(card.id)
+    );
 
 
             //----------------------------------
@@ -552,7 +572,7 @@ function openCoolRecoveryModal(){
             // クール回収時の発光
             //==================================
 
-            if(isInferno){
+            if(isRecoveryBlocked){
 
                 //----------------------------------
                 // インフェルノ
@@ -655,7 +675,7 @@ function openCoolRecoveryModal(){
                 // その他の通常選択も解除
                 //----------------------------------
 
-                if(selectedInfoCard){
+                if(isRecoveryBlocked){
 
                     selectedInfoCard.setSelected(
                         false
@@ -728,18 +748,18 @@ function openCoolRecoveryModal(){
                 );
 
 
-                //----------------------------------
-                // インフェルノ
-                //----------------------------------
+//==================================
+// クール回収不可カード
+//==================================
 
-                if(isInferno){
+if(isRecoveryBlocked){
 
-                    console.log(
-                        "クール回収不可：",
-                        card.name
-                    );
+    console.log(
+        "クール回収不可：",
+        card.name
+    );
 
-                }
+}
 
 
                 //----------------------------------
@@ -814,6 +834,32 @@ function confirmCoolRecovery(){
 
     const card =
         selectedCoolCard;
+
+//======================================
+// ターン開始時に回収できないカード
+// 38：インフェルノ
+// 48：ファストコール
+// 56：キャンセレーション
+// 64：ダイヤスキン
+//======================================
+
+if(
+    [38, 48].includes(
+        Number(card.id)
+    )
+){
+
+    console.log(
+        "クール回収不可：",
+        card.name
+    );
+
+    updateButtons();
+
+    return;
+
+}
+
 
 
     console.log(

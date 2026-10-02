@@ -80,24 +80,31 @@ function triggerResist(event){
     }
 
 
-    //----------------------------------
-    // 最終ダメージが0以下なら
-    // 「ダメージを受けた」とはみなさない
-    //----------------------------------
+//----------------------------------
+// ダメージイベントの場合のみ
+// 最終ダメージ0以下を除外
+//----------------------------------
 
-    if(
-        Number(event.damage) <= 0
-    ){
+const isDamageEvent =
+    event.type === GAME_EVENT.BEFORE_PLAYER_DAMAGE ||
+    event.type === GAME_EVENT.BEFORE_SUMMON_DAMAGE ||
+    event.type === GAME_EVENT.AFTER_PLAYER_DAMAGE;
 
-        console.log(
-            "レジスト発動なし：最終ダメージ0",
-            "damage=",
-            event.damage
-        );
 
-        return false;
+if(
+    isDamageEvent &&
+    Number(event.damage) <= 0
+){
 
-    }
+    console.log(
+        "レジスト発動なし：最終ダメージ0",
+        "damage=",
+        event.damage
+    );
+
+    return false;
+
+}
 
 
     //==================================
@@ -502,6 +509,73 @@ const result = [];
 
 
 //======================================
+// レジスト選択時の案内文
+//======================================
+
+function getResistGuideMessage(event){
+
+    //----------------------------------
+    // 相手がカードをプレイした場合
+    //----------------------------------
+
+    if(
+        event.type === GAME_EVENT.ENEMY_PLAY_CARD
+    ){
+
+const cardName =
+    event.source?.card?.name ??
+    event.source?.name ??
+    event.card?.name ??
+    "相手のカード";
+
+        return (
+            `${cardName}がプレイされました。<br>\n\n` +
+            "レジストをプレイしますか？"
+        );
+
+    }
+
+    //----------------------------------
+    // ダメージを受ける場合
+    //----------------------------------
+
+    const isDamageEvent =
+        event.type === GAME_EVENT.BEFORE_PLAYER_DAMAGE ||
+        event.type === GAME_EVENT.BEFORE_SUMMON_DAMAGE ||
+        event.type === GAME_EVENT.AFTER_PLAYER_DAMAGE;
+
+    if(isDamageEvent){
+
+        const damage =
+            Number(event.damage) || 0;
+
+        const targetName =
+            event.type === GAME_EVENT.BEFORE_SUMMON_DAMAGE
+                ? (
+                    event.target?.card?.name ??
+                    event.target?.name ??
+                    "サモン"
+                )
+                : "プレイヤー";
+
+        return (
+            `${targetName}は${damage}ダメージを受けます。<br>\n\n` +
+            "レジストをプレイしますか？"
+        );
+
+    }
+
+    //----------------------------------
+    // その他のイベント
+    //----------------------------------
+
+    return "レジストをプレイしますか？";
+
+}
+
+
+
+//======================================
 // レジスト選択表示
 //======================================
 
@@ -548,7 +622,7 @@ selectableResistCards.forEach(card=>{
     //----------------------------------
 
     showActionGuide(
-        "レジストをプレイしますか？"
+        getResistGuideMessage(event)
     );
 
     //----------------------------------

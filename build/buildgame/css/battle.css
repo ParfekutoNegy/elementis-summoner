@@ -1641,3 +1641,35 @@
     background:#594231;
 
 }
+
+/* ======================================
+   CPUカード画像のクリック操作
+====================================== */
+
+/* 背景はクリックを通過 */
+#cpu-card-action-overlay {
+    pointer-events: none;
+}
+
+/* カードパネルはクリック可能 */
+#cpu-card-action-panel {
+    pointer-events: auto;
+}
+
+/* カード画像 */
+#cpu-card-action-image {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* ======================================
+   CPUカード表示中のターン終了ボタン
+====================================== */
+
+#battle-screen:has(
+    #cpu-card-action-overlay.active
+) #endturn-button {
+
+    pointer-events: none;
+
+}

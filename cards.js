@@ -724,15 +724,27 @@ const CARD_LIST = [
 
         }
     },
-    {
-        id: 48,
-        name:"ファストコール",
-        type: "レジスト",
-        element: "風",
-        cost: 3,
-        series:"folklore",
-        image: "images/048-ファストコール.jpg"
-    },
+{
+    id: 48,
+    name: "ファストコール",
+    type: "レジスト",
+    element: "風",
+    cost: 3,
+    series: "folklore",
+    image: "images/048-ファストコール.jpg",
+
+    condi: "相手がカードをプレイしたとき。",
+
+    text:
+        "自分の手札のサモンを１枚選び、" +
+        "コストを支払いプレイする。" +
+        "『ファストコール』はターン開始時に" +
+        "クールゾーンから手札に加えられない。",
+
+    trigger: "enemyPlayCard",
+
+    effect: "fastCall"
+},
     {
         id: 49,
         name:"マーフォーク",

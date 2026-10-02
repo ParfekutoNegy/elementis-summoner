@@ -45,23 +45,30 @@ function startTurn(){
     resetAttackState();
 
 
-    //----------------------------------
-    // 状態リセット
-    //----------------------------------
+//----------------------------------
+// 状態リセット
+//----------------------------------
 
-    summonUsedThisTurn =
-        false;
+summonUsedThisTurn =
+    false;
 
-    summonCard =
-        null;
+//----------------------------------
+// ファストコール
+// 相手ターン中の召喚回数をリセット
+//----------------------------------
 
-    selectedCostCards =
-        [];
+resetFastCallSummon();
 
-    costConfirm =
-        false;
+summonCard =
+    null;
 
-    closeCostView();
+selectedCostCards =
+    [];
+
+costConfirm =
+    false;
+
+closeCostView();
 
 
     //----------------------------------
@@ -441,6 +448,30 @@ function beginPlaying(){
 //======================================
 
 function endTurn(){
+
+    //==================================
+// CPUカード表示中はターン終了禁止
+//==================================
+
+const cpuCardOverlay =
+    document.getElementById(
+        "cpu-card-action-overlay"
+    );
+
+if(
+    cpuCardOverlay &&
+    cpuCardOverlay.classList.contains(
+        "active"
+    )
+){
+
+    console.log(
+        "CPUカード表示中のためターン終了不可"
+    );
+
+    return;
+
+}
 
     //----------------------------------
     // PLAYERターン以外

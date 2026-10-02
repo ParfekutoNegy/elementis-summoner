@@ -7,6 +7,79 @@ let currentResistEvent = null;
 let resistPassedThisEvent = false;
 
 //======================================
+// ファストコール
+// 相手ターン中の召喚管理
+//======================================
+
+// 相手ターン中にファストコールで
+// サモンを召喚したかどうか
+
+let fastCallSummonUsed = false;
+
+//--------------------------------------
+// ファストコール効果処理中
+//--------------------------------------
+
+let fastCallSelectingSummon = false;
+
+let fastCallSelectedSummon = null;
+
+
+//--------------------------------------
+// ファストコールによる召喚が可能か
+//--------------------------------------
+
+function canFastCallSummon(){
+
+    // 自分のターン中は使用不可
+    if(game.currentPlayer !== ENEMY){
+
+        return false;
+
+    }
+
+    // 相手ターン中に召喚済み
+    if(fastCallSummonUsed){
+
+        return false;
+
+    }
+
+    return true;
+
+}
+
+
+//--------------------------------------
+// ファストコールによる召喚成立
+//--------------------------------------
+
+function registerFastCallSummon(){
+
+    fastCallSummonUsed = true;
+
+    console.log(
+        "ファストコール：相手ターン中の召喚完了"
+    );
+
+}
+
+
+//--------------------------------------
+// 相手ターン用の召喚回数をリセット
+//--------------------------------------
+
+function resetFastCallSummon(){
+
+    fastCallSummonUsed = false;
+
+    console.log(
+        "ファストコール：召喚回数リセット"
+    );
+
+}
+
+//======================================
 // レジスト発動開始
 //======================================
 
@@ -75,7 +148,7 @@ function startResistCost(){
     if(currentCost > 0){
 
         showActionGuide(
-            `コストゾーンに置くカードを<br>${currentCost}枚選んでください`
+            `コストゾーンに置くカードを<br>${currentCost}枚選んでください。`
         );
 
     }
@@ -374,13 +447,21 @@ function payResistCost(){
     resistUsingCard.usedThisEvent = true;
 
 
-    //----------------------------------
-    // 効果発動
-    //----------------------------------
+//----------------------------------
+// ファストコール判定
+//----------------------------------
 
-    activateResist(
-        resistUsingCard
-    );
+const isFastCall =
+    resistUsingCard.effect === "fastCall";
+
+
+//----------------------------------
+// 効果発動
+//----------------------------------
+
+activateResist(
+    resistUsingCard
+);
 
 
     //----------------------------------
@@ -433,12 +514,133 @@ function payResistCost(){
         payCost;
 
 
-    finishResist();
+//----------------------------------
+// ファストコールの場合は
+// サモンの召喚完了まで待機
+//----------------------------------
 
-    updateButtons();
+if(!isFastCall){
+
+    finishResist();
 
 }
 
+updateButtons();
+
+}
+
+//======================================
+// ファストコール
+//======================================
+
+function fastCall(card, event){
+
+    console.log(
+        "ファストコール発動",
+        event
+    );
+
+    //----------------------------------
+    // 相手ターン中の召喚制限
+    //----------------------------------
+
+    if(!canFastCallSummon()){
+
+        console.log(
+            "ファストコール：召喚不可"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // 手札のサモンを取得
+    //----------------------------------
+
+    const summonCards =
+        board.handCards.filter(
+            c => c.type === "サモン"
+        );
+
+    //----------------------------------
+    // 選択状態を開始
+    //----------------------------------
+
+    fastCallSelectingSummon = true;
+
+    fastCallSelectedSummon = null;
+
+    //----------------------------------
+// ファストコール：サモン選択案内
+//----------------------------------
+
+showActionGuide(
+    "プレイするサモンを選んでください。"
+);
+
+    //----------------------------------
+// 召喚可能なサモンを発光
+//----------------------------------
+
+updateHandHighlight();
+updateButtons();
+
+    console.log(
+        "ファストコール：サモン選択開始",
+        summonCards.map(c => c.name)
+    );
+
+}
+
+//======================================
+// ファストコール
+// サモン選択
+//======================================
+
+function selectFastCallSummon(card){
+
+    if(!fastCallSelectingSummon){
+
+        return;
+
+    }
+
+    //----------------------------------
+    // 手札のサモンのみ選択可能
+    //----------------------------------
+
+    if(
+        card.area !== "hand" ||
+        card.type !== "サモン" ||
+        !board.handCards.includes(card)
+    ){
+
+        return;
+
+    }
+
+    //----------------------------------
+    // 選択状態を更新
+    //----------------------------------
+
+    board.handCards.forEach(c => {
+
+        c.setSelected(false);
+
+    });
+
+    fastCallSelectedSummon = card;
+
+    card.setSelected(true);
+
+    showCardInfo(card);
+
+    console.log(
+        "ファストコール：サモン選択",
+        card.name
+    );
+
+}
 
 //======================================
 // レジスト効果一覧
@@ -452,7 +654,9 @@ const resistEffects = {
     liquidVeil,
     rapidMove,
     sandProtect,
-    illusionFog
+    illusionFog,
+
+    fastCall
 
 };
 
@@ -494,15 +698,32 @@ function activateResist(card){
 
     }
 
-    //----------------------------------
-    // 軽減後ダメージ処理へ
-    //----------------------------------
+//----------------------------------
+// ファストコールの場合は
+// サモンの召喚完了まで待機
+//----------------------------------
 
-    setTimeout(()=>{
+if(card.effect === "fastCall"){
 
-        finishResist();
+    console.log(
+        "ファストコール：サモン選択待機"
+    );
 
-    },2000);
+    return;
+
+}
+
+
+//----------------------------------
+// 通常レジスト
+// 軽減後ダメージ処理へ
+//----------------------------------
+
+setTimeout(()=>{
+
+    finishResist();
+
+},2000);
 
 
 }
@@ -580,16 +801,23 @@ resistPassedThisEvent = true;
     resistMode =
         false;
 
+//----------------------------------
+// ダメージイベントの場合のみ
+// ダメージを正規化
+//----------------------------------
 
-    //----------------------------------
-    // ダメージを正規化
-    //----------------------------------
+if(
+    event.type !==
+    GAME_EVENT.ENEMY_PLAY_CARD
+){
 
     event.damage =
         Math.max(
             0,
-            event.damage
+            event.damage ?? 0
         );
+
+}
 
 
     console.log(
@@ -855,6 +1083,111 @@ function sandProtect(card){
 }
 
 //======================================
+// カードプレイイベント終了処理
+//======================================
+
+function finishCardPlayResist(){
+
+    if(
+        !currentResistEvent ||
+        currentResistEvent.type !==
+            GAME_EVENT.ENEMY_PLAY_CARD
+    ){
+        return false;
+    }
+
+    const event = currentResistEvent;
+
+    //----------------------------------
+    // レジスト状態を解除
+    //----------------------------------
+
+    selectableResistCards.forEach(card => {
+
+        card.setSelected(false);
+        card.setHighlight(false);
+
+    });
+
+    currentResistEvent = null;
+
+    resistMode = false;
+    resistUsingCard = null;
+    resistCostConfirm = false;
+
+    selectedResistCostCards = [];
+    selectableResistCards = [];
+
+    resistPassedThisEvent = false;
+
+
+//==================================
+// CPUの事前カード表示を終了
+//==================================
+
+if(
+    typeof hideCpuCardAction === "function"
+){
+    hideCpuCardAction();
+}
+
+
+
+//----------------------------------
+// 中断していたCPUのカードプレイを再開
+//----------------------------------
+
+if(
+    typeof event.resume === "function"
+){
+
+    console.log(
+        "ファストコール：レジスト処理終了"
+    );
+
+    // レジスト処理の終了後に
+    // CPUのカードプレイを再開する
+    setTimeout(
+        ()=>{
+
+            // ゲームが終了していた場合は
+            // CPUの行動を再開しない
+            if(
+                battleGameEnding ||
+                battleGameConceded
+            ){
+
+                cpuFastCallWaiting = false;
+
+                cpuFastCallPendingAction = null;
+
+                cpuWaiting = false;
+
+                return;
+
+            }
+
+            event.resume();
+
+        },
+        300
+    );
+
+}else{
+
+    console.warn(
+        "ファストコール：CPU再開処理なし"
+    );
+
+}
+
+    updateButtons();
+
+    return true;
+
+}
+
+//======================================
 // レジスト終了
 //======================================
 
@@ -869,6 +1202,71 @@ function finishResist(){
         console.log(
             "finishResist：イベントなし"
         );
+
+        return;
+
+    }
+
+    //======================================
+// CPUファストコール終了処理
+//======================================
+
+if(
+    currentResistEvent.type ===
+    GAME_EVENT.PLAY_CARD
+){
+
+    const event = currentResistEvent;
+
+    // レジスト状態を解除
+    currentResistEvent = null;
+
+    resistMode = false;
+    resistUsingCard = null;
+    resistCostConfirm = false;
+
+    selectedResistCostCards = [];
+    selectableResistCards = [];
+
+    resistPassedThisEvent = false;
+
+    // CPUのカード表示を終了
+    if(
+        typeof hideCpuCardAction ===
+        "function"
+    ){
+        hideCpuCardAction();
+    }
+
+    // 中断していたプレイヤーの行動を再開
+    if(
+        typeof event.resume ===
+        "function"
+    ){
+
+        setTimeout(
+            () => event.resume(),
+            300
+        );
+
+    }
+
+    return;
+
+}
+
+
+    //==================================
+    // ファストコール
+    // カードプレイイベントの終了
+    //==================================
+
+    if(
+        currentResistEvent.type ===
+        GAME_EVENT.ENEMY_PLAY_CARD
+    ){
+
+        finishCardPlayResist();
 
         return;
 
@@ -1607,9 +2005,11 @@ function cancelResistCost(){
     // 行動案内をレジスト選択に戻す
     //----------------------------------
 
-    showActionGuide(
-        "レジストをプレイしますか？"
-    );
+showActionGuide(
+    getResistGuideMessage(
+        currentResistEvent
+    )
+);
 
     updateGameState();
 
@@ -1821,6 +2221,172 @@ function getCurrentEnemyCardCost(card){
 }
 
 //======================================
+// CPUファストコール専用召喚
+//======================================
+
+function executeCpuFastCallSummon(card){
+
+    if(
+        !card ||
+        !enemyHandCards.includes(card)
+    ){
+        return false;
+    }
+
+    // 属性による使用制限
+    if(
+        !canPlaySummonByElementRestriction(
+            ENEMY,
+            card
+        )
+    ){
+        return false;
+    }
+
+//----------------------------------
+// 現在の召喚コスト
+//----------------------------------
+
+const currentCost =
+    getCurrentCardCost(
+        card,
+        ENEMY
+    );
+
+
+//======================================
+// ファストコール専用コスト選択
+//======================================
+
+// 召喚するサモン自身を除外
+const candidates =
+    enemyHandCards.filter(
+        handCard =>
+            handCard !== card
+    );
+
+
+//----------------------------------
+// カードの種類ごとに分類
+//----------------------------------
+
+const summons =
+    candidates.filter(
+        c => c.type === "サモン"
+    );
+
+const magias =
+    candidates.filter(
+        c => c.type === "マギア"
+    );
+
+const resists =
+    candidates.filter(
+        c => c.type === "レジスト"
+    );
+
+
+//----------------------------------
+// 通常のCPUと同じ優先順位
+//----------------------------------
+
+summons.sort(
+    () => Math.random() - 0.5
+);
+
+magias.sort(
+    () => Math.random() - 0.5
+);
+
+resists.sort(
+    () => Math.random() - 0.5
+);
+
+
+//----------------------------------
+// 必要なコストを選択
+//----------------------------------
+
+const costCards = [
+    ...summons,
+    ...magias,
+    ...resists
+].slice(
+    0,
+    currentCost
+);
+
+
+console.log(
+    "CPUファストコール召喚コスト",
+    costCards.map(c => c.name)
+);
+
+    // コスト不足、または召喚カード自身が
+    // コストに選ばれている場合は中止
+    if(
+        costCards.length < currentCost ||
+        costCards.includes(card)
+    ){
+        console.log(
+            "CPUファストコール：召喚コスト不足",
+            card.name
+        );
+
+        return false;
+    }
+
+    // コスト支払い
+    costCards.forEach(costCard => {
+        moveEnemyToCost(costCard);
+    });
+
+    // 召喚実行
+//----------------------------------
+// ファストコールによる召喚
+//----------------------------------
+
+const summon =
+    executeSummon(
+        card,
+        ENEMY
+    );
+
+if(!summon){
+
+    console.log(
+        "CPUファストコール：召喚失敗",
+        card.name
+    );
+
+    return false;
+
+}
+
+
+//======================================
+// カードプレイ枚数を記録
+//======================================
+
+registerCardPlay(
+    ENEMY,
+    card
+);
+
+    addBattleLog(
+        `CPU：ファストコールで${card.name}を召喚`
+    );
+
+    console.log(
+        "CPUファストコール：召喚完了",
+        card.name
+    );
+
+    return true;
+
+}
+
+//======================================
 // CPUレジスト使用
 //======================================
 
@@ -1883,11 +2449,103 @@ function useCpuResist(card){
     // コストカード取得
     //----------------------------------
 
-    const costCards =
+//======================================
+// CPUレジストのコスト選択
+//======================================
+
+let costCards;
+
+// ファストコールで召喚するサモン
+let reservedSummon = null;
+
+if(card.effect === "fastCall"){
+
+//======================================
+// 召喚コストも確保できる組み合わせを探す
+//======================================
+
+const summonCards =
+    enemyHandCards.filter(
+        c =>
+            c !== card &&
+            c.type === "サモン" &&
+            canPlaySummonByElementRestriction(
+                ENEMY,
+                c
+            )
+    );
+
+summonCards.sort(
+    (a, b) =>
+        Number(b.power || 0) -
+        Number(a.power || 0)
+);
+
+
+let reservedCostCards = [];
+
+for(const summon of summonCards){
+
+    const candidates =
+        enemyHandCards.filter(
+            c =>
+                c !== card &&
+                c !== summon
+        );
+
+    const selected =
+        candidates.slice(
+            0,
+            currentCost
+        );
+
+    if(selected.length < currentCost){
+        continue;
+    }
+
+    const remaining =
+        candidates.filter(
+            c => !selected.includes(c)
+        );
+
+    const summonCost =
+        getCurrentCardCost(
+            summon,
+            ENEMY
+        );
+
+    if(remaining.length < summonCost){
+        continue;
+    }
+
+    reservedSummon = summon;
+    reservedCostCards = selected;
+
+    break;
+}
+
+costCards = reservedCostCards;
+
+if(!reservedSummon){
+
+    console.log(
+        "CPUファストコール中止：",
+        "召喚可能な組み合わせなし"
+    );
+
+    return false;
+
+}
+
+}else{
+
+    costCards =
         selectCpuCostCards(
             card,
             currentCost
         );
+
+}
 
 
     //----------------------------------
@@ -1907,6 +2565,105 @@ function useCpuResist(card){
         return false;
 
     }
+
+    //======================================
+// CPUファストコール
+// 召喚サモンの事前確保
+//======================================
+
+let cpuFastCallSummon = null;
+
+if(card.effect === "fastCall"){
+
+    // ファストコールのコストに
+    // 召喚予定のサモンを使わない
+    const availableHand =
+        enemyHandCards.filter(
+            handCard =>
+                handCard !== card &&
+                !costCards.includes(handCard)
+        );
+
+    const summonCards =
+        availableHand.filter(
+            handCard =>
+                handCard.type === "サモン" &&
+                canPlaySummonByElementRestriction(
+                    ENEMY,
+                    handCard
+                )
+        );
+
+//======================================
+// 召喚可能なサモンを選択
+//======================================
+
+// パワーが高い順に並べる
+summonCards.sort(
+    (a, b) =>
+        Number(b.power || 0) -
+        Number(a.power || 0)
+);
+
+
+//--------------------------------------
+// コストを支払えるサモンを探す
+//--------------------------------------
+
+cpuFastCallSummon =
+    reservedSummon;
+
+if(!cpuFastCallSummon){
+
+    console.log(
+        "CPUファストコール中止：召喚サモンなし"
+    );
+
+    return false;
+
+}
+
+//======================================
+// 召喚コストの事前確認
+//======================================
+
+const summonCost =
+    getCurrentCardCost(
+        cpuFastCallSummon,
+        ENEMY
+    );
+
+// ファストコールのコスト支払い後に
+// 残るカードを取得
+const remainingHand =
+    enemyHandCards.filter(
+        handCard =>
+            handCard !== card &&
+            handCard !== cpuFastCallSummon &&
+            !costCards.includes(handCard)
+    );
+
+if(remainingHand.length < summonCost){
+
+    console.log(
+        "CPUファストコール中止：召喚コスト不足",
+        cpuFastCallSummon.name,
+        "必要枚数=",
+        summonCost,
+        "使用可能枚数=",
+        remainingHand.length
+    );
+
+    return false;
+
+}
+
+    console.log(
+        "CPUファストコール召喚予定：",
+        cpuFastCallSummon.name
+    );
+
+}
 
 
     //----------------------------------
@@ -2034,14 +2791,35 @@ function useCpuResist(card){
         ];
 
 
-    if(effect){
+//======================================
+// CPUレジスト効果発動
+//======================================
 
-        effect(
-            card,
-            currentResistEvent
+if(card.effect === "fastCall"){
+
+    console.log(
+        "CPUファストコール：専用召喚開始",
+        cpuFastCallSummon?.name
+    );
+
+    const summonResult =
+        executeCpuFastCallSummon(
+            cpuFastCallSummon
         );
 
-    }
+    console.log(
+        "CPUファストコール：召喚結果",
+        summonResult
+    );
+
+}else if(effect){
+
+    effect(
+        card,
+        currentResistEvent
+    );
+
+}
 
 
     //----------------------------------
@@ -2134,5 +2912,235 @@ function illusionFog(card){
             ?.card
             ?.name
     );
+
+}
+
+function startFastCallSummonCost(){
+
+    const card = fastCallSelectedSummon;
+
+    if(!card || !fastCallSelectingSummon){
+        return;
+    }
+
+    if(!canFastCallSummon()){
+        return;
+    }
+
+    if(!canPlayCardByLimit(PLAYER)){
+        return;
+    }
+
+    if(!canPlaySummonByElementRestriction(PLAYER, card)){
+        return;
+    }
+
+    if(!canPayCost(card)){
+        alert("サモンのコストが足りません");
+        return;
+    }
+
+    fastCallSelectingSummon = false;
+
+    summonCard = card;
+    costTargetCard = card;
+    costMode = "fastCallSummon";
+
+    selectedCostCards = [];
+
+    costConfirm =
+        getCurrentCardCost(card, PLAYER) === 0;
+
+    board.handCards.forEach(c => {
+        c.setHighlight(false);
+    });
+
+    showActionGuide(
+        "サモンのコストを選択してください。"
+    );
+
+    updateButtons();
+}
+function payFastCallSummonCost(){
+
+    const card = summonCard;
+
+    if(
+        costMode !== "fastCallSummon" ||
+        !card ||
+        card !== fastCallSelectedSummon
+    ){
+        return;
+    }
+
+    if(!canFastCallSummon()){
+        return;
+    }
+
+    if(
+        !canPlayCardByLimit(PLAYER) ||
+        !canPlaySummonByElementRestriction(PLAYER, card)
+    ){
+        return;
+    }
+
+    const requiredCost =
+        getCurrentCardCost(card, PLAYER);
+
+    if(
+        !costConfirm ||
+        selectedCostCards.length !== requiredCost ||
+        selectedCostCards.some(
+            c =>
+                c === card ||
+                !board.handCards.includes(c)
+        )
+    ){
+        return;
+    }
+
+    //----------------------------------
+    // サモンのコストを支払う
+    //----------------------------------
+
+    selectedCostCards.forEach(c => {
+
+        c.setSelected(false);
+        c.setCostSelected(false);
+
+        moveToCost(c);
+
+    });
+
+    //----------------------------------
+    // サモンを場に出す
+    //----------------------------------
+
+    card.setSelected(false);
+
+    board.removeHandCard(card);
+
+    registerCardPlay(PLAYER, card);
+
+    card.area = "field";
+
+    const summon =
+        new Summon(card, PLAYER);
+
+    summon.attackReady = false;
+
+    summon.view.setHighlight(false);
+
+    playerField.push(summon);
+
+    addBattleLog(
+        `PLAYER：ファストコールで${card.name}を召喚`
+    );
+
+    applySummonAbility(summon);
+
+    board.addPlayerCard(summon.view);
+
+    updateHandCostDisplay();
+
+    //----------------------------------
+    // ファストコール専用の召喚回数
+    //----------------------------------
+
+    registerFastCallSummon();
+
+    //----------------------------------
+    // 選択状態を解除
+    //----------------------------------
+
+    selectedCostCards = [];
+
+    summonCard = null;
+    costTargetCard = null;
+
+    selectedHandCard = null;
+
+    costConfirm = false;
+    costMode = null;
+
+    fastCallSelectedSummon = null;
+    fastCallSelectingSummon = false;
+
+    hideActionGuide();
+
+    updateGameState();
+    updateButtons();
+
+    console.log(
+        "ファストコール：サモン召喚完了"
+    );
+
+    //----------------------------------
+// ファストコールの処理終了
+//----------------------------------
+
+finishResist();
+
+}
+
+//======================================
+// ファストコール
+// サモンのコスト支払いキャンセル
+//======================================
+
+function cancelFastCallSummonCost(){
+
+    console.log(
+        "ファストコール：サモン選択に戻る"
+    );
+
+    //----------------------------------
+    // コスト選択解除
+    //----------------------------------
+
+    selectedCostCards.forEach(card=>{
+
+        card.setSelected(false);
+        card.setCostSelected(false);
+
+    });
+
+    selectedCostCards = [];
+
+    //----------------------------------
+    // 選択中サモンを解除
+    //----------------------------------
+
+    if(fastCallSelectedSummon){
+
+        fastCallSelectedSummon.setSelected(
+            false
+        );
+
+    }
+
+    fastCallSelectedSummon = null;
+
+    //----------------------------------
+    // コスト支払い状態を解除
+    //----------------------------------
+
+    summonCard = null;
+    costTargetCard = null;
+    costConfirm = false;
+    costMode = null;
+
+    //----------------------------------
+    // サモン選択に戻る
+    //----------------------------------
+
+    fastCallSelectingSummon = true;
+
+showActionGuide(
+    "プレイするサモンを選んでください。"
+);
+
+    updateHandHighlight();
+    updateButtons();
 
 }

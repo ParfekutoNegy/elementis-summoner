@@ -210,6 +210,9 @@ let hydraCostSelectMode =
     false;
 
 
+    let costMode = null;
+
+
 
 //==================================================
 // カードプレイ枚数取得
@@ -3180,6 +3183,34 @@ if(
     }
 
 
+//==================================================
+// ファストコール
+// 手札のサモン選択中
+//==================================================
+
+if(fastCallSelectingSummon){
+
+    //----------------------------------
+    // 手札のサモンを選択
+    //----------------------------------
+
+    if(
+        card.area === "hand" &&
+        card.type === "サモン"
+    ){
+
+        selectFastCallSummon(card);
+
+    }
+
+    //----------------------------------
+    // 通常のカード操作へ進ませない
+    //----------------------------------
+
+    return;
+
+}
+
     //==================================================
     // レジスト コスト選択中
     //
@@ -4238,7 +4269,10 @@ if(isAttacking()){
 // カード情報表示
 //======================================
 
-function showCardInfo(card){
+function showCardInfo(
+    card,
+    readOnly = false
+){
 
     const image =
         document.getElementById(
@@ -4421,9 +4455,27 @@ function showCardInfo(card){
         "flex";
 
 
-    updateButtons();
+updateButtons();
+
+// 閲覧専用の場合は
+// カード操作ボタンを表示しない
+
+if(readOnly){
+
+    const modal =
+        document.getElementById(
+            "hand-card-modal"
+        );
+
+    // 操作ボタンの制御は
+    // 既存のモーダル構造に合わせて行う
+
+}
+else{
 
     updateCardAction(card);
+
+}
 
 }
 //=========================
@@ -4602,7 +4654,7 @@ function startSummon(card){
     showActionGuide(
         "コストゾーンに置くカードを<br>"+
         currentCost +
-        "枚選んでください"
+        "枚選んでください。"
     );
 
 
@@ -4786,6 +4838,18 @@ function selectCostCard(card){
 function payCost(){
 
     //----------------------------------
+    // ファストコール専用処理
+    //----------------------------------
+
+    if(costMode === "fastCallSummon"){
+
+        payFastCallSummonCost();
+
+        return;
+
+    }
+
+    //----------------------------------
     // 選択したカードをコストへ送る
     //----------------------------------
 
@@ -4900,6 +4964,94 @@ if(
         );
 
     }
+
+    //======================================
+// CPUファストコール判定
+//======================================
+
+const playedCard = summonCard;
+
+const playEvent = {
+
+    type: GAME_EVENT.PLAY_CARD,
+
+    player: ENEMY,
+
+    source: playedCard,
+
+    sourceType: playedCard.type,
+
+    // ファストコール終了後に
+    // プレイヤーのカード処理を再開する
+    resume: null
+
+};
+
+//======================================
+// CPUファストコール判定
+//======================================
+
+// 二重実行防止
+let playerCardPlayResumed = false;
+
+// ファストコール終了後の再開処理
+playEvent.resume = function(){
+
+    if(playerCardPlayResumed){
+        return;
+    }
+
+    playerCardPlayResumed = true;
+
+    console.log(
+        "プレイヤーのカード処理再開",
+        playedCard.name
+    );
+
+    continuePlayerCardPlay();
+
+};
+
+
+//--------------------------------------
+// CPUレジスト判定
+//--------------------------------------
+
+const waitCpuResist =
+    emitGameEvent(
+        playEvent
+    );
+
+
+//--------------------------------------
+// CPUファストコール発動
+//--------------------------------------
+
+if(waitCpuResist){
+
+    console.log(
+        "CPUファストコール待機",
+        playedCard.name
+    );
+
+    return;
+
+}
+
+
+//--------------------------------------
+// CPUファストコールなし
+//--------------------------------------
+
+playEvent.resume();
+
+}
+
+//======================================
+// プレイヤーのカード処理を再開
+//======================================
+
+function continuePlayerCardPlay(){
 
 
     //----------------------------------
@@ -5887,6 +6039,29 @@ const actionRunning =
 resetActionButtons();
 
 //======================================
+// ファストコール：サモン選択中
+//======================================
+
+if(fastCallSelectingSummon){
+
+    actionArea.style.display = "flex";
+
+    if(fastCallSelectedSummon){
+
+        confirmButton.style.display =
+            "inline-block";
+
+        confirmButton.textContent =
+            "決定";
+
+        confirmButton.onclick =
+            startFastCallSummonCost;
+    }
+
+    return;
+}
+
+//======================================
 // ヒュドラ
 // ダメージ無効能力
 //======================================
@@ -6349,13 +6524,20 @@ if(coolRecoveryMode){
     }
 
 
-    //==================================
-    // インフェルノ
-    //==================================
+//======================================
+// ターン開始時に回収できないカード
+//
+// 38：インフェルノ
+// 48：ファストコール
+// 56：キャンセレーション
+// 64：ダイヤスキン
+//======================================
 
-    if(
-        Number(selectedCoolCard.id) === 38
-    ){
+if(
+    [38, 48,56,64].includes(
+        Number(selectedCoolCard.id)
+    )
+){
 
         //----------------------------------
         // 選択自体は可能
@@ -7019,8 +7201,22 @@ if(summonCard){
     cancelButton.style.display =
     "inline-block";
 
-    cancelButton.onclick =
-    cancelSummon;
+
+cancelButton.onclick = ()=>{
+
+    if(costMode === "fastCallSummon"){
+
+        cancelFastCallSummonCost();
+
+    }
+    else{
+
+        cancelSummon();
+
+    }
+
+};
+
 
     confirmButton.textContent =
     "決定";
@@ -7354,12 +7550,16 @@ function openCoolModal(
                     "cool-card-wrapper";
 
 
-                //----------------------------------
-                // インフェルノ判定
-                //----------------------------------
+// 回収不可カード
+// 38：インフェルノ
+// 48：ファストコール
+// 56：キャンセレーション
+// 64：ダイヤスキン
 
-                const isInferno =
-                    Number(card.id) === 38;
+const isRecoveryBlocked =
+    [38, 48, 56, 64].includes(
+        Number(card.id)
+    );
 
 
                 //----------------------------------
@@ -7387,13 +7587,11 @@ function openCoolModal(
                 if(coolRecoveryMode){
 
                     //----------------------------------
-                    // インフェルノ
-                    //
                     // 回収不可なので
                     // 発光させない
                     //----------------------------------
 
-                    if(isInferno){
+                    if(isRecoveryBlocked){
 
                         console.log(
                             "クール回収発光なし：",
@@ -7565,10 +7763,10 @@ function openCoolModal(
 
 
                         //----------------------------------
-                        // インフェルノ
+                        // インフェルノ等
                         //----------------------------------
 
-                        if(isInferno){
+                        if(isRecoveryBlocked){
 
                             console.log(
                                 "クール回収不可：",
@@ -8207,14 +8405,20 @@ function recoverCoolCards(owner){
     const card =
         selectedCoolCard;
 
-            //==================================
-    // インフェルノ
-    // ターン開始時のクール回収不可
-    //==================================
+//======================================
+// ターン開始時に回収できないカード
+//
+// 38：インフェルノ
+// 48：ファストコール
+// 56：キャンセレーション
+// 64：ダイヤスキン
+//======================================
 
-    if(
-        card.id === 38
-    ){
+if(
+    [38, 48, 56, 64].includes(
+        Number(card.id)
+    )
+){
 
         console.log(
             "クール回収不可：",
@@ -12435,18 +12639,17 @@ function logCpuCardTotal(){
 let cpuCardActionTimer = null;
 
 
+
 function showCpuCardAction(
     card,
     actionType = "MAGIA",
-    target = null
+    target = null,
+    keepVisible = false
 ){
 
     if(!card){
-
         return;
-
     }
-
 
     //----------------------------------
     // DOM取得
@@ -12457,36 +12660,30 @@ function showCpuCardAction(
             "cpu-card-action-overlay"
         );
 
-
     const panel =
         document.getElementById(
             "cpu-card-action-panel"
         );
-
 
     const typeElement =
         document.getElementById(
             "cpu-card-action-type"
         );
 
-
     const imageElement =
         document.getElementById(
             "cpu-card-action-image"
         );
-
 
     const nameElement =
         document.getElementById(
             "cpu-card-action-name"
         );
 
-
     const targetElement =
         document.getElementById(
             "cpu-card-action-target"
         );
-
 
     if(
         !overlay ||
@@ -12496,15 +12693,12 @@ function showCpuCardAction(
         !nameElement ||
         !targetElement
     ){
-
         console.warn(
             "CPUカード使用演出：DOMが見つかりません"
         );
 
         return;
-
     }
-
 
     //----------------------------------
     // 前回タイマー解除
@@ -12517,9 +12711,7 @@ function showCpuCardAction(
         );
 
         cpuCardActionTimer = null;
-
     }
-
 
     //----------------------------------
     // フェード解除
@@ -12529,42 +12721,59 @@ function showCpuCardAction(
         "fade-out"
     );
 
-
-//----------------------------------
-// 種類
-//----------------------------------
-
-if(
-    actionType === "RESIST"
-){
-
-    typeElement.textContent =
-        "CPU RESIST";
-
-}
-else if(
-    actionType === "ABILITY"
-){
-
-    typeElement.textContent =
-        "CPU ABILITY";
-
-}
-else{
-
-    typeElement.textContent =
-        "CPU MAGIA";
-
-}
-
-
     //----------------------------------
-    // カード画像
+    // カードの種類
     //----------------------------------
 
-    imageElement.src =
-        card.image;
+    if(actionType === "RESIST"){
 
+        typeElement.textContent =
+            "CPU RESIST";
+
+    }
+    else if(actionType === "ABILITY"){
+
+        typeElement.textContent =
+            "CPU ABILITY";
+
+    }
+    else if(actionType === "SUMMON"){
+
+        typeElement.textContent =
+            "CPU SUMMON";
+
+    }
+    else{
+
+        typeElement.textContent =
+            "CPU MAGIA";
+    }
+
+//----------------------------------
+// カード画像
+//----------------------------------
+
+imageElement.src =
+    card.image;
+
+imageElement.style.cursor = "pointer";
+
+imageElement.onclick = function(event){
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log(
+        "CPUカード画像クリック成功",
+        card.name
+    );
+
+    showCardInfo(
+        card,
+        true
+    );
+
+};
 
     //----------------------------------
     // カード名
@@ -12573,14 +12782,11 @@ else{
     nameElement.textContent =
         card.name;
 
-
     //----------------------------------
     // 対象
     //----------------------------------
 
-    if(
-        actionType === "RESIST"
-    ){
+    if(actionType === "RESIST"){
 
         targetElement.style.display =
             "none";
@@ -12591,46 +12797,31 @@ else{
         targetElement.style.display =
             "block";
 
-
         let targetName =
             "不明";
-
 
         if(
             target === PLAYER ||
             target === "player"
         ){
-
-            targetName =
-                "PLAYER";
-
+            targetName = "PLAYER";
         }
         else if(
             target === ENEMY ||
             target === "enemy"
         ){
-
-            targetName =
-                "CPU";
-
+            targetName = "CPU";
         }
-        else if(
-            target.card
-        ){
+        else if(target.card){
 
             targetName =
                 target.card.name;
-
         }
-        else if(
-            target.name
-        ){
+        else if(target.name){
 
             targetName =
                 target.name;
-
         }
-
 
         targetElement.textContent =
             `対象：${targetName}`;
@@ -12640,21 +12831,33 @@ else{
 
         targetElement.style.display =
             "none";
-
     }
 
-
     //----------------------------------
-    // 表示
+    // カード表示
     //----------------------------------
 
     overlay.classList.add(
         "active"
     );
 
+    //----------------------------------
+    // レジスト確認中は表示を維持
+    //----------------------------------
+
+    if(keepVisible){
+
+        console.log(
+            "CPUカード表示を維持：",
+            card.name
+        );
+
+        return;
+    }
 
     //----------------------------------
-    // フェードアウト
+    // 通常のカード使用演出
+    // 3秒後にフェードアウト
     //----------------------------------
 
     cpuCardActionTimer =
@@ -12664,12 +12867,20 @@ else{
                 "fade-out"
             );
 
-
-            //----------------------------------
-            // 完全に消えたら非表示
-            //----------------------------------
+            cpuCardActionTimer = null;
 
             setTimeout(()=>{
+
+                // この間に別のカードが
+                // 表示されていた場合は消さない
+                if(
+                    cpuCardActionTimer !== null ||
+                    !overlay.classList.contains(
+                        "fade-out"
+                    )
+                ){
+                    return;
+                }
 
                 overlay.classList.remove(
                     "active",
@@ -12678,9 +12889,42 @@ else{
 
             },300);
 
-
         },3000);
+}
 
+
+//======================================
+// CPUカード使用演出を終了
+//======================================
+
+function hideCpuCardAction(){
+
+    const overlay =
+        document.getElementById(
+            "cpu-card-action-overlay"
+        );
+
+    if(cpuCardActionTimer){
+
+        clearTimeout(
+            cpuCardActionTimer
+        );
+
+        cpuCardActionTimer = null;
+    }
+
+    if(!overlay){
+        return;
+    }
+
+    overlay.classList.remove(
+        "active",
+        "fade-out"
+    );
+
+    console.log(
+        "CPUカード使用演出を終了"
+    );
 }
 
 

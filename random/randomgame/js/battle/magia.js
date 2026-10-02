@@ -1075,7 +1075,7 @@ function startMagiaCost(){
     if(currentCost > 0){
 
         showActionGuide(
-            `コストゾーンに置くカードを<br>${currentCost}枚選んでください`
+            `コストゾーンに置くカードを<br>${currentCost}枚選んでください。`
         );
 
     }

@@ -2005,44 +2005,19 @@ function canUseCard(card){
 // 手札使用可能発光
 //======================================
 
+
 function updateHandHighlight(){
-        console.log(
+
+    console.log(
         "updateHandHighlight",
         "resistMode=",
         resistMode,
-        "selectable=",
-        selectableResistCards.map(c=>c.name)
+        "fastCallSelectingSummon=",
+        fastCallSelectingSummon
     );
 
-
     //----------------------------------
-    // レジスト選択中
-    //----------------------------------
-
-    if(resistMode){
-
-        board.handCards.forEach(card=>{
-
-            card.setHighlight(false);
-
-        });
-
-
-        selectableResistCards.forEach(card=>{
-
-            card.setHighlight(true);
-
-        });
-
-
-        return;
-
-    }
-
-
-
-    //----------------------------------
-    // 全解除
+    // 一度すべての発光を解除
     //----------------------------------
 
     board.handCards.forEach(card=>{
@@ -2051,11 +2026,67 @@ function updateHandHighlight(){
 
     });
 
+    //==================================
+    // ファストコール
+    // サモン選択中
+    //==================================
 
+    if(fastCallSelectingSummon){
 
-    //----------------------------------
+        board.handCards.forEach(card=>{
+
+            //----------------------------------
+            // サモン以外は対象外
+            //----------------------------------
+
+            if(card.type !== "サモン"){
+                return;
+            }
+
+            //----------------------------------
+            // プレイ枚数制限
+            //----------------------------------
+
+            if(!canPlayCardByLimit(PLAYER)){
+                return;
+            }
+
+            //----------------------------------
+            // 属性による召喚制限
+            //----------------------------------
+
+            if(
+                !canPlaySummonByElementRestriction(
+                    PLAYER,
+                    card
+                )
+            ){
+                return;
+            }
+
+            //----------------------------------
+            // コスト支払い可否
+            //----------------------------------
+
+            if(!canPayCost(card)){
+                return;
+            }
+
+            //----------------------------------
+            // プレイ可能なサモンを発光
+            //----------------------------------
+
+            card.setHighlight(true);
+
+        });
+
+        return;
+
+    }
+
+    //==================================
     // レジスト選択中
-    //----------------------------------
+    //==================================
 
     if(resistMode){
 
@@ -2065,19 +2096,15 @@ function updateHandHighlight(){
 
         });
 
-
         return;
 
     }
 
-
-
-    //----------------------------------
-    // 通常使用可能カード
-    //----------------------------------
+    //==================================
+    // 通常の手札
+    //==================================
 
     board.handCards.forEach(card=>{
-
 
         if(canUseCard(card)){
 

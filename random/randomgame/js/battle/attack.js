@@ -7729,9 +7729,9 @@ function resolveNextCharybdisTrigger(){
         ){
 
             showActionGuide(
-                `${source.card.name}の能力が発動しました<br>` +
+                `${source.card.name}の能力が発動しました。<br>` +
                 "コストゾーンに置くカードを<br>" +
-                "1枚選んでください"
+                "1枚選んでください。"
             );
 
         }

@@ -5,6 +5,85 @@
 
 let cpuWaiting = false;
 
+//======================================
+// ファストコール
+// CPUカードプレイの一時停止
+//======================================
+
+// ファストコールの解決待ちかどうか
+let cpuFastCallWaiting = false;
+
+// 中断したCPUのカードプレイを保存
+let cpuFastCallPendingAction = null;
+
+
+//--------------------------------------
+// CPUカードプレイを一時保存
+//--------------------------------------
+
+function pauseCpuCardPlayForFastCall(
+    card,
+    resumeAction
+){
+
+    if(cpuFastCallWaiting){
+        return false;
+    }
+
+    cpuFastCallWaiting = true;
+
+    cpuFastCallPendingAction = {
+        card: card,
+        resume: resumeAction
+    };
+
+    cpuWaiting = true;
+
+    console.log(
+        "ファストコール：CPUカードプレイ一時停止",
+        card.name
+    );
+
+    return true;
+
+}
+
+
+//--------------------------------------
+// CPUカードプレイを再開
+//--------------------------------------
+
+function resumeCpuCardPlayAfterFastCall(){
+
+    if(!cpuFastCallWaiting){
+        return;
+    }
+
+    const pending =
+        cpuFastCallPendingAction;
+
+    cpuFastCallWaiting = false;
+
+    cpuFastCallPendingAction = null;
+
+    cpuWaiting = false;
+
+    if(
+        !pending ||
+        typeof pending.resume !== "function"
+    ){
+        return;
+    }
+
+    console.log(
+        "ファストコール：CPUカードプレイ再開",
+        pending.card.name
+    );
+
+    pending.resume();
+
+}
+
 let cpuSelectedBlocker = null;
 
 //======================================
@@ -353,6 +432,10 @@ if(
 //======================================
 // CPU攻撃フェーズ開始
 //======================================
+//======================================
+// CPU攻撃フェーズ開始
+//======================================
+
 function cpuStartAttackPhase(){
 
     console.log(
@@ -360,80 +443,99 @@ function cpuStartAttackPhase(){
     );
 
 
-    //----------------------------------
+    //==================================
     // 最初の攻撃前
-    //----------------------------------
+    //==================================
 
-    if(
-        cpuTurnStep === 0
-    ){
-
-//----------------------------------
-// アクアストリーム
-//----------------------------------
-
-const aquaInfo =
-    cpuShouldUseAquaStream();
+    if(cpuTurnStep === 0){
 
 
-if(aquaInfo){
+        //==============================
+        // アクアストリーム
+        //==============================
 
-    //----------------------------------
-    // PLAYERのサモンからのみ選択
-    //----------------------------------
-
-    const target =
-        aquaInfo.targets[
-            Math.floor(
-                Math.random() *
-                aquaInfo.targets.length
-            )
-        ];
+        const aquaInfo =
+            cpuShouldUseAquaStream();
 
 
-    console.log(
-        "CPU：最初の攻撃前にアクアストリーム使用",
-        "対象=",
-        target.card.name,
-        "owner=",
-        target.owner
-    );
+        if(aquaInfo){
+
+            //----------------------------------
+            // PLAYERのサモンからのみ選択
+            //----------------------------------
+
+            const target =
+                aquaInfo.targets[
+                    Math.floor(
+                        Math.random() *
+                        aquaInfo.targets.length
+                    )
+                ];
 
 
-    //----------------------------------
-    // CPUマギア使用
-    //----------------------------------
-
-    const result =
-        cpuMagia(
-            aquaInfo.card,
-            target
-        );
+            console.log(
+                "CPU：最初の攻撃前にアクアストリーム使用",
+                "対象=",
+                target.card.name,
+                "owner=",
+                target.owner
+            );
 
 
-    console.log(
-        "CPU：アクアストリーム使用結果",
-        result
-    );
+            //----------------------------------
+            // CPUマギア使用
+            //----------------------------------
+
+            const result =
+                cpuMagia(
+                    aquaInfo.card,
+                    target
+                );
 
 
-    if(result){
-
-        setTimeout(
-            runCpuTurnStep,
-            1200
-        );
-
-        return;
-
-    }
-
-}
+            console.log(
+                "CPU：アクアストリーム使用結果",
+                result
+            );
 
 
-        //----------------------------------
+            //==============================
+            // ファストコール解決待ち
+            //==============================
+
+            if(result === "WAIT_FAST_CALL"){
+
+                console.log(
+                    "CPU：アクアストリーム一時停止",
+                    "ファストコール解決待ち"
+                );
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // マギア使用成功
+            //----------------------------------
+
+            if(result === true){
+
+                setTimeout(
+                    runCpuTurnStep,
+                    1200
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        //==============================
         // ウィンドプレッシャー
-        //----------------------------------
+        //==============================
 
         const windPressureInfo =
             cpuShouldUseWindPressure();
@@ -445,6 +547,10 @@ if(aquaInfo){
                 "CPU：最初の攻撃前にウィンドプレッシャー使用"
             );
 
+
+            //----------------------------------
+            // CPUマギア使用
+            //----------------------------------
 
             const result =
                 cpuMagia(
@@ -459,18 +565,15 @@ if(aquaInfo){
             );
 
 
-            //----------------------------------
-            // 強制コスト型
-            //----------------------------------
+            //==============================
+            // ファストコール解決待ち
+            //==============================
 
-            if(
-                windPressureInfo.card.effect &&
-                windPressureInfo.card.effect.type ===
-                "forceCost"
-            ){
+            if(result === "WAIT_FAST_CALL"){
 
                 console.log(
-                    "CPU：ウィンドプレッシャーの選択待ち"
+                    "CPU：ウィンドプレッシャー一時停止",
+                    "ファストコール解決待ち"
                 );
 
                 return;
@@ -478,11 +581,36 @@ if(aquaInfo){
             }
 
 
-            //----------------------------------
-            // 通常マギア
-            //----------------------------------
+            //==============================
+            // マギア使用成功
+            //==============================
 
-            if(result){
+            if(result === true){
+
+
+                //----------------------------------
+                // 強制コスト型
+                //----------------------------------
+
+                if(
+                    windPressureInfo.card.effect &&
+                    windPressureInfo.card.effect.type ===
+                        "forceCost"
+                ){
+
+                    console.log(
+                        "CPU：ウィンドプレッシャー",
+                        "強制コスト選択待ち"
+                    );
+
+                    return;
+
+                }
+
+
+                //----------------------------------
+                // 通常マギア
+                //----------------------------------
 
                 setTimeout(
                     runCpuTurnStep,
@@ -495,32 +623,32 @@ if(aquaInfo){
 
         }
 
-    } // ← 最初の攻撃前のifをここで閉じる
+    }
 
 
-    //----------------------------------
+    //==================================
     // 攻撃キュー作成
-    //----------------------------------
+    //==================================
 
     createCpuAttackQueue();
 
 
-    //----------------------------------
-    // 攻撃可能なし
-    //----------------------------------
+    //==================================
+    // 攻撃可能なサモンなし
+    //==================================
 
-    if(
-        cpuAttackQueue.length === 0
-    ){
+    if(cpuAttackQueue.length === 0){
 
         console.log(
             "CPU攻撃可能サモンなし"
         );
 
 
-        if(
-            cpuTurnStep === 0
-        ){
+        //----------------------------------
+        // 次のフェーズへ
+        //----------------------------------
+
+        if(cpuTurnStep === 0){
 
             cpuTurnStep = 1;
 
@@ -542,20 +670,22 @@ if(aquaInfo){
     }
 
 
-    //----------------------------------
+    //==================================
     // 攻撃開始
-    //----------------------------------
+    //==================================
 
     cpuAttackIndex = 0;
 
-setTimeout(
-    ()=>{
 
-        cpuNextAttack();
+    setTimeout(
+        ()=>{
 
-    },
-    2000
-);
+            cpuNextAttack();
+
+        },
+        2000
+    );
+
 }
 
 
@@ -2508,162 +2638,257 @@ if(
 // CPUサモン召喚
 //======================================
 
-function cpuSummon(card){
+
+function cpuSummon(
+    card,
+    skipFastCall = false,
+    costPaid = false
+){
+
+    //----------------------------------
+    // カード確認
+    //----------------------------------
 
     if(!card){
-
         return false;
-
     }
 
-
-    //==================================
-    // カードプレイ枚数制限
-    //
-    // ジャックフロスト等
-    //==================================
-
-    if(
-        !canPlayCardByLimit(
-            ENEMY
-        )
-    ){
-
-        console.log(
-            "CPUサモン使用不可：",
-            "カードプレイ枚数上限",
-            getCardPlayCount(
-                ENEMY
-            ),
-            "/",
-            getCardPlayLimit(
-                ENEMY
-            ),
-            "card=",
-            card.name
-        );
-
-        return false;
-
-    }
-
-
-    //==================================
-    // ケートス等
-    // サモン属性プレイ制限
-    //==================================
-
-    if(
-        !canPlaySummonByElementRestriction(
-            ENEMY,
-            card
-        )
-    ){
-
-        console.log(
-            "CPUサモン使用不可：",
-            "属性プレイ制限",
-            "card=",
-            card.name,
-            "element=",
-            card.elementType
-        );
-
-
-        return false;
-
-    }
-
-
     //----------------------------------
-    // 現在のコスト取得
+    // 通常のプレイ開始時のみ確認
     //----------------------------------
 
-    const currentCost =
-        getCurrentCardCost(
-            card,
-            ENEMY
-        );
+    if(!costPaid){
 
+        if(!canPlayCardByLimit(ENEMY)){
 
-    console.log(
-        "CPUサモンコスト",
-        card.name,
-        "元cost=",
-        card.cost,
-        "現在cost=",
-        currentCost
-    );
-
-
-    //----------------------------------
-    // 手札残数確認
-    //----------------------------------
-
-    if(
-        enemyHandCards.length
-        - 1
-        - currentCost
-        <
-        2
-    ){
-
-        console.log(
-            "CPUサモン：手札不足"
-        );
-
-        return false;
-
-    }
-
-
-    //----------------------------------
-    // コストカード
-    //----------------------------------
-
-    const costCards =
-        selectCpuCostCards(
-            card,
-            currentCost
-        );
-
-
-    //----------------------------------
-    // コスト枚数確認
-    //----------------------------------
-
-    if(
-        costCards.length <
-        currentCost
-    ){
-
-        console.log(
-            "CPUサモン：コスト不足"
-        );
-
-        return false;
-
-    }
-
-
-    //----------------------------------
-    // コスト支払い
-    //----------------------------------
-
-    costCards.forEach(
-        costCard=>{
-
-            moveEnemyToCost(
-                costCard
+            console.log(
+                "CPUサモン使用不可：カードプレイ枚数上限",
+                card.name
             );
 
+            return false;
         }
-    );
 
+        if(
+            !canPlaySummonByElementRestriction(
+                ENEMY,
+                card
+            )
+        ){
 
-    //----------------------------------
-    // 召喚
-    //----------------------------------
+            console.log(
+                "CPUサモン使用不可：属性制限",
+                card.name
+            );
+
+            return false;
+        }
+
+        //----------------------------------
+        // コスト取得
+        //----------------------------------
+
+        const currentCost =
+            getCurrentCardCost(
+                card,
+                ENEMY
+            );
+
+        //----------------------------------
+        // 手札残数確認
+        //----------------------------------
+
+        if(
+            enemyHandCards.length
+            - 1
+            - currentCost
+            <
+            2
+        ){
+
+            console.log(
+                "CPUサモン：手札不足"
+            );
+
+            return false;
+        }
+
+        //----------------------------------
+        // コストカード決定
+        //----------------------------------
+
+        const costCards =
+            selectCpuCostCards(
+                card,
+                currentCost
+            );
+
+        if(
+            costCards.length <
+            currentCost
+        ){
+
+            console.log(
+                "CPUサモン：コスト不足"
+            );
+
+            return false;
+        }
+
+        //==================================
+        // 先にコストを支払う
+        //==================================
+
+        costCards.forEach(
+            costCard => {
+
+                moveEnemyToCost(
+                    costCard
+                );
+
+            }
+        );
+
+        //==================================
+        // プレイするカードを手札から除外
+        //==================================
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                c => c !== card
+            );
+
+        // 解決待ちとして保持
+        card.area = "pending";
+
+        updateEnemyZoneDisplay();
+
+        //==================================
+        // ファストコール発動確認
+        //==================================
+
+        if(!skipFastCall){
+
+            const event = {
+
+                type:
+                    GAME_EVENT.ENEMY_PLAY_CARD,
+
+                player:
+                    PLAYER,
+
+                source:
+                    card,
+
+                sourceType:
+                    "サモン",
+
+                resume:
+                    resumeCpuCardPlayAfterFastCall
+
+            };
+
+            const available =
+                findResistCards(
+                    event
+                ).some(
+                    resist =>
+                        resist.effect ===
+                        "fastCall"
+                );
+
+            if(available){
+
+                const paused =
+                    pauseCpuCardPlayForFastCall(
+                        card,
+                        () => {
+
+                            console.log(
+                                "CPU：ファストコール終了後",
+                                "召喚再開",
+                                card.name
+                            );
+
+                            // コスト支払い済みで再開
+                            const result =
+                                cpuSummon(
+                                    card,
+                                    true,
+                                    true
+                                );
+
+                            if(result === true){
+
+                                cpuSummonUsedThisTurn =
+                                    true;
+
+                            }
+
+                            setTimeout(
+                                runCpuTurnStep,
+                                2000
+                            );
+
+                        }
+                    );
+
+                if(paused){
+
+                    //----------------------------------
+                    // プレイするカードを表示
+                    //----------------------------------
+
+                    showCpuCardAction(
+                        card,
+                        "SUMMON",
+                        null,
+                        true
+                    );
+
+                    const triggered =
+                        emitGameEvent(
+                            event
+                        );
+
+                    if(triggered){
+
+                        console.log(
+                            "CPU：ファストコール待機",
+                            card.name
+                        );
+
+                        return "WAIT_FAST_CALL";
+
+                    }
+
+                    //----------------------------------
+                    // レジストが開始されなかった
+                    //----------------------------------
+
+                    hideCpuCardAction();
+
+                    cpuFastCallWaiting =
+                        false;
+
+                    cpuFastCallPendingAction =
+                        null;
+
+                    cpuWaiting =
+                        false;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    //==================================
+    // CPUの召喚処理
+    // コストの再支払いは行わない
+    //==================================
 
     const result =
         executeSummon(
@@ -2671,14 +2896,7 @@ function cpuSummon(card){
             ENEMY
         );
 
-
-    //----------------------------------
-    // 召喚失敗
-    //----------------------------------
-
-    if(
-        result === false
-    ){
+    if(result === false){
 
         console.log(
             "CPUサモン：召喚失敗",
@@ -2686,22 +2904,16 @@ function cpuSummon(card){
         );
 
         return false;
-
     }
 
-
-    //==================================
+    //----------------------------------
     // カードプレイ成立
-    //
-    // ジャックフロスト等の
-    // プレイ枚数管理
-    //==================================
+    //----------------------------------
 
     registerCardPlay(
         ENEMY,
         card
     );
-
 
     //----------------------------------
     // バトルログ
@@ -2711,10 +2923,10 @@ function cpuSummon(card){
         `CPU：${card.name}を召喚`
     );
 
-
     return true;
 
 }
+
 
 //======================================
 // CPUコスト移動
@@ -2754,202 +2966,357 @@ function moveEnemyToCost(card){
 // CPUマギア使用
 //======================================
 
+
 function cpuMagia(
     card,
     target,
-    ownSummon = null
+    ownSummon = null,
+    skipFastCall = false,
+    costPaid = false
 ){
 
-    //==================================
-    // カードプレイ枚数制限
-    //==================================
-
-    if(
-        !canPlayCardByLimit(
-            ENEMY
-        )
-    ){
-
-        console.log(
-            "CPUマギア使用不可：",
-            "カードプレイ枚数上限",
-            getCardPlayCount(
-                ENEMY
-            ),
-            "/",
-            getCardPlayLimit(
-                ENEMY
-            ),
-            "card=",
-            card?.name
-        );
-
+    if(!card){
         return false;
+    }
+
+    //==================================
+    // 通常プレイ時の事前確認
+    //==================================
+
+    if(!costPaid){
+
+        //----------------------------------
+        // カードプレイ枚数制限
+        //----------------------------------
+
+        if(!canPlayCardByLimit(ENEMY)){
+
+            console.log(
+                "CPUマギア使用不可：カードプレイ枚数上限",
+                card.name
+            );
+
+            return false;
+        }
 
     }
 
-
-    //==================================
-    // 自分サモンパワー参照型確認
-    //==================================
+    //----------------------------------
+    // 参照サモンの確認
+    //----------------------------------
 
     if(
         card.effect?.valueType ===
-            "ownSummonPower"
+        "ownSummonPower"
     ){
 
-        if(!ownSummon){
-
-            console.log(
-                "CPUマギア使用不可：",
-                card.name,
-                "参照サモンなし"
-            );
-
-            return false;
-
-        }
-
-
         if(
-            ownSummon.destroyed
+            !ownSummon ||
+            ownSummon.destroyed ||
+            !enemyField.includes(ownSummon)
         ){
 
             console.log(
-                "CPUマギア使用不可：",
-                card.name,
-                "参照サモン破壊済み",
-                ownSummon.card?.name
+                "CPUマギア使用不可：参照サモンなし",
+                card.name
             );
 
             return false;
-
-        }
-
-
-        if(
-            !enemyField.includes(
-                ownSummon
-            )
-        ){
-
-            console.log(
-                "CPUマギア使用不可：",
-                card.name,
-                "参照サモンが場にいない",
-                ownSummon.card?.name
-            );
-
-            return false;
-
         }
 
     }
 
-
     //==================================
-    // マギア情報保存
+    // マギア情報を設定
     //
-    // 対象によってコストが変化する
-    // マギアがあるため、
+    // 対象によってコストが変化するため
     // コスト計算より先に設定する
     //==================================
 
-    magiaCard =
-        card;
+    magiaCard = card;
 
-    magiaCard.owner =
-        ENEMY;
+    magiaCard.owner = ENEMY;
 
-    magiaTarget =
-        target;
+    magiaTarget = target;
 
-    magiaSelectedOwnSummon =
-        ownSummon;
-
+    magiaSelectedOwnSummon = ownSummon;
 
     //==================================
-    // CPU側の現在コスト
+    // 初回のみコスト支払い
     //==================================
 
-    const currentCost =
-        getCurrentCardCost(
-            card,
-            ENEMY
-        );
+    if(!costPaid){
 
+        //----------------------------------
+        // 現在のコスト
+        //----------------------------------
 
-    console.log(
-        "CPUマギアコスト",
-        {
-            card:
-                card.name,
-
-            target:
-                target?.name ??
-                target?.card?.name ??
-                target,
-
-            targetElement:
-                target?.elementType ??
-                target?.element ??
-                target?.card?.elementType ??
-                target?.card?.element ??
-                null,
-
-            baseCost:
-                card.cost,
-
-            currentCost:
-                currentCost
-        }
-    );
-
-
-    //==================================
-    // 実際に支払えるか確認
-    //==================================
-
-    if(
-        enemyHandCards.length - 1 <
-        currentCost
-    ){
+        const currentCost =
+            getCurrentCardCost(
+                card,
+                ENEMY
+            );
 
         console.log(
-            "CPUマギア使用不可：",
+            "CPUマギアコスト",
             card.name,
-            "対象決定後のコスト不足",
-            "必要=",
-            currentCost,
-            "支払可能=",
-            enemyHandCards.length - 1
+            currentCost
         );
 
+        //----------------------------------
+        // 支払い可能か確認
+        //----------------------------------
 
-        magiaCard =
-            null;
+        if(
+            enemyHandCards.length - 1 <
+            currentCost
+        ){
 
-        magiaTarget =
-            null;
+            console.log(
+                "CPUマギア：コスト不足",
+                card.name
+            );
 
-        magiaSelectedOwnSummon =
-            null;
+            magiaCard = null;
 
+            magiaTarget = null;
 
-        return false;
+            magiaSelectedOwnSummon = null;
+
+            return false;
+        }
+
+        //==================================
+        // プレイするマギアを手札から除外
+        //==================================
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                c => c !== card
+            );
+
+        //----------------------------------
+        // 解決待ちの状態
+        //----------------------------------
+
+        card.area = "pending";
+
+        //==================================
+        // コスト支払い
+        //==================================
+
+        payEnemyCost(
+            currentCost
+        );
+
+        updateEnemyZoneDisplay();
+
+        console.log(
+            "CPUマギア：コスト支払い完了",
+            card.name
+        );
+
+        //==================================
+        // ファストコール発動確認
+        //==================================
+
+        if(!skipFastCall){
+
+            const event = {
+
+                type:
+                    GAME_EVENT.ENEMY_PLAY_CARD,
+
+                player:
+                    PLAYER,
+
+                source:
+                    card,
+
+                sourceType:
+                    "マギア",
+
+                resume:
+                    resumeCpuCardPlayAfterFastCall
+
+            };
+
+            //----------------------------------
+            // 使用可能なファストコールを検索
+            //----------------------------------
+
+            const available =
+                findResistCards(
+                    event
+                ).some(
+                    resist =>
+                        resist.effect ===
+                        "fastCall"
+                );
+
+            if(available){
+
+                //----------------------------------
+                // マギア解決処理を保存
+                //----------------------------------
+
+                const paused =
+                    pauseCpuCardPlayForFastCall(
+                        card,
+                        () => {
+
+                            console.log(
+                                "CPU：ファストコール終了",
+                                "マギア解決再開",
+                                card.name
+                            );
+
+                            //----------------------------------
+                            // 支払い済みで再開
+                            //----------------------------------
+
+                            const result =
+                                cpuMagia(
+                                    card,
+                                    target,
+                                    ownSummon,
+                                    true,
+                                    true
+                                );
+
+                            //----------------------------------
+                            // 強制コスト型
+                            //----------------------------------
+
+                            if(result === true){
+
+                                if(
+                                    card.effect?.type ===
+                                    "forceCost"
+                                ){
+
+                                    console.log(
+                                        "CPU：強制コスト選択待ち"
+                                    );
+
+                                    return;
+                                }
+
+                                //----------------------------------
+                                // 通常マギア
+                                //----------------------------------
+
+                                console.log(
+                                    "CPU：マギア処理完了",
+                                    card.name
+                                );
+
+                                setTimeout(
+                                    runCpuTurnStep,
+                                    2000
+                                );
+
+                            }
+                            else{
+
+                                console.log(
+                                    "CPU：マギア再開失敗",
+                                    card.name
+                                );
+
+                                setTimeout(
+                                    runCpuTurnStep,
+                                    500
+                                );
+
+                            }
+
+                        }
+                    );
+
+                //----------------------------------
+                // 一時停止できた場合
+                //----------------------------------
+
+                if(paused){
+
+                    //----------------------------------
+                    // CPUが使用するカードを事前表示
+                    //----------------------------------
+
+                    showCpuCardAction(
+                        card,
+                        "MAGIA",
+                        target,
+                        true
+                    );
+
+                    //----------------------------------
+                    // レジストイベント発生
+                    //----------------------------------
+
+                    const triggered =
+                        emitGameEvent(
+                            event
+                        );
+
+                    if(triggered){
+
+                        console.log(
+                            "CPU：ファストコール待機",
+                            card.name
+                        );
+
+                        return "WAIT_FAST_CALL";
+
+                    }
+
+                    //----------------------------------
+                    // レジストが開始されなかった場合
+                    //----------------------------------
+
+                    hideCpuCardAction();
+
+                    cpuFastCallWaiting = false;
+
+                    cpuFastCallPendingAction = null;
+
+                    cpuWaiting = false;
+
+                }
+
+            }
+
+        }
 
     }
 
+    //==================================
+    // ここからマギアの解決処理
+    //
+    // コスト支払いは行わない
+    //==================================
 
-    //==================================
+    //----------------------------------
+    // 再開時にも対象情報を復元
+    //----------------------------------
+
+    magiaCard = card;
+
+    magiaCard.owner = ENEMY;
+
+    magiaTarget = target;
+
+    magiaSelectedOwnSummon = ownSummon;
+
+    //----------------------------------
     // カードプレイ成立
-    //==================================
+    //----------------------------------
 
     registerCardPlay(
         ENEMY,
         card
     );
-
 
     //----------------------------------
     // バトルログ
@@ -2961,12 +3328,9 @@ function cpuMagia(
 
     addBattleLog(
         `CPU：対象 → ${
-            getMagiaTargetLog(
-                target
-            )
+            getMagiaTargetLog(target)
         }`
     );
-
 
     //----------------------------------
     // 追加サモンログ
@@ -2980,7 +3344,6 @@ function cpuMagia(
 
     }
 
-
     //----------------------------------
     // CPUカード使用演出
     //----------------------------------
@@ -2991,60 +3354,10 @@ function cpuMagia(
         target
     );
 
-
     console.log(
         "CPUマギア使用",
         card.name
     );
-
-
-    //----------------------------------
-    // 追加サモン情報ログ
-    //----------------------------------
-
-    if(ownSummon){
-
-        console.log(
-            "CPU：マギア追加サモン保存",
-            {
-                magia:
-                    card.name,
-
-                target:
-                    target?.card?.name ??
-                    target,
-
-                ownSummon:
-                    ownSummon.card?.name,
-
-                power:
-                    getPower(
-                        ownSummon
-                    )
-            }
-        );
-
-    }
-
-
-    //----------------------------------
-    // CPUマギアを手札から除外
-    //----------------------------------
-
-    enemyHandCards =
-        enemyHandCards.filter(
-            c => c !== card
-        );
-
-
-    //----------------------------------
-    // コスト支払い
-    //----------------------------------
-
-    payEnemyCost(
-        currentCost
-    );
-
 
     //----------------------------------
     // 強制コスト型
@@ -3053,55 +3366,28 @@ function cpuMagia(
     if(
         card.effect &&
         card.effect.type ===
-            "forceCost"
+        "forceCost"
     ){
 
         console.log(
             "CPU：強制コスト選択開始"
         );
 
-
-        console.log(
-            "CPUマギア対象デバッグ",
-            "target=",
-            target,
-            "target===PLAYER=",
-            target === PLAYER,
-            "target==='player'=",
-            target === "player"
-        );
-
-
         showCpuMagiaTargetHighlight(
             target
         );
 
-
-        //----------------------------------
-        // プレイヤーが手札を選択
-        //----------------------------------
-
-        forceCostSource =
-            "magia";
-
+        forceCostSource = "magia";
 
         startForceCostSelect(
             target
         );
 
-
-        //----------------------------------
-        // CPUターン停止
-        //----------------------------------
-
-        cpuWaiting =
-            true;
-
+        cpuWaiting = true;
 
         return true;
 
     }
-
 
     //----------------------------------
     // 通常マギア
@@ -3109,47 +3395,34 @@ function cpuMagia(
 
     resolveMagia();
 
-
     //----------------------------------
     // 対象発光
     //----------------------------------
 
-    setTimeout(()=>{
-
-        console.log(
-            "CPUマギア対象デバッグ",
-            "target=",
-            target,
-            "target===PLAYER=",
-            target === PLAYER,
-            "target==='player'=",
-            target === "player"
-        );
-
+    setTimeout(() => {
 
         showCpuMagiaTargetHighlight(
             target
         );
 
-    },0);
-
+    }, 0);
 
     //----------------------------------
     // 対象発光解除
     //----------------------------------
 
-    setTimeout(()=>{
+    setTimeout(() => {
 
         clearCpuMagiaTargetHighlight(
             target
         );
 
-    },5000);
-
+    }, 5000);
 
     return true;
 
 }
+
 //==================================================
 // CPU：条件付きブロック不可マギア対象選択
 //
@@ -5834,6 +6107,23 @@ function findCpuResistCards(event){
         const card of enemyHandCards
     ){
 
+
+        //======================================
+// カード使用イベント専用判定
+//======================================
+
+// プレイヤーがカードを使用した際は
+// ファストコールのみを候補にする
+
+if(
+    event.type === GAME_EVENT.PLAY_CARD &&
+    card.effect !== "fastCall"
+){
+
+    continue;
+
+}
+
         //----------------------------------
         // レジストのみ
         //----------------------------------
@@ -5858,35 +6148,31 @@ function findCpuResistCards(event){
         }
 
 
-        //----------------------------------
-        // 発動タイミング確認
-        //----------------------------------
+//----------------------------------
+// 発動タイミング確認
+//----------------------------------
 
-        if(
-            Array.isArray(card.trigger)
-        ){
+const isCpuFastCallEvent =
+    event.type === GAME_EVENT.PLAY_CARD &&
+    card.effect === "fastCall";
 
-            if(
-                !card.trigger.includes(
-                    event.type
-                )
-            ){
+if(!isCpuFastCallEvent){
 
-                continue;
+    if(Array.isArray(card.trigger)){
 
-            }
-
-        }else{
-
-            if(
-                card.trigger !== event.type
-            ){
-
-                continue;
-
-            }
-
+        if(!card.trigger.includes(event.type)){
+            continue;
         }
+
+    }else{
+
+        if(card.trigger !== event.type){
+            continue;
+        }
+
+    }
+
+}
 
 
         //----------------------------------
@@ -5961,6 +6247,75 @@ function findCpuResistCards(event){
 
 }
 
+//======================================
+// CPUファストコール
+// 召喚するサモンの選択
+//======================================
+
+function selectCpuFastCallSummon(){
+
+    const summonCards =
+        enemyHandCards.filter(card => {
+
+            if(card.type !== "サモン"){
+                return false;
+            }
+
+            // 属性による召喚制限
+            if(
+                !canPlaySummonByElementRestriction(
+                    ENEMY,
+                    card
+                )
+            ){
+                return false;
+            }
+
+            // 現在の召喚コスト
+            const cost =
+                getCurrentCardCost(
+                    card,
+                    ENEMY
+                );
+
+            // コスト支払い可能か確認
+            if(
+                !canPayCost(card, ENEMY)
+            ){
+                return false;
+            }
+
+            return (
+                enemyHandCards.length - 1 >= cost
+            );
+
+        });
+
+    if(summonCards.length === 0){
+
+        console.log(
+            "CPUファストコール：召喚可能サモンなし"
+        );
+
+        return null;
+    }
+
+    // パワーが高いサモンを優先
+    summonCards.sort(
+        (a, b) =>
+            Number(b.power || 0) -
+            Number(a.power || 0)
+    );
+
+    console.log(
+        "CPUファストコール召喚候補：",
+        summonCards.map(card => card.name)
+    );
+
+    return summonCards[0];
+
+}
+
 
 //======================================
 // CPUレジスト使用判定
@@ -5991,6 +6346,83 @@ function shouldCpuUseResist(event){
         return false;
 
     }
+
+//======================================
+// CPUファストコール使用判定
+//======================================
+
+//======================================
+// CPUファストコール使用判定
+//======================================
+
+if(
+    event.type === GAME_EVENT.PLAY_CARD &&
+    event.player === ENEMY
+){
+
+    const fastCallCard =
+        enemyHandCards.find(
+            card =>
+                card.effect === "fastCall" &&
+                !card.usedThisEvent &&
+                canPayCost(card, ENEMY) &&
+                (
+                    !card.condition ||
+                    card.condition(event)
+                )
+        );
+
+    if(!fastCallCard){
+        return false;
+    }
+
+    // ファストコール自体のコスト
+    const fastCallCost =
+        getCurrentEnemyCardCost(
+            fastCallCard
+        );
+
+    // 召喚可能なサモンを探す
+    const summonCards =
+        enemyHandCards.filter(
+            card =>
+                card.type === "サモン" &&
+                canPlaySummonByElementRestriction(
+                    ENEMY,
+                    card
+                )
+        );
+
+    // 両方のコストを支払えるか確認
+    const canUse =
+        summonCards.some(
+            summon => {
+
+                const summonCost =
+                    getCurrentCardCost(
+                        summon,
+                        ENEMY
+                    );
+
+                const availableCards =
+                    enemyHandCards.length - 2;
+
+                return (
+                    availableCards >=
+                    fastCallCost + summonCost
+                );
+
+            }
+        );
+
+    console.log(
+        "CPUファストコール使用判定",
+        canUse
+    );
+
+    return canUse;
+
+}
 
 
     //======================================
@@ -13338,6 +13770,21 @@ function cpuExecuteBestAction(){
                 card
             );
 
+            //----------------------------------
+// ファストコール解決待ち
+//----------------------------------
+
+if(result === "WAIT_FAST_CALL"){
+
+    console.log(
+        "CPU：ファストコールの解決待ち"
+    );
+
+    return;
+
+}
+
+
 
         if(result){
 
@@ -13469,12 +13916,55 @@ function cpuExecuteBestAction(){
         // CPUマギア実行
         //==================================
 
-        const result =
-            cpuMagia(
-                card,
-                target,
-                ownSummon
-            );
+const result =
+    cpuMagia(
+        card,
+        target,
+        ownSummon
+    );
+
+
+//==================================
+// ファストコールの解決待ち
+//==================================
+
+if(
+    result === "WAIT_FAST_CALL"
+){
+
+    console.log(
+        "CPU：ファストコールの解決待ち",
+        card.name
+    );
+
+    // ファストコール終了後に
+    // 保存済みのマギア処理を再開する
+    return;
+
+}
+
+
+//==================================
+// マギア使用失敗
+//==================================
+
+if(
+    result === false
+){
+
+    console.log(
+        "CPU：マギア使用失敗",
+        card.name
+    );
+
+    setTimeout(
+        runCpuTurnStep,
+        500
+    );
+
+    return;
+
+}
 
 
         //----------------------------------
