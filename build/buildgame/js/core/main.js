@@ -2477,6 +2477,51 @@ function onCardClick(card){
     );
 
         //==================================================
+    // バトルボム
+    // バトル参加サモンの対象選択
+    //==================================================
+
+    if(battleBombSelecting){
+
+        // 場のカード以外は選択不可
+        if(
+            card.area !== "field" &&
+            card.area !== "enemyField"
+        ){
+            return;
+        }
+
+        // カードからサモンを取得
+        const targetSummon =
+            findSummonByView(card);
+
+        if(!targetSummon){
+            return;
+        }
+
+        // バトル参加サモンのみ選択可能
+        if(
+            !battleBombTargetCandidates.includes(
+                targetSummon
+            )
+        ){
+            console.log(
+                "バトルボム：対象外",
+                card.name
+            );
+
+            return;
+        }
+
+        // 対象を確定
+        selectBattleBombTarget(
+            targetSummon
+        );
+
+        return;
+    }
+
+        //==================================================
     // マギア
     // 追加の自分サモン選択中
     //
@@ -4981,6 +5026,12 @@ const playEvent = {
 
     sourceType: playedCard.type,
 
+    // マギアの選択対象
+target:
+    playedCard.type === "マギア"
+        ? magiaTarget
+        : null,
+
     // ファストコール終了後に
     // プレイヤーのカード処理を再開する
     resume: null
@@ -4994,14 +5045,95 @@ const playEvent = {
 // 二重実行防止
 let playerCardPlayResumed = false;
 
-// ファストコール終了後の再開処理
+// CPUレジスト終了後の再開処理
 playEvent.resume = function(){
 
+    // 二重実行防止
     if(playerCardPlayResumed){
         return;
     }
 
     playerCardPlayResumed = true;
+
+    //==================================
+    // キャンセレーション成立
+    //==================================
+
+    if(
+        playEvent.cancelled === true &&
+        playedCard.type === "マギア"
+    ){
+
+        console.log(
+            "キャンセレーション成立：",
+            playedCard.name
+        );
+
+        // カードのプレイ枚数を記録
+        registerCardPlay(
+            PLAYER,
+            playedCard
+        );
+
+        // 効果を発動せずクールへ送る
+        playedCard.area = "cool";
+
+        board.addCoolCard(
+            playedCard,
+            PLAYER
+        );
+
+        // マギア操作状態を解除
+        resetMagiaState();
+
+        summonCard = null;
+
+        selectedHandCard = null;
+
+        selectedCostCards = [];
+
+        costConfirm = false;
+
+hideActionGuide();
+
+// キャンセレーションで無効化したボタンを復帰
+const actionArea =
+    document.getElementById("cost-action-area");
+
+if(actionArea){
+    actionArea.style.display = "";
+}
+
+[
+    "use-button",
+    "cancel-button",
+    "confirm-button"
+].forEach(id => {
+
+    const button =
+        document.getElementById(id);
+
+    if(button){
+
+        button.disabled = false;
+        button.style.display = "";
+
+    }
+
+});
+
+console.log(
+    "CPUキャンセレーション終了：ボタン復帰完了"
+);
+
+updateButtons();
+
+return;
+    }
+
+    //==================================
+    // 通常のカード処理
+    //==================================
 
     console.log(
         "プレイヤーのカード処理再開",
@@ -6037,6 +6169,7 @@ const actionRunning =
 }
 
 resetActionButtons();
+
 
 //======================================
 // ファストコール：サモン選択中
@@ -13060,6 +13193,8 @@ function finishBattleGame(winner){
     closeCostView();
 
     resetAttackState();
+
+    hideActionGuide();
 
 
     //----------------------------------

@@ -142,3 +142,66 @@ function illusionFogCondition(event){
     );
 
 }
+
+//======================================
+// ダイヤスキン条件
+// 自分がダメージを受けるとき
+//======================================
+
+function diamondSkinCondition(event){
+
+    return (
+        event.type ===
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE &&
+
+        Number(event.damage) > 0
+    );
+
+}
+
+//======================================
+// バトルボム条件
+// サモンのバトル開始時
+//======================================
+
+function battleBombCondition(event){
+
+    //----------------------------------
+    // バトル開始イベント確認
+    //----------------------------------
+
+    if(
+        event?.type !==
+        GAME_EVENT.BATTLE_START
+    ){
+
+        return false;
+
+    }
+
+    //----------------------------------
+    // バトル参加サモン確認
+    //----------------------------------
+
+    if(
+        !Array.isArray(
+            event.participants
+        ) ||
+        event.participants.length !== 2
+    ){
+
+        return false;
+
+    }
+
+    //----------------------------------
+    // 2体ともサモンか確認
+    //----------------------------------
+
+    return event.participants.every(
+        summon =>
+            summon instanceof Summon &&
+            !summon.destroyed
+    );
+
+}

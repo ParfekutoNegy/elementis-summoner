@@ -600,7 +600,11 @@ const CARD_LIST = [
         element: "火",
         cost: 2,
         series:"folklore",
-        image: "images/040-バトルボム.jpg"
+        image: "images/040-バトルボム.jpg",
+        trigger: "battleStart",
+        condition: battleBombCondition,
+        condi:"サモンのバトル開始時",
+        text:"バトルを行うサモン１体を対象にし、バトル終了後に７ダメージを与える。"
     },
     {
         id: 41,
@@ -865,7 +869,12 @@ const CARD_LIST = [
         element: "水",
         cost: 1,
         series:"folklore",
-        image: "images/056-キャンセレーション.jpg"
+        image: "images/056-キャンセレーション.jpg",
+        condi:"相手がマギアをプレイしたとき",
+        text:"プレイされたマギアの効果を無くす。",
+        trigger:"enemyPlayCard",
+
+        effect: "cancelMagia"
     },
     {
         id: 57,
@@ -969,17 +978,26 @@ const CARD_LIST = [
         element: "土",
         cost: 1,
         series:"folklore",
-        image: "images/063-マルチシールド.jpg"
+        image: "images/063-マルチシールド.jpg",
+        effect: "multiShield",
+        trigger:"beforePlayerDamage",
+        condi:"自分がダメージを受けるとき",
+        text: "このカードのプレイに支払ったコスト１につき、受けるダメージを－２する。このカードのコストは望む数だけ増やせる。"
     },
+
     {
-        id: 64,
-        name:"ダイヤスキン",
-        type: "レジスト",
-        element: "土",
-        cost: 1,
-        series:"folklore",
-        image: "images/064-ダイヤスキン.jpg"
-    },
+    id: 64,
+    name: "ダイヤスキン",
+    type: "レジスト",
+    element: "土",
+    cost: 1,
+    series: "folklore",
+    image: "images/064-ダイヤスキン.jpg",
+    condi:"自分がダメージを受けるとき",
+    text: "受けるダメージを０にする。『ダイヤスキン』はターン開始時にクールゾーンから手札に加えられない。",
+    trigger: "beforePlayerDamage",
+    effect: "diamondSkin"
+},
     {
         id: 65,
         name:"ミノタウロス",

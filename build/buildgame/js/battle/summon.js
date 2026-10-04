@@ -3672,6 +3672,25 @@ function triggerHorizontalSummonOnCool(
 
     }
 
+//----------------------------------
+// オブリビオンレイン
+// 能力無効中は誘発しない
+//----------------------------------
+
+if(
+    summonAbilitiesDisabledFor === owner
+){
+
+    console.log(
+        "マンドラゴラ能力無効：",
+        card.name,
+        owner
+    );
+
+    return;
+}
+
+
 
     //----------------------------------
     // 能力タイプ確認

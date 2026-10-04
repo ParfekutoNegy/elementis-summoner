@@ -3143,14 +3143,14 @@ function cpuMagia(
             // 使用可能なファストコールを検索
             //----------------------------------
 
-            const available =
-                findResistCards(
-                    event
-                ).some(
-                    resist =>
-                        resist.effect ===
-                        "fastCall"
-                );
+const available =
+    findResistCards(
+        event
+    ).some(
+        resist =>
+            resist.effect === "fastCall" ||
+            resist.effect === "cancelMagia"
+    );
 
             if(available){
 
@@ -3162,6 +3162,45 @@ function cpuMagia(
                     pauseCpuCardPlayForFastCall(
                         card,
                         () => {
+
+                            //======================================
+// キャンセレーション
+// マギアの効果を無効化
+//======================================
+
+if(event.cancelled === true){
+
+    console.log(
+        "キャンセレーション：",
+        card.name,
+        "の効果を無効化"
+    );
+
+    // カードのプレイ枚数を記録
+    registerCardPlay(
+        ENEMY,
+        card
+    );
+
+    // マギアをクールゾーンへ送る
+    card.area = "cool";
+
+    board.addCoolCard(
+        card,
+        ENEMY
+    );
+
+    // マギアの使用状態を解除
+    resetMagiaState();
+
+    // CPUの次の行動へ
+    setTimeout(
+        runCpuTurnStep,
+        500
+    );
+
+    return;
+}
 
                             console.log(
                                 "CPU：ファストコール終了",
@@ -3342,15 +3381,20 @@ function cpuMagia(
 
     }
 
-    //----------------------------------
-    // CPUカード使用演出
-    //----------------------------------
+//----------------------------------
+// CPUカード使用演出
+// 再開時は二重表示しない
+//----------------------------------
+
+if(!skipFastCall){
 
     showCpuCardAction(
         card,
         "MAGIA",
         target
     );
+
+}
 
     console.log(
         "CPUマギア使用",
@@ -6009,6 +6053,11 @@ function cpuCanReduceAttackToOne(
 
                 break;
 
+            case "diamondSkin":
+
+            remaining = 0;
+  
+            break;
 
             case "rapidMove":
 
@@ -6114,12 +6163,18 @@ function findCpuResistCards(event){
 // プレイヤーがカードを使用した際は
 // ファストコールのみを候補にする
 
-if(
-    event.type === GAME_EVENT.PLAY_CARD &&
-    card.effect !== "fastCall"
-){
+if(event.type === GAME_EVENT.PLAY_CARD){
 
-    continue;
+    const isFastCall =
+        card.effect === "fastCall";
+
+    const isCancellation =
+        card.effect === "cancelMagia" &&
+        event.sourceType === "マギア";
+
+    if(!isFastCall && !isCancellation){
+        continue;
+    }
 
 }
 
@@ -6153,7 +6208,13 @@ if(
 
 const isCpuFastCallEvent =
     event.type === GAME_EVENT.PLAY_CARD &&
-    card.effect === "fastCall";
+    (
+        card.effect === "fastCall" ||
+        (
+            card.effect === "cancelMagia" &&
+            event.sourceType === "マギア"
+        )
+    );
 
 if(!isCpuFastCallEvent){
 
@@ -6348,8 +6409,27 @@ function shouldCpuUseResist(event){
     }
 
 //======================================
-// CPUファストコール使用判定
+// CPUキャンセレーション使用判定
 //======================================
+
+if(
+    event.type === GAME_EVENT.PLAY_CARD &&
+    event.player === ENEMY &&
+    event.sourceType === "マギア"
+){
+
+    const canCancel =
+        enemyHandCards.some(card =>
+            card.effect === "cancelMagia" &&
+            !card.usedThisEvent &&
+            canPayCost(card, ENEMY)
+        );
+
+    if(canCancel){
+        return true;
+    }
+
+}
 
 //======================================
 // CPUファストコール使用判定
@@ -6746,11 +6826,432 @@ if(
 // CPUレジスト最適カード選択
 //======================================
 
+
 function selectBestCpuResist(
     cards,
     damage,
     event = null
 ){
+
+    //======================================
+    // CPUキャンセレーション選択
+    //======================================
+
+    if(
+        event?.type === GAME_EVENT.PLAY_CARD &&
+        event.sourceType === "マギア"
+    ){
+
+        const cancellation =
+            cards?.find(
+                card =>
+                    card.effect === "cancelMagia"
+            );
+
+        if(!cancellation){
+            return null;
+        }
+
+        const magia =
+            event.source?.card ??
+            event.source ??
+            event.card;
+
+        const target =
+            event.target;
+
+        let canDefend = false;
+
+        const magiaDamage =
+            magia?.effect?.type === "damage"
+                ? Number(magia.effect.value) || 0
+                : 0;
+
+        //======================================
+        // リキッドヴェールによる防御判定
+        //======================================
+
+        if(
+            magiaDamage > 0 &&
+            target?.owner === ENEMY
+        ){
+
+            const power =
+                getPower(target);
+
+            const remainingDamage =
+                Math.max(
+                    0,
+                    magiaDamage - 2
+                );
+
+            const damageEvent = {
+                ...event,
+
+                type:
+                    GAME_EVENT.BEFORE_SUMMON_DAMAGE,
+
+                player: ENEMY,
+
+                damage: magiaDamage,
+
+                target: target
+            };
+
+            const liquidVeil =
+                enemyHandCards.find(card => {
+
+                    if(
+                        card.effect !== "liquidVeil" ||
+                        card.usedThisEvent ||
+                        !canPayCost(card, ENEMY)
+                    ){
+                        return false;
+                    }
+
+                    const triggerMatches =
+                        Array.isArray(card.trigger)
+                            ? card.trigger.includes(
+                                damageEvent.type
+                            )
+                            : card.trigger ===
+                                damageEvent.type;
+
+                    if(!triggerMatches){
+                        return false;
+                    }
+
+                    if(
+                        card.condition &&
+                        !card.condition(damageEvent)
+                    ){
+                        return false;
+                    }
+
+                    return true;
+
+                });
+
+            if(
+                liquidVeil &&
+                remainingDamage < power
+            ){
+
+                canDefend = true;
+
+                console.log(
+                    "CPU：リキッドヴェールで防御可能",
+                    "対象=",
+                    target.card.name,
+                    "パワー=",
+                    power,
+                    "軽減後ダメージ=",
+                    remainingDamage
+                );
+
+            }
+
+        }
+
+
+        //======================================
+        // ストーンガード・グラウンドウォール
+        //======================================
+
+        if(
+            !canDefend &&
+            magiaDamage > 0 &&
+            (
+                target === ENEMY ||
+                target?.owner === ENEMY
+            )
+        ){
+
+            const isSummon =
+                target?.owner === ENEMY;
+
+            const power =
+                isSummon
+                    ? getPower(target)
+                    : 0;
+
+            const damageEvent = {
+                ...event,
+
+                type: isSummon
+                    ? GAME_EVENT.BEFORE_SUMMON_DAMAGE
+                    : GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+
+                player: ENEMY,
+
+                target: target,
+
+                damage: magiaDamage
+            };
+
+            const reductions = {
+                stoneGuard: 3,
+                groundwall: 5
+            };
+
+            const defensiveCard =
+                enemyHandCards.find(card => {
+
+                    const reduction =
+                        reductions[card.effect];
+
+                    if(!reduction){
+                        return false;
+                    }
+
+                    if(
+                        card.usedThisEvent ||
+                        !canPayCost(card, ENEMY)
+                    ){
+                        return false;
+                    }
+
+                    const triggerMatches =
+                        Array.isArray(card.trigger)
+                            ? card.trigger.includes(
+                                damageEvent.type
+                            )
+                            : card.trigger ===
+                                damageEvent.type;
+
+                    if(!triggerMatches){
+                        return false;
+                    }
+
+                    if(
+                        card.condition &&
+                        !card.condition(damageEvent)
+                    ){
+                        return false;
+                    }
+
+                    const remainingDamage =
+                        Math.max(
+                            0,
+                            magiaDamage - reduction
+                        );
+
+                    if(isSummon){
+
+                        return (
+                            remainingDamage < power
+                        );
+
+                    }
+
+                    return remainingDamage === 0;
+
+                });
+
+
+            if(defensiveCard){
+
+                canDefend = true;
+
+                console.log(
+                    "CPU：他のレジストで防御可能",
+                    defensiveCard.name
+                );
+
+            }
+
+        }
+
+        //======================================
+// その他のレジストによる防御判定
+//======================================
+
+if(
+    !canDefend &&
+    magiaDamage > 0 &&
+    (
+        target === ENEMY ||
+        target?.owner === ENEMY
+    )
+){
+
+    const isSummon =
+        target?.owner === ENEMY;
+
+const damageEvent = {
+    ...event,
+
+    type: isSummon
+        ? GAME_EVENT.BEFORE_SUMMON_DAMAGE
+        : GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+
+    player: ENEMY,
+
+    sourceType: "マギア",
+
+    // 元のマギアの属性を引き継ぐ
+    element: magia.elementType,
+
+    target: target,
+
+    damage: magiaDamage
+};
+
+    const defensiveCard =
+        enemyHandCards.find(card => {
+
+            // ウォーターバリアの判定状況を確認
+if(card.effect === "waterBarrier"){
+
+    console.log(
+        "★ ウォーターバリア事前判定",
+        {
+            target: target,
+            damage: magiaDamage,
+            trigger: card.trigger,
+            expectedTrigger: damageEvent.type,
+            usedThisEvent: card.usedThisEvent,
+            canPay: canPayCost(card, ENEMY),
+            conditionResult:
+                card.condition
+                    ? card.condition(damageEvent)
+                    : true
+        }
+    );
+
+}
+
+            if(
+                card.usedThisEvent ||
+                !canPayCost(card, ENEMY)
+            ){
+                return false;
+            }
+
+            const triggerMatches =
+                Array.isArray(card.trigger)
+                    ? card.trigger.includes(
+                        damageEvent.type
+                    )
+                    : card.trigger ===
+                        damageEvent.type;
+
+            if(!triggerMatches){
+                return false;
+            }
+
+            if(
+                card.condition &&
+                !card.condition(damageEvent)
+            ){
+                return false;
+            }
+
+            switch(card.effect){
+
+                case "waterBarrier":
+                    return true;
+
+                case "illusionFog":
+                    return isSummon;
+
+                case "sandProtect":
+                    return magiaDamage === 1;
+
+                default:
+                    return false;
+
+            }
+
+        });
+
+    if(defensiveCard){
+
+        canDefend = true;
+
+        console.log(
+            "CPU：他のレジストで防御可能",
+            defensiveCard.name
+        );
+
+    }
+
+}
+
+
+        //======================================
+        // 他のレジストで防御可能なら温存
+        //======================================
+
+        if(canDefend){
+
+            console.log(
+                "CPU：キャンセレーション温存",
+                "他のレジストで防御可能"
+            );
+
+            return null;
+
+        }
+
+
+        //======================================
+        // マギアのコストに応じた確率判定
+        //======================================
+
+        const magiaCost =
+            Number(magia?.cost ?? 0);
+
+        const probability =
+            Math.min(
+                100,
+                Math.max(
+                    0,
+                    magiaCost * 20
+                )
+            );
+
+        const random =
+            Math.random() * 100;
+
+        console.log(
+            "CPUキャンセレーション確率判定",
+            "マギア=",
+            magia?.name,
+            "コスト=",
+            magiaCost,
+            "使用確率=",
+            probability,
+            "乱数=",
+            random
+        );
+
+
+        if(random < probability){
+
+            console.log(
+                "CPU：キャンセレーション使用",
+                magia?.name
+            );
+
+            return cancellation;
+
+        }
+
+
+        console.log(
+            "CPU：キャンセレーション温存",
+            magia?.name
+        );
+
+        return null;
+
+    }
+
+
+    //======================================
+    // 使用可能レジスト確認
+    //======================================
 
     if(
         !cards ||
@@ -6770,25 +7271,21 @@ function selectBestCpuResist(
     if(
         event &&
         event.type ===
-        GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+            GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
         event.target &&
         event.target.owner === ENEMY
     ){
 
         //----------------------------------
         // イリュージョンフォグ
-        //
-        // 条件を満たして候補に入っているなら
-        // ダメージを完全に0にできる
         //----------------------------------
 
         const illusionFogCard =
             cards.find(
                 card =>
                     card.effect ===
-                    "illusionFog"
+                        "illusionFog"
             );
-
 
         if(illusionFogCard){
 
@@ -6808,21 +7305,18 @@ function selectBestCpuResist(
         //----------------------------------
 
         if(
-            event.sourceType ===
-                "マギア" &&
+            event.sourceType === "マギア" &&
             event.source &&
             event.source.effect &&
-            event.source.effect.type ===
-                "damage"
+            event.source.effect.type === "damage"
         ){
 
             const liquidVeilCard =
                 cards.find(
                     card =>
                         card.effect ===
-                        "liquidVeil"
+                            "liquidVeil"
                 );
-
 
             if(liquidVeilCard){
 
@@ -6831,14 +7325,11 @@ function selectBestCpuResist(
                         event.target
                     );
 
-
                 //----------------------------------
                 // パワーと同じ
                 //----------------------------------
 
-                if(
-                    damage === power
-                ){
+                if(damage === power){
 
                     console.log(
                         "CPUレジスト最優先：リキッドヴェール",
@@ -6849,7 +7340,6 @@ function selectBestCpuResist(
                         "damage=",
                         damage
                     );
-
 
                     return liquidVeilCard;
 
@@ -6860,9 +7350,7 @@ function selectBestCpuResist(
                 // パワー+1
                 //----------------------------------
 
-                if(
-                    damage === power + 1
-                ){
+                if(damage === power + 1){
 
                     console.log(
                         "CPUレジスト最優先：リキッドヴェール",
@@ -6874,7 +7362,6 @@ function selectBestCpuResist(
                         damage
                     );
 
-
                     return liquidVeilCard;
 
                 }
@@ -6884,9 +7371,7 @@ function selectBestCpuResist(
                 // パワー+2以上
                 //----------------------------------
 
-                if(
-                    damage >= power + 2
-                ){
+                if(damage >= power + 2){
 
                     console.log(
                         "CPUリキッドヴェール使用見送り",
@@ -6912,24 +7397,20 @@ function selectBestCpuResist(
     // サンドプロテクトを最優先
     //----------------------------------
 
-    if(
-        damage === 1
-    ){
+    if(damage === 1){
 
         const sandProtectCard =
             cards.find(
                 card =>
                     card.effect ===
-                    "sandProtect"
+                        "sandProtect"
             );
-
 
         if(sandProtectCard){
 
             console.log(
                 "CPUレジスト最優先：サンドプロテクト"
             );
-
 
             return sandProtectCard;
 
@@ -6938,36 +7419,25 @@ function selectBestCpuResist(
     }
 
 
-    //----------------------------------
+    //======================================
     // 各レジストの軽減量
-    //----------------------------------
+    //======================================
 
     function getResistReduction(card){
 
         if(!card){
-
             return 0;
-
         }
-
 
         switch(card.effect){
 
             case "stoneGuard":
-
                 return 3;
 
-
             case "groundwall":
-
                 return 5;
 
-
             case "liquidVeil":{
-
-                //==================================
-                // マギアからサモンへのダメージ
-                //==================================
 
                 if(
                     event &&
@@ -6975,24 +7445,16 @@ function selectBestCpuResist(
                         GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
                     event.target &&
                     event.target.owner === ENEMY &&
-                    event.sourceType ===
-                        "マギア" &&
+                    event.sourceType === "マギア" &&
                     event.source &&
                     event.source.effect &&
-                    event.source.effect.type ===
-                        "damage"
+                    event.source.effect.type === "damage"
                 ){
 
                     const power =
                         getPower(
                             event.target
                         );
-
-
-                    //----------------------------------
-                    // POWER+2以上のダメージでは
-                    // 使用してもサモンを守れない
-                    //----------------------------------
 
                     if(
                         damage >= power + 2
@@ -7008,49 +7470,78 @@ function selectBestCpuResist(
                             damage
                         );
 
-
                         return 0;
 
                     }
 
                 }
 
-
                 return 2;
 
             }
 
+            case "multiShield": {
+
+    // CPU本体へのダメージの場合のみ
+    if(
+        event?.type !==
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+        return 0;
+    }
+
+    // マルチシールド以外の手札
+    const availableCards =
+        enemyHandCards.filter(
+            c => c !== card
+        ).length;
+
+    // 支払うコストを計算
+    const cost =
+        getCpuMultiShieldCost(
+            damage,
+            availableCards
+        );
+
+    // 基本コストを払えない場合
+    if(
+        cost <
+        getCurrentCardCost(card, ENEMY)
+    ){
+        return 0;
+    }
+
+    return Math.min(
+        damage,
+        cost * 2
+    );
+
+}
 
             case "waterBarrier":
+                return damage;
 
+
+        
+            case "diamondSkin":
                 return damage;
 
 
             case "rapidMove":
-
                 return damage;
-
 
             case "illusionFog":
-
                 return damage;
-
 
             case "sandProtect":
 
-                if(
-                    damage === 1
-                ){
-
+                if(damage === 1){
                     return 1;
-
                 }
 
                 return 0;
 
-
             default:
-
                 return 0;
 
         }
@@ -7058,59 +7549,44 @@ function selectBestCpuResist(
     }
 
 
-    //----------------------------------
+    //======================================
     // 使用可能カードを評価
-    //----------------------------------
+    //======================================
 
     const candidates =
         cards
-        .map(card=>{
+            .map(card => {
 
-            const reduction =
-                getResistReduction(
-                    card
-                );
+                const reduction =
+                    getResistReduction(card);
 
+                const remaining =
+                    Math.max(
+                        0,
+                        damage - reduction
+                    );
 
-            const remaining =
-                Math.max(
-                    0,
-                    damage - reduction
-                );
+                return {
+                    card: card,
+                    reduction: reduction,
+                    remaining: remaining
+                };
 
-
-            return {
-
-                card:
-                    card,
-
-                reduction:
-                    reduction,
-
-                remaining:
-                    remaining
-
-            };
-
-        })
-        .filter(
-            item =>
-                item.reduction > 0
-        );
+            })
+            .filter(
+                item =>
+                    item.reduction > 0
+            );
 
 
-    if(
-        candidates.length === 0
-    ){
-
+    if(candidates.length === 0){
         return null;
-
     }
 
 
-    //----------------------------------
-    // 1枚で0にできるカードを優先
-    //----------------------------------
+    //======================================
+    // 1枚でダメージを0にできるカードを優先
+    //======================================
 
     const finishers =
         candidates.filter(
@@ -7119,16 +7595,26 @@ function selectBestCpuResist(
         );
 
 
-    if(
-        finishers.length > 0
-    ){
+if(finishers.length > 0){
 
-        finishers.sort(
-            (a,b) =>
-                a.reduction -
-                b.reduction
-        );
+    finishers.sort((a, b) => {
 
+        // ダイヤスキンは最後に使用する
+        const aDiamond =
+            a.card.effect === "diamondSkin";
+
+        const bDiamond =
+            b.card.effect === "diamondSkin";
+
+        if(aDiamond !== bDiamond){
+            return aDiamond ? 1 : -1;
+        }
+
+        // それ以外は従来どおり
+        // 軽減量が小さいカードを優先
+        return a.reduction - b.reduction;
+
+    });
 
         console.log(
             "CPUレジスト最適選択",
@@ -7139,23 +7625,21 @@ function selectBestCpuResist(
             finishers[0].reduction
         );
 
-
         return finishers[0].card;
 
     }
 
 
-    //----------------------------------
+    //======================================
     // 1枚で0にできない場合
     // 最も大きく軽減するカード
-    //----------------------------------
+    //======================================
 
     candidates.sort(
-        (a,b) =>
+        (a, b) =>
             b.reduction -
             a.reduction
     );
-
 
     console.log(
         "CPUレジスト最適選択",
@@ -7165,7 +7649,6 @@ function selectBestCpuResist(
         "軽減=",
         candidates[0].reduction
     );
-
 
     return candidates[0].card;
 
@@ -17488,5 +17971,25 @@ function createCpuOwnSummonPowerDamagePlan(
 
 
     return bestPlan;
+
+}
+
+//======================================
+// CPU：マルチシールド必要コスト計算
+//======================================
+
+function getCpuMultiShieldCost(damage, availableCards){
+
+    // ダメージを0にする最小コスト
+    const requiredCost = Math.max(
+        1,
+        Math.ceil(damage / 2)
+    );
+
+    // 支払える枚数を超えない
+    return Math.min(
+        requiredCost,
+        Math.max(0, availableCards)
+    );
 
 }

@@ -25,7 +25,12 @@ const GAME_EVENT = {
     TURN_END:
         "turnEnd",
 
-    ENEMY_PLAY_CARD:"enemyPlayCard"    
+    ENEMY_PLAY_CARD:
+        "enemyPlayCard",
+
+    // バトルボム
+    BATTLE_START:
+        "battleStart"
 
 };
 //======================================
@@ -76,7 +81,6 @@ function triggerResist(event){
         return false;
 
     }
-
 
 
 //----------------------------------
@@ -182,38 +186,16 @@ if(
         currentResistEvent =
             event;
 
+//==================================
+// CPU使用レジスト選択
+//==================================
 
-        //----------------------------------
-        // CPUが使うレジストを選択
-        //----------------------------------
-
-//======================================
-// CPUレジスト選択
-// ファストコールは個別判定
-//======================================
-
-let cpuResist = null;
-
-if(
-    event.type === GAME_EVENT.PLAY_CARD
-){
-
-    cpuResist =
-        cpuResistCards.find(
-            card =>
-                card.effect === "fastCall"
-        ) ?? null;
-
-}else{
-
-    cpuResist =
-        selectBestCpuResist(
-            cpuResistCards,
-            event.damage,
-            event
-        );
-
-}
+const cpuResist =
+    selectBestCpuResist(
+        cpuResistCards,
+        event.damage,
+        event
+    );
 
 
         if(!cpuResist){
@@ -449,6 +431,89 @@ const result = [];
 
         }
 
+        //======================================
+// キャンセレーション
+// 相手のマギアにのみ使用可能
+//======================================
+
+if(card.effect === "cancelMagia"){
+
+    const playedCard =
+        event.source?.card ??
+        event.source ??
+        event.card;
+
+    if(
+        event.type !== GAME_EVENT.ENEMY_PLAY_CARD ||
+        playedCard?.type !== "マギア"
+    ){
+        continue;
+    }
+
+}
+
+//======================================
+// ファストコール
+// 召喚可能なサモンの存在確認
+//======================================
+
+if(card.effect === "fastCall"){
+
+    // 相手ターン中の召喚制限
+    if(!canFastCallSummon()){
+        continue;
+    }
+
+    // ファストコール自身を除いた手札
+    const remainingCards =
+        board.handCards.filter(
+            c => c !== card
+        );
+
+    // レジストと召喚の両方の
+    // コストを支払えるサモンを探す
+    const resistCost =
+        getCurrentCardCost(card, PLAYER);
+
+    const canSummon =
+        remainingCards.some(summon => {
+
+            if(summon.type !== "サモン"){
+                return false;
+            }
+
+            if(
+                !canPlaySummonByElementRestriction(
+                    PLAYER,
+                    summon
+                )
+            ){
+                return false;
+            }
+
+            const summonCost =
+                getCurrentCardCost(
+                    summon,
+                    PLAYER
+                );
+
+            return (
+                remainingCards.length - 1 >=
+                resistCost + summonCost
+            );
+
+        });
+
+    if(!canSummon){
+        console.log(
+            "ファストコール：召喚可能なサモンなし"
+        );
+
+        continue;
+    }
+
+}
+
 
 
         //----------------------------------
@@ -554,6 +619,23 @@ const cardName =
         );
 
     }
+
+    //==================================
+// バトルボム
+// バトル開始時の案内
+//==================================
+
+if(
+    event.type ===
+    GAME_EVENT.BATTLE_START
+){
+
+    return (
+        "サモン同士のバトルが開始されます。<br>" +
+        "レジストをプレイしますか？"
+    );
+
+}
 
     //----------------------------------
     // ダメージを受ける場合

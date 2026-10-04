@@ -125,6 +125,324 @@ let hydraBlockWasForcedAttack =
     false;    
 
 
+//======================================
+// バトルボム
+//======================================
+
+// バトルを行う2体
+let battleBombParticipants = [];
+
+// バトルボムの対象
+let battleBombTarget = null;
+
+// バトルボムを使用したカード
+let battleBombSourceCard = null;
+
+// バトルボムの解決待機
+let battleBombWaiting = false;
+
+//======================================
+// バトルボム
+// バトル開始イベント管理
+//======================================
+
+// 通常戦闘の開始イベントが
+// すでに処理されたかどうか
+let battleBombStartProcessed = false;
+
+// バトルボムのダメージ処理を
+// 開始したかどうか
+let battleBombDamageStarted = false;
+
+// バトルボムのダメージが確定したか
+let battleBombDamageResolved = false;
+
+
+//======================================
+// バトルボム
+// バトル参加サモンの記録
+//======================================
+
+function setBattleBombParticipants(
+    attacker,
+    defender
+){
+
+battleBombParticipants = [];
+
+battleBombTarget = null;
+
+battleBombWaiting = false;
+
+battleBombDamageStarted = false;
+
+battleBombSourceCard = null;
+
+battleBombDamageResolved = false;
+
+    if(
+        !(attacker instanceof Summon) ||
+        !(defender instanceof Summon)
+    ){
+        return;
+    }
+
+    battleBombParticipants = [
+        attacker,
+        defender
+    ];
+
+    console.log(
+        "バトルボム：バトル参加サモン",
+        battleBombParticipants.map(
+            summon => summon.card.name
+        )
+    );
+
+}
+
+//======================================
+// バトルボム
+// バトル開始イベント
+//======================================
+
+function startBattleBombEvent(resume){
+
+    // サモン同士の戦闘以外は対象外
+    if(
+        battleBombParticipants.length !== 2
+    ){
+        return false;
+    }
+
+    const participants = [
+        ...battleBombParticipants
+    ];
+
+    // レジストを使用できるのは
+    // 現在のターンではないプレイヤー
+    const resistPlayer =
+        game.currentPlayer === PLAYER
+            ? ENEMY
+            : PLAYER;
+
+    const event = {
+
+        type: GAME_EVENT.BATTLE_START,
+
+        player: resistPlayer,
+
+        participants: participants,
+
+        attacker: participants[0],
+
+        target: participants[1],
+
+        // レジスト終了後に実行
+        resume: resume
+
+    };
+
+    console.log(
+        "バトルボム：バトル開始イベント",
+        participants.map(
+            summon => summon.card.name
+        )
+    );
+
+    return !!emitGameEvent(event);
+
+}
+
+//======================================
+// バトルボム
+// 対象が場に残っているか確認
+//======================================
+
+function isBattleBombTargetValid(){
+
+    if(
+        !battleBombTarget ||
+        battleBombTarget.destroyed
+    ){
+        return false;
+    }
+
+    const field =
+        battleBombTarget.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+    return field.includes(
+        battleBombTarget
+    );
+
+}
+
+//======================================
+// バトルボム
+// ダメージ処理の待機解除
+//======================================
+
+function resumeBattleBombAfterDamage(){
+
+    if(!battleBombWaiting){
+        return false;
+    }
+
+    console.log(
+        "バトルボム：ダメージ処理再開"
+    );
+
+    battleBombWaiting = false;
+
+    // この時点では攻撃を終了しない。
+    // レジスト・ヒュドラの結果を
+    // 反映した後の破壊処理が必要。
+
+    return true;
+
+}
+
+//======================================
+// バトルボム
+// 戦闘終了後の7ダメージ
+//======================================
+
+function resolveBattleBombDamage(){
+
+    //==================================
+    // 二重発動防止
+    //==================================
+
+    if(battleBombDamageStarted){
+
+        console.log(
+            "バトルボム：ダメージ処理開始済み"
+        );
+
+        return battleBombWaiting
+            ? "WAIT"
+            : "DONE";
+
+    }
+
+    //==================================
+    // 対象確認
+    //==================================
+
+    if(
+        !battleBombTarget ||
+        !isBattleBombTargetValid()
+    ){
+
+        console.log(
+            "バトルボム：有効な対象なし"
+        );
+
+        return "DONE";
+
+    }
+
+    // ダメージ処理開始を記録
+    battleBombDamageStarted = true;
+
+    //----------------------------------
+    // バトルボムの対象確認
+    //----------------------------------
+
+    if(!battleBombTarget){
+
+        console.log(
+            "バトルボム：対象なし"
+        );
+
+        return "DONE";
+
+    }
+
+
+    //----------------------------------
+    // 対象が場に残っているか確認
+    //----------------------------------
+
+    if(!isBattleBombTargetValid()){
+
+        console.log(
+            "バトルボム：対象が場にいないため効果なし"
+        );
+
+        return "DONE";
+
+    }
+
+
+    //----------------------------------
+    // ダメージ処理
+    //----------------------------------
+
+    console.log(
+        "バトルボム：7ダメージ",
+        battleBombTarget.card.name
+    );
+
+
+const result =
+    dealDamage(
+        battleBombTarget,
+        7,
+        battleBombSourceCard,
+        false
+    );
+
+
+    //----------------------------------
+    // レジスト待機
+    //----------------------------------
+
+    if(result === "WAIT_RESIST"){
+
+        console.log(
+            "バトルボム：レジスト待機"
+        );
+
+        battleBombWaiting = true;
+
+        return "WAIT_RESIST";
+
+    }
+
+
+    //----------------------------------
+    // ヒュドラ待機
+    //----------------------------------
+
+    if(result === "WAIT_HYDRA"){
+
+        console.log(
+            "バトルボム：ヒュドラ待機"
+        );
+
+        battleBombWaiting = true;
+
+        return "WAIT_HYDRA";
+
+    }
+
+
+    //----------------------------------
+    // ダメージ処理完了
+    //----------------------------------
+
+    battleBombWaiting = false;
+
+    console.log(
+        "バトルボム：ダメージ処理完了"
+    );
+
+    return "DONE";
+
+}
 
 //==================================================
 // メドゥーサ
@@ -1958,81 +2276,68 @@ return continueAttackAfterAttackAbility(
 // この関数から攻撃を再開する
 //==================================================
 
+//======================================
+// 攻撃能力処理後の攻撃再開
+//======================================
+
 function continueAttackAfterAttackAbility(
     attacker,
     target
 ){
 
     //==================================
-// 攻撃情報確認
-//==================================
+    // 攻撃情報確認
+    //==================================
 
-if(
-    !attacker ||
-    target == null
-){
+    if(
+        !attacker ||
+        target == null
+    ){
 
-    console.warn(
-        "攻撃再開：",
-        "攻撃情報がありません"
-    );
+        console.warn(
+            "攻撃再開：攻撃情報がありません"
+        );
 
+        if(attackResolving){
+            finishAttack();
+        }
 
-    if(attackResolving){
-
-        finishAttack();
-
+        return false;
     }
 
 
-    return false;
+    //==================================
+    // 攻撃者がまだ場にいるか確認
+    //==================================
 
-}
+    const attackerField =
+        attacker.owner === PLAYER
+            ? playerField
+            : enemyField;
 
+    if(
+        !attackerField.includes(attacker) ||
+        attacker.destroyed
+    ){
 
-//==================================
-// 攻撃者がまだ場にいるか確認
-//==================================
+        console.log(
+            "攻撃再開：攻撃者が場にいないため攻撃終了",
+            attacker.card?.name
+        );
 
-const attackerField =
-    attacker.owner === PLAYER
-        ?
-        playerField
-        :
-        enemyField;
+        if(attackResolving){
+            finishAttack();
+        }
 
-
-if(
-    !attackerField.includes(
-        attacker
-    ) ||
-    attacker.destroyed
-){
-
-    console.log(
-        "攻撃再開：",
-        "攻撃者が場にいないため攻撃終了",
-        attacker.card?.name
-    );
-
-
-    if(attackResolving){
-
-        finishAttack();
-
+        return false;
     }
 
 
-    return false;
-
-}
-
-    //----------------------------------
+    //==================================
     // 攻撃者を保証
-    //----------------------------------
+    //==================================
 
-    attackingSummon =
-        attacker;
+    attackingSummon = attacker;
 
 
     //==================================
@@ -2043,30 +2348,19 @@ if(
 
         //==================================
         // トロール
-        //
-        // 相手サモンから
-        // 自分サモンへのアタックを
-        // ブロックできる
+        // サモンへの攻撃をブロック
         //==================================
 
         const trollBlockers =
-            findSummonAttackBlockers(
-                target
-            );
+            findSummonAttackBlockers(target);
 
-
-        //----------------------------------
-        // トロールによるブロック可能
-        //----------------------------------
 
         if(trollBlockers.length > 0){
 
             console.log(
-                "サモンへの攻撃：",
-                "トロールでブロック可能",
+                "サモンへの攻撃：トロールでブロック可能",
                 trollBlockers.map(
-                    summon =>
-                        summon.card.name
+                    summon => summon.card.name
                 )
             );
 
@@ -2075,41 +2369,21 @@ if(
             // PLAYER側
             //==================================
 
-            if(
-                target.owner === PLAYER
-            ){
+            if(target.owner === PLAYER){
 
-                //----------------------------------
-                // 元の攻撃対象を保存
-                //----------------------------------
-
-                summonAttackBlockMode =
-                    true;
-
+                summonAttackBlockMode = true;
 
                 originalAttackTargetSummon =
                     target;
 
-
                 console.log(
-                    "トロール：",
-                    "ブロック確認開始",
-                    "元の攻撃対象=",
+                    "トロール：ブロック確認開始",
                     target.card.name
                 );
 
-
-                //----------------------------------
-                // ブロック選択開始
-                //----------------------------------
-
-                startBlock(
-                    trollBlockers
-                );
-
+                startBlock(trollBlockers);
 
                 return "WAIT_BLOCK";
-
             }
 
 
@@ -2117,25 +2391,12 @@ if(
             // CPU側
             //==================================
 
-            if(
-                target.owner === ENEMY
-            ){
+            if(target.owner === ENEMY){
 
-                //----------------------------------
-                // 元の攻撃対象を保存
-                //----------------------------------
-
-                summonAttackBlockMode =
-                    true;
-
+                summonAttackBlockMode = true;
 
                 originalAttackTargetSummon =
                     target;
-
-
-                //----------------------------------
-                // CPUがブロックするか判断
-                //----------------------------------
 
                 const shouldBlock =
                     cpuShouldBlock(
@@ -2144,48 +2405,31 @@ if(
                     );
 
 
-                //----------------------------------
-                // ブロックする
-                //----------------------------------
-
+                // CPUがブロックする
                 if(shouldBlock){
 
                     console.log(
-                        "CPU：",
-                        "サモンへの攻撃をブロック"
+                        "CPU：サモンへの攻撃をブロック"
                     );
-
 
                     executeCpuBlock(
                         trollBlockers,
                         attackingSummon
                     );
 
-
                     return;
-
                 }
 
 
-                //----------------------------------
-                // ブロックしない
-                //----------------------------------
+                // CPUがブロックしない
+                summonAttackBlockMode = false;
 
-                summonAttackBlockMode =
-                    false;
-
-
-                originalAttackTargetSummon =
-                    null;
-
+                originalAttackTargetSummon = null;
 
                 console.log(
-                    "CPU：",
-                    "サモンへの攻撃をブロックしない"
+                    "CPU：サモンへの攻撃をブロックしない"
                 );
-
             }
-
         }
 
 
@@ -2193,11 +2437,8 @@ if(
         // 通常のサモン同士の戦闘
         //==================================
 
-
-        //----------------------------------
         // バジリスク：
         // バトル相手を記録
-        //----------------------------------
 
         setBasiliskBattleTarget(
             attackingSummon,
@@ -2205,146 +2446,74 @@ if(
         );
 
 
-//----------------------------------
-// ダメージ交換
-//----------------------------------
+        //==================================
+        // バトルボム
+        // バトル参加サモンを記録
+        //==================================
 
-//==================================
-// ① 攻撃対象へのダメージ
-//==================================
-
-const targetDamageResult =
-    dealDamage(
-        target,
-        getPower(
-            attackingSummon
-        ),
-        attackingSummon.card,
-        true
-    );
-
-//----------------------------------
-// ヒュドラ待機
-//----------------------------------
-
-if(
-    targetDamageResult ===
-    "WAIT_HYDRA"
-){
-
-    console.log(
-        "戦闘停止：",
-        target.card.name,
-        "のヒュドラ能力待ち"
-    );
-
-
-    hydraBattleWaiting =
-        true;
-
-    hydraBattleAttacker =
-        attackingSummon;
-
-    hydraBattleTarget =
-        target;
-
-    hydraBattleStep =
-        1;
-
-
-    return "WAIT_HYDRA";
-
-}
-
-
-//----------------------------------
-// レジスト待機
-//----------------------------------
-
-if(
-    targetDamageResult ===
-    "WAIT_RESIST"
-){
-
-    console.log(
-        "戦闘停止：",
-        target.card.name,
-        "へのダメージのレジスト待ち"
-    );
-
-
-    return "WAIT_RESIST";
-
-}
-
-
-//==================================
-// ② 攻撃者への反撃ダメージ
-//==================================
-
-const attackerDamageResult =
-    dealDamage(
-        attackingSummon,
-        getPower(
+        setBattleBombParticipants(
+            attackingSummon,
             target
-        ),
-        target.card,
-        true
-    );
+        );
 
-//----------------------------------
-// ヒュドラ待機
-//----------------------------------
-
-if(
-    attackerDamageResult ===
-    "WAIT_HYDRA"
-){
-
-    console.log(
-        "戦闘停止：",
-        attackingSummon.card.name,
-        "のヒュドラ能力待ち"
-    );
+        console.log(
+            "バトルボム：通常戦闘開始",
+            attackingSummon.card.name,
+            "VS",
+            target.card.name
+        );
 
 
-    hydraBattleWaiting =
-        true;
+        //==================================
+        // バトル開始イベント
+        //==================================
 
-    hydraBattleAttacker =
-        attackingSummon;
+        if(!battleBombStartProcessed){
 
-    hydraBattleTarget =
-        target;
+            // 同じ戦闘でイベントを
+            // 二重に発行しない
 
-    hydraBattleStep =
-        2;
-
-
-    return "WAIT_HYDRA";
-
-}
+            battleBombStartProcessed = true;
 
 
-//----------------------------------
-// レジスト待機
-//----------------------------------
+            const waiting =
+                startBattleBombEvent(() => {
 
-if(
-    attackerDamageResult ===
-    "WAIT_RESIST"
-){
+                    console.log(
+                        "バトルボム：通常戦闘再開"
+                    );
 
-    console.log(
-        "戦闘停止：",
-        attackingSummon.card.name,
-        "へのダメージのレジスト待ち"
-    );
+                    // トロール判定などには戻らず、
+                    // ダメージ交換から再開
+
+                    continueNormalSummonBattleDamage(
+                        attacker,
+                        target
+                    );
+
+                });
 
 
-    return "WAIT_RESIST";
+            // レジスト選択中
+            if(waiting){
 
-}
+                console.log(
+                    "バトルボム：レジスト処理待機"
+                );
+
+                return "WAIT_RESIST";
+            }
+        }
+
+
+        //==================================
+        // 通常戦闘のダメージ交換
+        //==================================
+
+        return continueNormalSummonBattleDamage(
+            attacker,
+            target
+        );
 
     }
 
@@ -2363,10 +2532,7 @@ if(
         );
 
 
-        //----------------------------------
         // ブロッカー確認
-        //----------------------------------
-
         const blockers =
             findBlockSummons();
 
@@ -2378,54 +2544,33 @@ if(
                 blockers.length
             );
 
-
-            startBlock(
-                blockers
-            );
-
+            startBlock(blockers);
 
             return "WAIT_BLOCK";
-
         }
 
 
-        //----------------------------------
         // ブロックなし
-        //----------------------------------
-
         damagePlayer(
-
             PLAYER,
-
-            getPower(
-                attackingSummon
-            ),
-
+            getPower(attackingSummon),
             false,
-
             attackingSummon.card
-
         );
 
 
-//----------------------------------
-// レジスト・ネレイド待機中なら停止
-//----------------------------------
+        // レジスト・ネレイド待機
+        if(
+            resistMode ||
+            nereidDamageWaiting
+        ){
 
-if(
-    resistMode ||
-    nereidDamageWaiting
-){
+            console.log(
+                "ダメージ処理待機中なので戦闘終了停止"
+            );
 
-    console.log(
-        "ダメージ処理待機中なので戦闘終了停止"
-    );
-
-
-    return "WAIT_RESIST";
-
-}
-
+            return "WAIT_RESIST";
+        }
     }
 
 
@@ -2443,10 +2588,7 @@ if(
         );
 
 
-        //----------------------------------
         // CPUブロッカー確認
-        //----------------------------------
-
         const blockers =
             findBlockSummons();
 
@@ -2456,15 +2598,10 @@ if(
             console.log(
                 "CPUブロック可能",
                 blockers.map(
-                    summon =>
-                        summon.card.name
+                    summon => summon.card.name
                 )
             );
 
-
-            //----------------------------------
-            // CPUがブロックするか判断
-            //----------------------------------
 
             const shouldBlock =
                 cpuShouldBlock(
@@ -2473,102 +2610,259 @@ if(
                 );
 
 
+            // CPUがブロックする
             if(shouldBlock){
 
                 console.log(
                     "CPUブロック"
                 );
 
-
                 executeCpuBlock(
                     blockers,
                     attackingSummon
                 );
 
-
                 return;
-
             }
 
 
             console.log(
                 "CPUブロックしない"
             );
-
         }
 
 
-        //----------------------------------
         // CPUへのダメージ
-        //----------------------------------
-
         damagePlayer(
-
             ENEMY,
-
-            getPower(
-                attackingSummon
-            ),
-
+            getPower(attackingSummon),
             false,
-
             attackingSummon.card
-
         );
 
 
-        //----------------------------------
         // レジスト待機
-        //----------------------------------
-
         if(resistMode){
 
             console.log(
                 "CPUへのダメージ：レジスト待機"
             );
 
-
             return "WAIT_RESIST";
-
         }
-
     }
 
 
-//----------------------------------
-// レジスト・ネレイド待機中なら
-// 戦闘終了しない
-//----------------------------------
+    //==================================
+    // レジスト・ネレイド待機
+    //==================================
 
-if(
-    resistMode ||
-    nereidDamageWaiting
-){
+    if(
+        resistMode ||
+        nereidDamageWaiting
+    ){
 
-    console.log(
-        "ダメージ処理待機中なので戦闘終了停止"
-    );
+        console.log(
+            "ダメージ処理待機中なので戦闘終了停止"
+        );
+
+        return;
+    }
 
 
-    return;
+    //==================================
+    // バトル解決
+    //==================================
+
+    setTimeout(() => {
+
+        resolveBattle();
+
+        finishAttack();
+
+    }, 1000);
 
 }
 
+//======================================
+// 通常のサモン同士の戦闘
+// ダメージ交換
+//======================================
 
-    //----------------------------------
-    // バトル解決
-    //----------------------------------
+function continueNormalSummonBattleDamage(
+    attacker,
+    target
+){
 
-    setTimeout(
-        () => {
+    //==================================
+    // 攻撃情報確認
+    //==================================
 
-            resolveBattle();
+    if(
+        !attacker ||
+        !target
+    ){
 
+        console.warn(
+            "通常戦闘：攻撃情報がありません"
+        );
+
+        if(attackResolving){
             finishAttack();
+        }
 
-        },
-        1000
-    );
+        return false;
+    }
+
+
+    //==================================
+    // ① 攻撃対象へのダメージ
+    //==================================
+
+    const targetDamageResult =
+        dealDamage(
+            target,
+            getPower(attacker),
+            attacker.card,
+            true
+        );
+
+
+    //==================================
+    // ヒュドラ待機
+    //==================================
+
+    if(
+        targetDamageResult ===
+        "WAIT_HYDRA"
+    ){
+
+        console.log(
+            "戦闘停止：",
+            target.card.name,
+            "のヒュドラ能力待ち"
+        );
+
+        hydraBattleWaiting = true;
+
+        hydraBattleAttacker = attacker;
+
+        hydraBattleTarget = target;
+
+        hydraBattleStep = 1;
+
+        return "WAIT_HYDRA";
+    }
+
+
+    //==================================
+    // レジスト待機
+    //==================================
+
+    if(
+        targetDamageResult ===
+        "WAIT_RESIST"
+    ){
+
+        console.log(
+            "戦闘停止：",
+            target.card.name,
+            "へのダメージのレジスト待ち"
+        );
+
+        return "WAIT_RESIST";
+    }
+
+
+    //==================================
+    // ② 攻撃者への反撃ダメージ
+    //==================================
+
+    const attackerDamageResult =
+        dealDamage(
+            attacker,
+            getPower(target),
+            target.card,
+            true
+        );
+
+
+    //==================================
+    // ヒュドラ待機
+    //==================================
+
+    if(
+        attackerDamageResult ===
+        "WAIT_HYDRA"
+    ){
+
+        console.log(
+            "戦闘停止：",
+            attacker.card.name,
+            "のヒュドラ能力待ち"
+        );
+
+        hydraBattleWaiting = true;
+
+        hydraBattleAttacker = attacker;
+
+        hydraBattleTarget = target;
+
+        hydraBattleStep = 2;
+
+        return "WAIT_HYDRA";
+    }
+
+
+    //==================================
+    // レジスト待機
+    //==================================
+
+    if(
+        attackerDamageResult ===
+        "WAIT_RESIST"
+    ){
+
+        console.log(
+            "戦闘停止：",
+            attacker.card.name,
+            "へのダメージのレジスト待ち"
+        );
+
+        return "WAIT_RESIST";
+    }
+
+
+    //==================================
+    // ダメージ交換終了
+    //==================================
+
+    if(
+        resistMode ||
+        nereidDamageWaiting
+    ){
+
+        console.log(
+            "通常戦闘：ダメージ処理待機"
+        );
+
+        return "WAIT_RESIST";
+    }
+
+
+    //==================================
+    // バトル解決
+    //==================================
+
+    setTimeout(() => {
+
+        resolveBattle();
+
+        finishAttack();
+
+    }, 1000);
+
+    return true;
 
 }
 
@@ -3112,6 +3406,26 @@ function resetHydraBlockBattleState(){
 // 攻撃終了
 //======================================
 function finishAttack(){
+
+    //======================================
+// バトルボム
+// 次の戦闘に備えて初期化
+//======================================
+
+battleBombStartProcessed = false;
+
+battleBombParticipants = [];
+
+battleBombTarget = null;
+
+battleBombWaiting = false;
+
+battleBombDamageStarted = false;
+
+battleBombSourceCard = null;
+
+battleBombDamageResolved = false;
+
 
     //----------------------------------
     // 今回が強制アタックだったか保存
@@ -5494,6 +5808,23 @@ function skipBlock(){
             target
         );
 
+        //==================================
+// バトルボム
+// トロールがブロックしなかった場合
+//==================================
+
+setBattleBombParticipants(
+    attackingSummon,
+    target
+);
+
+console.log(
+    "バトルボム：トロールのブロック辞退",
+    attackingSummon.card.name,
+    "VS",
+    target.card.name
+);
+
 
         //----------------------------------
         // ダメージ交換
@@ -6591,6 +6922,16 @@ function executeBlock(blocker){
         blocker
     );
 
+    //==================================
+// バトルボム
+// プレイヤーのブロック戦闘
+//==================================
+
+setBattleBombParticipants(
+    attackingSummon,
+    blocker
+);
+
 
     //==================================
     // 今回が強制アタックか保存
@@ -6933,6 +7274,16 @@ function executeCpuBlock(
         attacker,
         blocker
     );
+
+    //==================================
+// バトルボム
+// CPUのブロック戦闘
+//==================================
+
+setBattleBombParticipants(
+    attacker,
+    blocker
+);
 
 
     //==================================

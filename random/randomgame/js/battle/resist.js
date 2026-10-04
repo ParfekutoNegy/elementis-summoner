@@ -7,6 +7,15 @@ let currentResistEvent = null;
 let resistPassedThisEvent = false;
 
 //======================================
+// バトルボム
+// 対象選択状態
+//======================================
+
+let battleBombSelecting = false;
+
+let battleBombTargetCandidates = [];
+
+//======================================
 // ファストコール
 // 相手ターン中の召喚管理
 //======================================
@@ -147,9 +156,19 @@ function startResistCost(){
 
     if(currentCost > 0){
 
-        showActionGuide(
-            `コストゾーンに置くカードを<br>${currentCost}枚選んでください。`
-        );
+if(resistUsingCard?.effect === "multiShield"){
+
+    showActionGuide(
+        `コストゾーンに置くカードを<br>${currentCost}枚以上選んでください。`
+    );
+
+}else{
+
+    showActionGuide(
+        `コストゾーンに置くカードを<br>${currentCost}枚選んでください。`
+    );
+
+}
 
     }
 
@@ -225,39 +244,46 @@ function selectResistCostCard(card){
     // 選択解除
     //----------------------------------
 
-    if(
-        selectedResistCostCards.includes(card)
-    ){
+if(selectedResistCostCards.includes(card)){
 
-        selectedResistCostCards =
+    selectedResistCostCards =
         selectedResistCostCards.filter(
             c => c !== card
         );
 
+    card.setCostSelected(false);
 
-        card.setCostSelected(false);
+    //==================================
+    // コスト選択解除後の決定判定
+    //==================================
 
-        resistCostConfirm = false;
+    const currentCost =
+        getCurrentCardCost(resistUsingCard);
 
-        updateButtons();
+    resistCostConfirm =
+        selectedResistCostCards.length >= currentCost;
 
-        return;
+    updateButtons();
 
-    }
+    return;
+}
 
 
-    //----------------------------------
-    // 必要枚数以上
-    //----------------------------------
+//======================================
+// マルチシールドは追加コストを許可
+//======================================
 
-    if(
-        selectedResistCostCards.length >=
-        currentCost
-    ){
+const isMultiShield =
+    resistUsingCard?.effect === "multiShield";
 
-        return;
+if(
+    !isMultiShield &&
+    selectedResistCostCards.length >= currentCost
+){
 
-    }
+    return;
+
+}
 
 
     //----------------------------------
@@ -269,18 +295,19 @@ function selectResistCostCard(card){
     card.setCostSelected(true);
 
 
-    //----------------------------------
-    // 必要枚数到達
-    //----------------------------------
+//======================================
+// コスト選択完了判定
+//======================================
 
-    if(
-        selectedResistCostCards.length ===
-        currentCost
-    ){
+if(
+    isMultiShield
+        ? selectedResistCostCards.length >= currentCost
+        : selectedResistCostCards.length === currentCost
+){
 
-        resistCostConfirm = true;
+    resistCostConfirm = true;
 
-    }
+}
 
 
     console.log(
@@ -377,6 +404,81 @@ function payResistCost(){
     console.log(
         "payResistCost"
     );
+
+// マルチシールドの支払いコストを記録
+if(resistUsingCard?.effect === "multiShield"){
+
+    resistUsingCard.paidCost =
+        selectedResistCostCards.length;
+
+    console.log(
+        "マルチシールド支払コスト：",
+        resistUsingCard.paidCost
+    );
+
+}
+
+  //======================================
+// ファストコール
+// コスト支払い後の召喚可否を確認
+//======================================
+
+if(resistUsingCard?.effect === "fastCall"){
+
+    // レジストコスト支払い後に残る手札
+    const remainingCards =
+        board.handCards.filter(card =>
+            card !== resistUsingCard &&
+            !selectedResistCostCards.includes(card)
+        );
+
+    // 召喚可能なサモンが残るか確認
+    const canSummon =
+        remainingCards.some(card => {
+
+            if(card.type !== "サモン"){
+                return false;
+            }
+
+            if(
+                !canPlaySummonByElementRestriction(
+                    PLAYER,
+                    card
+                )
+            ){
+                return false;
+            }
+
+            const requiredCost =
+                getCurrentCardCost(
+                    card,
+                    PLAYER
+                );
+
+            // 召喚するサモン自身を除いた
+            // 残りの手札でコストを支払えるか
+            return (
+                remainingCards.length - 1 >=
+                requiredCost
+            );
+
+        });
+
+    if(!canSummon){
+
+        console.log(
+            "召喚可能なサモンが残りません。"
+        );
+
+        showActionGuide(
+            "プレイ可能なサモンを手札に残してください。"
+        );
+
+        return;
+    }
+
+}  
+
 
 
     //==================================
@@ -519,13 +621,218 @@ activateResist(
 // サモンの召喚完了まで待機
 //----------------------------------
 
-if(!isFastCall){
+//======================================
+// レジスト終了判定
+//======================================
+
+// ファストコールは召喚完了待機
+// バトルボムは対象選択完了待機
+
+if(
+    !isFastCall &&
+    !battleBombSelecting
+){
 
     finishResist();
 
 }
 
 updateButtons();
+
+}
+
+
+//======================================
+// キャンセレーション終了後のボタン復帰
+//======================================
+
+function restoreCancellationButtons(){
+
+    const actionArea =
+        document.getElementById(
+            "cost-action-area"
+        );
+
+    [
+        "use-button",
+        "cancel-button",
+        "confirm-button"
+    ].forEach(id => {
+
+        const button =
+            document.getElementById(id);
+
+        if(button){
+
+            button.disabled = false;
+
+            // 表示状態はupdateButtonsに任せる
+            button.style.display = "";
+
+        }
+
+    });
+
+    if(actionArea){
+
+        actionArea.style.display = "";
+
+    }
+
+    updateButtons();
+
+}
+
+//======================================
+// キャンセレーション終了後のボタン復帰
+//======================================
+
+function restoreCancellationButtons(){
+
+    const actionArea =
+        document.getElementById(
+            "cost-action-area"
+        );
+
+    [
+        "use-button",
+        "cancel-button",
+        "confirm-button"
+    ].forEach(id => {
+
+        const button =
+            document.getElementById(id);
+
+        if(button){
+
+            button.disabled = false;
+
+            // 表示状態はupdateButtonsに任せる
+            button.style.display = "";
+
+        }
+
+    });
+
+    if(actionArea){
+
+        actionArea.style.display = "";
+
+    }
+
+    updateButtons();
+
+}
+
+//======================================
+// キャンセレーション
+// PLAYER・CPU共通
+//======================================
+
+function cancelMagia(card, event){
+
+    //----------------------------------
+    // イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        (
+            event.type !== GAME_EVENT.ENEMY_PLAY_CARD &&
+            event.type !== GAME_EVENT.PLAY_CARD
+        ) ||
+        event.sourceType !== "マギア"
+    ){
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // マギアの無効化
+    //----------------------------------
+
+    event.cancelled = true;
+
+    //======================================
+// キャンセレーション成立時
+// 操作ボタンを非表示・無効化
+//======================================
+
+const actionArea =
+    document.getElementById("cost-action-area");
+
+const buttonIds = [
+    "use-button",
+    "cancel-button",
+    "confirm-button"
+];
+
+buttonIds.forEach(id => {
+
+    const button =
+        document.getElementById(id);
+
+    if(button){
+
+        button.style.display = "none";
+        button.disabled = true;
+
+    }
+
+});
+
+if(actionArea){
+    actionArea.style.display = "none";
+}
+
+//======================================
+// 元のマギアの操作案内を消去
+//======================================
+
+if(typeof hideActionGuide === "function"){
+
+    hideActionGuide();
+
+}
+
+
+    //----------------------------------
+    // 無効化したマギアの名前
+    //----------------------------------
+
+    const magiaName =
+        event.source?.card?.name ??
+        event.source?.name ??
+        event.card?.name ??
+        "相手のマギア";
+
+
+    //----------------------------------
+    // 使用者
+    //----------------------------------
+
+    const userName =
+        card.owner === ENEMY
+            ? "CPU"
+            : "PLAYER";
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "キャンセレーション：マギア無効化",
+        userName,
+        magiaName
+    );
+
+
+    addBattleLog(
+        `${userName}：${magiaName}の効果を無効化`
+    );
 
 }
 
@@ -643,6 +950,145 @@ function selectFastCallSummon(card){
 }
 
 //======================================
+// バトルボム
+// 効果処理
+//======================================
+
+function battleBomb(card, event){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "バトルボム：効果処理開始"
+    );
+
+    console.log(
+        "================================"
+    );
+
+
+    //==================================
+    // バトル開始イベント確認
+    //==================================
+
+    if(
+        !event ||
+        event.type !== GAME_EVENT.BATTLE_START
+    ){
+
+        console.warn(
+            "バトルボム：バトル開始イベントではありません"
+        );
+
+        return;
+    }
+
+
+    //==================================
+    // バトル参加サモンの確認
+    //==================================
+
+    if(
+        !Array.isArray(event.participants) ||
+        event.participants.length !== 2
+    ){
+
+        console.warn(
+            "バトルボム：バトル参加サモンが不正です"
+        );
+
+        return;
+    }
+
+
+    //==================================
+    // 対象候補を取得
+    //==================================
+
+    battleBombTargetCandidates =
+        event.participants.filter(
+            summon =>
+
+                summon instanceof Summon &&
+
+                !summon.destroyed
+
+        );
+
+
+    //==================================
+    // 対象候補の確認
+    //==================================
+
+    if(
+        battleBombTargetCandidates.length === 0
+    ){
+
+        console.warn(
+            "バトルボム：選択可能な対象がありません"
+        );
+
+        return;
+    }
+
+
+    //==================================
+    // 対象選択状態を開始
+    //==================================
+
+battleBombSelecting = true;
+
+battleBombTarget = null;
+
+// 使用したバトルボムを記録
+battleBombSourceCard = card;
+
+
+    //==================================
+    // 対象候補のログ
+    //==================================
+
+    console.log(
+        "バトルボム：対象選択開始"
+    );
+
+    console.log(
+        "選択可能なサモン：",
+        battleBombTargetCandidates.map(
+            summon => summon.card.name
+        )
+    );
+
+
+    //==================================
+    // 操作案内
+    //==================================
+
+    showActionGuide(
+        "バトルボム：ダメージを与えるサモンを選んでください。"
+    );
+
+
+    //==================================
+    // 対象選択完了まで待機
+    //==================================
+
+    // 対象選択後は
+    // selectBattleBombTarget(summon)
+    // から finishResist() を呼び出す。
+    //
+    // バトル終了後の7ダメージは
+    // 後続の処理で実装する。
+
+    console.log(
+        "バトルボム：対象選択待機中"
+    );
+
+}
+
+//======================================
 // レジスト効果一覧
 //======================================
 
@@ -651,12 +1097,17 @@ const resistEffects = {
     stoneGuard,
     groundwall,
     waterBarrier,
+    diamondSkin,
     liquidVeil,
     rapidMove,
     sandProtect,
     illusionFog,
+    multiShield,
 
-    fastCall
+    fastCall,
+    cancelMagia,
+
+    battleBomb
 
 };
 
@@ -712,6 +1163,25 @@ if(card.effect === "fastCall"){
     return;
 
 }
+
+//======================================
+// バトルボム
+// 対象選択が終わるまで待機
+//======================================
+
+if(
+    card.effect === "battleBomb" &&
+    battleBombSelecting
+){
+
+    console.log(
+        "バトルボム：対象選択待機中"
+    );
+
+    return;
+
+}
+
 
 
 //----------------------------------
@@ -943,6 +1413,26 @@ function waterBarrier(card){
         currentResistEvent.damage
     );
 
+
+}
+
+//======================================
+// ダイヤスキン
+// プレイヤーが受けるダメージを0にする
+//======================================
+
+function diamondSkin(card){
+
+    console.log(
+        "ダイヤスキン発動"
+    );
+
+    currentResistEvent.damage = 0;
+
+    console.log(
+        "変更後ダメージ",
+        currentResistEvent.damage
+    );
 
 }
 
@@ -1181,7 +1671,19 @@ if(
 
 }
 
-    updateButtons();
+    //==================================
+    // キャンセレーション終了後の復帰
+    //==================================
+
+    if(event.cancelled){
+
+        restoreCancellationButtons();
+
+    }else{
+
+        updateButtons();
+
+    }
 
     return true;
 
@@ -1206,6 +1708,72 @@ function finishResist(){
         return;
 
     }
+
+    // 今回のレジストがバトルボムの
+// ダメージに対するものか記録
+const wasBattleBombDamageEvent =
+    currentResistEvent.type ===
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+    battleBombWaiting &&
+    battleBombDamageStarted &&
+    currentResistEvent.target ===
+        battleBombTarget;
+
+    //======================================
+// バトルボム
+// バトル開始イベント終了
+//======================================
+
+if(
+    currentResistEvent.type ===
+    GAME_EVENT.BATTLE_START
+){
+
+    const event = currentResistEvent;
+
+    // 使用済みフラグ解除
+    selectableResistCards.forEach(card => {
+
+        card.setSelected(false);
+        card.setHighlight(false);
+        card.usedThisEvent = false;
+
+    });
+
+    enemyHandCards.forEach(card => {
+        card.usedThisEvent = false;
+    });
+
+    enemyCoolCards.forEach(card => {
+        card.usedThisEvent = false;
+    });
+
+    // レジスト状態解除
+    currentResistEvent = null;
+    resistMode = false;
+    resistUsingCard = null;
+    resistCostConfirm = false;
+
+    selectedResistCostCards = [];
+    selectableResistCards = [];
+
+    resistPassedThisEvent = false;
+
+    updateButtons();
+
+    // 保存された戦闘再開処理
+    if(
+        typeof event.resume === "function"
+    ){
+
+        event.resume();
+
+    }
+
+    return;
+
+}
+
 
     //======================================
 // CPUファストコール終了処理
@@ -1512,6 +2080,50 @@ if(
                 currentResistEvent.damage;
 
 
+                //==================================
+// PLAYERネレイド能力判定
+//==================================
+
+if(
+    currentResistEvent.player === PLAYER &&
+    finalDamage > 0
+){
+
+    const nereidWaiting =
+        checkNereidDamagePrevent(
+            PLAYER,
+            finalDamage,
+            currentResistEvent
+        );
+
+    if(nereidWaiting){
+
+        // レジストの選択状態を終了
+        selectableResistCards.forEach(card => {
+            card.setSelected(false);
+            card.setHighlight(false);
+            card.usedThisEvent = false;
+        });
+
+        selectableResistCards = [];
+        resistMode = false;
+        resistUsingCard = null;
+        resistCostConfirm = false;
+        selectedResistCostCards = [];
+        resistPassedThisEvent = false;
+
+        updateButtons();
+
+        console.log(
+            "レジスト後：PLAYERネレイド能力待機"
+        );
+
+        return;
+
+    }
+
+}
+
             console.log(
                 "レジスト後：プレイヤーダメージ確定",
                 currentResistEvent.player,
@@ -1757,6 +2369,30 @@ if(
         return;
 
     }
+
+    //======================================
+// バトルボム
+// レジスト終了後の専用処理
+//======================================
+
+/*if(
+    typeof battleBombWaiting !== "undefined" &&
+    battleBombWaiting &&
+    battleBombDamageStarted &&
+    !battleBombDamageResolved &&
+    wasBattleBombDamageEvent
+){
+
+    console.log(
+        "バトルボム：レジスト終了"
+    );
+
+    resumeBattleBombAfterDamage();
+
+    // 通常の戦闘終了処理には進まない
+    return;
+
+}*/
 
 
     //----------------------------------
@@ -2537,6 +3173,50 @@ if(!reservedSummon){
 
 }
 
+}else if(card.effect === "multiShield"){
+
+    //==================================
+    // マルチシールド専用コスト選択
+    //==================================
+
+    const damage =
+        Math.max(
+            0,
+            Number(currentResistEvent?.damage) || 0
+        );
+
+    // 支払いに使用できる手札
+    const availableCards =
+        enemyHandCards.filter(
+            c => c !== card
+        ).length;
+
+    // ダメージを防ぐための必要コスト
+    const requiredCost =
+        getCpuMultiShieldCost(
+            damage,
+            availableCards
+        );
+
+    // コスト増減効果も考慮
+    const payCost =
+        Math.max(
+            currentCost,
+            requiredCost
+        );
+
+    costCards =
+        selectCpuCostCards(
+            card,
+            payCost
+        );
+
+    console.log(
+        "CPUマルチシールド",
+        "ダメージ=", damage,
+        "必要コスト=", payCost
+    );
+
 }else{
 
     costCards =
@@ -2706,6 +3386,23 @@ if(remainingHand.length < summonCost){
         card,
         "RESIST"
     );
+
+
+    //==================================
+// マルチシールド支払コスト記録
+//==================================
+
+if(card.effect === "multiShield"){
+
+    card.paidCost =
+        costCards.length;
+
+    console.log(
+        "CPUマルチシールド支払コスト：",
+        card.paidCost
+    );
+
+}
 
 
     //----------------------------------
@@ -3142,5 +3839,39 @@ showActionGuide(
 
     updateHandHighlight();
     updateButtons();
+
+}
+
+//======================================
+// マルチシールド
+// 支払ったコスト1につきダメージ-2
+//======================================
+
+function multiShield(card, event){
+
+    const paidCost =
+        card.paidCost ?? 0;
+
+    const reduction =
+        paidCost * 2;
+
+    event.damage = Math.max(
+        0,
+        event.damage - reduction
+    );
+
+    console.log(
+        "マルチシールド発動",
+        "支払コスト:", paidCost,
+        "軽減量:", reduction,
+        "残りダメージ:", event.damage
+    );
+
+    addBattleLog(
+        `マルチシールド：${reduction}ダメージ軽減`
+    );
+
+    // 次回使用時に備えて初期化
+    card.paidCost = 0;
 
 }

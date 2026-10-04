@@ -665,9 +665,13 @@ addCoolCard(
         );
 
 
-    if(
-        returnToHandAbility
-    ){
+if(
+    returnToHandAbility &&
+    !(
+        typeof summonAbilitiesDisabledFor !== "undefined" &&
+        summonAbilitiesDisabledFor === owner
+    )
+){
 
         console.log(
             "★フェニックス手札戻し前",

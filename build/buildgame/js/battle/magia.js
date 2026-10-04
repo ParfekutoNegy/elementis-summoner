@@ -78,6 +78,16 @@ let hydraWaitingMagiaOwnSummon =
 
 let resistMagiaWaiting = false;
 
+//==================================================
+// CPUキャンセレーション
+// プレイヤーマギアの効果発動前の待機状態
+//==================================================
+
+let cpuCancellationWaiting = false;
+
+// 中断したマギアの情報
+let cpuCancellationPending = null;
+
 let resistWaitingMagia = null;
 
 let resistWaitingMagiaTarget = null;
@@ -1112,7 +1122,6 @@ function resolveMagia(){
         );
 
         return;
-
     }
 
 
@@ -1122,15 +1131,12 @@ function resolveMagia(){
 
     if(
         magiaCard.effect &&
-        magiaCard.effect.type ===
-            "forceCost"
+        magiaCard.effect.type === "forceCost"
     ){
 
         //----------------------------------
         // PLAYER → CPU
-        //----------------------------------
-        // CPU手札が0枚なら
-        // 効果なしで終了
+        // CPU手札が0枚なら効果なし
         //----------------------------------
 
         if(
@@ -1144,45 +1150,27 @@ function resolveMagia(){
                 "効果なし"
             );
 
-
-            //----------------------------------
-            // マギア情報保存
-            //----------------------------------
-
-            const resolvedMagia =
-                magiaCard;
-
-            const resolvedTarget =
-                magiaTarget;
+            const resolvedMagia = magiaCard;
+            const resolvedTarget = magiaTarget;
 
             const isCpuMagia =
-                resolvedMagia.owner ===
-                    ENEMY;
+                resolvedMagia.owner === ENEMY;
 
 
-            //==================================
             // マギアプレイ時サモン能力
-            //==================================
 
             triggerSummonAbilitiesOnMagiaPlay(
                 resolvedMagia.owner
             );
 
 
-            //----------------------------------
             // 手札から削除
-            //----------------------------------
 
-            if(
-                resolvedMagia.owner ===
-                PLAYER
-            ){
+            if(resolvedMagia.owner === PLAYER){
 
                 board.handCards =
                     board.handCards.filter(
-                        card =>
-                            card !==
-                            resolvedMagia
+                        card => card !== resolvedMagia
                     );
 
             }
@@ -1190,24 +1178,16 @@ function resolveMagia(){
 
                 enemyHandCards =
                     enemyHandCards.filter(
-                        card =>
-                            card !==
-                            resolvedMagia
+                        card => card !== resolvedMagia
                     );
 
             }
 
 
-            //----------------------------------
             // 効果解決完了
-            //----------------------------------
 
             setTimeout(
                 () => {
-
-                    //----------------------------------
-                    // CPU対象発光解除
-                    //----------------------------------
 
                     if(
                         isCpuMagia &&
@@ -1221,27 +1201,14 @@ function resolveMagia(){
 
                     }
 
-
-                    //----------------------------------
-                    // 戦闘解決
-                    //----------------------------------
-
                     resolveBattle();
 
-
-                    //----------------------------------
-                    // マギアをクールへ
-                    //----------------------------------
-
-                    resolvedMagia.area =
-                        "cool";
-
+                    resolvedMagia.area = "cool";
 
                     board.addCoolCard(
                         resolvedMagia,
                         resolvedMagia.owner
                     );
-
 
                     console.log(
                         "forceCostマギア効果解決完了 → クールへ",
@@ -1253,27 +1220,17 @@ function resolveMagia(){
             );
 
 
-            //----------------------------------
-            // 状態リセット
-            //----------------------------------
-
             resetMagiaState();
 
-            summonCard =
-                null;
+            summonCard = null;
 
-            selectedCostCards =
-                [];
+            selectedCostCards = [];
 
-            costConfirm =
-                false;
-
+            costConfirm = false;
 
             updateButtons();
 
-
             return;
-
         }
 
 
@@ -1281,17 +1238,13 @@ function resolveMagia(){
         // 通常の強制コスト選択
         //----------------------------------
 
-        forceCostSource =
-            "magia";
-
+        forceCostSource = "magia";
 
         startForceCostSelect(
             magiaTarget
         );
 
-
         return;
-
     }
 
 
@@ -1299,17 +1252,13 @@ function resolveMagia(){
     // 通常マギア
     //==================================
 
-    const resolvedMagia =
-        magiaCard;
+    const resolvedMagia = magiaCard;
 
-    const resolvedTarget =
-        magiaTarget;
+    const resolvedTarget = magiaTarget;
 
 
     //----------------------------------
     // イグナイト等
-    //
-    // resetMagiaState()で消える前に
     // 選択サモンを保存
     //----------------------------------
 
@@ -1318,9 +1267,7 @@ function resolveMagia(){
 
 
     const isCpuMagia =
-        resolvedMagia.owner ===
-            ENEMY;
-
+        resolvedMagia.owner === ENEMY;
 
     //==================================
     // マギアプレイ時サモン能力
@@ -1348,8 +1295,7 @@ function resolveMagia(){
     //==================================
 
     if(
-        effectResult ===
-        "GAME_OVER"
+        effectResult === "GAME_OVER"
     ){
 
         console.log(
@@ -1358,7 +1304,6 @@ function resolveMagia(){
         );
 
         return;
-
     }
 
 
@@ -1367,8 +1312,7 @@ function resolveMagia(){
     //==================================
 
     if(
-        effectResult ===
-        "WAIT_HYDRA"
+        effectResult === "WAIT_HYDRA"
     ){
 
         console.log(
@@ -1377,9 +1321,7 @@ function resolveMagia(){
             "→ ヒュドラ待ち"
         );
 
-
-        hydraMagiaWaiting =
-            true;
+        hydraMagiaWaiting = true;
 
         hydraWaitingMagia =
             resolvedMagia;
@@ -1390,9 +1332,7 @@ function resolveMagia(){
         hydraWaitingMagiaOwnSummon =
             resolvedOwnSummon;
 
-
         return;
-
     }
 
 
@@ -1401,8 +1341,7 @@ function resolveMagia(){
     //==================================
 
     if(
-        effectResult ===
-        "WAIT_NEREID"
+        effectResult === "WAIT_NEREID"
     ){
 
         console.log(
@@ -1410,7 +1349,6 @@ function resolveMagia(){
             resolvedMagia.name,
             "→ ネレイド待ち"
         );
-
 
         nereidWaitingMagia =
             resolvedMagia;
@@ -1421,9 +1359,7 @@ function resolveMagia(){
         nereidWaitingMagiaOwnSummon =
             resolvedOwnSummon;
 
-
         return;
-
     }
 
 
@@ -1433,7 +1369,7 @@ function resolveMagia(){
 
     if(
         effectResult ===
-        "WAIT_CRYSTAL_PEEPING"
+            "WAIT_CRYSTAL_PEEPING"
     ){
 
         console.log(
@@ -1442,9 +1378,7 @@ function resolveMagia(){
             "→ クリスタルピーキング待ち"
         );
 
-
         return;
-
     }
 
 
@@ -1453,8 +1387,7 @@ function resolveMagia(){
     //==================================
 
     if(
-        effectResult ===
-        "WAIT_RESIST"
+        effectResult === "WAIT_RESIST"
     ){
 
         console.log(
@@ -1463,9 +1396,7 @@ function resolveMagia(){
             "→ レジスト待ち"
         );
 
-
-        resistMagiaWaiting =
-            true;
+        resistMagiaWaiting = true;
 
         resistWaitingMagia =
             resolvedMagia;
@@ -1476,9 +1407,7 @@ function resolveMagia(){
         resistWaitingMagiaOwnSummon =
             resolvedOwnSummon;
 
-
         return;
-
     }
 
 
@@ -1489,7 +1418,7 @@ function resolveMagia(){
 
     if(
         effectResult ===
-        "WAIT_COOL_TRIGGER"
+            "WAIT_COOL_TRIGGER"
     ){
 
         console.log(
@@ -1498,30 +1427,15 @@ function resolveMagia(){
             "→ クール時誘発能力待ち"
         );
 
-
-        //----------------------------------
         // アースクェイク側が
-        // マギア情報・対象進行状態を
-        // 保持している
-        //----------------------------------
+        // マギア情報と進行状態を保持
 
         return;
-
     }
 
 
     //==================================
-    // アースクェイク
-    //==================================
-    //
-    // 待機が発生しなかった場合でも、
-    // startEarthquakeResolution() 内で
-    // 全対象を最後まで解決し、
-    // finishEarthquakeResolution() が
-    // マギア終了処理を担当する。
-    //
-    // そのため通常マギア終了処理へ
-    // 二重に入らない。
+    // アースクェイク専用処理
     //==================================
 
     if(
@@ -1534,14 +1448,12 @@ function resolveMagia(){
             "専用解決処理へ移行"
         );
 
-
         return;
-
     }
 
 
     //==================================
-    // ここから通常マギア
+    // ここから通常マギア終了処理
     //==================================
 
 
@@ -1550,15 +1462,13 @@ function resolveMagia(){
     //----------------------------------
 
     if(
-        resolvedMagia.owner ===
-        PLAYER
+        resolvedMagia.owner === PLAYER
     ){
 
         board.handCards =
             board.handCards.filter(
                 card =>
-                    card !==
-                    resolvedMagia
+                    card !== resolvedMagia
             );
 
     }
@@ -1567,8 +1477,7 @@ function resolveMagia(){
         enemyHandCards =
             enemyHandCards.filter(
                 card =>
-                    card !==
-                    resolvedMagia
+                    card !== resolvedMagia
             );
 
     }
@@ -1581,11 +1490,10 @@ function resolveMagia(){
     setTimeout(
         () => {
 
+
             //----------------------------------
             // イグナイト等
-            //
-            // 選択した自分サモンを
-            // クールへ
+            // 選択した自分サモンをクールへ
             //----------------------------------
 
             resolveMagiaCoolOwnSummon(
@@ -1605,9 +1513,7 @@ function resolveMagia(){
             // マギアをクールへ
             //----------------------------------
 
-            resolvedMagia.area =
-                "cool";
-
+            resolvedMagia.area = "cool";
 
             board.addCoolCard(
                 resolvedMagia,
@@ -1631,15 +1537,11 @@ function resolveMagia(){
 
     resetMagiaState();
 
-    summonCard =
-        null;
+    summonCard = null;
 
-    selectedCostCards =
-        [];
+    selectedCostCards = [];
 
-    costConfirm =
-        false;
-
+    costConfirm = false;
 
     updateButtons();
 
