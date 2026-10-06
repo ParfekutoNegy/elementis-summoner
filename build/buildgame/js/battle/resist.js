@@ -963,6 +963,60 @@ battleBombTarget = null;
 // 使用したバトルボムを記録
 battleBombSourceCard = card;
 
+//==================================
+// バトルボム
+// 対象候補発光
+//==================================
+
+battleBombTargetCandidates.forEach(
+    summon => {
+
+        console.log(
+            "★ バトルボム発光確認",
+            summon.card?.name,
+            summon.view
+        );
+
+
+        const element =
+            summon.view?.getElement?.();
+
+
+        console.log(
+            "★ バトルボムDOM確認",
+            summon.card?.name,
+            element
+        );
+
+
+        if(!element){
+
+            console.warn(
+                "★ バトルボム：DOM取得失敗",
+                summon.card?.name
+            );
+
+            return;
+
+        }
+
+
+        element.classList.add(
+            "magia-target"
+        );
+
+
+        console.log(
+            "★ バトルボムclass追加後",
+            summon.card?.name,
+            element.classList.contains(
+                "magia-target"
+            ),
+            element.className
+        );
+
+    }
+);
 
     //==================================
     // 対象候補のログ
@@ -985,7 +1039,7 @@ battleBombSourceCard = card;
     //==================================
 
     showActionGuide(
-        "バトルボム：ダメージを与えるサモンを選んでください。"
+        "バトルボムの対象を選んでください。"
     );
 
 
@@ -1049,7 +1103,9 @@ function selectBattleBombTarget(summon){
 
     if(
         !(summon instanceof Summon) ||
-        !battleBombTargetCandidates.includes(summon) ||
+        !battleBombTargetCandidates.includes(
+            summon
+        ) ||
         summon.destroyed
     ){
 
@@ -1066,17 +1122,74 @@ function selectBattleBombTarget(summon){
     // 対象確定
     //==================================
 
-    battleBombTarget = summon;
+    battleBombTarget =
+        summon;
 
-    battleBombSelecting = false;
+    battleBombSelecting =
+        false;
 
-    battleBombTargetCandidates = [];
 
+    //==================================
+    // バトルボム
+    // 対象候補の青白い発光を解除
+    //
+    // summon.view はDOMそのものではないため
+    // getElement() で取得する
+    //==================================
+
+    battleBombTargetCandidates.forEach(
+        candidate => {
+
+            if(
+                !candidate ||
+                !candidate.view ||
+                typeof candidate.view.getElement !==
+                    "function"
+            ){
+
+                return;
+
+            }
+
+
+            const element =
+                candidate.view.getElement();
+
+
+            if(
+                element &&
+                element.classList
+            ){
+
+                element.classList.remove(
+                    "magia-target"
+                );
+
+            }
+
+        }
+    );
+
+
+    //==================================
+    // 対象候補をクリア
+    //
+    // 発光解除後に行う
+    //==================================
+
+    battleBombTargetCandidates =
+        [];
+
+
+    //==================================
+    // ログ
+    //==================================
 
     console.log(
         "バトルボム：対象確定",
         summon.card.name
     );
+
 
     addBattleLog(
         `バトルボム：${summon.card.name}を対象に選択`
@@ -1084,12 +1197,12 @@ function selectBattleBombTarget(summon){
 
 
     //==================================
-    // 表示更新
+    // 行動案内を解除
     //==================================
 
     if(
         typeof hideActionGuide ===
-        "function"
+            "function"
     ){
 
         hideActionGuide();
@@ -1098,19 +1211,32 @@ function selectBattleBombTarget(summon){
 
 
     //==================================
-    // レジスト終了
+    // UI更新
     //==================================
 
-    // 対象は battleBombTarget に保持する。
-    // バトル終了後のダメージ処理は
-    // 次の段階で実装する。
+    if(
+        typeof updateButtons ===
+            "function"
+    ){
+
+        updateButtons();
+
+    }
+
+
+    //==================================
+    // レジスト終了
+    //
+    // battleBombTarget は保持したまま
+    // バトル開始イベントを再開する
+    //==================================
 
     finishResist();
+
 
     return true;
 
 }
-
 
 //======================================
 // レジスト効果一覧
@@ -2400,17 +2526,16 @@ if(
 
     }
 
-    //======================================
+//======================================
 // バトルボム
 // レジスト終了後の専用処理
 //======================================
 
-/*if(
-    typeof battleBombWaiting !== "undefined" &&
+if(
+    wasBattleBombDamageEvent &&
     battleBombWaiting &&
     battleBombDamageStarted &&
-    !battleBombDamageResolved &&
-    wasBattleBombDamageEvent
+    !battleBombDamageResolved
 ){
 
     console.log(
@@ -2419,10 +2544,50 @@ if(
 
     resumeBattleBombAfterDamage();
 
-    // 通常の戦闘終了処理には進まない
+    finishBattleBombDamage();
+
     return;
 
-}*/
+}
+
+//======================================
+// 戦闘ダメージへのレジスト終了
+//
+// 通常戦闘・ブロック戦闘の途中で
+// レジストが発生していた場合、
+// 戦闘の続きへ戻る
+//======================================
+
+if(
+    (
+        typeof hydraBattleWaiting !==
+            "undefined" &&
+        hydraBattleWaiting
+    ) ||
+    (
+        typeof hydraBlockWaiting !==
+            "undefined" &&
+        hydraBlockWaiting
+    )
+){
+
+    console.log(
+        "レジスト終了：戦闘ダメージ処理を再開"
+    );
+
+
+    if(
+        typeof resumeBattleAfterHydra ===
+            "function"
+    ){
+
+        resumeBattleAfterHydra();
+
+        return;
+
+    }
+
+}
 
 
     //----------------------------------
@@ -2583,6 +2748,30 @@ function finishResistAfterHydra(){
     updateButtons();
 
 
+    //======================================
+    // バトルボム
+    // レジスト → ヒュドラ終了
+    //======================================
+
+    if(
+        battleBombWaiting &&
+        battleBombDamageStarted &&
+        !battleBombDamageResolved
+    ){
+
+        console.log(
+            "バトルボム：レジスト・ヒュドラ終了"
+        );
+
+        resumeBattleBombAfterDamage();
+
+        finishBattleBombDamage();
+
+        return;
+
+    }
+
+
     //==================================
     // マギアへ戻る
     //==================================
@@ -2608,8 +2797,50 @@ function finishResistAfterHydra(){
 
 
     //==================================
-    // 念のため
-    // 通常戦闘へ戻る
+    // ★追加
+    // 戦闘ダメージへ戻る
+    //
+    // 通常戦闘・ブロック戦闘の途中で
+    // レジスト → ヒュドラとなった場合、
+    // 保存してある位置から戦闘を再開する
+    //==================================
+
+    if(
+        (
+            typeof hydraBattleWaiting !==
+                "undefined" &&
+            hydraBattleWaiting
+        ) ||
+        (
+            typeof hydraBlockWaiting !==
+                "undefined" &&
+            hydraBlockWaiting
+        )
+    ){
+
+        console.log(
+            "レジスト → ヒュドラ終了：",
+            "戦闘ダメージ処理を再開"
+        );
+
+
+        if(
+            typeof resumeBattleAfterHydra ===
+                "function"
+        ){
+
+            resumeBattleAfterHydra();
+
+            return;
+
+        }
+
+    }
+
+
+    //==================================
+    // その他
+    // 通常解決
     //==================================
 
     resolveBattle();

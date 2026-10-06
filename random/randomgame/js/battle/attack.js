@@ -280,7 +280,7 @@ function isBattleBombTargetValid(){
 
 //======================================
 // バトルボム
-// ダメージ処理の待機解除
+// ダメージ確定後の待機解除
 //======================================
 
 function resumeBattleBombAfterDamage(){
@@ -289,18 +289,20 @@ function resumeBattleBombAfterDamage(){
         return false;
     }
 
+    // 二重処理防止
+    if(battleBombDamageResolved){
+        return false;
+    }
+
     console.log(
-        "バトルボム：ダメージ処理再開"
+        "バトルボム：ダメージ処理完了"
     );
 
     battleBombWaiting = false;
 
-    // この時点では攻撃を終了しない。
-    // レジスト・ヒュドラの結果を
-    // 反映した後の破壊処理が必要。
+    battleBombDamageResolved = true;
 
     return true;
-
 }
 
 //======================================
@@ -310,136 +312,281 @@ function resumeBattleBombAfterDamage(){
 
 function resolveBattleBombDamage(){
 
-    //==================================
-    // 二重発動防止
-    //==================================
-
+    // すでに処理を開始している場合
     if(battleBombDamageStarted){
-
-        console.log(
-            "バトルボム：ダメージ処理開始済み"
-        );
 
         return battleBombWaiting
             ? "WAIT"
             : "DONE";
-
     }
 
-    //==================================
-    // 対象確認
-    //==================================
-
-    if(
-        !battleBombTarget ||
-        !isBattleBombTargetValid()
-    ){
-
-        console.log(
-            "バトルボム：有効な対象なし"
-        );
-
-        return "DONE";
-
-    }
-
-    // ダメージ処理開始を記録
-    battleBombDamageStarted = true;
-
-    //----------------------------------
-    // バトルボムの対象確認
-    //----------------------------------
-
-    if(!battleBombTarget){
-
-        console.log(
-            "バトルボム：対象なし"
-        );
-
-        return "DONE";
-
-    }
-
-
-    //----------------------------------
-    // 対象が場に残っているか確認
-    //----------------------------------
-
+    // 対象が場に残っていなければ不発
     if(!isBattleBombTargetValid()){
 
         console.log(
-            "バトルボム：対象が場にいないため効果なし"
+            "バトルボム：対象が場にいないため不発"
         );
 
-        return "DONE";
+        battleBombDamageResolved = true;
 
+        return "DONE";
     }
 
+    // 二重発動を防止
+    battleBombDamageStarted = true;
 
-    //----------------------------------
-    // ダメージ処理
-    //----------------------------------
+    battleBombDamageResolved = false;
 
     console.log(
         "バトルボム：7ダメージ",
         battleBombTarget.card.name
     );
 
-
-const result =
-    dealDamage(
+    // 通常のダメージ処理を使用
+    // 戦闘ダメージではない
+    const result = dealDamage(
         battleBombTarget,
         7,
         battleBombSourceCard,
         false
     );
 
-
-    //----------------------------------
-    // レジスト待機
-    //----------------------------------
-
-    if(result === "WAIT_RESIST"){
-
-        console.log(
-            "バトルボム：レジスト待機"
-        );
+    // レジスト・ヒュドラの処理待ち
+    if(
+        result === "WAIT_RESIST" ||
+        result === "WAIT_HYDRA"
+    ){
 
         battleBombWaiting = true;
 
-        return "WAIT_RESIST";
-
-    }
-
-
-    //----------------------------------
-    // ヒュドラ待機
-    //----------------------------------
-
-    if(result === "WAIT_HYDRA"){
-
         console.log(
-            "バトルボム：ヒュドラ待機"
+            "バトルボム：ダメージ処理待機",
+            result
         );
 
-        battleBombWaiting = true;
-
-        return "WAIT_HYDRA";
-
+        return result;
     }
 
-
-    //----------------------------------
-    // ダメージ処理完了
-    //----------------------------------
-
+    // 待機が不要な場合
     battleBombWaiting = false;
 
+    battleBombDamageResolved = true;
+
     console.log(
-        "バトルボム：ダメージ処理完了"
+        "バトルボム：ダメージ処理確定"
     );
 
     return "DONE";
+}
+
+//======================================
+// バトルボム
+// 通常戦闘終了後の処理
+//======================================
+
+//==================================================
+// バトルボム
+// 通常戦闘終了後の処理
+//==================================================
+
+function finishSummonBattleWithBattleBomb(){
+
+    console.log(
+        "通常戦闘解決完了：バトルボム確認"
+    );
+
+
+    //==================================
+    // バトルボムが使用されていない
+    //==================================
+
+    if(
+        !battleBombTarget ||
+        !battleBombSourceCard
+    ){
+
+        console.log(
+            "バトルボム：使用なし"
+        );
+
+        finishAttack();
+
+        return;
+
+    }
+
+
+    //==================================
+    // 選択した対象が
+    // 戦闘終了時点ですでに場にいない
+    //
+    // → バトルボム不発
+    //==================================
+
+    if(
+        !isBattleBombTargetValid()
+    ){
+
+        console.log(
+            "バトルボム：",
+            "対象が戦闘で場を離れたため不発"
+        );
+
+        battleBombWaiting =
+            false;
+
+        battleBombDamageResolved =
+            true;
+
+        finishAttack();
+
+        return;
+
+    }
+
+
+    //==================================
+    // バトルボム
+    //
+    // 通常戦闘のダメージ表示と
+    // 重ならないよう少し待ってから
+    // 7ダメージを開始
+    //==================================
+
+    console.log(
+        "バトルボム：",
+        "7ダメージ演出待機"
+    );
+
+
+    setTimeout(() => {
+
+        //==================================
+        // 待機中に対象が場を離れていないか
+        // 念のため再確認
+        //==================================
+
+        if(
+            !isBattleBombTargetValid()
+        ){
+
+            console.log(
+                "バトルボム：",
+                "待機中に対象が場を離れたため不発"
+            );
+
+            battleBombWaiting =
+                false;
+
+            battleBombDamageResolved =
+                true;
+
+            finishAttack();
+
+            return;
+
+        }
+
+
+        //==================================
+        // バトルボム
+        // 7ダメージ開始
+        //==================================
+
+        console.log(
+            "バトルボム：",
+            "戦闘終了後の7ダメージ開始",
+            battleBombTarget.card?.name
+        );
+
+
+        const result =
+            resolveBattleBombDamage();
+
+
+        //==================================
+        // レジスト・ヒュドラ等で
+        // ダメージ処理が停止
+        //==================================
+
+        if(
+            result === "WAIT_RESIST" ||
+            result === "WAIT_HYDRA" ||
+            result === "WAIT"
+        ){
+
+            console.log(
+                "バトルボム：",
+                "7ダメージ解決待機",
+                result
+            );
+
+            return;
+
+        }
+
+
+        //==================================
+        // 7ダメージが即時解決
+        //==================================
+
+        finishBattleBombDamage();
+
+
+    }, 800);
+
+}
+
+//==================================================
+// バトルボム
+// 7ダメージ確定後の共通終了処理
+//==================================================
+
+function finishBattleBombDamage(){
+
+    console.log(
+        "バトルボム：7ダメージ確定後処理"
+    );
+
+
+    //==================================
+    // 状態確定
+    //==================================
+
+    battleBombWaiting =
+        false;
+
+
+    battleBombDamageResolved =
+        true;
+
+
+    //==================================
+    // 7ダメージによる
+    //
+    // ・破壊判定
+    // ・クール移動
+    // ・クール時誘発能力
+    //
+    // をすべて解決
+    //==================================
+
+    resolveBattle(
+        () => {
+
+            console.log(
+                "バトルボム：全処理完了"
+            );
+
+
+            //==================================
+            // ここで初めて攻撃終了
+            //==================================
+
+            finishAttack();
+
+        }
+    );
 
 }
 
@@ -2743,11 +2890,14 @@ function continueNormalSummonBattleDamage(
 
         hydraBattleWaiting = true;
 
-        hydraBattleAttacker = attacker;
+        hydraBattleAttacker =
+            attacker;
 
-        hydraBattleTarget = target;
+        hydraBattleTarget =
+            target;
 
-        hydraBattleStep = 1;
+        hydraBattleStep =
+            1;
 
         return "WAIT_HYDRA";
     }
@@ -2767,6 +2917,26 @@ function continueNormalSummonBattleDamage(
             target.card.name,
             "へのダメージのレジスト待ち"
         );
+
+
+        //==================================
+        // ★追加
+        // レジスト終了後に
+        // 戦闘の続きを再開するため保存
+        //==================================
+
+        hydraBattleWaiting =
+            true;
+
+        hydraBattleAttacker =
+            attacker;
+
+        hydraBattleTarget =
+            target;
+
+        hydraBattleStep =
+            1;
+
 
         return "WAIT_RESIST";
     }
@@ -2800,13 +2970,17 @@ function continueNormalSummonBattleDamage(
             "のヒュドラ能力待ち"
         );
 
-        hydraBattleWaiting = true;
+        hydraBattleWaiting =
+            true;
 
-        hydraBattleAttacker = attacker;
+        hydraBattleAttacker =
+            attacker;
 
-        hydraBattleTarget = target;
+        hydraBattleTarget =
+            target;
 
-        hydraBattleStep = 2;
+        hydraBattleStep =
+            2;
 
         return "WAIT_HYDRA";
     }
@@ -2826,6 +3000,26 @@ function continueNormalSummonBattleDamage(
             attacker.card.name,
             "へのダメージのレジスト待ち"
         );
+
+
+        //==================================
+        // ★追加
+        // レジスト終了後に
+        // 戦闘終了処理へ戻るため保存
+        //==================================
+
+        hydraBattleWaiting =
+            true;
+
+        hydraBattleAttacker =
+            attacker;
+
+        hydraBattleTarget =
+            target;
+
+        hydraBattleStep =
+            2;
+
 
         return "WAIT_RESIST";
     }
@@ -2852,17 +3046,39 @@ function continueNormalSummonBattleDamage(
     // バトル解決
     //==================================
 
-    setTimeout(() => {
+    setTimeout(
+        () => {
 
-        resolveBattle();
+            //==================================
+            // まず通常戦闘を完全に解決
+            //==================================
 
-        finishAttack();
+            resolveBattle(
+                () => {
 
-    }, 1000);
+                    //==================================
+                    // 戦闘終了後
+                    // バトルボム確認
+                    //==================================
+
+                    finishSummonBattleWithBattleBomb();
+
+                }
+            );
+
+        },
+        1000
+    );
+
 
     return true;
 
 }
+
+//==================================================
+// ヒュドラ
+// 一時停止していた戦闘を再開
+//==================================================
 
 //==================================================
 // ヒュドラ
@@ -2896,6 +3112,83 @@ function resumeBattleAfterHydra(){
         "================================"
     );
 
+
+    //==================================================
+    // バトルボム
+    // 7ダメージ処理中に発生したヒュドラ
+    //==================================================
+
+    if(
+        battleBombWaiting &&
+        battleBombDamageStarted &&
+        !battleBombDamageResolved
+    ){
+
+        console.log(
+            "バトルボム：ヒュドラ解決完了"
+        );
+
+
+        //==================================
+        // バトルボム
+        // ↓
+        // レジスト
+        // ↓
+        // ヒュドラ
+        //
+        // の順で停止していた場合
+        //==================================
+
+        if(
+            currentResistEvent &&
+            currentResistEvent.type ===
+                GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+            currentResistEvent.target ===
+                battleBombTarget
+        ){
+
+            console.log(
+                "バトルボム：レジスト処理へ戻る"
+            );
+
+
+            finishResistAfterHydra();
+
+
+            return;
+
+        }
+
+
+        //==================================
+        // バトルボム
+        // ↓
+        // ヒュドラ
+        //
+        // レジストを経由していない場合
+        //==================================
+
+        console.log(
+            "バトルボム：ヒュドラのみ終了"
+        );
+
+
+        resumeBattleBombAfterDamage();
+
+
+        //==================================
+        // バトルボム7ダメージ後の
+        // 破壊・クール時能力処理
+        //==================================
+
+        finishBattleBombDamage();
+
+
+        return;
+
+    }
+
+
     //==================================================
     // レジスト処理中に発生したヒュドラ
     //==================================================
@@ -2906,7 +3199,7 @@ function resumeBattleAfterHydra(){
     // ↓
     // ヒュドラ
     //
-    // の順で停止していた場合。
+    // の順で停止していた場合
     //==================================================
 
     if(
@@ -2996,35 +3289,36 @@ function resumeBattleAfterHydra(){
         // 必要情報確認
         //----------------------------------
 
-if(
-    !attacker ||
-    !blocker
-){
+        if(
+            !attacker ||
+            !blocker
+        ){
 
-    console.warn(
-        "ヒュドラ：",
-        "ブロック戦闘再開情報がありません"
-    );
-
-
-    resetHydraBlockBattleState();
+            console.warn(
+                "ヒュドラ：",
+                "ブロック戦闘再開情報がありません"
+            );
 
 
-    //==================================
-    // 攻撃処理が開始済みなら
-    // 必ず攻撃終了処理を通す
-    //==================================
-
-    if(attackResolving){
-
-        finishAttack();
-
-    }
+            resetHydraBlockBattleState();
 
 
-    return;
+            //==================================
+            // 攻撃処理が開始済みなら
+            // 必ず攻撃終了処理を通す
+            //==================================
 
-}
+            if(attackResolving){
+
+                finishAttack();
+
+            }
+
+
+            return;
+
+        }
+
 
         console.log(
             "ヒュドラ：ブロック戦闘再開",
@@ -3044,17 +3338,20 @@ if(
         //==================================
         // STEP 1
         //
-        // ブロッカーから攻撃者への
-        // ダメージで停止していた
+        // ブロッカー → 攻撃者
+        // のダメージ処理で停止していた
         //
-        // → 次はブロッカーが
-        //    攻撃者からダメージを受ける
+        // ↓
+        //
+        // 攻撃者 → ブロッカー
+        // のダメージへ進む
         //==================================
 
         if(step === 1){
 
             //----------------------------------
             // ゴーレム
+            // ブロック時ダメージ無効
             //----------------------------------
 
             if(
@@ -3074,7 +3371,8 @@ if(
             else{
 
                 //----------------------------------
-                // ブロッカーへのダメージ
+                // ブロッカーへの
+                // 戦闘ダメージ
                 //----------------------------------
 
                 const blockerDamageResult =
@@ -3083,7 +3381,8 @@ if(
                         getPower(
                             attacker
                         ),
-                        attacker.card
+                        attacker.card,
+                        true
                     );
 
 
@@ -3142,34 +3441,72 @@ if(
 
 
         //==================================
-        // STEP 2 または
-        // STEP 1の残りまで終了
+        // STEP 2
         //
-        // → 戦闘完了
+        // または
+        //
+        // STEP 1から残りのダメージ処理が
+        // 完了した場合
+        //
+        // ↓
+        //
+        // ブロック戦闘終了
         //==================================
 
         resetHydraBlockBattleState();
 
 
-        //----------------------------------
+        console.log(
+            "ヒュドラ：",
+            "ブロック戦闘ダメージ処理完了"
+        );
+
+
+        //==================================
         // 戦闘解決
-        //----------------------------------
-
-        resolveBattle();
-
-
-        //----------------------------------
-        // 攻撃終了
         //
-        // 通常CPU攻撃の場合
-        // → finishAttack() が次の攻撃へ
-        //
-        // 強制アタックの場合
-        // → finishAttack() が次の
-        //   強制アタックへ
-        //================================--
+        // 破壊
+        // ↓
+        // クール移動
+        // ↓
+        // クール時誘発能力
+        // ↓
+        // バトルボム
+        //==================================
 
-        finishAttack();
+        resolveBattle(
+            () => {
+
+                console.log(
+                    "ブロック戦闘解決完了：",
+                    "バトルボム確認"
+                );
+
+
+                //----------------------------------
+                // CPU側ブロッカー選択解除
+                //----------------------------------
+
+                if(
+                    typeof cpuSelectedBlocker !==
+                    "undefined"
+                ){
+
+                    cpuSelectedBlocker =
+                        null;
+
+                }
+
+
+                //==================================
+                // バトルボム
+                // 戦闘終了後処理
+                //==================================
+
+                finishSummonBattleWithBattleBomb();
+
+            }
+        );
 
 
         hideActionGuide();
@@ -3204,35 +3541,35 @@ if(
         // 必要情報確認
         //----------------------------------
 
-if(
-    !attacker ||
-    !target
-){
+        if(
+            !attacker ||
+            !target
+        ){
 
-    console.warn(
-        "ヒュドラ：",
-        "通常戦闘再開情報がありません"
-    );
-
-
-    resetHydraNormalBattleState();
+            console.warn(
+                "ヒュドラ：",
+                "通常戦闘再開情報がありません"
+            );
 
 
-    //==================================
-    // 攻撃処理が開始済みなら
-    // 必ず攻撃終了処理を通す
-    //==================================
-
-    if(attackResolving){
-
-        finishAttack();
-
-    }
+            resetHydraNormalBattleState();
 
 
-    return;
+            //==================================
+            // 攻撃処理が開始済みなら
+            // 必ず攻撃終了処理を通す
+            //==================================
 
-}
+            if(attackResolving){
+
+                finishAttack();
+
+            }
+
+
+            return;
+
+        }
 
 
         console.log(
@@ -3253,9 +3590,13 @@ if(
         //==================================
         // STEP 1
         //
-        // 攻撃対象へのダメージで停止
+        // 攻撃者 → 攻撃対象
+        // のダメージで停止していた
         //
-        // → 攻撃者への反撃ダメージへ
+        // ↓
+        //
+        // 攻撃対象 → 攻撃者
+        // の反撃ダメージへ
         //==================================
 
         if(step === 1){
@@ -3266,7 +3607,8 @@ if(
                     getPower(
                         target
                     ),
-                    target.card
+                    target.card,
+                    true
                 );
 
 
@@ -3328,12 +3670,36 @@ if(
         resetHydraNormalBattleState();
 
 
+        console.log(
+            "ヒュドラ：",
+            "通常戦闘ダメージ交換完了"
+        );
+
+
+        //==================================
+        // 通常戦闘を完全に解決
+        //
+        // ↓
+        //
+        // バトルボムへ
+        //==================================
+
         setTimeout(
             () => {
 
-                resolveBattle();
+                resolveBattle(
+                    () => {
 
-                finishAttack();
+                        console.log(
+                            "通常戦闘解決完了：",
+                            "バトルボム確認"
+                        );
+
+
+                        finishSummonBattleWithBattleBomb();
+
+                    }
+                );
 
             },
             1000
@@ -3345,9 +3711,9 @@ if(
     }
 
 
-    //----------------------------------
+    //==================================================
     // 待機中の戦闘なし
-    //----------------------------------
+    //==================================================
 
     console.log(
         "ヒュドラ戦闘再開：",
@@ -3355,6 +3721,7 @@ if(
     );
 
 }
+
 //==================================================
 // ヒュドラ
 // 通常戦闘待機状態リセット
@@ -6819,6 +7186,11 @@ function startBlock(blockers){
 // ブロック実行
 //======================================
 
+//======================================
+// PLAYER
+// ブロック実行
+//======================================
+
 function executeBlock(blocker){
 
     hideActionGuide();
@@ -6911,25 +7283,109 @@ function executeBlock(blocker){
 
 
     //----------------------------------
+    // 攻撃者保存
+    //----------------------------------
+
+    const attacker =
+        attackingSummon;
+
+
+    //----------------------------------
     // バジリスク：
     // バトル相手を記録
     //----------------------------------
 
     setBasiliskBattleTarget(
-        attackingSummon,
+        attacker,
         blocker
     );
 
+
     //==================================
-// バトルボム
-// プレイヤーのブロック戦闘
-//==================================
+    // バトルボム
+    // バトル参加サモンを記録
+    //==================================
 
-setBattleBombParticipants(
-    attackingSummon,
+    setBattleBombParticipants(
+        attacker,
+        blocker
+    );
+
+
+    console.log(
+        "バトルボム：PLAYERブロック戦闘開始",
+        attacker.card.name,
+        "VS",
+        blocker.card.name
+    );
+
+
+    //==================================
+    // バトル開始イベント
+    //==================================
+
+    if(!battleBombStartProcessed){
+
+        battleBombStartProcessed =
+            true;
+
+
+        const waiting =
+            startBattleBombEvent(
+                () => {
+
+                    console.log(
+                        "バトルボム：PLAYERブロック戦闘再開"
+                    );
+
+
+                    continuePlayerBlockBattleDamage(
+                        attacker,
+                        blocker
+                    );
+
+                }
+            );
+
+
+        //----------------------------------
+        // バトルボム選択待機
+        //----------------------------------
+
+        if(waiting){
+
+            console.log(
+                "バトルボム：PLAYERブロック戦闘 レジスト待機"
+            );
+
+
+            return "WAIT_RESIST";
+
+        }
+
+    }
+
+
+    //==================================
+    // ブロック戦闘へ
+    //==================================
+
+    return continuePlayerBlockBattleDamage(
+        attacker,
+        blocker
+    );
+
+}
+
+//======================================
+// PLAYER
+// ブロック戦闘ダメージ処理
+//======================================
+
+function continuePlayerBlockBattleDamage(
+    attacker,
     blocker
-);
-
+){
 
     //==================================
     // 今回が強制アタックか保存
@@ -6947,7 +7403,7 @@ setBattleBombParticipants(
 
     const attackerDamageResult =
         dealDamage(
-            attackingSummon,
+            attacker,
             getPower(
                 blocker
             ),
@@ -6967,7 +7423,7 @@ setBattleBombParticipants(
 
         console.log(
             "ブロック戦闘停止：",
-            attackingSummon.card.name,
+            attacker.card.name,
             "のヒュドラ能力待ち"
         );
 
@@ -6976,7 +7432,7 @@ setBattleBombParticipants(
             true;
 
         hydraBlockAttacker =
-            attackingSummon;
+            attacker;
 
         hydraBlocker =
             blocker;
@@ -7008,6 +7464,23 @@ setBattleBombParticipants(
         );
 
 
+        // 再開に必要なので保存
+        hydraBlockWaiting =
+            true;
+
+        hydraBlockAttacker =
+            attacker;
+
+        hydraBlocker =
+            blocker;
+
+        hydraBlockStep =
+            1;
+
+        hydraBlockWasForcedAttack =
+            wasForcedAttack;
+
+
         return "WAIT_RESIST";
 
     }
@@ -7019,7 +7492,6 @@ setBattleBombParticipants(
 
     //----------------------------------
     // ゴーレム
-    // ブロック時はダメージを受けない
     //----------------------------------
 
     if(
@@ -7041,9 +7513,9 @@ setBattleBombParticipants(
             dealDamage(
                 blocker,
                 getPower(
-                    attackingSummon
+                    attacker
                 ),
-                attackingSummon.card,
+                attacker.card,
                 true
             );
 
@@ -7068,7 +7540,7 @@ setBattleBombParticipants(
                 true;
 
             hydraBlockAttacker =
-                attackingSummon;
+                attacker;
 
             hydraBlocker =
                 blocker;
@@ -7100,6 +7572,22 @@ setBattleBombParticipants(
             );
 
 
+            hydraBlockWaiting =
+                true;
+
+            hydraBlockAttacker =
+                attacker;
+
+            hydraBlocker =
+                blocker;
+
+            hydraBlockStep =
+                2;
+
+            hydraBlockWasForcedAttack =
+                wasForcedAttack;
+
+
             return "WAIT_RESIST";
 
         }
@@ -7107,25 +7595,22 @@ setBattleBombParticipants(
     }
 
 
-    //----------------------------------
+    //==================================
     // 戦闘解決
-    //----------------------------------
-
-    resolveBattle();
-
-
-    //==================================
-    // 攻撃終了
-    //
-    // 通常CPU攻撃の場合
-    // → finishAttack() が次の攻撃へ
-    //
-    // 強制アタックの場合
-    // → finishAttack() が次の
-    //   強制アタックへ
     //==================================
 
-    finishAttack();
+    resolveBattle(
+        () => {
+
+            //==================================
+            // 戦闘終了後
+            // バトルボムへ
+            //==================================
+
+            finishSummonBattleWithBattleBomb();
+
+        }
+    );
 
 
     hideActionGuide();
@@ -7134,6 +7619,11 @@ setBattleBombParticipants(
     return;
 
 }
+
+//======================================
+// CPU
+// ブロック実行
+//======================================
 
 function executeCpuBlock(
     blockers,
@@ -7200,9 +7690,17 @@ function executeCpuBlock(
     //----------------------------------
 
     console.log(
-        "CPUブロッカー",
+        "CPUブロッカー：",
         blocker.card.name
     );
+
+
+    //----------------------------------
+    // ブロッカー保存
+    //----------------------------------
+
+    blockingSummon =
+        blocker;
 
 
     //----------------------------------
@@ -7212,27 +7710,27 @@ function executeCpuBlock(
     if(wasSummonAttackBlock){
 
         addBattleLog(
-            `CPU：${blocker.card.name}が${originalTarget?.card?.name ?? "サモン"}への攻撃をブロック`
+            `ENEMY：${blocker.card.name}が${originalTarget?.card?.name ?? "サモン"}への攻撃をブロック`
         );
 
     }
     else{
 
         addBattleLog(
-            `CPU：${blocker.card.name}が${attacker.card.name}をブロック`
+            `ENEMY：${blocker.card.name}が${attacker.card.name}をブロック`
         );
 
     }
 
 
-    //----------------------------------
+    //==================================
     // トロール用状態解除
-    //----------------------------------
+    //==================================
 
     if(wasSummonAttackBlock){
 
         console.log(
-            "CPUトロール：",
+            "トロール：",
             blocker.card.name,
             "が",
             originalTarget?.card?.name,
@@ -7273,15 +7771,143 @@ function executeCpuBlock(
         blocker
     );
 
-    //==================================
-// バトルボム
-// CPUのブロック戦闘
-//==================================
 
-setBattleBombParticipants(
+    //==================================
+    // バトルボム
+    // CPUのブロック戦闘
+    //==================================
+
+    setBattleBombParticipants(
+        attacker,
+        blocker
+    );
+
+
+    console.log(
+        "バトルボム：CPUブロック戦闘開始",
+        attacker.card.name,
+        "VS",
+        blocker.card.name
+    );
+
+
+    //==================================
+    // バトル開始イベント
+    //==================================
+
+    if(!battleBombStartProcessed){
+
+        //----------------------------------
+        // 同じ戦闘で
+        // BATTLE_STARTを二重発行しない
+        //----------------------------------
+
+        battleBombStartProcessed =
+            true;
+
+
+        const waiting =
+            startBattleBombEvent(
+                () => {
+
+                    console.log(
+                        "バトルボム：CPUブロック戦闘再開"
+                    );
+
+
+                    //----------------------------------
+                    // バトルボム選択終了後
+                    // 実際の戦闘へ
+                    //----------------------------------
+
+                    continueCpuBlockBattleDamage(
+                        attacker,
+                        blocker
+                    );
+
+                }
+            );
+
+
+        //----------------------------------
+        // バトルボムの
+        // レジスト選択待機
+        //----------------------------------
+
+        if(waiting){
+
+            console.log(
+                "バトルボム：CPUブロック戦闘 レジスト待機"
+            );
+
+
+            return true;
+
+        }
+
+    }
+
+
+    //==================================
+    // バトルボム待機がなければ
+    // そのまま戦闘開始
+    //==================================
+
+    return continueCpuBlockBattleDamage(
+        attacker,
+        blocker
+    );
+
+}
+
+
+//==================================================
+// CPU
+// ブロック戦闘ダメージ処理
+//==================================================
+
+function continueCpuBlockBattleDamage(
     attacker,
     blocker
-);
+){
+
+    console.log(
+        "=== CPUブロック戦闘ダメージ処理 ===",
+        {
+            attacker:
+                attacker?.card?.name,
+
+            blocker:
+                blocker?.card?.name
+        }
+    );
+
+
+    //==================================
+    // 安全確認
+    //==================================
+
+    if(
+        !attacker ||
+        !blocker
+    ){
+
+        console.warn(
+            "CPUブロック戦闘：",
+            "攻撃者またはブロッカーが存在しません"
+        );
+
+
+        cpuSelectedBlocker =
+            null;
+
+
+        finishAttack();
+
+
+        return false;
+
+    }
 
 
     //==================================
@@ -7313,6 +7939,7 @@ setBattleBombParticipants(
 
 
     //==================================
+    // 攻撃者側
     // ヒュドラ待機
     //==================================
 
@@ -7348,7 +7975,6 @@ setBattleBombParticipants(
         //
         // 再開後は
         // 攻撃者 → ブロッカー
-        // へ進む
         //----------------------------------
 
         hydraBlockStep =
@@ -7364,9 +7990,10 @@ setBattleBombParticipants(
     }
 
 
-    //----------------------------------
+    //==================================
+    // 攻撃者側
     // レジスト待機
-    //----------------------------------
+    //==================================
 
     if(
         attackerDamageResult ===
@@ -7379,6 +8006,11 @@ setBattleBombParticipants(
             "のレジスト待ち"
         );
 
+
+        //----------------------------------
+        // レジスト終了後に
+        // ブロック戦闘へ戻るため保存
+        //----------------------------------
 
         hydraBlockWaiting =
             true;
@@ -7412,7 +8044,9 @@ setBattleBombParticipants(
 
     //----------------------------------
     // ゴーレム
-    // ブロック時はダメージを受けない
+    //
+    // ブロック時は
+    // ダメージを受けない
     //----------------------------------
 
     if(
@@ -7442,6 +8076,7 @@ setBattleBombParticipants(
 
 
         //==================================
+        // ブロッカー側
         // ヒュドラ待機
         //==================================
 
@@ -7476,7 +8111,7 @@ setBattleBombParticipants(
             // まで到達済み
             //
             // 再開後は
-            // 戦闘解決へ進む
+            // 戦闘解決へ
             //----------------------------------
 
             hydraBlockStep =
@@ -7492,9 +8127,10 @@ setBattleBombParticipants(
         }
 
 
-        //----------------------------------
+        //==================================
+        // ブロッカー側
         // レジスト待機
-        //----------------------------------
+        //==================================
 
         if(
             blockerDamageResult ===
@@ -7507,6 +8143,11 @@ setBattleBombParticipants(
                 "のレジスト待ち"
             );
 
+
+            //----------------------------------
+            // レジスト終了後に
+            // ブロック戦闘へ戻るため保存
+            //----------------------------------
 
             hydraBlockWaiting =
                 true;
@@ -7545,35 +8186,43 @@ setBattleBombParticipants(
     );
 
 
-    //----------------------------------
+    //==================================
     // 戦闘解決
-    //----------------------------------
+    //==================================
 
     setTimeout(
         () => {
 
-            resolveBattle();
+            resolveBattle(
+                () => {
+
+                    //----------------------------------
+                    // CPUブロッカー選択をリセット
+                    //----------------------------------
+
+                    cpuSelectedBlocker =
+                        null;
 
 
-            //----------------------------------
-            // CPUブロッカー選択をリセット
-            //----------------------------------
+                    //==================================
+                    // 通常戦闘終了
+                    //
+                    // ↓
+                    //
+                    // バトルボムの
+                    // 戦闘後処理へ
+                    //==================================
 
-            cpuSelectedBlocker =
-                null;
+                    console.log(
+                        "CPUブロック戦闘解決完了：",
+                        "バトルボム確認"
+                    );
 
 
-            //==================================
-            // 攻撃終了
-            //
-            // 通常CPU攻撃
-            // → finishAttack() が処理
-            //
-            // 強制アタック
-            // → finishAttack() が処理
-            //==================================
+                    finishSummonBattleWithBattleBomb();
 
-            finishAttack();
+                }
+            );
 
         },
         1000

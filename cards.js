@@ -593,19 +593,20 @@ const CARD_LIST = [
         series:"folklore",
         image: "images/039-ヒートストレングス.jpg"
     },
-    {
-        id: 40,
-        name:"バトルボム",
-        type: "レジスト",
-        element: "火",
-        cost: 2,
-        series:"folklore",
-        image: "images/040-バトルボム.jpg",
-        trigger: "battleStart",
-        condition: battleBombCondition,
-        condi:"サモンのバトル開始時",
-        text:"バトルを行うサモン１体を対象にし、バトル終了後に７ダメージを与える。"
-    },
+ {
+    id: 40,
+    name: "バトルボム",
+    type: "レジスト",
+    element: "火",
+    cost: 2,
+    series: "folklore",
+    image: "images/040-バトルボム.jpg",
+    trigger: "battleStart",
+    condition: battleBombCondition,
+    effect: "battleBomb",
+    condi: "サモンのバトル開始時",
+    text: "バトルを行うサモン１体を対象にし、バトル終了後に７ダメージを与える。"
+},
     {
         id: 41,
         name:"ケット・シー",

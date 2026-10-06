@@ -70,13 +70,31 @@ function setBasiliskBattleTarget(
 // ダメージ・撃破解決
 //==================================================
 
-function resolveBattle(){
+let battleResolveAfterCallback = null;
+
+
+function resolveBattle(afterResolve = null){
 
     //----------------------------------
     // 今回の同時タイミング用
     //----------------------------------
 
     coolTriggerQueue = [];
+
+
+    //----------------------------------
+    // 後続処理を保存
+    //----------------------------------
+
+    if(
+        typeof afterResolve ===
+        "function"
+    ){
+
+        battleResolveAfterCallback =
+            afterResolve;
+
+    }
 
 
     //----------------------------------
@@ -121,6 +139,8 @@ function resolveBattle(){
     startCoolTriggerResolution();
 
 }
+
+
 function resolveDestroy(){
 
     const fields = [

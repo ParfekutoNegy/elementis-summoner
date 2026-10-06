@@ -3094,7 +3094,10 @@ if(
     // ブロック中
     //======================================
 
-    if(blockMode){
+   if(
+    blockMode &&
+    !resistMode
+){
 
         //----------------------------------
         // 前回の選択解除
@@ -3278,6 +3281,41 @@ if(
         card.setSelected(
             true
         );
+
+
+        console.log(
+    "★ レジストクリック照合",
+    {
+        clickedCard: card,
+        clickedName: card?.name,
+        clickedId: card?.id,
+
+        selectableResistCards:
+            selectableResistCards,
+
+        selectableNames:
+            selectableResistCards.map(
+                c => c?.name
+            ),
+
+        selectableIds:
+            selectableResistCards.map(
+                c => c?.id
+            ),
+
+        sameObject:
+            selectableResistCards.includes(
+                card
+            ),
+
+        sameId:
+            selectableResistCards.some(
+                c =>
+                    Number(c?.id) ===
+                    Number(card?.id)
+            )
+    }
+);
 
 
         //----------------------------------
@@ -5677,52 +5715,40 @@ if(
 
 }
 
+//----------------------------------
+// レジスト待機中
+//----------------------------------
 
-    //----------------------------------
-    // レジスト待機中
-    //----------------------------------
-
-    if(
-        resistMode &&
-        !resistUsingCard
-    ){
-
-        actionArea.style.display =
-        "flex";
-
-
-        resistPassButton.style.display =
-        "inline-block";
-
-
-        resistPassButton.textContent =
-        "プレイしない";
-
-
-        resistPassButton.onclick =
-        passResist;
-
-
-     if(
+if(
     resistMode &&
     !resistUsingCard
 ){
 
-    actionArea.style.display =
-    "flex";
+    //----------------------------------
+    // アクションエリア表示
+    //----------------------------------
 
+    actionArea.style.display =
+        "flex";
+
+
+    //----------------------------------
+    // 「プレイしない」
+    //----------------------------------
 
     resistPassButton.style.display =
-    "inline-block";
-
+        "inline-block";
 
     resistPassButton.textContent =
-    "プレイしない";
-
+        "プレイしない";
 
     resistPassButton.onclick =
-    passResist;
+        passResist;
 
+
+    //----------------------------------
+    // カード未選択
+    //----------------------------------
 
     if(
         !selectedHandCard
@@ -5733,26 +5759,41 @@ if(
     }
 
 
+    //----------------------------------
+    // 使用可能なレジストを
+    // 選択している場合
+    //----------------------------------
+
     if(
-        selectedHandCard.type === "レジスト" &&
+        selectedHandCard.type ===
+            "レジスト" &&
         selectableResistCards.includes(
             selectedHandCard
         )
     ){
 
+        console.log(
+            "レジスト：プレイボタン表示",
+            selectedHandCard.name
+        );
+
+
         useButton.style.display =
-        "inline-block";
+            "inline-block";
+
 
         useButton.textContent =
-        "プレイ";
+            "プレイ";
 
-        useButton.onclick = ()=>{
 
-            startResist(
-                selectedHandCard
-            );
+        useButton.onclick =
+            () => {
 
-        };
+                startResist(
+                    selectedHandCard
+                );
+
+            };
 
     }
 
@@ -5760,10 +5801,6 @@ if(
     return;
 
 }
-
-    }
-
-
 
     //----------------------------------
     // レジストコスト選択中
@@ -10866,6 +10903,34 @@ function updateCardAction(card){
         document.getElementById(
             "cost-action-area"
         );
+
+    //==================================
+    // レジスト選択中
+    //
+    // レジスト用ボタンは
+    // updateButtons() が管理する
+    //==================================
+
+    if(
+        resistMode &&
+        !resistUsingCard
+    ){
+
+        console.log(
+            "updateCardAction：",
+            "レジスト選択中のため",
+            "updateButtonsへ任せる",
+            card?.name
+        );
+
+
+        updateButtons();
+
+
+        return;
+
+    }
+
 
 
     const attackButton =

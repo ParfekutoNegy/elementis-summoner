@@ -4648,17 +4648,43 @@ function startCoolTriggerResolution(){
     // キューなし
     //----------------------------------
 
+if(
+    !coolTriggerQueue ||
+    coolTriggerQueue.length === 0
+){
+
+    coolTriggerResolving =
+        false;
+
+
+    //==================================
+    // resolveBattle 後続処理
+    //==================================
+
     if(
-        !coolTriggerQueue ||
-        coolTriggerQueue.length === 0
+        typeof battleResolveAfterCallback ===
+            "function"
     ){
 
-        coolTriggerResolving =
-            false;
+        const callback =
+            battleResolveAfterCallback;
 
-        return;
+        // 二重実行防止
+        battleResolveAfterCallback =
+            null;
+
+        console.log(
+            "resolveBattle：後続処理を実行"
+        );
+
+        callback();
 
     }
+
+
+    return;
+
+}
 
 
     //----------------------------------
@@ -4719,6 +4745,36 @@ function resolveNextCoolTrigger(){
         clearSummonAbilityTargetHighlight();
 
         hideActionGuide();
+
+
+        //==================================
+// resolveBattle 後続処理
+//==================================
+
+if(
+    typeof battleResolveAfterCallback ===
+        "function"
+){
+
+    const callback =
+        battleResolveAfterCallback;
+
+    // 二重実行防止
+    battleResolveAfterCallback =
+        null;
+
+    console.log(
+        "resolveBattle：クール時誘発能力終了 → 後続処理"
+    );
+
+    callback();
+
+    // callback側で
+    // バトルボムなどの処理へ進むため
+    // CPUターン再開には進まない
+    return;
+
+}
 
 
                 //==================================
