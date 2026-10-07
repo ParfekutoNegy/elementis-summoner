@@ -6226,6 +6226,108 @@ if(event.type === GAME_EVENT.PLAY_CARD){
 
         }
 
+        //======================================
+// バトルボム
+// BATTLE_START専用確認
+//======================================
+
+if(
+    card.effect ===
+        "battleBomb"
+){
+
+    //----------------------------------
+    // BATTLE_START以外では使用不可
+    //----------------------------------
+
+    if(
+        event.type !==
+            GAME_EVENT.BATTLE_START
+    ){
+
+        continue;
+
+    }
+
+
+    //----------------------------------
+    // CPUがレジスト使用側か
+    //----------------------------------
+
+    if(
+        event.player !== ENEMY
+    ){
+
+        continue;
+
+    }
+
+
+    //----------------------------------
+    // バトル参加サモン確認
+    //----------------------------------
+
+    const participants =
+        Array.isArray(
+            event.participants
+        )
+            ?
+            event.participants.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+            :
+            [];
+
+
+    if(
+        participants.length < 2
+    ){
+
+        console.log(
+            "CPUバトルボム候補除外：",
+            "バトル参加サモン不足"
+        );
+
+        continue;
+
+    }
+
+
+    //----------------------------------
+    // PLAYER側サモンが存在するか
+    //----------------------------------
+
+    const playerTargetExists =
+        participants.some(
+            summon =>
+                summon.owner === PLAYER
+        );
+
+
+    if(!playerTargetExists){
+
+        console.log(
+            "CPUバトルボム候補除外：",
+            "PLAYER側サモンなし"
+        );
+
+        continue;
+
+    }
+
+
+    console.log(
+        "CPUバトルボム：候補条件OK",
+        participants.map(
+            summon =>
+                summon.card?.name
+        )
+    );
+
+}
+
 
         //----------------------------------
         // このイベントで使用済み
@@ -6442,6 +6544,132 @@ function shouldCpuUseResist(event){
         return false;
 
     }
+
+    //======================================
+// CPUバトルボム使用判定
+//======================================
+
+if(
+    event.type ===
+        GAME_EVENT.BATTLE_START &&
+    event.player === ENEMY
+){
+
+    const battleBombCard =
+        enemyHandCards.find(
+            card =>
+                card.type ===
+                    "レジスト" &&
+                card.effect ===
+                    "battleBomb" &&
+                !card.usedThisEvent &&
+                canPayCost(
+                    card,
+                    ENEMY
+                ) &&
+                (
+                    !card.condition ||
+                    card.condition(event)
+                )
+        );
+
+
+    //----------------------------------
+    // バトルボムなし
+    //----------------------------------
+
+    if(!battleBombCard){
+
+        console.log(
+            "CPUバトルボム：使用可能カードなし"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // バトル参加サモン確認
+    //----------------------------------
+
+    const participants =
+        Array.isArray(
+            event.participants
+        )
+            ?
+            event.participants.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+            :
+            [];
+
+
+    if(
+        participants.length < 2
+    ){
+
+        console.log(
+            "CPUバトルボム：",
+            "バトル参加サモン不足"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // PLAYER側サモン確認
+    //----------------------------------
+
+    const playerTarget =
+        participants.find(
+            summon =>
+                summon.owner === PLAYER
+        );
+
+
+    if(!playerTarget){
+
+        console.log(
+            "CPUバトルボム：",
+            "PLAYER側対象なし"
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // 使用する
+    //----------------------------------
+
+    console.log(
+        "CPUバトルボム使用判定：YES",
+        {
+            target:
+                playerTarget.card?.name,
+
+            power:
+                typeof getPower ===
+                    "function"
+                    ?
+                    getPower(
+                        playerTarget
+                    )
+                    :
+                    null
+        }
+    );
+
+
+    return true;
+
+}
 
 //======================================
 // CPUキャンセレーション使用判定
@@ -6868,6 +7096,110 @@ function selectBestCpuResist(
     damage,
     event = null
 ){
+
+    //======================================
+// CPUバトルボム選択
+//======================================
+
+if(
+    event?.type ===
+        GAME_EVENT.BATTLE_START &&
+    event?.player ===
+        ENEMY
+){
+
+    //----------------------------------
+    // 使用可能候補から
+    // バトルボムを取得
+    //----------------------------------
+
+    const battleBombCard =
+        cards?.find(
+            card =>
+                card &&
+                card.effect ===
+                    "battleBomb"
+        );
+
+
+    //----------------------------------
+    // バトルボムなし
+    //----------------------------------
+
+    if(!battleBombCard){
+
+        console.log(
+            "CPUバトルボム選択：",
+            "候補なし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // バトル参加サモン取得
+    //----------------------------------
+
+    const participants =
+        Array.isArray(
+            event.participants
+        )
+            ?
+            event.participants.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+            :
+            [];
+
+
+    //----------------------------------
+    // PLAYER側の戦闘参加サモン
+    //----------------------------------
+
+    const playerTarget =
+        participants.find(
+            summon =>
+                summon.owner ===
+                    PLAYER
+        );
+
+
+    //----------------------------------
+    // PLAYER側対象なし
+    //----------------------------------
+
+    if(!playerTarget){
+
+        console.log(
+            "CPUバトルボム選択：",
+            "PLAYER側対象なし"
+        );
+
+        return null;
+
+    }
+
+
+    //----------------------------------
+    // 今回はPLAYER側サモンを
+    // バトルボム対象候補として採用
+    //----------------------------------
+
+    console.log(
+        "CPUバトルボム選択：",
+        battleBombCard.name,
+        "対象予定=",
+        playerTarget.card?.name
+    );
+
+
+    return battleBombCard;
+
+}
 
     //======================================
     // CPUキャンセレーション選択

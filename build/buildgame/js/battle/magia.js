@@ -2541,10 +2541,16 @@ function clearMagiaHighlight(){
 
 }
 
+
 //======================================
 // マギア使用可能判定
 //======================================
+
 function canUseMagia(card){
+
+    //----------------------------------
+    // 対象指定なし
+    //----------------------------------
 
     if(
         !card ||
@@ -2561,130 +2567,109 @@ function canUseMagia(card){
         card.effect.target;
 
 
-    //----------------------------------
-    // 自分サモン
-    //----------------------------------
-
-    if(
-        targets.includes("playerSummon") &&
-        playerField.length > 0
-    ){
-
-        return true;
-
-    }
-
-
-    //----------------------------------
-    // 相手サモン
-    //----------------------------------
-
-    if(
-        targets.includes("enemySummon") &&
-        enemyField.length > 0
-    ){
-
-        return true;
-
-    }
-
-
-    //----------------------------------
-    // 自分タテ向き
-    //----------------------------------
-
-    if(
-        targets.includes(
-            "playerVerticalSummon"
-        )
-    ){
-
-        if(
-            playerField.some(
-                summon =>
-                    !summon.destroyed &&
-                    !summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
-
-    }
-
-
-    //----------------------------------
-    // 自分ヨコ向き
-    //----------------------------------
-
-    if(
-        targets.includes(
-            "playerHorizontalSummon"
-        )
-    ){
-
-        if(
-            playerField.some(
-                summon =>
-                    !summon.destroyed &&
-                    summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
-
-    }
+    const condition =
+        card.effect.condition;
 
 
     //==================================
-    // 自分・相手のヨコ向きサモン
+    // 向き条件付きサモン
+    //
+    // トルネード等
+    //
+    // effect.condition.orientation
+    // を持つカード
     //==================================
 
     if(
-        targets.includes(
-            "horizontalSummon"
-        )
+        condition &&
+        condition.orientation
     ){
 
-        //----------------------------------
-        // 使用カード以外の手札枚数
-        //----------------------------------
-
-        const handCount =
-            board.handCards.filter(
-                handCard =>
-                    handCard !== card
-            ).length;
+        const orientation =
+            condition.orientation;
 
 
         //----------------------------------
-        // 自分・相手の場をまとめる
+        // 対象候補
         //----------------------------------
 
-        const fieldSummons = [
-            ...playerField,
-            ...enemyField
-        ];
+        const targetSummons = [];
 
 
         //----------------------------------
-        // 実際に使用可能な対象があるか
+        // 自分サモン
+        //----------------------------------
+
+        if(
+            targets.includes(
+                "playerSummon"
+            ) ||
+            targets.includes(
+                "selfSummon"
+            )
+        ){
+
+            targetSummons.push(
+                ...playerField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 相手サモン
+        //----------------------------------
+
+        if(
+            targets.includes(
+                "enemySummon"
+            )
+        ){
+
+            targetSummons.push(
+                ...enemyField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 条件に合う対象が存在するか
         //----------------------------------
 
         const canUseTarget =
-            fieldSummons.some(
+            targetSummons.some(
                 summon => {
 
                     //----------------------------------
-                    // 無効なサモン
+                    // 存在しない
+                    //----------------------------------
+
+                    if(!summon){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 破壊済み
+                    //----------------------------------
+
+                    if(summon.destroyed){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // ヨコ向き指定
                     //----------------------------------
 
                     if(
-                        !summon ||
-                        summon.destroyed ||
+                        orientation ===
+                            "horizontal" &&
                         !summon.isRest
                     ){
 
@@ -2694,10 +2679,28 @@ function canUseMagia(card){
 
 
                     //----------------------------------
-                    // マギアの対象にできるか
+                    // タテ向き指定
                     //----------------------------------
 
                     if(
+                        orientation ===
+                            "vertical" &&
+                        summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // マギア対象不可
+                    // クラーケン等
+                    //----------------------------------
+
+                    if(
+                        typeof isMagiaTargetBlocked ===
+                            "function" &&
                         isMagiaTargetBlocked(
                             card,
                             summon
@@ -2710,110 +2713,152 @@ function canUseMagia(card){
 
 
                     //----------------------------------
-                    // 対象による
-                    // コスト軽減がない場合
+                    // 使用可能対象
                     //----------------------------------
 
-                    if(
-                        !card.effect.costDownElement ||
-                        !card.effect.costDownValue
-                    ){
-
-                        const requiredCost =
-                            getCurrentCardCost(
-                                card
-                            );
-
-
-                        return (
-                            handCount >=
-                            requiredCost
-                        );
-
-                    }
-
-
-                    //----------------------------------
-                    // 通常コスト
-                    //----------------------------------
-
-                    let requiredCost =
-                        getCurrentCardCost(
-                            card
-                        );
-
-
-                    //----------------------------------
-                    // 対象属性
-                    //----------------------------------
-
-                    const targetElement =
-                        summon.card?.elementType ??
-                        summon.card?.element ??
-                        summon.elementType ??
-                        summon.element ??
-                        null;
-
-
-                    //----------------------------------
-                    // 対象によるコスト軽減
-                    //----------------------------------
-
-                    if(
-                        targetElement ===
-                            card.effect.costDownElement
-                    ){
-
-                        requiredCost -=
-                            Number(
-                                card.effect.costDownValue
-                            ) || 0;
-
-                    }
-
-
-                    requiredCost =
-                        Math.max(
-                            0,
-                            requiredCost
-                        );
-
-
-                    //----------------------------------
-                    // この対象なら支払えるか
-                    //----------------------------------
-
-                    return (
-                        handCount >=
-                        requiredCost
-                    );
+                    return true;
 
                 }
             );
 
 
-        if(canUseTarget){
+        console.log(
+            "マギア使用可能判定：向き条件",
+            {
+                card:
+                    card.name,
 
-            return true;
+                orientation:
+                    orientation,
 
-        }
+                result:
+                    canUseTarget
+            }
+        );
+
+
+        //----------------------------------
+        // 向き条件付きカードは
+        // ここで使用可否を確定
+        //----------------------------------
+
+        return canUseTarget;
+
+    }
+
+
+    //==================================
+    // horizontalSummon
+    //
+    // 別形式のカード用として残す
+    //==================================
+
+    if(
+        targets.includes(
+            "horizontalSummon"
+        )
+    ){
+
+        const fieldSummons = [
+            ...playerField,
+            ...enemyField
+        ];
+
+
+        const canUseTarget =
+            fieldSummons.some(
+                summon => {
+
+                    if(
+                        !summon ||
+                        summon.destroyed ||
+                        !summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    if(
+                        typeof isMagiaTargetBlocked ===
+                            "function" &&
+                        isMagiaTargetBlocked(
+                            card,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        return canUseTarget;
 
     }
 
 
     //----------------------------------
-    // 相手タテ向き
+    // 自分サモン
     //----------------------------------
 
     if(
         targets.includes(
-            "enemyVerticalSummon"
+            "playerSummon"
+        ) &&
+        playerField.some(
+            summon =>
+                summon &&
+                !summon.destroyed
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 相手サモン
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "enemySummon"
+        ) &&
+        enemyField.some(
+            summon =>
+                summon &&
+                !summon.destroyed
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 自分タテ向きサモン
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "playerVerticalSummon"
         )
     ){
 
         if(
-            enemyField.some(
+            playerField.some(
                 summon =>
+                    summon &&
                     !summon.destroyed &&
                     !summon.isRest
             )
@@ -2827,18 +2872,19 @@ function canUseMagia(card){
 
 
     //----------------------------------
-    // 相手ヨコ向き
+    // 自分ヨコ向きサモン
     //----------------------------------
 
     if(
         targets.includes(
-            "enemyHorizontalSummon"
+            "playerHorizontalSummon"
         )
     ){
 
         if(
-            enemyField.some(
+            playerField.some(
                 summon =>
+                    summon &&
                     !summon.destroyed &&
                     summon.isRest
             )
@@ -2852,11 +2898,65 @@ function canUseMagia(card){
 
 
     //----------------------------------
-    // 自分
+    // 相手タテ向きサモン
     //----------------------------------
 
     if(
-        targets.includes("player")
+        targets.includes(
+            "enemyVerticalSummon"
+        )
+    ){
+
+        if(
+            enemyField.some(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    !summon.isRest
+            )
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // 相手ヨコ向きサモン
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "enemyHorizontalSummon"
+        )
+    ){
+
+        if(
+            enemyField.some(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    summon.isRest
+            )
+        ){
+
+            return true;
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // 自分プレイヤー
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "player"
+        )
     ){
 
         return true;
@@ -2865,11 +2965,13 @@ function canUseMagia(card){
 
 
     //----------------------------------
-    // 相手
+    // 相手プレイヤー
     //----------------------------------
 
     if(
-        targets.includes("enemy")
+        targets.includes(
+            "enemy"
+        )
     ){
 
         return true;
@@ -2894,154 +2996,8 @@ function canUseMagia(card){
 
 
     //----------------------------------
-    // 自分クールゾーンのマギア
+    // 使用可能対象なし
     //----------------------------------
-
-    if(
-        targets.includes(
-            "playerCoolMagia"
-        ) &&
-        board.playerCoolCards.some(
-            coolCard =>
-                coolCard.type ===
-                "マギア"
-        )
-    ){
-
-        return true;
-
-    }
-
-
-    //----------------------------------
-    // 自分クールゾーンのサモン
-    //----------------------------------
-
-    if(
-        targets.includes(
-            "playerCoolSummon"
-        )
-    ){
-
-        //----------------------------------
-        // コスト軽減対象を持つマギア
-        //----------------------------------
-
-        if(
-            card.effect.costDownElement &&
-            card.effect.costDownValue
-        ){
-
-            //----------------------------------
-            // 使用カード以外の手札枚数
-            //----------------------------------
-
-            const handCount =
-                board.handCards.filter(
-                    handCard =>
-                        handCard !== card
-                ).length;
-
-
-            //----------------------------------
-            // クールゾーンに
-            // 支払い可能な対象があるか
-            //----------------------------------
-
-            const canUseTarget =
-                board.playerCoolCards.some(
-                    coolCard => {
-
-                        if(
-                            coolCard.type !==
-                                "サモン"
-                        ){
-
-                            return false;
-
-                        }
-
-
-                        //----------------------------------
-                        // 通常の現在コスト
-                        //----------------------------------
-
-                        let requiredCost =
-                            getCurrentCardCost(
-                                card
-                            );
-
-
-                        //----------------------------------
-                        // 対象属性
-                        //----------------------------------
-
-                        const targetElement =
-                            coolCard.elementType ??
-                            coolCard.element ??
-                            null;
-
-
-                        //----------------------------------
-                        // 対象によるコスト軽減
-                        //----------------------------------
-
-                        if(
-                            targetElement ===
-                                card.effect.costDownElement
-                        ){
-
-                            requiredCost -=
-                                Number(
-                                    card.effect.costDownValue
-                                ) || 0;
-
-                        }
-
-
-                        requiredCost =
-                            Math.max(
-                                0,
-                                requiredCost
-                            );
-
-
-                        return (
-                            handCount >=
-                            requiredCost
-                        );
-
-                    }
-                );
-
-
-            if(canUseTarget){
-
-                return true;
-
-            }
-
-        }
-
-
-        //----------------------------------
-        // 通常のクールサモン対象
-        //----------------------------------
-
-        else if(
-            board.playerCoolCards.some(
-                coolCard =>
-                    coolCard.type ===
-                        "サモン"
-            )
-        ){
-
-            return true;
-
-        }
-
-    }
-
 
     return false;
 
@@ -3609,104 +3565,6 @@ function isValidMagiaTarget(
             target.owner === PLAYER &&
             target.isRest
         ){
-
-            return true;
-
-        }
-
-
-        //==================================
-        // 自分・相手のヨコ向き
-        //==================================
-
-        if(
-            targets.includes(
-                "horizontalSummon"
-            ) &&
-            target.isRest
-        ){
-
-            //----------------------------------
-            // 対象によってコストが変化する場合
-            //----------------------------------
-
-            if(
-                card.effect.costDownElement &&
-                card.effect.costDownValue
-            ){
-
-                //----------------------------------
-                // 使用カード以外の手札枚数
-                //----------------------------------
-
-                const handCount =
-                    board.handCards.filter(
-                        handCard =>
-                            handCard !== card
-                    ).length;
-
-
-                //----------------------------------
-                // 通常の現在コスト
-                //----------------------------------
-
-                let requiredCost =
-                    getCurrentCardCost(
-                        card
-                    );
-
-
-                //----------------------------------
-                // 対象属性
-                //----------------------------------
-
-                const targetElement =
-                    target.card?.elementType ??
-                    target.card?.element ??
-                    target.elementType ??
-                    target.element ??
-                    null;
-
-
-                //----------------------------------
-                // 対象によるコスト軽減
-                //----------------------------------
-
-                if(
-                    targetElement ===
-                        card.effect.costDownElement
-                ){
-
-                    requiredCost -=
-                        Number(
-                            card.effect.costDownValue
-                        ) || 0;
-
-                }
-
-
-                requiredCost =
-                    Math.max(
-                        0,
-                        requiredCost
-                    );
-
-
-                //----------------------------------
-                // 支払い可能なら対象にできる
-                //----------------------------------
-
-                return (
-                    handCount >=
-                    requiredCost
-                );
-
-            }
-
-
-            //----------------------------------
-            // コスト変化なし
-            //----------------------------------
 
             return true;
 

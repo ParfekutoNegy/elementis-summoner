@@ -2116,12 +2116,22 @@ function updateHandHighlight(){
 
 }
 
+
+
+//======================================
+// マギア対象存在判定
+//======================================
+
 //======================================
 // マギア対象存在判定
 //======================================
 
 function hasMagiaTarget(card){
 
+
+    //----------------------------------
+    // 効果なし
+    //----------------------------------
 
     if(!card.effect){
 
@@ -2131,19 +2141,177 @@ function hasMagiaTarget(card){
 
 
     const targets =
-    card.effect.target;
+        card.effect.target;
+
+
+    const condition =
+        card.effect.condition;
 
 
     //----------------------------------
     // 対象なし
     //----------------------------------
 
-    if(!targets || targets.length === 0){
+    if(
+        !targets ||
+        targets.length === 0
+    ){
 
         return true;
 
     }
 
+
+    //==================================
+    // サモン対象の条件付き判定
+    //
+    // トルネード等
+    //==================================
+
+    if(
+        condition &&
+        condition.orientation
+    ){
+
+        const orientation =
+            condition.orientation;
+
+
+        //----------------------------------
+        // 対象候補を作る
+        //----------------------------------
+
+        const targetSummons = [];
+
+
+        //----------------------------------
+        // 相手サモン
+        //----------------------------------
+
+        if(
+            targets.includes(
+                "enemySummon"
+            )
+        ){
+
+            targetSummons.push(
+                ...enemyField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 自分サモン
+        //----------------------------------
+
+        if(
+            targets.includes(
+                "playerSummon"
+            ) ||
+            targets.includes(
+                "selfSummon"
+            )
+        ){
+
+            targetSummons.push(
+                ...playerField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 条件に合うサモン確認
+        //----------------------------------
+
+        const hasValidTarget =
+            targetSummons.some(
+                summon => {
+
+                    if(
+                        !summon ||
+                        summon.destroyed
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // ヨコ向き指定
+                    //----------------------------------
+
+                    if(
+                        orientation ===
+                        "horizontal" &&
+                        !summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // タテ向き指定
+                    //----------------------------------
+
+                    if(
+                        orientation ===
+                        "vertical" &&
+                        summon.isRest
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // マギア対象不可
+                    // クラーケン等
+                    //----------------------------------
+
+                    if(
+                        typeof isMagiaTargetBlocked ===
+                            "function" &&
+                        isMagiaTargetBlocked(
+                            card,
+                            summon
+                        )
+                    ){
+
+                        return false;
+
+                    }
+
+
+                    return true;
+
+                }
+            );
+
+
+        console.log(
+            "hasMagiaTarget：条件付き対象判定",
+            {
+                card:
+                    card.name,
+
+                orientation:
+                    orientation,
+
+                result:
+                    hasValidTarget
+            }
+        );
+
+
+        return hasValidTarget;
+
+    }
 
 
     //----------------------------------
@@ -2151,17 +2319,24 @@ function hasMagiaTarget(card){
     //----------------------------------
 
     if(
-        targets.includes("enemySummon")
+        targets.includes(
+            "enemySummon"
+        )
     ){
 
-        if(enemyField.length > 0){
+        if(
+            enemyField.some(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+        ){
 
             return true;
 
         }
 
     }
-
 
 
     //----------------------------------
@@ -2169,7 +2344,9 @@ function hasMagiaTarget(card){
     //----------------------------------
 
     if(
-        targets.includes("enemy")
+        targets.includes(
+            "enemy"
+        )
     ){
 
         return true;
@@ -2177,16 +2354,26 @@ function hasMagiaTarget(card){
     }
 
 
-
     //----------------------------------
     // 自分サモン対象
     //----------------------------------
 
     if(
-        targets.includes("selfSummon")
+        targets.includes(
+            "selfSummon"
+        ) ||
+        targets.includes(
+            "playerSummon"
+        )
     ){
 
-        if(playerField.length > 0){
+        if(
+            playerField.some(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+        ){
 
             return true;
 
@@ -2195,13 +2382,14 @@ function hasMagiaTarget(card){
     }
 
 
-
     //----------------------------------
     // 自分対象
     //----------------------------------
 
     if(
-        targets.includes("self")
+        targets.includes(
+            "self"
+        )
     ){
 
         return true;
@@ -2212,7 +2400,6 @@ function hasMagiaTarget(card){
     return false;
 
 }
-
 
 //======================================
 // レジスト使用可能判定

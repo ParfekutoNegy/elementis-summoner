@@ -952,6 +952,7 @@ function selectFastCallSummon(card){
 //======================================
 // バトルボム
 // 効果処理
+// PLAYER・CPU共通
 //======================================
 
 function battleBomb(card, event){
@@ -961,7 +962,10 @@ function battleBomb(card, event){
     );
 
     console.log(
-        "バトルボム：効果処理開始"
+        "バトルボム：効果処理開始",
+        card.owner === ENEMY
+            ? "CPU"
+            : "PLAYER"
     );
 
     console.log(
@@ -975,7 +979,8 @@ function battleBomb(card, event){
 
     if(
         !event ||
-        event.type !== GAME_EVENT.BATTLE_START
+        event.type !==
+            GAME_EVENT.BATTLE_START
     ){
 
         console.warn(
@@ -987,11 +992,13 @@ function battleBomb(card, event){
 
 
     //==================================
-    // バトル参加サモンの確認
+    // バトル参加サモン確認
     //==================================
 
     if(
-        !Array.isArray(event.participants) ||
+        !Array.isArray(
+            event.participants
+        ) ||
         event.participants.length !== 2
     ){
 
@@ -1004,26 +1011,20 @@ function battleBomb(card, event){
 
 
     //==================================
-    // 対象候補を取得
+    // 対象候補取得
     //==================================
 
     battleBombTargetCandidates =
         event.participants.filter(
             summon =>
-
                 summon instanceof Summon &&
-
                 !summon.destroyed
-
         );
 
 
-    //==================================
-    // 対象候補の確認
-    //==================================
-
     if(
-        battleBombTargetCandidates.length === 0
+        battleBombTargetCandidates.length ===
+            0
     ){
 
         console.warn(
@@ -1035,74 +1036,156 @@ function battleBomb(card, event){
 
 
     //==================================
-    // 対象選択状態を開始
+    // 使用したバトルボムを記録
     //==================================
 
-battleBombSelecting = true;
+    battleBombSourceCard =
+        card;
 
-battleBombTarget = null;
+    battleBombTarget =
+        null;
 
-// 使用したバトルボムを記録
-battleBombSourceCard = card;
 
-//==================================
-// バトルボム
-// 対象候補発光
-//==================================
+    //==================================
+    // CPU使用
+    //==================================
 
-battleBombTargetCandidates.forEach(
-    summon => {
+    if(
+        card.owner === ENEMY
+    ){
 
         console.log(
-            "★ バトルボム発光確認",
-            summon.card?.name,
-            summon.view
+            "CPUバトルボム：対象自動選択開始"
         );
 
 
-        const element =
-            summon.view?.getElement?.();
+        //----------------------------------
+        // PLAYER側の戦闘参加サモンを取得
+        //----------------------------------
 
-
-        console.log(
-            "★ バトルボムDOM確認",
-            summon.card?.name,
-            element
-        );
-
-
-        if(!element){
-
-            console.warn(
-                "★ バトルボム：DOM取得失敗",
-                summon.card?.name
+        const playerTarget =
+            battleBombTargetCandidates.find(
+                summon =>
+                    summon.owner ===
+                        PLAYER
             );
 
-            return;
 
+        //----------------------------------
+        // PLAYER側サモンがない場合
+        // 念のため候補先頭
+        //----------------------------------
+
+        const target =
+            playerTarget ??
+            battleBombTargetCandidates[0];
+
+
+        if(!target){
+
+            console.warn(
+                "CPUバトルボム：対象なし"
+            );
+
+            battleBombTargetCandidates =
+                [];
+
+            battleBombSelecting =
+                false;
+
+            return;
         }
 
 
-        element.classList.add(
-            "magia-target"
-        );
+        //----------------------------------
+        // CPUはクリック待ちにしない
+        //----------------------------------
 
+        battleBombSelecting =
+            false;
+
+        battleBombTarget =
+            target;
+
+
+        //----------------------------------
+        // 対象候補クリア
+        //----------------------------------
+
+        battleBombTargetCandidates =
+            [];
+
+
+        //----------------------------------
+        // ログ
+        //----------------------------------
 
         console.log(
-            "★ バトルボムclass追加後",
-            summon.card?.name,
-            element.classList.contains(
-                "magia-target"
-            ),
-            element.className
+            "CPUバトルボム：対象確定",
+            target.card?.name
         );
 
+
+        addBattleLog(
+            `CPU：バトルボムで${target.card.name}を対象に選択`
+        );
+
+
+        //==================================
+        // 重要
+        //
+        // ここでは finishResist() を
+        // 呼ばない。
+        //
+        // useCpuResist() 側の
+        // CPUレジスト終了処理へ戻す。
+        //==================================
+
+        return;
     }
-);
 
 
     //==================================
-    // 対象候補のログ
+    // PLAYER使用
+    // 従来通り手動対象選択
+    //==================================
+
+    battleBombSelecting =
+        true;
+
+
+    //==================================
+    // 対象候補発光
+    //==================================
+
+    battleBombTargetCandidates.forEach(
+        summon => {
+
+            const element =
+                summon.view?.getElement?.();
+
+
+            if(!element){
+
+                console.warn(
+                    "バトルボム：DOM取得失敗",
+                    summon.card?.name
+                );
+
+                return;
+            }
+
+
+            element.classList.add(
+                "magia-target"
+            );
+
+        }
+    );
+
+
+    //==================================
+    // 対象候補ログ
     //==================================
 
     console.log(
@@ -1112,7 +1195,8 @@ battleBombTargetCandidates.forEach(
     console.log(
         "選択可能なサモン：",
         battleBombTargetCandidates.map(
-            summon => summon.card.name
+            summon =>
+                summon.card.name
         )
     );
 
@@ -1125,17 +1209,6 @@ battleBombTargetCandidates.forEach(
         "バトルボムの対象を選んでください。"
     );
 
-
-    //==================================
-    // 対象選択完了まで待機
-    //==================================
-
-    // 対象選択後は
-    // selectBattleBombTarget(summon)
-    // から finishResist() を呼び出す。
-    //
-    // バトル終了後の7ダメージは
-    // 後続の処理で実装する。
 
     console.log(
         "バトルボム：対象選択待機中"
@@ -1399,22 +1472,47 @@ if(card.effect === "fastCall"){
 
 //======================================
 // バトルボム
-// 対象選択が終わるまで待機
+//
+// バトルボムは通常レジスト用の
+// 2秒後 finishResist() を使用しない
+//
+// PLAYER
+// → 対象クリック後
+//   selectBattleBombTarget()
+//   から finishResist()
+//
+// CPU
+// → useCpuResist() 側で
+//   対象自動確定後に finishResist()
+//
+// そのためここでは必ず終了する
 //======================================
 
 if(
-    card.effect === "battleBomb" &&
-    battleBombSelecting
+    card.effect ===
+        "battleBomb"
 ){
 
-    console.log(
-        "バトルボム：対象選択待機中"
-    );
+    if(
+        battleBombSelecting
+    ){
+
+        console.log(
+            "バトルボム：対象選択待機中"
+        );
+
+    }
+    else{
+
+        console.log(
+            "バトルボム：専用終了処理待機"
+        );
+
+    }
 
     return;
 
 }
-
 
 
 //----------------------------------
@@ -1422,11 +1520,14 @@ if(
 // 軽減後ダメージ処理へ
 //----------------------------------
 
-setTimeout(()=>{
+setTimeout(
+    () => {
 
-    finishResist();
+        finishResist();
 
-},2000);
+    },
+    2000
+);
 
 
 }
@@ -2577,6 +2678,79 @@ if(
 
 
     updateButtons();
+
+    //==================================
+// アースクェイク
+// 各サモンへのレジスト終了後
+//==================================
+//
+// アースクェイクは複数のサモンへ
+// 1体ずつダメージを与える。
+//
+// 2体目以降では
+// resistMagiaWaiting が解除済みの
+// 場合があるため、
+// earthquakeResolving を直接確認して
+// 現在の1体分を完了させる。
+//==================================
+
+if(
+    typeof earthquakeResolving !==
+        "undefined" &&
+    earthquakeResolving &&
+    typeof earthquakeMagia !==
+        "undefined" &&
+    earthquakeMagia &&
+    typeof earthquakeCurrentTarget !==
+        "undefined" &&
+    earthquakeCurrentTarget
+){
+
+    console.log(
+        "レジスト終了：アースクェイク直接再開",
+        {
+            target:
+                earthquakeCurrentTarget
+                    ?.card?.name ?? null,
+
+            index:
+                typeof earthquakeIndex !==
+                    "undefined"
+                    ?
+                    earthquakeIndex
+                    :
+                    null,
+
+            total:
+                typeof earthquakeTargets !==
+                    "undefined"
+                    ?
+                    earthquakeTargets.length
+                    :
+                    null
+        }
+    );
+
+
+    //----------------------------------
+    // この1体分のダメージは
+    // レジスト処理内ですでに確定済み。
+    //
+    // dealDamage() は再実行しない。
+    //----------------------------------
+
+    if(
+        typeof finishEarthquakeTargetDamage ===
+            "function"
+    ){
+
+        finishEarthquakeTargetDamage();
+
+        return;
+
+    }
+
+}
 
 
     //==================================
@@ -3816,21 +3990,24 @@ if(card.effect === "multiShield"){
         true;
 
 
-    //----------------------------------
-    // 効果発動
-    //----------------------------------
+//----------------------------------
+// 効果発動
+//----------------------------------
 
-    const effect =
-        resistEffects[
-            card.effect
-        ];
+const effect =
+    resistEffects[
+        card.effect
+    ];
 
 
 //======================================
 // CPUレジスト効果発動
 //======================================
 
-if(card.effect === "fastCall"){
+if(
+    card.effect ===
+        "fastCall"
+){
 
     console.log(
         "CPUファストコール：専用召喚開始",
@@ -3847,12 +4024,84 @@ if(card.effect === "fastCall"){
         summonResult
     );
 
-}else if(effect){
+}
+else if(effect){
 
     effect(
         card,
         currentResistEvent
     );
+
+}
+
+
+//======================================
+// CPUバトルボム
+// 対象確定後にBATTLE_STARTを終了
+//======================================
+
+if(
+    card.effect ===
+        "battleBomb"
+){
+
+    //----------------------------------
+    // 対象確定確認
+    //----------------------------------
+
+    if(
+        battleBombTarget
+    ){
+
+        console.log(
+            "CPUバトルボム：",
+            "対象確定後、戦闘を再開",
+            battleBombTarget
+                ?.card?.name
+        );
+
+
+        //==================================
+        // battleBomb()ではCPUの場合
+        // 対象だけを自動確定している。
+        //
+        // ここでBATTLE_STARTの
+        // レジスト処理を終了し、
+        // event.resume()から戦闘へ戻す。
+        //==================================
+
+        setTimeout(
+            () => {
+
+                finishResist();
+
+            },
+            800
+        );
+
+    }
+    else{
+
+        console.warn(
+            "CPUバトルボム：",
+            "対象を確定できませんでした"
+        );
+
+        //----------------------------------
+        // 対象が取れなかった場合でも
+        // BATTLE_STARTを停止させない
+        //----------------------------------
+
+        setTimeout(
+            () => {
+
+                finishResist();
+
+            },
+            300
+        );
+
+    }
 
 }
 
