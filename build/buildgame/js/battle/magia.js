@@ -3553,6 +3553,27 @@ function isValidMagiaTarget(
 
         }
 
+        //==================================
+// 自分・相手のヨコ向きサモン
+// クイックアクション等
+//==================================
+
+if(
+    targets.includes(
+        "horizontalSummon"
+    ) &&
+    target.isRest &&
+    !target.destroyed &&
+    (
+        target.owner === PLAYER ||
+        target.owner === ENEMY
+    )
+){
+
+    return true;
+
+}
+
 
         //----------------------------------
         // 自分ヨコ向き

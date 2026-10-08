@@ -6328,6 +6328,70 @@ if(
 
 }
 
+//======================================
+// ヒートストレングス
+// CPU使用可能条件
+//======================================
+
+if(card.effect === "heatStrength"){
+
+    if(
+        event.type !== GAME_EVENT.BATTLE_START ||
+        event.player !== ENEMY
+    ){
+        continue;
+    }
+
+    const participants =
+        Array.isArray(event.participants)
+            ? event.participants.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed
+            )
+            : [];
+
+    const cpuSummon =
+        participants.find(
+            summon => summon.owner === ENEMY
+        );
+
+    const playerSummon =
+        participants.find(
+            summon => summon.owner === PLAYER
+        );
+
+    if(!cpuSummon || !playerSummon){
+        continue;
+    }
+
+    const cpuPower =
+        getPower(cpuSummon);
+
+    const playerPower =
+        getPower(playerSummon);
+
+    //----------------------------------
+    // ＋2で戦闘結果が改善する場合
+    //----------------------------------
+
+    const improvesBattle =
+        cpuPower < playerPower &&
+        cpuPower + 2 >= playerPower;
+
+    if(!improvesBattle){
+        continue;
+    }
+
+    console.log(
+        "CPUヒートストレングス：使用候補",
+        cpuSummon.card.name,
+        cpuPower,
+        "→",
+        cpuPower + 2
+    );
+}
+
 
         //----------------------------------
         // このイベントで使用済み
@@ -6530,7 +6594,6 @@ function shouldCpuUseResist(event){
         event
     );
 
-
     //----------------------------------
     // イベントなし
     //----------------------------------
@@ -6542,232 +6605,293 @@ function shouldCpuUseResist(event){
         );
 
         return false;
-
     }
 
     //======================================
-// CPUバトルボム使用判定
-//======================================
-
-if(
-    event.type ===
-        GAME_EVENT.BATTLE_START &&
-    event.player === ENEMY
-){
-
-    const battleBombCard =
-        enemyHandCards.find(
-            card =>
-                card.type ===
-                    "レジスト" &&
-                card.effect ===
-                    "battleBomb" &&
-                !card.usedThisEvent &&
-                canPayCost(
-                    card,
-                    ENEMY
-                ) &&
-                (
-                    !card.condition ||
-                    card.condition(event)
-                )
-        );
-
-
-    //----------------------------------
-    // バトルボムなし
-    //----------------------------------
-
-    if(!battleBombCard){
-
-        console.log(
-            "CPUバトルボム：使用可能カードなし"
-        );
-
-        return false;
-
-    }
-
-
-    //----------------------------------
-    // バトル参加サモン確認
-    //----------------------------------
-
-    const participants =
-        Array.isArray(
-            event.participants
-        )
-            ?
-            event.participants.filter(
-                summon =>
-                    summon &&
-                    !summon.destroyed
-            )
-            :
-            [];
-
+    // CPUバトル開始時レジスト使用判定
+    // バトルボム / ヒートストレングス
+    //======================================
 
     if(
-        participants.length < 2
+        event.type === GAME_EVENT.BATTLE_START &&
+        event.player === ENEMY
     ){
 
-        console.log(
-            "CPUバトルボム：",
-            "バトル参加サモン不足"
-        );
+        //----------------------------------
+        // バトル参加サモン確認
+        //----------------------------------
 
-        return false;
+        const participants =
+            Array.isArray(event.participants)
+                ? event.participants.filter(
+                    summon =>
+                        summon &&
+                        !summon.destroyed
+                )
+                : [];
 
-    }
+        const cpuSummon =
+            participants.find(
+                summon =>
+                    summon.owner === ENEMY
+            );
 
+        const playerSummon =
+            participants.find(
+                summon =>
+                    summon.owner === PLAYER
+            );
 
-    //----------------------------------
-    // PLAYER側サモン確認
-    //----------------------------------
+        if(
+            !cpuSummon ||
+            !playerSummon
+        ){
 
-    const playerTarget =
-        participants.find(
-            summon =>
-                summon.owner === PLAYER
-        );
+            console.log(
+                "CPUバトル開始時レジスト：",
+                "参加サモン不足"
+            );
 
-
-    if(!playerTarget){
-
-        console.log(
-            "CPUバトルボム：",
-            "PLAYER側対象なし"
-        );
-
-        return false;
-
-    }
-
-
-    //----------------------------------
-    // 使用する
-    //----------------------------------
-
-    console.log(
-        "CPUバトルボム使用判定：YES",
-        {
-            target:
-                playerTarget.card?.name,
-
-            power:
-                typeof getPower ===
-                    "function"
-                    ?
-                    getPower(
-                        playerTarget
-                    )
-                    :
-                    null
+            return false;
         }
-    );
 
+        //----------------------------------
+        // バトルボム確認
+        //----------------------------------
 
-    return true;
+        const battleBombCard =
+            enemyHandCards.find(
+                card =>
+                    card.type === "レジスト" &&
+                    card.effect === "battleBomb" &&
+                    !card.usedThisEvent &&
+                    canPayCost(card, ENEMY) &&
+                    (
+                        !card.condition ||
+                        card.condition(event)
+                    )
+            );
 
-}
+        //======================================
+        // CPUバトルボム使用判断
+        //======================================
 
-//======================================
-// CPUキャンセレーション使用判定
-//======================================
+        if(battleBombCard){
 
-if(
-    event.type === GAME_EVENT.PLAY_CARD &&
-    event.player === ENEMY &&
-    event.sourceType === "マギア"
-){
+            //----------------------------------
+            // バトル参加サモンのパワー
+            //----------------------------------
 
-    const canCancel =
-        enemyHandCards.some(card =>
-            card.effect === "cancelMagia" &&
-            !card.usedThisEvent &&
-            canPayCost(card, ENEMY)
-        );
+            const cpuPower =
+                getPower(cpuSummon);
 
-    if(canCancel){
-        return true;
-    }
+            const playerPower =
+                getPower(playerSummon);
 
-}
+            //----------------------------------
+            // 通常戦闘で相手を破壊できるか
+            //----------------------------------
 
+            const canDestroyNormally =
+                cpuPower >= playerPower;
 
-//======================================
-// CPUファストコール使用判定
-//======================================
+            if(canDestroyNormally){
 
-if(
-    event.type === GAME_EVENT.PLAY_CARD &&
-    event.player === ENEMY
-){
-
-    const fastCallCard =
-        enemyHandCards.find(
-            card =>
-                card.effect === "fastCall" &&
-                !card.usedThisEvent &&
-                canPayCost(card, ENEMY) &&
-                (
-                    !card.condition ||
-                    card.condition(event)
-                )
-        );
-
-    if(!fastCallCard){
-        return false;
-    }
-
-    // ファストコール自体のコスト
-    const fastCallCost =
-        getCurrentEnemyCardCost(
-            fastCallCard
-        );
-
-    // 召喚可能なサモンを探す
-    const summonCards =
-        enemyHandCards.filter(
-            card =>
-                card.type === "サモン" &&
-                canPlaySummonByElementRestriction(
-                    ENEMY,
-                    card
-                )
-        );
-
-    // 両方のコストを支払えるか確認
-    const canUse =
-        summonCards.some(
-            summon => {
-
-                const summonCost =
-                    getCurrentCardCost(
-                        summon,
-                        ENEMY
-                    );
-
-                const availableCards =
-                    enemyHandCards.length - 2;
-
-                return (
-                    availableCards >=
-                    fastCallCost + summonCost
+                console.log(
+                    "CPUバトルボム温存：",
+                    "通常戦闘で相手サモンを破壊可能",
+                    {
+                        cpuPower,
+                        playerPower
+                    }
                 );
 
+                // バトルボムを使用せず、
+                // ヒートストレングスの判定へ進む
             }
+
+            else{
+
+                console.log(
+                    "CPUレジスト使用判定：YES",
+                    "バトルボム",
+                    {
+                        cpuPower,
+                        playerPower
+                    }
+                );
+
+                return true;
+            }
+        }
+
+        //----------------------------------
+        // ヒートストレングス確認
+        //----------------------------------
+
+        const heatStrengthCard =
+            enemyHandCards.find(
+                card =>
+                    card.type === "レジスト" &&
+                    card.effect === "heatStrength" &&
+                    !card.usedThisEvent &&
+                    canPayCost(card, ENEMY) &&
+                    (
+                        !card.condition ||
+                        card.condition(event)
+                    )
+            );
+
+        if(!heatStrengthCard){
+
+            console.log(
+                "CPUバトル開始時レジスト：",
+                "使用可能カードなし"
+            );
+
+            return false;
+        }
+
+        //----------------------------------
+        // パワー比較
+        //----------------------------------
+
+        const cpuPower =
+            getPower(cpuSummon);
+
+        const playerPower =
+            getPower(playerSummon);
+
+        const improvesBattle =
+            cpuPower < playerPower &&
+            cpuPower + 2 >= playerPower;
+
+        if(improvesBattle){
+
+            console.log(
+                "CPUレジスト使用判定：YES",
+                "ヒートストレングス",
+                {
+                    cpuPower,
+                    playerPower,
+                    afterPower: cpuPower + 2
+                }
+            );
+
+            return true;
+        }
+
+        console.log(
+            "CPUヒートストレングス：",
+            "使用条件を満たさない"
         );
 
-    console.log(
-        "CPUファストコール使用判定",
-        canUse
-    );
+        return false;
+    }
 
-    return canUse;
+    //======================================
+    // CPUキャンセレーション使用判定
+    //======================================
 
-}
+    if(
+        event.type === GAME_EVENT.PLAY_CARD &&
+        event.player === ENEMY &&
+        event.sourceType === "マギア"
+    ){
 
+        const canCancel =
+            enemyHandCards.some(card =>
+                card.effect === "cancelMagia" &&
+                !card.usedThisEvent &&
+                canPayCost(card, ENEMY)
+            );
+
+        if(canCancel){
+
+            return true;
+        }
+    }
+
+    //======================================
+    // CPUファストコール使用判定
+    //======================================
+
+    if(
+        event.type === GAME_EVENT.PLAY_CARD &&
+        event.player === ENEMY
+    ){
+
+        const fastCallCard =
+            enemyHandCards.find(
+                card =>
+                    card.effect === "fastCall" &&
+                    !card.usedThisEvent &&
+                    canPayCost(card, ENEMY) &&
+                    (
+                        !card.condition ||
+                        card.condition(event)
+                    )
+            );
+
+        if(!fastCallCard){
+
+            return false;
+        }
+
+        //----------------------------------
+        // ファストコール自体のコスト
+        //----------------------------------
+
+        const fastCallCost =
+            getCurrentEnemyCardCost(
+                fastCallCard
+            );
+
+        //----------------------------------
+        // 召喚可能なサモンを探す
+        //----------------------------------
+
+        const summonCards =
+            enemyHandCards.filter(
+                card =>
+                    card.type === "サモン" &&
+                    canPlaySummonByElementRestriction(
+                        ENEMY,
+                        card
+                    )
+            );
+
+        //----------------------------------
+        // 両方のコストを支払えるか確認
+        //----------------------------------
+
+        const canUse =
+            summonCards.some(
+                summon => {
+
+                    const summonCost =
+                        getCurrentCardCost(
+                            summon,
+                            ENEMY
+                        );
+
+                    const availableCards =
+                        enemyHandCards.length - 2;
+
+                    return (
+                        availableCards >=
+                        fastCallCost + summonCost
+                    );
+                }
+            );
+
+        console.log(
+            "CPUファストコール使用判定",
+            canUse
+        );
+
+        return canUse;
+    }
 
     //======================================
     // CPUサモンへのダメージ
@@ -6792,9 +6916,7 @@ if(
             );
 
             return false;
-
         }
-
 
         //----------------------------------
         // ダメージ確認
@@ -6803,13 +6925,10 @@ if(
         const damage =
             Number(event.damage) || 0;
 
-
         if(damage <= 0){
 
             return false;
-
         }
-
 
         //----------------------------------
         // 対象サモンの現在パワー
@@ -6819,7 +6938,6 @@ if(
             getPower(
                 event.target
             );
-
 
         //----------------------------------
         // このダメージで破壊されないなら
@@ -6842,9 +6960,7 @@ if(
             );
 
             return false;
-
         }
-
 
         //----------------------------------
         // 使用可能なレジストがあるか確認
@@ -6864,18 +6980,14 @@ if(
                     ){
 
                         return false;
-
                     }
-
 
                     if(
                         card.usedThisEvent
                     ){
 
                         return false;
-
                     }
-
 
                     //----------------------------------
                     // 発動タイミング
@@ -6894,10 +7006,9 @@ if(
                         ){
 
                             return false;
-
                         }
-
                     }
+
                     else{
 
                         if(
@@ -6906,11 +7017,8 @@ if(
                         ){
 
                             return false;
-
                         }
-
                     }
-
 
                     //----------------------------------
                     // 個別条件
@@ -6922,9 +7030,7 @@ if(
                     ){
 
                         return false;
-
                     }
-
 
                     //----------------------------------
                     // コスト
@@ -6938,15 +7044,11 @@ if(
                     ){
 
                         return false;
-
                     }
 
-
                     return true;
-
                 }
             );
-
 
         if(!usableResist){
 
@@ -6956,9 +7058,7 @@ if(
             );
 
             return false;
-
         }
-
 
         console.log(
             "CPUレジスト使用判定：YES",
@@ -6970,11 +7070,8 @@ if(
             damage
         );
 
-
         return true;
-
     }
-
 
     //======================================
     // ここからCPU本体へのダメージ
@@ -6991,9 +7088,7 @@ if(
         );
 
         return false;
-
     }
-
 
     //----------------------------------
     // CPUが対象でなければ不可
@@ -7012,9 +7107,7 @@ if(
         );
 
         return false;
-
     }
-
 
     //----------------------------------
     // 1ダメージ
@@ -7030,9 +7123,7 @@ if(
         );
 
         return true;
-
     }
-
 
     //----------------------------------
     // 2ダメージ以上
@@ -7049,9 +7140,7 @@ if(
         );
 
         return true;
-
     }
-
 
     //----------------------------------
     // ライフ0になる場合
@@ -7069,9 +7158,7 @@ if(
         );
 
         return true;
-
     }
-
 
     //----------------------------------
     // 使用しない
@@ -7082,7 +7169,6 @@ if(
     );
 
     return false;
-
 }
 
 
@@ -7098,108 +7184,146 @@ function selectBestCpuResist(
 ){
 
     //======================================
-// CPUバトルボム選択
-//======================================
+    // CPUバトル開始時レジスト選択
+    //======================================
 
-if(
-    event?.type ===
-        GAME_EVENT.BATTLE_START &&
-    event?.player ===
-        ENEMY
-){
+    if(
+        event?.type === GAME_EVENT.BATTLE_START &&
+        event?.player === ENEMY
+    ){
 
-    //----------------------------------
-    // 使用可能候補から
-    // バトルボムを取得
-    //----------------------------------
+        //----------------------------------
+        // バトル参加サモン取得
+        //----------------------------------
 
-    const battleBombCard =
-        cards?.find(
-            card =>
-                card &&
-                card.effect ===
-                    "battleBomb"
-        );
+        const participants =
+            Array.isArray(event.participants)
+                ? event.participants.filter(
+                    summon =>
+                        summon &&
+                        !summon.destroyed
+                )
+                : [];
 
+        const cpuSummon =
+            participants.find(
+                summon => summon.owner === ENEMY
+            );
 
-    //----------------------------------
-    // バトルボムなし
-    //----------------------------------
+        const playerSummon =
+            participants.find(
+                summon => summon.owner === PLAYER
+            );
 
-    if(!battleBombCard){
+        if(!cpuSummon || !playerSummon){
+
+            console.log(
+                "CPUバトル開始時レジスト：参加サモン不足"
+            );
+
+            return null;
+        }
+
+        //----------------------------------
+        // 現在のパワー取得
+        //----------------------------------
+
+        const cpuPower = getPower(cpuSummon);
+        const playerPower = getPower(playerSummon);
 
         console.log(
-            "CPUバトルボム選択：",
-            "候補なし"
+            "CPUバトル開始時パワー比較",
+            {
+                cpuPower,
+                playerPower
+            }
+        );
+
+        //======================================
+        // バトルボム選択
+        //======================================
+
+        const battleBombCard =
+            cards?.find(
+                card =>
+                    card &&
+                    card.effect === "battleBomb"
+            );
+
+        //----------------------------------
+        // 通常戦闘で破壊できない場合のみ使用
+        //----------------------------------
+
+        if(
+            battleBombCard &&
+            cpuPower < playerPower
+        ){
+
+            console.log(
+                "CPUレジスト選択：バトルボム",
+                {
+                    cpuPower,
+                    playerPower,
+                    target: playerSummon.card?.name
+                }
+            );
+
+            return battleBombCard;
+        }
+
+        //----------------------------------
+        // 通常戦闘で破壊できる場合は温存
+        //----------------------------------
+
+        if(battleBombCard){
+
+            console.log(
+                "CPUバトルボム温存：通常戦闘で破壊可能",
+                {
+                    cpuPower,
+                    playerPower
+                }
+            );
+        }
+
+        //======================================
+        // ヒートストレングス選択
+        //======================================
+
+        const heatStrengthCard =
+            cards?.find(
+                card =>
+                    card &&
+                    card.effect === "heatStrength"
+            );
+
+        const improvesBattle =
+            cpuPower < playerPower &&
+            cpuPower + 2 >= playerPower;
+
+        if(
+            heatStrengthCard &&
+            improvesBattle
+        ){
+
+            console.log(
+                "CPUレジスト選択：ヒートストレングス",
+                {
+                    cpuPower,
+                    playerPower,
+                    afterPower: cpuPower + 2
+                }
+            );
+
+            return heatStrengthCard;
+        }
+
+        console.log(
+            "CPUバトル開始時レジスト：使用候補なし"
         );
 
         return null;
-
     }
-
-
-    //----------------------------------
-    // バトル参加サモン取得
-    //----------------------------------
-
-    const participants =
-        Array.isArray(
-            event.participants
-        )
-            ?
-            event.participants.filter(
-                summon =>
-                    summon &&
-                    !summon.destroyed
-            )
-            :
-            [];
-
-
-    //----------------------------------
-    // PLAYER側の戦闘参加サモン
-    //----------------------------------
-
-    const playerTarget =
-        participants.find(
-            summon =>
-                summon.owner ===
-                    PLAYER
-        );
-
-
-    //----------------------------------
-    // PLAYER側対象なし
-    //----------------------------------
-
-    if(!playerTarget){
-
-        console.log(
-            "CPUバトルボム選択：",
-            "PLAYER側対象なし"
-        );
-
-        return null;
-
-    }
-
-
-    //----------------------------------
-    // 今回はPLAYER側サモンを
-    // バトルボム対象候補として採用
-    //----------------------------------
-
-    console.log(
-        "CPUバトルボム選択：",
-        battleBombCard.name,
-        "対象予定=",
-        playerTarget.card?.name
-    );
-
-
-    return battleBombCard;
-
-}
 
     //======================================
     // CPUキャンセレーション選択
@@ -7225,8 +7349,7 @@ if(
             event.source ??
             event.card;
 
-        const target =
-            event.target;
+        const target = event.target;
 
         let canDefend = false;
 
@@ -7244,8 +7367,7 @@ if(
             target?.owner === ENEMY
         ){
 
-            const power =
-                getPower(target);
+            const power = getPower(target);
 
             const remainingDamage =
                 Math.max(
@@ -7255,14 +7377,9 @@ if(
 
             const damageEvent = {
                 ...event,
-
-                type:
-                    GAME_EVENT.BEFORE_SUMMON_DAMAGE,
-
+                type: GAME_EVENT.BEFORE_SUMMON_DAMAGE,
                 player: ENEMY,
-
                 damage: magiaDamage,
-
                 target: target
             };
 
@@ -7297,7 +7414,6 @@ if(
                     }
 
                     return true;
-
                 });
 
             if(
@@ -7316,11 +7432,8 @@ if(
                     "軽減後ダメージ=",
                     remainingDamage
                 );
-
             }
-
         }
-
 
         //======================================
         // ストーンガード・グラウンドウォール
@@ -7345,15 +7458,11 @@ if(
 
             const damageEvent = {
                 ...event,
-
                 type: isSummon
                     ? GAME_EVENT.BEFORE_SUMMON_DAMAGE
                     : GAME_EVENT.BEFORE_PLAYER_DAMAGE,
-
                 player: ENEMY,
-
                 target: target,
-
                 damage: magiaDamage
             };
 
@@ -7405,17 +7514,11 @@ if(
                         );
 
                     if(isSummon){
-
-                        return (
-                            remainingDamage < power
-                        );
-
+                        return remainingDamage < power;
                     }
 
                     return remainingDamage === 0;
-
                 });
-
 
             if(defensiveCard){
 
@@ -7425,127 +7528,111 @@ if(
                     "CPU：他のレジストで防御可能",
                     defensiveCard.name
                 );
-
             }
-
         }
 
         //======================================
-// その他のレジストによる防御判定
-//======================================
+        // その他のレジストによる防御判定
+        //======================================
 
-if(
-    !canDefend &&
-    magiaDamage > 0 &&
-    (
-        target === ENEMY ||
-        target?.owner === ENEMY
-    )
-){
+        if(
+            !canDefend &&
+            magiaDamage > 0 &&
+            (
+                target === ENEMY ||
+                target?.owner === ENEMY
+            )
+        ){
 
-    const isSummon =
-        target?.owner === ENEMY;
+            const isSummon =
+                target?.owner === ENEMY;
 
-const damageEvent = {
-    ...event,
+            const damageEvent = {
+                ...event,
+                type: isSummon
+                    ? GAME_EVENT.BEFORE_SUMMON_DAMAGE
+                    : GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+                player: ENEMY,
+                sourceType: "マギア",
+                element: magia.elementType,
+                target: target,
+                damage: magiaDamage
+            };
 
-    type: isSummon
-        ? GAME_EVENT.BEFORE_SUMMON_DAMAGE
-        : GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+            const defensiveCard =
+                enemyHandCards.find(card => {
 
-    player: ENEMY,
+                    if(card.effect === "waterBarrier"){
 
-    sourceType: "マギア",
+                        console.log(
+                            "★ ウォーターバリア事前判定",
+                            {
+                                target: target,
+                                damage: magiaDamage,
+                                trigger: card.trigger,
+                                expectedTrigger: damageEvent.type,
+                                usedThisEvent: card.usedThisEvent,
+                                canPay: canPayCost(card, ENEMY),
+                                conditionResult:
+                                    card.condition
+                                        ? card.condition(damageEvent)
+                                        : true
+                            }
+                        );
+                    }
 
-    // 元のマギアの属性を引き継ぐ
-    element: magia.elementType,
+                    if(
+                        card.usedThisEvent ||
+                        !canPayCost(card, ENEMY)
+                    ){
+                        return false;
+                    }
 
-    target: target,
+                    const triggerMatches =
+                        Array.isArray(card.trigger)
+                            ? card.trigger.includes(
+                                damageEvent.type
+                            )
+                            : card.trigger ===
+                                damageEvent.type;
 
-    damage: magiaDamage
-};
+                    if(!triggerMatches){
+                        return false;
+                    }
 
-    const defensiveCard =
-        enemyHandCards.find(card => {
+                    if(
+                        card.condition &&
+                        !card.condition(damageEvent)
+                    ){
+                        return false;
+                    }
 
-            // ウォーターバリアの判定状況を確認
-if(card.effect === "waterBarrier"){
+                    switch(card.effect){
 
-    console.log(
-        "★ ウォーターバリア事前判定",
-        {
-            target: target,
-            damage: magiaDamage,
-            trigger: card.trigger,
-            expectedTrigger: damageEvent.type,
-            usedThisEvent: card.usedThisEvent,
-            canPay: canPayCost(card, ENEMY),
-            conditionResult:
-                card.condition
-                    ? card.condition(damageEvent)
-                    : true
+                        case "waterBarrier":
+                            return true;
+
+                        case "illusionFog":
+                            return isSummon;
+
+                        case "sandProtect":
+                            return magiaDamage === 1;
+
+                        default:
+                            return false;
+                    }
+                });
+
+            if(defensiveCard){
+
+                canDefend = true;
+
+                console.log(
+                    "CPU：他のレジストで防御可能",
+                    defensiveCard.name
+                );
+            }
         }
-    );
-
-}
-
-            if(
-                card.usedThisEvent ||
-                !canPayCost(card, ENEMY)
-            ){
-                return false;
-            }
-
-            const triggerMatches =
-                Array.isArray(card.trigger)
-                    ? card.trigger.includes(
-                        damageEvent.type
-                    )
-                    : card.trigger ===
-                        damageEvent.type;
-
-            if(!triggerMatches){
-                return false;
-            }
-
-            if(
-                card.condition &&
-                !card.condition(damageEvent)
-            ){
-                return false;
-            }
-
-            switch(card.effect){
-
-                case "waterBarrier":
-                    return true;
-
-                case "illusionFog":
-                    return isSummon;
-
-                case "sandProtect":
-                    return magiaDamage === 1;
-
-                default:
-                    return false;
-
-            }
-
-        });
-
-    if(defensiveCard){
-
-        canDefend = true;
-
-        console.log(
-            "CPU：他のレジストで防御可能",
-            defensiveCard.name
-        );
-
-    }
-
-}
-
 
         //======================================
         // 他のレジストで防御可能なら温存
@@ -7559,9 +7646,7 @@ if(card.effect === "waterBarrier"){
             );
 
             return null;
-
         }
-
 
         //======================================
         // マギアのコストに応じた確率判定
@@ -7594,7 +7679,6 @@ if(card.effect === "waterBarrier"){
             random
         );
 
-
         if(random < probability){
 
             console.log(
@@ -7603,9 +7687,7 @@ if(card.effect === "waterBarrier"){
             );
 
             return cancellation;
-
         }
-
 
         console.log(
             "CPU：キャンセレーション温存",
@@ -7613,9 +7695,7 @@ if(card.effect === "waterBarrier"){
         );
 
         return null;
-
     }
-
 
     //======================================
     // 使用可能レジスト確認
@@ -7626,11 +7706,8 @@ if(card.effect === "waterBarrier"){
         cards.length === 0 ||
         damage <= 0
     ){
-
         return null;
-
     }
-
 
     //======================================
     // サモンダメージ
@@ -7638,8 +7715,7 @@ if(card.effect === "waterBarrier"){
 
     if(
         event &&
-        event.type ===
-            GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+        event.type === GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
         event.target &&
         event.target.owner === ENEMY
     ){
@@ -7651,8 +7727,7 @@ if(card.effect === "waterBarrier"){
         const illusionFogCard =
             cards.find(
                 card =>
-                    card.effect ===
-                        "illusionFog"
+                    card.effect === "illusionFog"
             );
 
         if(illusionFogCard){
@@ -7664,9 +7739,7 @@ if(card.effect === "waterBarrier"){
                 "damage=",
                 damage
             );
-
         }
-
 
         //----------------------------------
         // リキッドヴェール
@@ -7682,16 +7755,13 @@ if(card.effect === "waterBarrier"){
             const liquidVeilCard =
                 cards.find(
                     card =>
-                        card.effect ===
-                            "liquidVeil"
+                        card.effect === "liquidVeil"
                 );
 
             if(liquidVeilCard){
 
                 const power =
-                    getPower(
-                        event.target
-                    );
+                    getPower(event.target);
 
                 //----------------------------------
                 // パワーと同じ
@@ -7710,9 +7780,7 @@ if(card.effect === "waterBarrier"){
                     );
 
                     return liquidVeilCard;
-
                 }
-
 
                 //----------------------------------
                 // パワー+1
@@ -7731,9 +7799,7 @@ if(card.effect === "waterBarrier"){
                     );
 
                     return liquidVeilCard;
-
                 }
-
 
                 //----------------------------------
                 // パワー+2以上
@@ -7750,19 +7816,13 @@ if(card.effect === "waterBarrier"){
                         "damage=",
                         damage
                     );
-
                 }
-
             }
-
         }
-
     }
 
-
     //----------------------------------
-    // 1ダメージなら
-    // サンドプロテクトを最優先
+    // 1ダメージならサンドプロテクトを最優先
     //----------------------------------
 
     if(damage === 1){
@@ -7770,8 +7830,7 @@ if(card.effect === "waterBarrier"){
         const sandProtectCard =
             cards.find(
                 card =>
-                    card.effect ===
-                        "sandProtect"
+                    card.effect === "sandProtect"
             );
 
         if(sandProtectCard){
@@ -7781,11 +7840,8 @@ if(card.effect === "waterBarrier"){
             );
 
             return sandProtectCard;
-
         }
-
     }
-
 
     //======================================
     // 各レジストの軽減量
@@ -7809,8 +7865,7 @@ if(card.effect === "waterBarrier"){
 
                 if(
                     event &&
-                    event.type ===
-                        GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
+                    event.type === GAME_EVENT.BEFORE_SUMMON_DAMAGE &&
                     event.target &&
                     event.target.owner === ENEMY &&
                     event.sourceType === "マギア" &&
@@ -7820,13 +7875,9 @@ if(card.effect === "waterBarrier"){
                 ){
 
                     const power =
-                        getPower(
-                            event.target
-                        );
+                        getPower(event.target);
 
-                    if(
-                        damage >= power + 2
-                    ){
+                    if(damage >= power + 2){
 
                         console.log(
                             "CPUリキッドヴェール候補除外",
@@ -7839,59 +7890,66 @@ if(card.effect === "waterBarrier"){
                         );
 
                         return 0;
-
                     }
-
                 }
 
                 return 2;
-
             }
 
             case "multiShield": {
 
-    // CPU本体へのダメージの場合のみ
-    if(
-        event?.type !==
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE
-    ){
-        return 0;
-    }
+                //----------------------------------
+                // CPU本体へのダメージの場合のみ
+                //----------------------------------
 
-    // マルチシールド以外の手札
-    const availableCards =
-        enemyHandCards.filter(
-            c => c !== card
-        ).length;
+                if(
+                    event?.type !==
+                    GAME_EVENT.BEFORE_PLAYER_DAMAGE
+                ){
+                    return 0;
+                }
 
-    // 支払うコストを計算
-    const cost =
-        getCpuMultiShieldCost(
-            damage,
-            availableCards
-        );
+                //----------------------------------
+                // マルチシールド以外の手札
+                //----------------------------------
 
-    // 基本コストを払えない場合
-    if(
-        cost <
-        getCurrentCardCost(card, ENEMY)
-    ){
-        return 0;
-    }
+                const availableCards =
+                    enemyHandCards.filter(
+                        c => c !== card
+                    ).length;
 
-    return Math.min(
-        damage,
-        cost * 2
-    );
+                //----------------------------------
+                // 支払うコストを計算
+                //----------------------------------
 
-}
+                const cost =
+                    getCpuMultiShieldCost(
+                        damage,
+                        availableCards
+                    );
+
+                //----------------------------------
+                // 基本コストを払えない場合
+                //----------------------------------
+
+                if(
+                    cost <
+                    getCurrentCardCost(card, ENEMY)
+                ){
+                    return 0;
+                }
+
+                return Math.min(
+                    damage,
+                    cost * 2
+                );
+            }
 
             case "waterBarrier":
                 return damage;
 
             case "diamondSkin":
-            return damage;
-
+                return damage;
 
             case "rapidMove":
                 return damage;
@@ -7909,11 +7967,8 @@ if(card.effect === "waterBarrier"){
 
             default:
                 return 0;
-
         }
-
     }
-
 
     //======================================
     // 使用可能カードを評価
@@ -7937,18 +7992,15 @@ if(card.effect === "waterBarrier"){
                     reduction: reduction,
                     remaining: remaining
                 };
-
             })
             .filter(
                 item =>
                     item.reduction > 0
             );
 
-
     if(candidates.length === 0){
         return null;
     }
-
 
     //======================================
     // 1枚でダメージを0にできるカードを優先
@@ -7960,27 +8012,30 @@ if(card.effect === "waterBarrier"){
                 item.remaining === 0
         );
 
+    if(finishers.length > 0){
 
-if(finishers.length > 0){
+        finishers.sort((a, b) => {
 
-    finishers.sort((a, b) => {
+            //----------------------------------
+            // ダイヤスキンは最後に使用
+            //----------------------------------
 
-        // ダイヤスキンは最後に使用する
-        const aDiamond =
-            a.card.effect === "diamondSkin";
+            const aDiamond =
+                a.card.effect === "diamondSkin";
 
-        const bDiamond =
-            b.card.effect === "diamondSkin";
+            const bDiamond =
+                b.card.effect === "diamondSkin";
 
-        if(aDiamond !== bDiamond){
-            return aDiamond ? 1 : -1;
-        }
+            if(aDiamond !== bDiamond){
+                return aDiamond ? 1 : -1;
+            }
 
-        // それ以外は従来どおり
-        // 軽減量が小さいカードを優先
-        return a.reduction - b.reduction;
+            //----------------------------------
+            // 軽減量が小さいカードを優先
+            //----------------------------------
 
-    });
+            return a.reduction - b.reduction;
+        });
 
         console.log(
             "CPUレジスト最適選択",
@@ -7992,9 +8047,7 @@ if(finishers.length > 0){
         );
 
         return finishers[0].card;
-
     }
-
 
     //======================================
     // 1枚で0にできない場合
@@ -8003,8 +8056,7 @@ if(finishers.length > 0){
 
     candidates.sort(
         (a, b) =>
-            b.reduction -
-            a.reduction
+            b.reduction - a.reduction
     );
 
     console.log(
@@ -8017,7 +8069,6 @@ if(finishers.length > 0){
     );
 
     return candidates[0].card;
-
 }
 
 

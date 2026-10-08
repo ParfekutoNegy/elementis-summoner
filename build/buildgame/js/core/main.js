@@ -2521,6 +2521,71 @@ function onCardClick(card){
         return;
     }
 
+    //==================================================
+// ヒートストレングス
+// バトル参加サモンの対象選択
+//==================================================
+
+if(heatStrengthSelecting){
+
+    //----------------------------------
+    // 場のカード以外は選択不可
+    //----------------------------------
+
+    if(
+        card.area !== "field" &&
+        card.area !== "enemyField"
+    ){
+
+        return;
+    }
+
+    //----------------------------------
+    // カードからサモンを取得
+    //----------------------------------
+
+    const targetSummon =
+        findSummonByView(card);
+
+    if(!targetSummon){
+
+        return;
+    }
+
+    //----------------------------------
+    // バトル参加サモンのみ選択可能
+    //----------------------------------
+
+    if(
+        !heatStrengthTargetCandidates.includes(
+            targetSummon
+        )
+    ){
+
+        console.log(
+            "ヒートストレングス：対象外",
+            card.name
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // 対象確定
+    //----------------------------------
+
+    console.log(
+        "ヒートストレングス：対象確定",
+        targetSummon.card.name
+    );
+
+    selectHeatStrengthTarget(
+        targetSummon
+    );
+
+    return;
+}
+
         //==================================================
     // マギア
     // 追加の自分サモン選択中
@@ -5432,17 +5497,24 @@ function continuePlayerCardPlay(){
         null;
 
 
-    //----------------------------------
-    // 行動案内を消す
-    //----------------------------------
+//----------------------------------
+// 行動案内を消す
+//
+// 強制アタックの対象選択中は
+// 案内を維持する
+//----------------------------------
 
-    if(
-        !doppelgangerTargetMode
-    ){
+if(
+    !doppelgangerTargetMode &&
+    !(
+        forcedAttackMode &&
+        attackMode
+    )
+){
 
-        hideActionGuide();
+    hideActionGuide();
 
-    }
+}
 
 
     //----------------------------------
@@ -12709,7 +12781,7 @@ function showActionGuide(message){
 
 function hideActionGuide(){
 
-        console.log(
+    console.log(
         "★ hideActionGuide 呼び出し"
     );
 
@@ -12718,13 +12790,11 @@ function hideActionGuide(){
             "action-guide"
         );
 
-
     if(!guide){
 
         return;
 
     }
-
 
     guide.style.display =
         "none";

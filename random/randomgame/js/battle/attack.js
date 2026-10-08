@@ -858,11 +858,12 @@ if(
 // 攻撃対象選択案内
 //----------------------------------
 
-if(
-    typeof forcedAttackMode !==
-        "undefined" &&
-    forcedAttackMode
-){
+if(forcedAttackMode){
+
+    console.log(
+        "強制アタック案内表示",
+        summon.card.name
+    );
 
     showActionGuide(
         `${summon.card.name}の強制アタック！<br>アタック対象を選んでください`

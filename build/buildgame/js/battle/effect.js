@@ -1417,16 +1417,47 @@ case "readySummon": {
     );
 
 
+//----------------------------------
+// 表示更新
+//----------------------------------
+
+updateGameState();
+
+updateButtons();
+
+
+//==================================
+// ワーウルフ等
+//
+// タテ向きになったとき
+// 強制アタックする能力
+//==================================
+
+if(
+    hasSummonAbility(
+        target,
+        "forceAttackWhenReady"
+    )
+){
+
+    console.log(
+        "マギアによるタテ向き変更：強制アタック",
+        target.card.name
+    );
+
+
     //----------------------------------
-    // 表示更新
+    // 強制アタックキューへ登録
     //----------------------------------
 
-    updateGameState();
+    queueForcedAttacks([
+        target
+    ]);
 
-    updateButtons();
+}
 
 
-    break;
+break;
 
 }
 

@@ -75,7 +75,111 @@ function createEnemyTestHand(){
 }*/
 
 //======================================
+// ランダムルール設定
+//======================================
+
+// 1 = ID1～32
+// 2 = ID33～64
+// 3 = ID65～96
+// 4 = ID1～96（後で実装）
+//======================================
+// URLからランダムルール設定を取得
+//======================================
+
+const randomRuleParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const requestedRandomRuleMode =
+    Number(
+        randomRuleParams.get("mode") || 1
+    );
+
+let randomRuleMode =
+    [1, 2, 3, 4].includes(
+        requestedRandomRuleMode
+    )
+        ? requestedRandomRuleMode
+        : 1;
+
+
+//======================================
+// オールカード最低枚数設定
+//======================================
+
+const allCardMinimums = {
+
+    summon:
+        Number(
+            randomRuleParams.get("summon") ?? 2
+        ),
+
+    magia:
+        Number(
+            randomRuleParams.get("magia") ?? 2
+        ),
+
+    resist:
+        Number(
+            randomRuleParams.get("resist") ?? 2
+        )
+
+};
+
+
+console.log(
+    "★ ランダムルールモード",
+    randomRuleMode
+);
+
+console.log(
+    "★ オールカード最低枚数",
+    allCardMinimums
+);
+
+
+//======================================
+// 使用するカードID範囲を取得
+//======================================
+
+function getRandomRuleRange(){
+
+    switch(randomRuleMode){
+
+        case 2:
+            return {
+                min: 33,
+                max: 64
+            };
+
+        case 3:
+            return {
+                min: 65,
+                max: 96
+            };
+
+        case 4:
+            return {
+                min: 1,
+                max: 96
+            };
+
+        case 1:
+        default:
+            return {
+                min: 1,
+                max: 32
+            };
+    }
+}
+
+
+//======================================
 // ランダムカードID取得
+//
+// モード1～3：従来のランダム抽選
+// モード4：種類別最低枚数を保証
 //======================================
 
 function getRandomCardIds(
@@ -84,67 +188,254 @@ function getRandomCardIds(
 ){
 
     //----------------------------------
-    // 1～32
+    // 現在のルールのカード範囲
     //----------------------------------
 
-    const ids = [];
-
-    for(let i = 1; i <= 32; i++){
-
-        //----------------------------------
-        // 使用済みカードは除外
-        //----------------------------------
-
-        if(
-            excludeIds.includes(i)
-        ){
-
-            continue;
-
-        }
-
-        ids.push(i);
-
-    }
-
+    const range =
+        getRandomRuleRange();
 
     //----------------------------------
-    // シャッフル
+    // 使用可能カード一覧
     //----------------------------------
 
-    for(
-        let i = ids.length - 1;
-        i > 0;
-        i--
-    ){
+    const availableCards =
+        CARD_LIST.filter(card => {
 
-        const j =
-            Math.floor(
-                Math.random() * (i + 1)
+            const id =
+                Number(card.id);
+
+            return (
+                id >= range.min &&
+                id <= range.max &&
+                !excludeIds.includes(id)
             );
 
+        });
 
-        [
-            ids[i],
-            ids[j]
-        ] =
-        [
-            ids[j],
-            ids[i]
-        ];
 
+    //----------------------------------
+    // シャッフル関数
+    //----------------------------------
+
+    function shuffleCards(cards){
+
+        const result =
+            [...cards];
+
+        for(
+            let i = result.length - 1;
+            i > 0;
+            i--
+        ){
+
+            const j =
+                Math.floor(
+                    Math.random() * (i + 1)
+                );
+
+            [
+                result[i],
+                result[j]
+            ] = [
+                result[j],
+                result[i]
+            ];
+        }
+
+        return result;
     }
 
 
     //----------------------------------
-    // 指定枚数取得
+    // 通常ランダム
+    // ベーシック・フォークロア・ミソロジー
     //----------------------------------
 
-    return ids.slice(
-        0,
-        count
+    if(randomRuleMode !== 4){
+
+        return shuffleCards(
+            availableCards
+        )
+        .slice(0, count)
+        .map(card => Number(card.id));
+    }
+
+
+    //==================================
+    // オールカード
+    //==================================
+
+    const minimums = {
+
+        "サモン":
+            allCardMinimums.summon,
+
+        "マギア":
+            allCardMinimums.magia,
+
+        "レジスト":
+            allCardMinimums.resist
+    };
+
+
+    //----------------------------------
+    // 設定値確認
+    //----------------------------------
+
+    const minimumTotal =
+        Object.values(minimums)
+            .reduce(
+                (sum, value) => sum + value,
+                0
+            );
+
+    if(minimumTotal > count){
+
+        console.error(
+            "最低枚数の合計がデッキ枚数を超えています",
+            minimums
+        );
+
+        return [];
+    }
+
+
+    //----------------------------------
+    // 種類別に最低枚数を確保
+    //----------------------------------
+
+    const selectedCards = [];
+
+    const selectedIds =
+        new Set();
+
+
+    for(const type of [
+        "サモン",
+        "マギア",
+        "レジスト"
+    ]){
+
+        const minimum =
+            minimums[type];
+
+        const candidates =
+            shuffleCards(
+                availableCards.filter(
+                    card =>
+                        card.type === type
+                )
+            );
+
+        if(candidates.length < minimum){
+
+            console.error(
+                "必要なカードが不足しています",
+                {
+                    type,
+                    minimum,
+                    available:
+                        candidates.length
+                }
+            );
+
+            return [];
+        }
+
+        const chosen =
+            candidates.slice(
+                0,
+                minimum
+            );
+
+        chosen.forEach(card => {
+
+            selectedCards.push(card);
+
+            selectedIds.add(
+                Number(card.id)
+            );
+
+        });
+    }
+
+
+    //----------------------------------
+    // 残りのカードをランダム抽選
+    //----------------------------------
+
+    const remainingCount =
+        count - selectedCards.length;
+
+    const remainingCandidates =
+        shuffleCards(
+            availableCards.filter(
+                card =>
+                    !selectedIds.has(
+                        Number(card.id)
+                    )
+            )
+        );
+
+    const additionalCards =
+        remainingCandidates.slice(
+            0,
+            remainingCount
+        );
+
+    selectedCards.push(
+        ...additionalCards
     );
 
+
+    //----------------------------------
+    // 最終的に順番をシャッフル
+    //----------------------------------
+
+    const finalCards =
+        shuffleCards(
+            selectedCards
+        );
+
+    const ids =
+        finalCards.map(
+            card => Number(card.id)
+        );
+
+
+    //----------------------------------
+    // デバッグログ
+    //----------------------------------
+
+    console.log(
+        "★ オールカード抽選結果",
+        {
+            minimums,
+
+            ids,
+
+            summon:
+                finalCards.filter(
+                    card =>
+                        card.type === "サモン"
+                ).length,
+
+            magia:
+                finalCards.filter(
+                    card =>
+                        card.type === "マギア"
+                ).length,
+
+            resist:
+                finalCards.filter(
+                    card =>
+                        card.type === "レジスト"
+                ).length
+        }
+    );
+
+
+    return ids;
 }
 
 
@@ -231,14 +522,13 @@ function createTestHand(){
 
 //======================================
 // 2戦目以降の初期手札
-// 使用済み開始手札を除外して10枚取得
+// 使用済み開始手札を除外
 //======================================
-
 
 function createNextGameHand(owner){
 
     //----------------------------------
-    // プレイヤー / CPU の使用済みID
+    // 使用済みカードID取得
     //----------------------------------
 
     const usedIds =
@@ -246,30 +536,37 @@ function createNextGameHand(owner){
             ? playerStartingCardIds
             : enemyStartingCardIds;
 
+    //----------------------------------
+    // 使用可能カードID
+    //----------------------------------
 
-    //----------------------------------
-    // 使用済みカードを除外
-    //----------------------------------
+    const range =
+        getRandomRuleRange();
 
     const availableIds = [];
 
-
     for(
-        let id = 1;
-        id <= 32;
+        let id = range.min;
+        id <= range.max;
         id++
     ){
 
-        if(
-            !usedIds.includes(id)
-        ){
-
-            availableIds.push(id);
-
+        if(usedIds.includes(id)){
+            continue;
         }
 
-    }
+        const exists =
+            CARD_LIST.some(
+                card =>
+                    Number(card.id) === id
+            );
 
+        if(!exists){
+            continue;
+        }
+
+        availableIds.push(id);
+    }
 
     console.log(
         owner === PLAYER
@@ -278,7 +575,6 @@ function createNextGameHand(owner){
         [...usedIds]
     );
 
-
     console.log(
         owner === PLAYER
             ? "★ プレイヤー残りカードID"
@@ -286,45 +582,15 @@ function createNextGameHand(owner){
         [...availableIds]
     );
 
-
     //----------------------------------
-    // 残りカードをシャッフル
-    //----------------------------------
-
-    for(
-        let i = availableIds.length - 1;
-        i > 0;
-        i--
-    ){
-
-        const j =
-            Math.floor(
-                Math.random() * (i + 1)
-            );
-
-
-        [
-            availableIds[i],
-            availableIds[j]
-        ] =
-        [
-            availableIds[j],
-            availableIds[i]
-        ];
-
-    }
-
-
-    //----------------------------------
-    // 10枚取得
+    // 次戦の10枚をランダム取得
     //----------------------------------
 
     const ids =
-        availableIds.slice(
-            0,
-            10
+        getRandomCardIds(
+            10,
+            usedIds
         );
-
 
     console.log(
         owner === PLAYER
@@ -333,21 +599,19 @@ function createNextGameHand(owner){
         ids
     );
 
-
     //----------------------------------
-    // カード作成
+    // カード生成
     //----------------------------------
 
     const hand = [];
 
-
-    ids.forEach(id=>{
+    ids.forEach(id => {
 
         const cardData =
             CARD_LIST.find(
-                card => card.id === id
+                card =>
+                    Number(card.id) === id
             );
-
 
         if(!cardData){
 
@@ -357,9 +621,7 @@ function createNextGameHand(owner){
             );
 
             return;
-
         }
-
 
         const card =
             createCard(
@@ -372,21 +634,14 @@ function createNextGameHand(owner){
                 owner
             );
 
-
         hand.push(card);
-
     });
 
-
     //----------------------------------
-    // 今回使ったカードも保存
-    // 3戦目では第1戦 + 第2戦を除外する
+    // 今回使用したIDを保存
     //----------------------------------
 
-    usedIds.push(
-        ...ids
-    );
-
+    usedIds.push(...ids);
 
     console.log(
         owner === PLAYER
@@ -395,9 +650,7 @@ function createNextGameHand(owner){
         [...usedIds]
     );
 
-
     return hand;
-
 }
 
 

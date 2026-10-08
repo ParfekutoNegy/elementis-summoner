@@ -16,6 +16,15 @@ let battleBombSelecting = false;
 let battleBombTargetCandidates = [];
 
 //======================================
+// ヒートストレングス
+// 対象選択状態
+//======================================
+
+let heatStrengthSelecting = false;
+
+let heatStrengthTargetCandidates = [];
+
+//======================================
 // ファストコール
 // 相手ターン中の召喚管理
 //======================================
@@ -624,13 +633,16 @@ activateResist(
 //======================================
 // レジスト終了判定
 //======================================
-
-// ファストコールは召喚完了待機
-// バトルボムは対象選択完了待機
+//
+// ファストコール：召喚完了待機
+// バトルボム：対象選択完了待機
+// ヒートストレングス：対象選択完了待機
+//======================================
 
 if(
     !isFastCall &&
-    !battleBombSelecting
+    !battleBombSelecting &&
+    !heatStrengthSelecting
 ){
 
     finishResist();
@@ -947,6 +959,227 @@ function selectFastCallSummon(card){
         card.name
     );
 
+}
+
+//======================================
+// ヒートストレングス
+// バトル参加サモンのパワーを＋2
+//======================================
+
+function heatStrength(card, event){
+
+    console.log(
+        "ヒートストレングス：効果処理開始"
+    );
+
+    //----------------------------------
+    // イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        event.type !== GAME_EVENT.BATTLE_START
+    ){
+
+        console.warn(
+            "ヒートストレングス：バトル開始イベントではありません"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // 対象候補
+    //----------------------------------
+
+    const candidates =
+        (event.participants || []).filter(
+            summon =>
+                summon instanceof Summon &&
+                !summon.destroyed
+        );
+
+    if(candidates.length === 0){
+
+        console.warn(
+            "ヒートストレングス：対象なし"
+        );
+
+        return;
+    }
+
+//======================================
+// CPUの場合
+//======================================
+
+if(card.owner === ENEMY){
+
+    //----------------------------------
+    // CPU側のバトル参加サモンを優先
+    //----------------------------------
+
+    const target =
+        candidates.find(
+            summon =>
+                summon.owner === ENEMY
+        ) ?? candidates[0];
+
+    if(!target){
+
+        console.warn(
+            "CPUヒートストレングス：対象なし"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // このターン中パワー＋2
+    //----------------------------------
+
+    addTemporaryPower(
+        target,
+        2
+    );
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "CPUヒートストレングス：対象",
+        target.card.name,
+        "現在パワー",
+        getPower(target)
+    );
+
+    addBattleLog(
+        `CPU：ヒートストレングスで${target.card.name}のパワー＋2`
+    );
+
+    //----------------------------------
+    // 対象候補をクリア
+    //----------------------------------
+
+    heatStrengthSelecting = false;
+
+    heatStrengthTargetCandidates = [];
+
+    //----------------------------------
+    // 重要
+    // ここではfinishResist()しない
+    // CPU側の終了処理に任せる
+    //----------------------------------
+
+    return;
+}
+
+    //----------------------------------
+    // PLAYERの場合
+    //----------------------------------
+
+    heatStrengthSelecting = true;
+
+    heatStrengthTargetCandidates =
+        candidates;
+
+    //----------------------------------
+    // 対象を発光
+    //----------------------------------
+
+    candidates.forEach(summon => {
+
+        const element =
+            summon.view?.getElement?.();
+
+        if(element){
+
+            element.classList.add(
+                "magia-target"
+            );
+        }
+
+    });
+
+    showActionGuide(
+        "ヒートストレングスの対象を選んでください。"
+    );
+
+    console.log(
+        "ヒートストレングス：対象選択待機"
+    );
+
+}
+
+
+//======================================
+// ヒートストレングス
+// 対象確定
+//======================================
+
+function selectHeatStrengthTarget(summon){
+
+    if(!heatStrengthSelecting){
+
+        return false;
+    }
+
+    if(
+        !heatStrengthTargetCandidates.includes(
+            summon
+        ) ||
+        summon.destroyed
+    ){
+
+        return false;
+    }
+
+    //----------------------------------
+    // パワー＋2
+    //----------------------------------
+
+    addTemporaryPower(
+        summon,
+        2
+    );
+
+    addBattleLog(
+        `ヒートストレングス：${summon.card.name}のパワー＋2`
+    );
+
+    //----------------------------------
+    // 発光解除
+    //----------------------------------
+
+    heatStrengthTargetCandidates.forEach(
+        candidate => {
+
+            candidate.view
+                ?.getElement?.()
+                ?.classList.remove(
+                    "magia-target"
+                );
+
+        }
+    );
+
+    //----------------------------------
+    // 状態解除
+    //----------------------------------
+
+    heatStrengthSelecting = false;
+
+    heatStrengthTargetCandidates = [];
+
+    hideActionGuide();
+
+    //----------------------------------
+    // レジスト終了
+    //----------------------------------
+
+    finishResist();
+
+    return true;
 }
 
 //======================================
@@ -1413,7 +1646,8 @@ const resistEffects = {
     fastCall,
     cancelMagia,
 
-    battleBomb
+    battleBomb,
+    heatStrength
 
 };
 
@@ -1512,6 +1746,33 @@ if(
 
     return;
 
+}
+
+//======================================
+// ヒートストレングス
+// 対象選択完了まで終了しない
+//======================================
+
+if(
+    card.effect === "heatStrength"
+){
+
+    if(heatStrengthSelecting){
+
+        console.log(
+            "ヒートストレングス：対象選択待機中"
+        );
+
+    }
+    else{
+
+        console.log(
+            "ヒートストレングス：専用終了処理待機"
+        );
+
+    }
+
+    return;
 }
 
 

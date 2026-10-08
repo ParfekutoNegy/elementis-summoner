@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>ランダムルール選択 - Elementis Summoner</title>
+
+    <link rel="stylesheet" href="select.css">
+</head>
+
+<body>
+
+<div id="random-select-screen">
+
+    <!-- =========================
+         タイトル
+    ========================= -->
+
+    <header>
+        <h1>ランダムルール</h1>
+    </header>
+
+    <main>
+
+        <p class="select-guide">
+            対戦するカードセットを選択してください
+        </p>
+
+        <!-- =========================
+             ベーシック
+        ========================= -->
+
+        <button
+            type="button"
+            class="rule-button"
+            onclick="startRandomRule(1)"
+        >
+            <span class="rule-name">
+                ベーシック
+            </span>
+
+        </button>
+
+
+        <!-- =========================
+             フォークロア
+        ========================= -->
+
+        <button
+            type="button"
+            class="rule-button"
+            onclick="startRandomRule(2)"
+        >
+            <span class="rule-name">
+                フォークロア
+            </span>
+
+        </button>
+
+
+        <!-- =========================
+             ミソロジー
+        ========================= -->
+
+        <button
+            type="button"
+            class="rule-button"
+            onclick="startRandomRule(3)"
+        >
+            <span class="rule-name">
+                ミソロジー
+            </span>
+
+        </button>
+
+
+        <!-- =========================
+             オールカード
+        ========================= -->
+
+        <section id="all-card-section">
+
+            <h2>オールカード</h2>
+
+            <p class="setting-guide">
+                デッキに含めるカード種類の最低枚数を設定
+            </p>
+
+
+            <!-- サモン -->
+
+            <div class="setting-row">
+
+                <label for="summon-min">
+                    サモン
+                </label>
+
+                <select id="summon-min">
+                    <option value="0">0枚</option>
+                    <option value="1">1枚</option>
+                    <option value="2" selected>2枚</option>
+                    <option value="3">3枚</option>
+                    <option value="4">4枚</option>
+                    <option value="5">5枚</option>
+                </select>
+
+                <span>以上</span>
+
+            </div>
+
+
+            <!-- マギア -->
+
+            <div class="setting-row">
+
+                <label for="magia-min">
+                    マギア
+                </label>
+
+                <select id="magia-min">
+                    <option value="0">0枚</option>
+                    <option value="1">1枚</option>
+                    <option value="2" selected>2枚</option>
+                    <option value="3">3枚</option>
+                    <option value="4">4枚</option>
+                    <option value="5">5枚</option>
+                </select>
+
+                <span>以上</span>
+
+            </div>
+
+
+            <!-- レジスト -->
+
+            <div class="setting-row">
+
+                <label for="resist-min">
+                    レジスト
+                </label>
+
+                <select id="resist-min">
+                    <option value="0">0枚</option>
+                    <option value="1">1枚</option>
+                    <option value="2" selected>2枚</option>
+                    <option value="3">3枚</option>
+                    <option value="4">4枚</option>
+                    <option value="5">5枚</option>
+                </select>
+
+                <span>以上</span>
+
+            </div>
+
+
+            <!-- 設定結果 -->
+
+            <p id="setting-summary"></p>
+
+            <p id="setting-error"></p>
+
+
+            <!-- 対戦開始 -->
+
+            <button
+                type="button"
+                id="all-card-start"
+                class="rule-button"
+                onclick="startAllCardRule()"
+            >
+                オールカードで対戦開始
+            </button>
+
+        </section>
+
+
+        <!-- =========================
+             戻る
+        ========================= -->
+
+        <a
+            class="back-button"
+            href="../index.html"
+        >
+            ホームに戻る
+        </a>
+
+    </main>
+
+</div>
+
+<script src="select.js"></script>
+
+</body>
+</html>

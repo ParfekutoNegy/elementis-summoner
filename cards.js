@@ -584,15 +584,20 @@ const CARD_LIST = [
         target: ["enemySummon" ,"playerSummon"]
     }
 },
-    {
-        id: 39,
-        name:"ヒートストレングス",
-        type: "レジスト",
-        element: "火",
-        cost: 1,
-        series:"folklore",
-        image: "images/039-ヒートストレングス.jpg"
-    },
+{
+    id: 39,
+    name: "ヒートストレングス",
+    type: "レジスト",
+    element: "火",
+    cost: 1,
+    series: "folklore",
+    image: "images/039-ヒートストレングス.jpg",
+    condi: "サモンのバトル開始時",
+    text: "バトルを行うサモン１体を対象にし、このターン中、パワーを＋２する。",
+
+    trigger: "battleStart",
+    effect: "heatStrength"
+},
  {
     id: 40,
     name: "バトルボム",
