@@ -1402,7 +1402,12 @@ const CARD_LIST = [
         element: "土",
         cost: 1,
         series:"mythology",
-        image: "images/094-プリヴェント.jpg"
+        image: "images/094-プリヴェント.jpg",
+        trigger:"beforePlayerDamage",
+        effect:"prevent",
+        condi:"自分がダメージを受けるとき",
+        text:"相手のコストゾーンのカード１枚につき、受けるダメージを－１する。"
+
     },
     {
         id: 95,
@@ -1420,7 +1425,12 @@ const CARD_LIST = [
         element: "土",
         cost: 4,
         series:"mythology",
-        image: "images/096-アースディフェンス.jpg"
+        image: "images/096-アースディフェンス.jpg",
+        trigger:"beforePlayerDamage",
+        effect:"earthDefense",
+        condi:"自分がダメージを受けるとき",
+        text:"受けるダメージを－４する。このカードのコストは自分のクールゾーンにある【土】カード１枚につき－２される。"
+
     },
 
     {

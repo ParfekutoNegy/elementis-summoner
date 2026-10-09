@@ -1564,7 +1564,9 @@ const resistEffects = {
     cancelMagia,
 
     battleBomb,
-    heatStrength
+    heatStrength,
+    prevent,
+    earthDefense,
 
 };
 
@@ -3538,6 +3540,37 @@ function getCurrentEnemyCardCost(card){
     );
 
 
+    //==================================
+    // アースディフェンス
+    // CPUのクールゾーンにある
+    // 土属性カード1枚につきコスト－2
+    //==================================
+
+    if(card.effect === "earthDefense"){
+
+        const earthCount =
+            board.enemyCoolCards.filter(
+                coolCard =>
+                    (
+                        coolCard.elementType ??
+                        coolCard.element
+                    ) === "土"
+            ).length;
+
+        const reduction =
+            earthCount * 2;
+
+        cost -= reduction;
+
+        console.log(
+            "CPUアースディフェンス：コスト計算",
+            "土カード枚数=", earthCount,
+            "軽減量=", reduction
+        );
+
+    }
+
+
     //----------------------------------
     // 0未満にはしない
     //----------------------------------
@@ -4690,5 +4723,89 @@ function multiShield(card, event){
 
     // 次回使用時に備えて初期化
     card.paidCost = 0;
+
+}
+
+//======================================
+// プリヴェント
+//
+// 相手のコストゾーンのカード
+// 1枚につき受けるダメージを－1
+//======================================
+
+function prevent(card){
+
+    //----------------------------------
+    // 使用者を確認
+    //----------------------------------
+
+    const owner = card.owner;
+
+    //----------------------------------
+    // 相手のコスト枚数を取得
+    //----------------------------------
+
+    const reduction =
+        owner === ENEMY
+            ? board.costCards.length
+            : board.enemyCostCards.length;
+
+    //----------------------------------
+    // ダメージ軽減
+    //----------------------------------
+
+    const beforeDamage =
+        currentResistEvent.damage;
+
+    currentResistEvent.damage =
+        Math.max(
+            0,
+            beforeDamage - reduction
+        );
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "プリヴェント発動",
+        "使用者=", owner,
+        "相手コスト枚数=", reduction,
+        "軽減前=", beforeDamage,
+        "軽減後=", currentResistEvent.damage
+    );
+
+}
+
+//======================================
+// アースディフェンス
+// 受けるダメージを－4
+//======================================
+
+function earthDefense(card){
+
+    if(
+        !currentResistEvent ||
+        currentResistEvent.type !==
+            GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+        return;
+    }
+
+    const beforeDamage =
+        currentResistEvent.damage;
+
+    currentResistEvent.damage =
+        Math.max(
+            0,
+            beforeDamage - 4
+        );
+
+    console.log(
+        "アースディフェンス発動",
+        "使用者=", card.owner,
+        "軽減前=", beforeDamage,
+        "軽減後=", currentResistEvent.damage
+    );
 
 }

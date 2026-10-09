@@ -6069,25 +6069,37 @@ function cpuCanReduceAttackToOne(
             card.effect
         ){
 
-            case "stoneGuard":
+case "stoneGuard":
 
-                remaining -= 3;
+    remaining -= 3;
 
-                break;
-
-
-            case "groundwall":
-
-                remaining -= 5;
-
-                break;
+    break;
 
 
-            case "liquidVeil":
+case "groundwall":
 
-                remaining -= 2;
+    remaining -= 5;
 
-                break;
+    break;
+
+
+//==================================
+// プリヴェント
+// 相手のコスト枚数だけ軽減
+//==================================
+
+case "prevent":
+
+    remaining -= board.costCards.length;
+
+    break;
+
+
+case "liquidVeil":
+
+    remaining -= 2;
+
+    break;
 
 
             case "waterBarrier":
@@ -7868,6 +7880,37 @@ function selectBestCpuResist(
 
             case "groundwall":
                 return 5;
+
+            case "earthDefense": 
+            return 4;
+
+                //==================================
+// プリヴェント
+//
+// 相手（PLAYER）のコストゾーン
+// 1枚につきダメージを1軽減
+//==================================
+
+case "prevent": {
+
+    //----------------------------------
+    // CPU本体へのダメージのみ
+    //----------------------------------
+
+    if(
+        event?.type !==
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+        return 0;
+    }
+
+    //----------------------------------
+    // PLAYERのコスト枚数
+    //----------------------------------
+
+    return playerCostCards.length;
+
+}
 
             case "liquidVeil":{
 

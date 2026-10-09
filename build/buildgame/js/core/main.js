@@ -5084,6 +5084,22 @@ if(
     }
 
 
+    //==================================
+    // アースディフェンス
+    // クールゾーンからカードが
+    // 削除された際のコスト再計算
+    //==================================
+
+    if(
+        typeof updateHandCostDisplay ===
+            "function"
+    ){
+
+        updateHandCostDisplay();
+
+    }
+
+
     //----------------------------------
     // 開いているクールモーダル
     //----------------------------------
@@ -12543,6 +12559,44 @@ function getCurrentCardCost(
             }
 
         }
+
+    }
+
+
+    //==================================
+    // アースディフェンス
+    // 自分のクールゾーンにある
+    // 土属性カード1枚につきコスト－2
+    //==================================
+
+    if(card.effect === "earthDefense"){
+
+        const coolCards =
+            owner === ENEMY
+                ? board.enemyCoolCards
+                : board.playerCoolCards;
+
+        const earthCount =
+            coolCards.filter(
+                coolCard =>
+                    (
+                        coolCard.elementType ??
+                        coolCard.element
+                    ) === "土"
+            ).length;
+
+        const reduction =
+            earthCount * 2;
+
+        cost -= reduction;
+
+        console.log(
+            "アースディフェンス：コスト計算",
+            "使用者=", owner,
+            "土カード枚数=", earthCount,
+            "軽減量=", reduction,
+            "最終コスト=", Math.max(0, cost)
+        );
 
     }
 

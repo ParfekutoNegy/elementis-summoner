@@ -548,7 +548,6 @@ case "damage":{
 
 }
 
-
 //==================================================
 // 相手のすべてのサモンにダメージ
 // アースクェイク
@@ -639,6 +638,7 @@ case "damageAllEnemySummons":
     return "DONE";
 
 }
+
 
         //==================================
         // 手札追加
@@ -981,7 +981,7 @@ case "damageAllEnemySummons":
 
             break;
 
-        //==================================
+                //==================================
         // ★追加
         // 条件付きブロック不可
         //
@@ -1105,9 +1105,7 @@ case "damageAllEnemySummons":
 
             break;
 
-        }
-
-
+        }    
 
         //==================================
         // カーススモーク
@@ -1326,7 +1324,7 @@ case "sendSummonToCool":{
         // サモンをタテ向きにする
         //==================================
 
- case "readySummon": {
+case "readySummon": {
 
     //----------------------------------
     // 対象確認
@@ -1419,16 +1417,47 @@ case "sendSummonToCool":{
     );
 
 
+//----------------------------------
+// 表示更新
+//----------------------------------
+
+updateGameState();
+
+updateButtons();
+
+
+//==================================
+// ワーウルフ等
+//
+// タテ向きになったとき
+// 強制アタックする能力
+//==================================
+
+if(
+    hasSummonAbility(
+        target,
+        "forceAttackWhenReady"
+    )
+){
+
+    console.log(
+        "マギアによるタテ向き変更：強制アタック",
+        target.card.name
+    );
+
+
     //----------------------------------
-    // 表示更新
+    // 強制アタックキューへ登録
     //----------------------------------
 
-    updateGameState();
+    queueForcedAttacks([
+        target
+    ]);
 
-    updateButtons();
+}
 
 
-    break;
+break;
 
 }
 
@@ -1534,6 +1563,7 @@ case "sendSummonToCool":{
 
             validateAllDoppelgangerAbilities();
 
+
             //----------------------------------
             // パワー・コスト表示更新
             //----------------------------------
@@ -1555,7 +1585,6 @@ case "sendSummonToCool":{
             break;
 
         }
-
 
         //==================================
         // 手札へ戻す
@@ -1607,27 +1636,34 @@ case "sendSummonToCool":{
             // PLAYER手札へ戻す
             //==================================
 
-            board.removeCoolCard(
-                target,
-                PLAYER
-            );
+board.removeCoolCard(
+    target,
+    PLAYER
+);
 
-            target.setFaceDown(
-                false
-            );
+target.setFaceDown(
+    false
+);
 
-            target.area =
-                "hand";
+target.area =
+    "hand";
 
-            board.addHandCard(
-                target
-            );
+board.addHandCard(
+    target
+);
 
 
-            break;
+//==================================
+// アースディフェンス
+// クールゾーンからカードが
+// 戻った後のコスト表示更新
+//==================================
+
+updateHandCostDisplay();
+
+break;
 
         }
-
 
         //==================================
         // 攻撃可能
@@ -1664,10 +1700,6 @@ case "forceCost":
     }
 
 }
-
-//======================================
-// ダメージ数字表示
-//======================================
 
 function showDamageNumber(target, damage){
 

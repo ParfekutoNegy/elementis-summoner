@@ -1636,24 +1636,32 @@ break;
             // PLAYER手札へ戻す
             //==================================
 
-            board.removeCoolCard(
-                target,
-                PLAYER
-            );
+board.removeCoolCard(
+    target,
+    PLAYER
+);
 
-            target.setFaceDown(
-                false
-            );
+target.setFaceDown(
+    false
+);
 
-            target.area =
-                "hand";
+target.area =
+    "hand";
 
-            board.addHandCard(
-                target
-            );
+board.addHandCard(
+    target
+);
 
 
-            break;
+//==================================
+// アースディフェンス
+// クールゾーンからカードが
+// 戻った後のコスト表示更新
+//==================================
+
+updateHandCostDisplay();
+
+break;
 
         }
 
