@@ -7492,28 +7492,69 @@ else if(
 if(summonCard){
 
     actionArea.style.display =
-    "flex";
+        "flex";
+
+    //----------------------------------
+    // キャンセルボタン
+    //----------------------------------
 
     cancelButton.style.display =
-    "inline-block";
+        "inline-block";
 
-    cancelButton.onclick =
-    cancelSummon;
+    cancelButton.textContent =
+        "キャンセル";
+
+
+    //==================================
+    // ファストコール専用
+    //
+    // サモンのコスト選択をキャンセルし、
+    // ファストコールのサモン選択へ戻る
+    //==================================
+
+    if(
+        costMode ===
+            "fastCallSummon"
+    ){
+
+        cancelButton.onclick =
+            cancelFastCallSummonCost;
+
+    }
+
+    //==================================
+    // 通常のサモン・マギア
+    //==================================
+
+    else{
+
+        cancelButton.onclick =
+            cancelSummon;
+
+    }
+
+
+    //----------------------------------
+    // 決定ボタン
+    //----------------------------------
 
     confirmButton.textContent =
-    "決定";
+        "決定";
 
     confirmButton.onclick =
-    payCost;
+        payCost;
+
 
     if(costConfirm){
 
         confirmButton.style.display =
-        "inline-block";
+            "inline-block";
 
     }
 
+
     return;
+
 }
 }
 

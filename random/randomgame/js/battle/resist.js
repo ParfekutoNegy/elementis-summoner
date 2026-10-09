@@ -4234,11 +4234,26 @@ if(card.effect === "multiShield"){
         }
 
 
-        board.enemyCoolCards =
-            enemyCoolCards;
+board.enemyCoolCards =
+    enemyCoolCards;
 
+updateEnemyZoneDisplay();
 
-        updateEnemyZoneDisplay();
+//==================================
+// 動的パワー表示更新
+//
+// ワーム・ミノタウロス等
+// CPUクールゾーンの枚数変化を反映
+//==================================
+
+if(
+    typeof refreshDynamicPowerSummons ===
+        "function"
+){
+
+    refreshDynamicPowerSummons();
+
+}
 
     }
 
@@ -4586,6 +4601,8 @@ function payFastCallSummonCost(){
 
     board.addPlayerCard(summon.view);
 
+    refreshDynamicPowerSummons();
+
     updateHandCostDisplay();
 
     //----------------------------------
@@ -4620,8 +4637,34 @@ function payFastCallSummonCost(){
         "ファストコール：サモン召喚完了"
     );
 
-    //----------------------------------
+//==================================
 // ファストコールの処理終了
+//==================================
+
+//----------------------------------
+// ドッペルゲンガーの対象選択中
+//----------------------------------
+
+if(
+    doppelgangerTargetMode &&
+    doppelgangerSource === summon
+){
+
+    console.log(
+        "ファストコール：ドッペルゲンガー対象選択待機"
+    );
+
+    // 対象選択が終わるまで
+    // CPUの行動再開を保留する
+    fastCallDoppelgangerWaiting = true;
+
+    return;
+
+}
+
+
+//----------------------------------
+// 通常のファストコール終了
 //----------------------------------
 
 finishResist();

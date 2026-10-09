@@ -1546,17 +1546,26 @@ function cpuNextAttack(){
         ];
 
 
-    //----------------------------------
-    // 攻撃不能になっていた場合
-    //----------------------------------
+//----------------------------------
+// 攻撃不能になっていた場合
+//
+// オーガのアタック禁止能力にも対応
+//----------------------------------
 
-    if(
-        !attacker ||
-        attacker.isRest ||
-        !enemyField.includes(
+if(
+    !attacker ||
+    attacker.isRest ||
+    !enemyField.includes(
+        attacker
+    ) ||
+    (
+        typeof isOgreBattleLocked ===
+            "function" &&
+        isOgreBattleLocked(
             attacker
         )
-    ){
+    )
+){
 
         //----------------------------------
         // ★追加
@@ -10161,6 +10170,86 @@ function evaluateCpuSummonAction(
 
 
         return null;
+
+    }
+
+        //==================================
+    // ヒッポグリフ専用
+    //
+    // 召喚ターンにアタックする見込みが
+    // ない場合は召喚候補から除外する
+    //==================================
+
+    if(card.name === "ヒッポグリフ"){
+
+        //----------------------------------
+        // PLAYER側のブロック可能サモン
+        //----------------------------------
+
+        const blockers =
+            playerField.filter(
+                summon => {
+
+                    if(
+                        !summon ||
+                        !summon.card ||
+                        summon.destroyed ||
+                        summon.isRest
+                    ){
+                        return false;
+                    }
+
+                    if(
+                        typeof isOgreBattleLocked ===
+                            "function" &&
+                        isOgreBattleLocked(summon)
+                    ){
+                        return false;
+                    }
+
+                    return true;
+
+                }
+            );
+
+        //----------------------------------
+        // 最もパワーが高いブロッカー
+        //----------------------------------
+
+        const maxBlockerPower =
+            blockers.length > 0
+                ? Math.max(
+                    ...blockers.map(
+                        summon => getPower(summon)
+                    )
+                )
+                : 0;
+
+        //----------------------------------
+        // 現在の攻撃キューと同じ
+        // 基準パワーによる判定
+        //----------------------------------
+
+        const hippogriffPower =
+            Number(card.power) || 0;
+
+        if(
+            hippogriffPower <
+            maxBlockerPower
+        ){
+
+            console.log(
+                "CPU：ヒッポグリフ召喚見送り",
+                "攻撃基準を満たさない",
+                "ヒッポグリフ=",
+                hippogriffPower,
+                "最大ブロッカー=",
+                maxBlockerPower
+            );
+
+            return null;
+
+        }
 
     }
 

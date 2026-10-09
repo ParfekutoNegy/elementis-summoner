@@ -74,19 +74,29 @@ class Board {
 
     }
 
-    renderEnemyField() {
+renderEnemyField() {
 
-        this.enemyField.innerHTML = "";
+    this.enemyField.innerHTML = "";
 
-        this.enemyCards.forEach(card => {
+    this.enemyCards.forEach(card => {
 
-            this.enemyField.appendChild(
-                card.getElement()
-            );
+        //----------------------------------
+        // CPU側のカード表示を最新状態へ更新
+        //----------------------------------
 
-        });
+        card.refresh();
 
-    }
+        //----------------------------------
+        // 場へ表示
+        //----------------------------------
+
+        this.enemyField.appendChild(
+            card.getElement()
+        );
+
+    });
+
+}
 
 
     //=========================
