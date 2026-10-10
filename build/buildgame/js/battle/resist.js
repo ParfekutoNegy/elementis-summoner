@@ -25,6 +25,24 @@ let heatStrengthSelecting = false;
 let heatStrengthTargetCandidates = [];
 
 //======================================
+// スノーストーム
+// 対象選択状態
+//======================================
+
+// PLAYERによるサモン選択待ち
+let snowStormSelecting = false;
+
+// 選択可能なサモン
+let snowStormTargetCandidates = [];
+
+// 使用されたスノーストーム
+let snowStormSourceCard = null;
+
+let snowStormSelectedTarget = null;
+
+let snowStormInfoLocked = false;
+
+//======================================
 // ファストコール
 // 相手ターン中の召喚管理
 //======================================
@@ -687,7 +705,8 @@ activateResist(
 if(
     !isFastCall &&
     !battleBombSelecting &&
-    !heatStrengthSelecting
+    !heatStrengthSelecting &&
+    !snowStormSelecting
 ){
 
     finishResist();
@@ -1591,6 +1610,377 @@ function selectBattleBombTarget(summon){
 }
 
 //======================================
+// スノーストーム
+//
+// 相手のターン終了時、
+// 相手の場にサモンが2体以上あるとき、
+// 相手自身がサモン1体を選び、
+// クールゾーンに置く
+//======================================
+
+function snowStorm(card, event){
+
+    console.log(
+        "================================"
+    );
+
+    console.log(
+        "スノーストーム：効果処理開始",
+        card.owner === ENEMY
+            ? "CPU使用"
+            : "PLAYER使用"
+    );
+
+    //----------------------------------
+    // イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        event.type !==
+            GAME_EVENT.ENEMY_TURN_END
+    ){
+
+        console.warn(
+            "スノーストーム：発動イベント不一致"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // サモンを選ぶ側
+    //
+    // PLAYER使用 → CPUが選ぶ
+    // CPU使用    → PLAYERが選ぶ
+    //----------------------------------
+
+    const choosingOwner =
+        card.owner === ENEMY
+            ? PLAYER
+            : ENEMY;
+
+    const field =
+        choosingOwner === PLAYER
+            ? playerField
+            : enemyField;
+
+    //----------------------------------
+    // 対象候補
+    //----------------------------------
+
+    const candidates =
+        field.filter(
+            summon =>
+                summon instanceof Summon &&
+                !summon.destroyed
+        );
+
+    if(candidates.length < 2){
+
+        console.warn(
+            "スノーストーム：サモン2体未満"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // 使用カードを記録
+    //----------------------------------
+
+    snowStormSourceCard = card;
+
+    snowStormTargetCandidates =
+        candidates;
+
+//----------------------------------
+// CPUがサモンを選ぶ場合
+//----------------------------------
+
+if(choosingOwner === ENEMY){
+
+    //==================================
+    // CPU選択優先順位
+    //
+    // ① コストが小さいサモン
+    // ② 同コストならヨコ向き
+    //==================================
+
+    const sortedCandidates = [
+        ...candidates
+    ].sort((a, b) => {
+
+        //----------------------------------
+        // コスト比較
+        //----------------------------------
+
+        const costA =
+            Number(a.card?.cost) || 0;
+
+        const costB =
+            Number(b.card?.cost) || 0;
+
+        if(costA !== costB){
+
+            return costA - costB;
+
+        }
+
+        //----------------------------------
+        // 同コストならヨコ向きを優先
+        //----------------------------------
+
+        if(a.isRest !== b.isRest){
+
+            return a.isRest ? -1 : 1;
+
+        }
+
+        //----------------------------------
+        // コスト・向きが同じ
+        //----------------------------------
+
+        return 0;
+
+    });
+
+    //----------------------------------
+    // 最優先サモンを選択
+    //----------------------------------
+
+    const target =
+        sortedCandidates[0];
+
+    console.log(
+        "スノーストーム：CPUが選択",
+        target.card?.name,
+        "コスト=",
+        target.card?.cost,
+        "向き=",
+        target.isRest
+            ? "ヨコ"
+            : "タテ"
+    );
+
+    addBattleLog(
+        `CPU：${target.card.name}を選択`
+    );
+
+    //----------------------------------
+    // 選択状態解除
+    //----------------------------------
+
+    snowStormSelecting = false;
+
+    snowStormTargetCandidates = [];
+
+    //----------------------------------
+    // クールゾーンへ移動
+    //----------------------------------
+
+    moveLamiaTargetToCool(
+        target
+    );
+
+    snowStormSourceCard = null;
+
+    return;
+}
+
+//----------------------------------
+// PLAYERがサモンを選ぶ場合
+//----------------------------------
+
+snowStormSelecting = true;
+
+snowStormSelectedTarget = null;
+
+candidates.forEach(summon => {
+
+    const element =
+        summon.view?.getElement?.();
+
+    if(element){
+
+        element.classList.add(
+            "magia-target"
+        );
+
+    }
+
+});
+
+showActionGuide(
+    "クールゾーンに置くサモンを1体選んでください。"
+);
+
+updateButtons();
+
+console.log(
+    "スノーストーム：PLAYER選択待機",
+    candidates.map(
+        summon => summon.card?.name
+    )
+);
+
+}
+
+//======================================
+// スノーストーム
+// PLAYERによるサモン選択
+//
+// サモン選択 → 決定ボタン → 効果解決
+//======================================
+
+function selectSnowStormTarget(summon){
+
+    if(!snowStormSelecting){
+        return false;
+    }
+
+    if(
+        !(summon instanceof Summon) ||
+        summon.owner !== PLAYER ||
+        summon.destroyed ||
+        !playerField.includes(summon) ||
+        !snowStormTargetCandidates.includes(summon)
+    ){
+        return false;
+    }
+
+    //----------------------------------
+    // 前回の選択表示を解除
+    //----------------------------------
+
+    snowStormTargetCandidates.forEach(candidate => {
+
+        const element =
+            candidate.view?.getElement?.();
+
+        if(element){
+            element.classList.remove(
+                "snowstorm-selected"
+            );
+        }
+
+    });
+
+    //----------------------------------
+    // 選択対象を保存
+    //----------------------------------
+
+    snowStormSelectedTarget = summon;
+
+    //----------------------------------
+    // 選択したサモンを浮き上がらせる
+    //----------------------------------
+
+    const element =
+        summon.view?.getElement?.();
+
+    if(element){
+        element.classList.add(
+            "snowstorm-selected"
+        );
+    }
+
+    console.log(
+        "スノーストーム：対象選択",
+        summon.card?.name
+    );
+
+
+
+    updateButtons();
+
+    return true;
+}
+
+//======================================
+// スノーストーム
+// PLAYER対象決定
+//======================================
+
+function confirmSnowStormTarget(){
+
+    if(
+        !snowStormSelecting ||
+        !snowStormSelectedTarget
+    ){
+        return;
+    }
+
+    const target =
+        snowStormSelectedTarget;
+
+    console.log(
+        "スノーストーム：対象決定",
+        target.card?.name
+    );
+
+    snowStormTargetCandidates.forEach(
+        summon => {
+
+            const element =
+                summon.view?.getElement?.();
+
+            if(element){
+
+element.classList.remove(
+    "magia-target",
+    "snowstorm-selected"
+);
+
+            }
+
+        }
+    );
+
+    snowStormSelecting = false;
+
+    snowStormSelectedTarget = null;
+
+    snowStormTargetCandidates = [];
+
+    snowStormSourceCard = null;
+
+//----------------------------------
+// 選択状態を解除
+//----------------------------------
+
+clearFieldSelection();
+
+selectedSummon = null;
+
+//----------------------------------
+// クールゾーンへ移動
+//----------------------------------
+
+moveLamiaTargetToCool(target);
+
+//----------------------------------
+// 表示終了
+//----------------------------------
+
+hideActionGuide();
+
+hideCpuCardAction();
+
+//----------------------------------
+// UI更新
+//----------------------------------
+
+updateButtons();
+
+//----------------------------------
+// レジスト終了
+//----------------------------------
+
+finishResist();
+}
+
+//======================================
 // レジスト効果一覧
 //======================================
 
@@ -1614,6 +2004,8 @@ const resistEffects = {
     prevent,
     earthDefense,
     flexibleSand,
+
+    snowStorm,
 
 };
 
@@ -1739,6 +2131,26 @@ if(
     }
 
     return;
+}
+
+//======================================
+// スノーストーム
+// 対象選択・専用終了処理待機
+//======================================
+
+if(
+    card.effect === "snowStorm"
+){
+
+    console.log(
+        "スノーストーム：",
+        snowStormSelecting
+            ? "PLAYERの対象選択待機中"
+            : "専用終了処理待機"
+    );
+
+    return;
+
 }
 
 
@@ -2276,6 +2688,94 @@ function finishResist(){
         return;
 
     }
+
+    //======================================
+// スノーストーム
+// ターン終了時レジスト解決完了
+//======================================
+
+if(
+    currentResistEvent.type ===
+        GAME_EVENT.ENEMY_TURN_END
+){
+
+    //----------------------------------
+    // 対象選択中なら終了しない
+    //----------------------------------
+
+    if(snowStormSelecting){
+
+        console.log(
+            "スノーストーム：対象選択待機中"
+        );
+
+        return;
+
+    }
+
+    //----------------------------------
+    // イベントを保存
+    //----------------------------------
+
+    const event = currentResistEvent;
+
+    //----------------------------------
+    // レジスト状態解除
+    //----------------------------------
+
+    selectableResistCards.forEach(card => {
+
+        card.setSelected(false);
+        card.setHighlight(false);
+        card.usedThisEvent = false;
+
+    });
+
+    enemyHandCards.forEach(card => {
+        card.usedThisEvent = false;
+    });
+
+    currentResistEvent = null;
+
+    resistMode = false;
+    resistUsingCard = null;
+    resistCostConfirm = false;
+
+    selectedResistCostCards = [];
+    selectableResistCards = [];
+
+    resistPassedThisEvent = false;
+
+    snowStormSelecting = false;
+    snowStormTargetCandidates = [];
+    snowStormSourceCard = null;
+
+    updateButtons();
+
+//----------------------------------
+// ターン終了処理を再開
+// スノーストームの効果を確認できるよう
+// 1.5秒待ってから次のターンへ
+//----------------------------------
+
+console.log(
+    "ターン終了時レジスト：解決完了"
+);
+
+if(typeof event.resume === "function"){
+
+    setTimeout(() => {
+
+        event.resume();
+
+    }, 1500);
+
+}
+
+return;
+
+}
+
 
     // 今回のレジストがバトルボムの
 // ダメージに対するものか記録
@@ -4177,10 +4677,12 @@ if(remainingHand.length < summonCost){
     // CPUレジスト使用演出
     //----------------------------------
 
-    showCpuCardAction(
-        card,
-        "RESIST"
-    );
+showCpuCardAction(
+    card,
+    "RESIST",
+    null,
+    card.effect === "snowStorm"
+);
 
 
     //==================================

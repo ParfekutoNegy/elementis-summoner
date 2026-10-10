@@ -25,6 +25,10 @@ const GAME_EVENT = {
     TURN_END:
         "turnEnd",
 
+    // ターン終了時レジスト
+    ENEMY_TURN_END:
+        "enemyTurnEnd",
+
     ENEMY_PLAY_CARD:
         "enemyPlayCard",
 
@@ -232,18 +236,39 @@ const cpuResist =
         // 使用成功
         //----------------------------------
 
-        if(result){
+if(result){
 
-            setTimeout(()=>{
+    //==================================
+    // スノーストーム
+    // PLAYERの対象選択を待機
+    //==================================
 
-                finishResist();
+    if(
+        cpuResist.effect === "snowStorm" &&
+        snowStormSelecting
+    ){
 
-            },2000);
+        console.log(
+            "CPUスノーストーム：PLAYERの対象選択待機"
+        );
 
+        return true;
 
-            return true;
+    }
 
-        }
+    //==================================
+    // 通常のCPUレジスト終了処理
+    //==================================
+
+    setTimeout(()=>{
+
+        finishResist();
+
+    },2000);
+
+    return true;
+
+}
 
 
         //----------------------------------
@@ -322,14 +347,26 @@ const cpuResist =
         event;
 
 
-    //----------------------------------
-    // プレイヤーのレジスト選択開始
-    //----------------------------------
+//----------------------------------
+// 前回の手札選択状態を解除
+//----------------------------------
 
-    showResistSelection(
-        resistCards,
-        event
-    );
+if(selectedHandCard){
+
+    selectedHandCard.setSelected(false);
+
+}
+
+selectedHandCard = null;
+
+//----------------------------------
+// プレイヤーのレジスト選択開始
+//----------------------------------
+
+showResistSelection(
+    resistCards,
+    event
+);
 
 
     //----------------------------------
@@ -511,6 +548,64 @@ if(card.effect === "fastCall"){
 
         continue;
     }
+
+}
+
+//======================================
+// スノーストーム
+// 相手ターン終了時
+// 相手の場にサモンが2体以上
+//======================================
+
+if(
+    card.effect === "snowStorm"
+){
+
+    //----------------------------------
+    // 発動タイミング
+    //----------------------------------
+
+    if(
+        event.type !==
+        GAME_EVENT.ENEMY_TURN_END
+    ){
+
+        continue;
+
+    }
+
+    //----------------------------------
+    // CPUの場のサモン数
+    //----------------------------------
+
+    const summonCount =
+        enemyField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    //----------------------------------
+    // 2体未満なら発動不可
+    //----------------------------------
+
+    if(summonCount < 2){
+
+        console.log(
+            "スノーストーム：発動条件不一致",
+            "CPUサモン数=",
+            summonCount
+        );
+
+        continue;
+
+    }
+
+    console.log(
+        "スノーストーム：発動条件成立",
+        "CPUサモン数=",
+        summonCount
+    );
 
 }
 
@@ -723,9 +818,26 @@ selectableResistCards.forEach(card=>{
     // 行動案内
     //----------------------------------
 
+//----------------------------------
+// レジスト操作案内
+//----------------------------------
+
+if(
+    event.type ===
+        GAME_EVENT.ENEMY_TURN_END
+){
+
+    showActionGuide(
+        "相手ターンが終了します。<br>レジストをプレイしますか？"
+    );
+
+}else{
+
     showActionGuide(
         getResistGuideMessage(event)
     );
+
+}
 
     //----------------------------------
     // 現在処理中イベント保存

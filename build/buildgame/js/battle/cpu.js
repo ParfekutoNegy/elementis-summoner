@@ -5760,11 +5760,26 @@ function cpuFinishTurn(){
 
     closeCostView();
 
+//==================================
+// CPUターン終了
+// サモン終了時能力を順番に解決
+//==================================
+
+game.state = TURN_STATE.END;
+
+onTurnEnd(() => {
+
+    console.log(
+        "CPUターン終了時サモン能力：解決完了"
+    );
+
     //----------------------------------
-    // ターン終了
+    // ターン終了時レジスト判定
     //----------------------------------
 
-    finishTurn();
+    checkTurnEndResist();
+
+});
 
 }
 
@@ -6523,6 +6538,78 @@ if(card.effect === "heatStrength"){
     );
 }
 
+//======================================
+// スノーストーム
+// CPU使用可能条件
+//
+// PLAYERターン終了時
+// PLAYERの場にサモンが2体以上
+//======================================
+
+if(card.effect === "snowStorm"){
+
+    //----------------------------------
+    // 発動タイミング確認
+    //----------------------------------
+
+    if(
+        event.type !==
+        GAME_EVENT.ENEMY_TURN_END
+    ){
+
+        continue;
+
+    }
+
+    //----------------------------------
+    // CPUがレジスト使用側か確認
+    //----------------------------------
+
+    if(event.player !== ENEMY){
+
+        continue;
+
+    }
+
+    //----------------------------------
+    // PLAYERの場のサモン数
+    //----------------------------------
+
+    const summonCount =
+        playerField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    //----------------------------------
+    // 2体未満なら使用不可
+    //----------------------------------
+
+    if(summonCount < 2){
+
+        console.log(
+            "CPUスノーストーム：条件不一致",
+            "PLAYERサモン数=",
+            summonCount
+        );
+
+        continue;
+
+    }
+
+    //----------------------------------
+    // 発動条件成立
+    //----------------------------------
+
+    console.log(
+        "CPUスノーストーム：使用候補",
+        "PLAYERサモン数=",
+        summonCount
+    );
+
+}
+
         //----------------------------------
         // このイベントで使用済み
         //----------------------------------
@@ -6737,6 +6824,104 @@ function shouldCpuUseResist(event){
 
         return false;
     }
+
+    //======================================
+// スノーストーム
+// CPUターン終了時レジスト判定
+//======================================
+
+if(
+    event.type === GAME_EVENT.ENEMY_TURN_END &&
+    event.player === ENEMY
+){
+
+    //----------------------------------
+    // PLAYERの場のサモン数
+    //----------------------------------
+
+    const summonCount =
+        playerField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    //----------------------------------
+    // 2体未満なら使用しない
+    //----------------------------------
+
+    if(summonCount < 2){
+
+        console.log(
+            "CPUスノーストーム：使用しない",
+            "PLAYERサモン数=",
+            summonCount
+        );
+
+        return false;
+
+    }
+
+    //----------------------------------
+    // 使用可能なスノーストームを探す
+    //----------------------------------
+
+    const canUseSnowStorm =
+        enemyHandCards.some(card => {
+
+            if(
+                card.type !== "レジスト" ||
+                card.effect !== "snowStorm" ||
+                card.usedThisEvent
+            ){
+                return false;
+            }
+
+            //----------------------------------
+            // 発動タイミング
+            //----------------------------------
+
+            const triggerMatches =
+                Array.isArray(card.trigger)
+                    ? card.trigger.includes(event.type)
+                    : card.trigger === event.type;
+
+            if(!triggerMatches){
+                return false;
+            }
+
+            //----------------------------------
+            // コスト
+            //----------------------------------
+
+            if(!canPayCost(card, ENEMY)){
+                return false;
+            }
+
+            //----------------------------------
+            // 個別条件
+            //----------------------------------
+
+            if(
+                card.condition &&
+                !card.condition(event)
+            ){
+                return false;
+            }
+
+            return true;
+
+        });
+
+    console.log(
+        "CPUスノーストーム使用判定：",
+        canUseSnowStorm
+    );
+
+    return canUseSnowStorm;
+
+}
+
 
     //======================================
     // CPUバトル開始時レジスト使用判定
@@ -7313,6 +7498,103 @@ function selectBestCpuResist(
     damage,
     event = null
 ){
+
+    //======================================
+// スノーストーム
+// CPUターン終了時レジスト選択
+//======================================
+
+if(
+    event?.type ===
+        GAME_EVENT.ENEMY_TURN_END &&
+    event?.player === ENEMY
+){
+
+    //----------------------------------
+    // スノーストームを探す
+    //----------------------------------
+
+    const snowStormCard =
+        cards?.find(
+            card =>
+                card &&
+                card.effect === "snowStorm"
+        );
+
+    //----------------------------------
+    // 使用可能なカードがない
+    //----------------------------------
+
+    if(!snowStormCard){
+
+        console.log(
+            "CPUスノーストーム：使用候補なし"
+        );
+
+        return null;
+
+    }
+
+    //----------------------------------
+    // PLAYERの場にサモンが2体以上
+    //----------------------------------
+
+    const playerSummons =
+        playerField.filter(
+            summon =>
+                summon instanceof Summon &&
+                !summon.destroyed
+        );
+
+    if(playerSummons.length < 2){
+
+        console.log(
+            "CPUスノーストーム：発動条件不成立"
+        );
+
+        return null;
+
+    }
+
+    //----------------------------------
+    // コスト支払い可能か確認
+    //----------------------------------
+
+    if(
+        !canPayCost(
+            snowStormCard,
+            ENEMY
+        )
+    ){
+
+        console.log(
+            "CPUスノーストーム：コスト不足"
+        );
+
+        return null;
+
+    }
+
+    //----------------------------------
+    // 使用可能なら必ず使用
+    //
+    // 使用後の手札0枚も許可
+    //----------------------------------
+
+    console.log(
+        "CPUスノーストーム：必ず使用",
+        "コスト=",
+        getCurrentCardCost(
+            snowStormCard,
+            ENEMY
+        ),
+        "手札枚数=",
+        enemyHandCards.length
+    );
+
+    return snowStormCard;
+
+}
 
     //======================================
     // CPUバトル開始時レジスト選択
@@ -17138,6 +17420,29 @@ function cpuGetCurseSmokePlan(card){
                     return false;
 
                 }
+
+                //======================================
+// カーススモーク
+// パワー1のサモンは対象外
+//======================================
+
+const currentPower =
+    getPower(
+        summon
+    );
+
+if(currentPower === 1){
+
+    console.log(
+        "CPU：カーススモーク対象外",
+        summon.card.name,
+        "パワー1"
+    );
+
+    return false;
+
+}
+
 
 
                 //----------------------------------

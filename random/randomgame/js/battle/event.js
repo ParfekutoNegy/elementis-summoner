@@ -25,6 +25,10 @@ const GAME_EVENT = {
     TURN_END:
         "turnEnd",
 
+    // ターン終了時レジスト
+    ENEMY_TURN_END:
+        "enemyTurnEnd",
+
     ENEMY_PLAY_CARD:
         "enemyPlayCard",
 
@@ -185,7 +189,6 @@ if(
         currentResistEvent =
             event;
 
-
 //==================================
 // CPU使用レジスト選択
 //==================================
@@ -196,6 +199,7 @@ const cpuResist =
         event.damage,
         event
     );
+
 
         if(!cpuResist){
 
@@ -227,53 +231,44 @@ const cpuResist =
             );
 
 
-//----------------------------------
-// 使用成功
-//----------------------------------
+        //----------------------------------
+        // 使用成功
+        //----------------------------------
 
 if(result){
 
     //==================================
-    // バトルボム
-    //
-    // BATTLE_STARTの終了処理は
-    // useCpuResist()側で行うため、
-    // ここではfinishResist()を
-    // 重ねて呼ばない
+    // スノーストーム
+    // PLAYERの対象選択を待機
     //==================================
 
     if(
-        cpuResist.effect ===
-            "battleBomb"
+        cpuResist.effect === "snowStorm" &&
+        snowStormSelecting
     ){
 
         console.log(
-            "CPUバトルボム：",
-            "専用終了処理へ"
+            "CPUスノーストーム：PLAYERの対象選択待機"
         );
 
         return true;
 
     }
 
-
     //==================================
-    // 通常CPUレジスト
+    // 通常のCPUレジスト終了処理
     //==================================
 
-    setTimeout(
-        () => {
+    setTimeout(()=>{
 
-            finishResist();
+        finishResist();
 
-        },
-        2000
-    );
-
+    },2000);
 
     return true;
 
 }
+
 
         //----------------------------------
         // 使用失敗
@@ -351,14 +346,26 @@ if(result){
         event;
 
 
-    //----------------------------------
-    // プレイヤーのレジスト選択開始
-    //----------------------------------
+//----------------------------------
+// 前回の手札選択状態を解除
+//----------------------------------
 
-    showResistSelection(
-        resistCards,
-        event
-    );
+if(selectedHandCard){
+
+    selectedHandCard.setSelected(false);
+
+}
+
+selectedHandCard = null;
+
+//----------------------------------
+// プレイヤーのレジスト選択開始
+//----------------------------------
+
+showResistSelection(
+    resistCards,
+    event
+);
 
 
     //----------------------------------
@@ -368,7 +375,6 @@ if(result){
     return true;
 
 }
-
 
 //======================================
 // 発動可能レジスト検索
@@ -541,6 +547,64 @@ if(card.effect === "fastCall"){
 
         continue;
     }
+
+}
+
+//======================================
+// スノーストーム
+// 相手ターン終了時
+// 相手の場にサモンが2体以上
+//======================================
+
+if(
+    card.effect === "snowStorm"
+){
+
+    //----------------------------------
+    // 発動タイミング
+    //----------------------------------
+
+    if(
+        event.type !==
+        GAME_EVENT.ENEMY_TURN_END
+    ){
+
+        continue;
+
+    }
+
+    //----------------------------------
+    // CPUの場のサモン数
+    //----------------------------------
+
+    const summonCount =
+        enemyField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    //----------------------------------
+    // 2体未満なら発動不可
+    //----------------------------------
+
+    if(summonCount < 2){
+
+        console.log(
+            "スノーストーム：発動条件不一致",
+            "CPUサモン数=",
+            summonCount
+        );
+
+        continue;
+
+    }
+
+    console.log(
+        "スノーストーム：発動条件成立",
+        "CPUサモン数=",
+        summonCount
+    );
 
 }
 
@@ -751,11 +815,26 @@ selectableResistCards.forEach(card=>{
     //---------------------------------
     // 行動案内
     //----------------------------------
+//----------------------------------
+// レジスト操作案内
+//----------------------------------
+
+if(
+    event.type ===
+        GAME_EVENT.ENEMY_TURN_END
+){
+
+    showActionGuide(
+        "相手ターンが終了します。<br>レジストをプレイしますか？"
+    );
+
+}else{
 
     showActionGuide(
         getResistGuideMessage(event)
     );
 
+}
     //----------------------------------
     // 現在処理中イベント保存
     //----------------------------------

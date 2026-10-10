@@ -787,6 +787,8 @@ let doppelgangerTargetMode = false;
 
 let doppelgangerSource = null;
 
+let fastCallDoppelgangerWaiting = false;
+
 
 //==================================================
 // ドッペルゲンガー

@@ -1829,6 +1829,82 @@ function createCard(
 
 function onCardClick(card){
 
+//======================================
+// スノーストーム
+// PLAYERサモン選択中
+//======================================
+
+if(
+    typeof snowStormSelecting !== "undefined" &&
+    snowStormSelecting
+){
+
+    //----------------------------------
+    // 自分の場のカードのみ選択可能
+    //----------------------------------
+
+    if(card.area !== "field"){
+        return;
+    }
+
+    //----------------------------------
+    // サモン取得
+    //----------------------------------
+
+    const targetSummon =
+        findSummonByView(card);
+
+    if(!targetSummon){
+        return;
+    }
+
+    //----------------------------------
+    // 選択可能なサモンか確認
+    //----------------------------------
+
+    if(
+        !snowStormTargetCandidates.includes(
+            targetSummon
+        )
+    ){
+        return;
+    }
+
+    //----------------------------------
+    // 前回の選択状態を解除
+    //----------------------------------
+
+    clearFieldSelection();
+
+    //----------------------------------
+    // 通常のサモン選択状態にする
+    //----------------------------------
+
+    selectedSummon = targetSummon;
+
+    card.setSelected(true);
+
+    //----------------------------------
+    // スノーストームの対象として保存
+    //----------------------------------
+
+    selectSnowStormTarget(
+        targetSummon
+    );
+
+    //----------------------------------
+    // カード詳細を表示
+    // 閲覧専用
+    //----------------------------------
+
+    showCardInfo(
+        card,
+        true
+    );
+
+    return;
+}
+
     console.log(
         "クリックカード",
         card
@@ -3798,6 +3874,18 @@ function showCardInfo(
     readOnly = false
 ){
 
+    //----------------------------------
+    // スノーストーム効果解決中
+    // カード情報の切り替えを禁止
+    //----------------------------------
+
+if(
+    typeof snowStormInfoLocked !== "undefined" &&
+    snowStormInfoLocked &&
+    !snowStormSelecting
+){
+    return;
+}
     const image =
         document.getElementById(
             "info-image"
@@ -5694,7 +5782,18 @@ const actionRunning =
     magiaTargetMode ||
     summonAbilityTargetMode ||
     summonAbilityCostMode ||
-    nereidDamageWaiting;
+    nereidDamageWaiting ||
+
+    //----------------------------------
+    // ドッペルゲンガー
+    // コピー対象選択中
+    //----------------------------------
+
+    (
+        typeof doppelgangerTargetMode !==
+            "undefined" &&
+        doppelgangerTargetMode
+    );
 
     endTurnButton.disabled =
 
@@ -5704,6 +5803,38 @@ const actionRunning =
 }
 
 resetActionButtons();
+
+//======================================
+// スノーストーム
+// PLAYERサモン選択中
+//======================================
+
+if(
+    typeof snowStormSelecting !== "undefined" &&
+    snowStormSelecting
+){
+
+    actionArea.style.display = "flex";
+
+    if(attackButton){
+        attackButton.style.display = "none";
+    }
+
+    if(snowStormSelectedTarget){
+
+        confirmButton.style.display =
+            "inline-block";
+
+        confirmButton.textContent =
+            "決定";
+
+        confirmButton.onclick =
+            confirmSnowStormTarget;
+
+    }
+
+    return;
+}
 
 //======================================
 // ファストコール：サモン選択中

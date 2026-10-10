@@ -1325,7 +1325,11 @@ const CARD_LIST = [
         element: "水",
         cost: 3,
         series:"mythology",
-        image: "images/088-スノーストーム.jpg"
+        image: "images/088-スノーストーム.jpg",
+        trigger: "enemyTurnEnd",
+        effect: "snowStorm",
+        condi:"相手のターン終了時、相手の場に２体以上のサモンがあるとき",
+        text:"相手のサモン１体を相手が選び、クールゾーンに置く。"
     },
     {
         id: 89,
