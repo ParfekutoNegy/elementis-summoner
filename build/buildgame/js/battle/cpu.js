@@ -463,7 +463,9 @@ function runCpuTurnStep(){
     cpuExecuteBestAction();
 
 }
-
+//======================================
+// CPU攻撃フェーズ開始
+//======================================
 //======================================
 // CPU攻撃フェーズ開始
 //======================================
@@ -719,7 +721,6 @@ function cpuStartAttackPhase(){
     );
 
 }
-
 
 //======================================
 // CPU攻撃キュー作成
@@ -2968,7 +2969,6 @@ function cpuSummon(
 
 }
 
-
 //======================================
 // CPUコスト移動
 //======================================
@@ -3244,7 +3244,6 @@ if(event.cancelled === true){
 
     return;
 }
-
 
                             console.log(
                                 "CPU：ファストコール終了",
@@ -4116,8 +4115,7 @@ function selectCpuMagiaTarget(card){
     const targets =
         card.effect.target;
 
-
-        //==================================
+    //==================================
     // 相手サモン能力無効
     //==================================
 
@@ -4137,7 +4135,9 @@ function selectCpuMagiaTarget(card){
 
         return PLAYER;
 
-    }    
+    }
+
+
 
     //==================================
     // クールゾーンのサモンを場に出す
@@ -5624,15 +5624,127 @@ function recoverEnemyCostCards(){
 //======================================
 // CPUターン終了
 //======================================
+
 function cpuFinishTurn(){
 
     console.log(
         "CPU行動終了"
     );
 
+    //==================================
+    // コンセントレイト
+    // ターン終了直前に使用
+    //==================================
+
+    if(
+        concentrateCostDown.enemy <= 0
+    ){
+
+        //----------------------------------
+        // 手札からコンセントレイトを探す
+        //----------------------------------
+
+        const concentrateCard =
+            enemyHandCards.find(
+                card =>
+                    card.effect?.type ===
+                    "nextCardCostDown"
+            );
+
+        if(concentrateCard){
+
+            //----------------------------------
+            // 現在のコスト
+            //----------------------------------
+
+            const currentCost =
+                getCurrentCardCost(
+                    concentrateCard,
+                    ENEMY
+                );
+
+            //----------------------------------
+            // 使用可能か確認
+            //----------------------------------
+
+            if(
+                canPlayCardByLimit(ENEMY) &&
+                enemyHandCards.length - 1 >=
+                    currentCost
+            ){
+
+                console.log(
+                    "CPU：ターン終了前にコンセントレイト使用",
+                    concentrateCard.name
+                );
+
+                //----------------------------------
+                // CPU自身を対象に使用
+                //----------------------------------
+
+                const result =
+                    cpuMagia(
+                        concentrateCard,
+                        ENEMY
+                    );
+
+                //----------------------------------
+                // ファストコール解決待ち
+                //----------------------------------
+
+                if(
+                    result === "WAIT_FAST_CALL"
+                ){
+
+                    console.log(
+                        "CPU：コンセントレイト",
+                        "ファストコール解決待ち"
+                    );
+
+                    return;
+
+                }
+
+                //----------------------------------
+                // 使用成功
+                //----------------------------------
+
+                if(result === true){
+
+                    console.log(
+                        "CPU：コンセントレイト使用完了",
+                        "ターン終了へ"
+                    );
+
+                    setTimeout(
+                        cpuFinishTurn,
+                        2000
+                    );
+
+                    return;
+
+                }
+
+                //----------------------------------
+                // 使用失敗
+                //----------------------------------
+
+                console.log(
+                    "CPU：コンセントレイト使用失敗",
+                    "通常のターン終了へ"
+                );
+
+            }
+
+        }
+
+    }
+
+    //==================================
+    // 通常のターン終了処理
+    //==================================
 
     cpuWaiting = false;
-
 
     //----------------------------------
     // モーダルを閉じる
@@ -5647,7 +5759,6 @@ function cpuFinishTurn(){
     closeEnemyCoolModal();
 
     closeCostView();
-
 
     //----------------------------------
     // ターン終了
@@ -6110,11 +6221,9 @@ case "liquidVeil":
 
             case "diamondSkin":
 
-    remaining = 0;
-
-    break;
-
-
+            remaining = 0;
+  
+            break;
 
             case "rapidMove":
 
@@ -6349,6 +6458,7 @@ if(
 
 }
 
+
 //======================================
 // ヒートストレングス
 // CPU使用可能条件
@@ -6412,7 +6522,6 @@ if(card.effect === "heatStrength"){
         cpuPower + 2
     );
 }
-
 
         //----------------------------------
         // このイベントで使用済み
@@ -6529,6 +6638,7 @@ if(!isCpuFastCallEvent){
     return result;
 
 }
+
 
 //======================================
 // CPUファストコール
@@ -7997,14 +8107,33 @@ case "prevent": {
                 );
             }
 
-            case "waterBarrier":
-                return damage;
+  case "waterBarrier":
+    return damage;
 
-            case "diamondSkin":
-                return damage;
+case "diamondSkin":
+    return damage;
 
-            case "rapidMove":
-                return damage;
+//======================================
+// フレキシブルサンド
+// 受けるダメージを1にする
+//======================================
+
+case "flexibleSand":
+
+    if(
+        event?.type !==
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+        return 0;
+    }
+
+    return Math.max(
+        0,
+        damage - 1
+    );
+
+case "rapidMove":
+    return damage;
 
             case "illusionFog":
                 return damage;
@@ -8122,7 +8251,6 @@ case "prevent": {
 
     return candidates[0].card;
 }
-
 
 //======================================
 // CPUコストカード選択
@@ -11053,6 +11181,19 @@ function createCpuMagiaAction(card){
 
     }
 
+//======================================
+// コンセントレイト
+// 通常のポイント評価から除外
+// 専用の使用タイミングで処理する
+//======================================
+
+if(
+    card.effect?.type ===
+        "nextCardCostDown"
+){
+    return null;
+}
+
         //==================================
     // オブリビオンレイン
     //==================================
@@ -11200,6 +11341,7 @@ if(
     );
 
 }
+
 
 //==================================
 // インフェルノ専用使用条件
@@ -12577,6 +12719,16 @@ if(
 
             break;
 
+            case "コンセントレイト":
+
+    addCpuActionPoints(
+        action,
+        30,
+        "次のカードのコスト－4"
+    );
+
+    break;
+
     }
 
 
@@ -13381,43 +13533,6 @@ if(
                 );
 
             }
-
-        }
-
-    }
-
-
-    //==================================
-    // オブリビオンレイン評価
-    //==================================
-
-    if(
-        card.effect?.type ===
-            "disableEnemySummonAbilities"
-    ){
-
-        //----------------------------------
-        // 使用条件を満たしている場合
-        //----------------------------------
-
-        if(
-            cpuShouldUseOblivionRain()
-        ){
-
-            addCpuActionPoints(
-                action,
-                30,
-                "相手サモン能力無効"
-            );
-
-
-            console.log(
-                "CPU：オブリビオンレイン評価",
-                {
-                    points:
-                        action.points
-                }
-            );
 
         }
 
@@ -14715,6 +14830,126 @@ function cpuExecuteBestAction(){
 
     }
 
+    //======================================
+// コンセントレイト
+// コスト4以上のカードをプレイする直前
+//======================================
+
+if(
+    bestAction &&
+    (
+        bestAction.type === "SUMMON" ||
+        bestAction.type === "MAGIA"
+    ) &&
+    bestAction.card &&
+    bestAction.card.effect?.type !==
+        "nextCardCostDown" &&
+    concentrateCostDown.enemy <= 0
+){
+
+    //----------------------------------
+    // 次にプレイするカードの現在コスト
+    //----------------------------------
+
+    const nextCardCost =
+        getCurrentCardCost(
+            bestAction.card,
+            ENEMY
+        );
+
+    if(nextCardCost >= 4){
+
+        //----------------------------------
+        // 手札からコンセントレイトを探す
+        //----------------------------------
+
+        const concentrateCard =
+            enemyHandCards.find(
+                card =>
+                    card.effect?.type ===
+                    "nextCardCostDown"
+            );
+
+        if(concentrateCard){
+
+            //----------------------------------
+            // コンセントレイトのコスト
+            //----------------------------------
+
+            const concentrateCost =
+                getCurrentCardCost(
+                    concentrateCard,
+                    ENEMY
+                );
+
+            //----------------------------------
+            // 使用可能か確認
+            //----------------------------------
+
+            if(
+                canPlayCardByLimit(ENEMY) &&
+                enemyHandCards.length - 1 >=
+                    concentrateCost
+            ){
+
+                console.log(
+                    "CPU：高コストカードの前にコンセントレイト",
+                    bestAction.card.name,
+                    "コスト=",
+                    nextCardCost
+                );
+
+                //----------------------------------
+                // CPU自身を対象として使用
+                //----------------------------------
+
+                const result =
+                    cpuMagia(
+                        concentrateCard,
+                        ENEMY
+                    );
+
+                //----------------------------------
+                // ファストコール解決待ち
+                //----------------------------------
+
+                if(result === "WAIT_FAST_CALL"){
+                    return;
+                }
+
+                //----------------------------------
+                // 使用成功
+                //----------------------------------
+
+                if(result === true){
+
+                    setTimeout(
+                        runCpuTurnStep,
+                        2000
+                    );
+
+                    return;
+                }
+
+                //----------------------------------
+                // 使用失敗なら通常行動へ
+                //----------------------------------
+
+                console.log(
+                    "CPU：コンセントレイト使用失敗",
+                    "通常行動を継続"
+                );
+
+            }
+
+        }
+
+    }
+
+}
+
+
+
 
     //----------------------------------
     // 選択結果
@@ -14803,6 +15038,7 @@ function cpuExecuteBestAction(){
                 card
             );
 
+
             //----------------------------------
 // ファストコール解決待ち
 //----------------------------------
@@ -14816,7 +15052,6 @@ if(result === "WAIT_FAST_CALL"){
     return;
 
 }
-
 
 
         if(result){

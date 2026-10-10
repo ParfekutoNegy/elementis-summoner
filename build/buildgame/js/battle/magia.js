@@ -2996,6 +2996,46 @@ function canUseMagia(card){
 
 
     //----------------------------------
+    // 自分クールゾーンのサモン
+    //
+    // クレイクリエイト等
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "playerCoolSummon"
+        ) &&
+        board.playerCoolCards.some(
+            card =>
+                card.type === "サモン"
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
+    // 自分クールゾーンのマギア
+    //----------------------------------
+
+    if(
+        targets.includes(
+            "playerCoolMagia"
+        ) &&
+        board.playerCoolCards.some(
+            card =>
+                card.type === "マギア"
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //----------------------------------
     // 使用可能対象なし
     //----------------------------------
 

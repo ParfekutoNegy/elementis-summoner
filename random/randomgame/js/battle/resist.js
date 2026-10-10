@@ -458,11 +458,33 @@ if(resistUsingCard?.effect === "fastCall"){
                 return false;
             }
 
-            const requiredCost =
-                getCurrentCardCost(
-                    card,
-                    PLAYER
-                );
+//----------------------------------
+// ファストコールで召喚するサモン
+// コンセントレイトの軽減は適用しない
+//----------------------------------
+
+const savedReduction =
+    concentrateCostDown.player;
+
+concentrateCostDown.player = 0;
+
+let requiredCost;
+
+try{
+
+    requiredCost =
+        getCurrentCardCost(
+            card,
+            PLAYER
+        );
+
+}
+finally{
+
+    concentrateCostDown.player =
+        savedReduction;
+
+}
 
             // 召喚するサモン自身を除いた
             // 残りの手札でコストを支払えるか
@@ -501,6 +523,30 @@ if(resistUsingCard?.effect === "fastCall"){
         PLAYER,
         resistUsingCard
     );
+
+
+    //==================================
+    // コンセントレイト
+    // レジストのプレイ成立時に
+    // コスト軽減効果を消費
+    //==================================
+
+    if(concentrateCostDown.player > 0){
+
+        console.log(
+            "コンセントレイト：効果消費",
+            {
+                card: resistUsingCard.name,
+                reduction:
+                    concentrateCostDown.player
+            }
+        );
+
+        concentrateCostDown.player = 0;
+
+        updateHandCostDisplay();
+
+    }
 
 
     //----------------------------------
@@ -1650,6 +1696,7 @@ const resistEffects = {
     heatStrength,
     prevent,
     earthDefense,
+    flexibleSand,
 
 };
 
@@ -3646,6 +3693,24 @@ function getCurrentEnemyCardCost(card){
     }
 
 
+    //==================================
+    // コンセントレイト
+    // CPUの次のカードのコスト軽減
+    //==================================
+
+    if(concentrateCostDown.enemy > 0){
+
+        cost -= concentrateCostDown.enemy;
+
+        console.log(
+            "CPUコンセントレイト：コスト軽減",
+            "カード=", card.name,
+            "軽減量=", concentrateCostDown.enemy
+        );
+
+    }
+
+
     //----------------------------------
     // 0未満にはしない
     //----------------------------------
@@ -4879,6 +4944,34 @@ function earthDefense(card){
         "使用者=", card.owner,
         "軽減前=", beforeDamage,
         "軽減後=", currentResistEvent.damage
+    );
+
+}
+
+//======================================
+// フレキシブルサンド
+// 受けるダメージを1にする
+//======================================
+
+function flexibleSand(card){
+
+    console.log(
+        "フレキシブルサンド発動"
+    );
+
+    if(
+        !currentResistEvent ||
+        currentResistEvent.type !==
+            GAME_EVENT.BEFORE_PLAYER_DAMAGE
+    ){
+        return;
+    }
+
+    currentResistEvent.damage = 1;
+
+    console.log(
+        "変更後ダメージ",
+        currentResistEvent.damage
     );
 
 }

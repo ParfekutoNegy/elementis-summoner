@@ -1386,15 +1386,21 @@ const CARD_LIST = [
             value:2
         }
     },
-    {
-        id: 93,
-        name:"コンセントレイト",
-        type: "マギア",
-        element: "土",
-        cost: 1,
-        series:"mythology",
-        image: "images/093-コンセントレイト.jpg"
-    },
+{
+    id: 93,
+    name: "コンセントレイト",
+    type: "マギア",
+    element: "土",
+    cost: 1,
+    series: "mythology",
+    image: "images/093-コンセントレイト.jpg",
+
+    effect: {
+        type: "nextCardCostDown",
+        value: 4,
+        target: ["player"]
+    }
+},
     {
         id: 94,
         name:"プリヴェント",
@@ -1416,7 +1422,12 @@ const CARD_LIST = [
         element: "土",
         cost: 1,
         series:"mythology",
-        image: "images/095-フレキシブルサンド.jpg"
+        image: "images/095-フレキシブルサンド.jpg",
+        trigger:"beforePlayerDamage",
+        effect:"flexibleSand",
+        condi:"自分がダメージを受けるとき",
+        text:"受けるダメージを１にする。"
+
     },
     {
         id: 96,

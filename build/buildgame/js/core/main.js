@@ -212,6 +212,16 @@ let hydraCostSelectMode =
 
     let costMode = null;
 
+//======================================
+// コンセントレイト
+// 次にプレイするカードのコスト－4
+//======================================
+
+let concentrateCostDown = {
+    player: 0,
+    enemy: 0
+};  
+
 
 
 //==================================================
@@ -340,6 +350,33 @@ function registerCardPlay(
                 )
         }
     );
+
+    //======================================
+// コンセントレイト
+// CPU側の軽減効果を消費
+//======================================
+
+if(
+    owner === ENEMY &&
+    concentrateCostDown.enemy > 0 &&
+    card?.effect?.type !== "nextCardCostDown"
+){
+
+    console.log(
+        "CPU：コンセントレイト効果消費",
+        {
+            card: card?.name,
+            reduction: concentrateCostDown.enemy
+        }
+    );
+
+    //----------------------------------
+    // 軽減効果を解除
+    //----------------------------------
+
+    concentrateCostDown.enemy = 0;
+
+}
 
 
     //==================================
@@ -953,7 +990,79 @@ console.log(
 
     setRandomBattleBackground();   
 
+//======================================
+// 自分プレイヤーアイコン
+// マギア対象選択
+//======================================
 
+const playerIconForMagia =
+    document.getElementById(
+        "player-icon"
+    );
+
+if(playerIconForMagia){
+
+    playerIconForMagia.addEventListener(
+        "click",
+        () => {
+
+            //----------------------------------
+            // マギア対象選択中のみ
+            //----------------------------------
+
+            if(
+                !magiaTargetMode ||
+                !magiaCard
+            ){
+
+                return;
+
+            }
+
+            //----------------------------------
+            // 自分を対象にできるか
+            //----------------------------------
+
+            const targets =
+                magiaCard.effect?.target || [];
+
+            if(
+                !targets.includes("player")
+            ){
+
+                return;
+
+            }
+
+            //----------------------------------
+            // 自分を対象に確定
+            //----------------------------------
+
+            console.log(
+                "マギア対象決定：自分プレイヤー",
+                magiaCard.name
+            );
+
+            magiaTarget = PLAYER;
+
+            magiaTargetMode = false;
+
+            //----------------------------------
+            // 発光解除
+            //----------------------------------
+
+            clearMagiaHighlight();
+
+            //----------------------------------
+            // コスト選択へ
+            //----------------------------------
+
+            startMagiaCost();
+
+        }
+    );
+
+}
 
     //------------------------------------------
     // ボタン登録
@@ -5135,6 +5244,39 @@ if(
 
 const playedCard = summonCard;
 
+//======================================
+// コンセントレイト
+// 次のカードをプレイしたため
+// コスト軽減効果を消費
+//======================================
+
+if(concentrateCostDown.player > 0){
+
+    console.log(
+        "コンセントレイト：効果消費",
+        {
+            card: playedCard.name,
+            reduction:
+                concentrateCostDown.player
+        }
+    );
+
+    //----------------------------------
+    // 軽減効果を解除
+    //----------------------------------
+
+    concentrateCostDown.player = 0;
+
+
+    //----------------------------------
+    // 手札コスト表示更新
+    //----------------------------------
+
+    updateHandCostDisplay();
+
+}
+
+
 const playEvent = {
 
     type: GAME_EVENT.PLAY_CARD,
@@ -7378,6 +7520,33 @@ else if(
         canUseMagia(
             selectedHandCard
         );
+
+        if(
+    selectedHandCard.name ===
+    "コンセントレイト"
+){
+
+    console.log(
+        "★ コンセントレイト使用判定",
+        {
+            canUse: canUse,
+
+            canPayCost:
+                canPayCost(
+                    selectedHandCard
+                ),
+
+            effect:
+                selectedHandCard.effect,
+
+            currentCost:
+                getCurrentCardCost(
+                    selectedHandCard
+                )
+        }
+    );
+
+}
 
 
     //==================================
@@ -12293,6 +12462,25 @@ function getEffectiveCost(card){
     );
 
 
+    //==================================
+    // コンセントレイト
+    // 次にプレイするカードのコスト－4
+    //==================================
+
+    if(concentrateCostDown.player > 0){
+
+        cost -=
+            concentrateCostDown.player;
+
+        console.log(
+            "コンセントレイト：コスト軽減",
+            "カード=", card.name,
+            "軽減量=", concentrateCostDown.player
+        );
+
+    }
+
+
     //----------------------------------
     // 0未満にはしない
     //----------------------------------
@@ -12596,6 +12784,30 @@ function getCurrentCardCost(
             "土カード枚数=", earthCount,
             "軽減量=", reduction,
             "最終コスト=", Math.max(0, cost)
+        );
+
+    }
+
+
+    //==================================
+    // コンセントレイト
+    // 次にプレイするカードのコスト軽減
+    //==================================
+
+    const concentrateReduction =
+        owner === ENEMY
+            ? concentrateCostDown.enemy
+            : concentrateCostDown.player;
+
+    if(concentrateReduction > 0){
+
+        cost -= concentrateReduction;
+
+        console.log(
+            "コンセントレイト：コスト軽減",
+            "使用者=", owner,
+            "カード=", card.name,
+            "軽減量=", concentrateReduction
         );
 
     }
