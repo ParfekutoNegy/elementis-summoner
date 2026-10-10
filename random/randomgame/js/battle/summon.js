@@ -587,13 +587,68 @@ function refreshDynamicPowerSummons(){
 
 }
 
+//======================================
+// ダメージブースト付与
+//======================================
+
+function addSummonDamageBoost(owner, value){
+
+    if(
+        owner !== PLAYER &&
+        owner !== ENEMY
+    ){
+        return;
+    }
+
+    summonDamageBoost[owner] +=
+        Number(value) || 0;
+
+    console.log(
+        "ダメージブースト付与",
+        owner,
+        summonDamageBoost[owner]
+    );
+}
+
+
+//======================================
+// ダメージブースト解除
+//======================================
+
+function resetSummonDamageBoost(owner){
+
+    if(
+        owner !== PLAYER &&
+        owner !== ENEMY
+    ){
+        return;
+    }
+
+    summonDamageBoost[owner] = 0;
+}
+
+
+//======================================
+// サモンの与えるダメージ
+//======================================
+
 function getDamage(summon, damage){
 
-    return (
-        damage +
-        summon.damageBonus
-    );
+    if(!summon){
+        return damage;
+    }
 
+    const individualBonus =
+        Number(summon.damageBonus) || 0;
+
+    const ownerBonus =
+        summonDamageBoost[summon.owner] || 0;
+
+    return (
+        Number(damage) +
+        individualBonus +
+        ownerBonus
+    );
 }
 
 //======================================
@@ -2189,21 +2244,18 @@ function paySummonAbilityCost(){
             );
 
 
-            addBattleLog(
-                `${source.card.name}の能力発動：相手に${damage}ダメージ`
-            );
+const finalDamage = getDamage(source, damage);
 
+addBattleLog(
+    `${source.card.name}の能力発動：相手に${finalDamage}ダメージ`
+);
 
-            //----------------------------------
-            // 通常のプレイヤーダメージ処理
-            //----------------------------------
-
-            damagePlayer(
-                ENEMY,
-                damage,
-                false,
-                source.card
-            );
+damagePlayer(
+    ENEMY,
+    finalDamage,
+    false,
+    source.card
+);
 
         }
 

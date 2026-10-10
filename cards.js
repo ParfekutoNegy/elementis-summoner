@@ -1070,7 +1070,15 @@ const CARD_LIST = [
         element: "火",
         cost: 1,
         series:"mythology",
-        image: "images/069-ダメージブースト.jpg"
+        image: "images/069-ダメージブースト.jpg",
+        tag:"自分",
+        text:"このターン中、自分のすべてのサモンが与えるダメージは＋１される。",
+
+        effect: {
+            type: "summonDamageBoost",
+             target: ["player"],
+            value: 1
+        }
     },
     {
         id: 70,
@@ -1398,7 +1406,8 @@ const CARD_LIST = [
     cost: 1,
     series: "mythology",
     image: "images/093-コンセントレイト.jpg",
-
+    tag:"自分",
+    text:"次に自分がプレイするカードのコストは－４される。",
     effect: {
         type: "nextCardCostDown",
         value: 4,

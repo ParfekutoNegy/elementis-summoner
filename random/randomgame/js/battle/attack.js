@@ -2696,13 +2696,16 @@ function continueAttackAfterAttackAbility(
         }
 
 
-        // ブロックなし
-        damagePlayer(
-            PLAYER,
-            getPower(attackingSummon),
-            false,
-            attackingSummon.card
-        );
+// ブロックなし
+damagePlayer(
+    PLAYER,
+    getDamage(
+        attackingSummon,
+        getPower(attackingSummon)
+    ),
+    false,
+    attackingSummon.card
+);
 
 
         // レジスト・ネレイド待機
@@ -2778,13 +2781,16 @@ function continueAttackAfterAttackAbility(
         }
 
 
-        // CPUへのダメージ
-        damagePlayer(
-            ENEMY,
-            getPower(attackingSummon),
-            false,
-            attackingSummon.card
-        );
+// CPUへのダメージ
+damagePlayer(
+    ENEMY,
+    getDamage(
+        attackingSummon,
+        getPower(attackingSummon)
+    ),
+    false,
+    attackingSummon.card
+);
 
 
         // レジスト待機
@@ -2865,13 +2871,16 @@ function continueNormalSummonBattleDamage(
     // ① 攻撃対象へのダメージ
     //==================================
 
-    const targetDamageResult =
-        dealDamage(
-            target,
-            getPower(attacker),
-            attacker.card,
-            true
-        );
+const targetDamageResult =
+    dealDamage(
+        target,
+        getDamage(
+            attacker,
+            getPower(attacker)
+        ),
+        attacker.card,
+        true
+    );
 
 
     //==================================
@@ -2947,13 +2956,18 @@ function continueNormalSummonBattleDamage(
     // ② 攻撃者への反撃ダメージ
     //==================================
 
-    const attackerDamageResult =
-        dealDamage(
-            attacker,
-            getPower(target),
-            target.card,
-            true
-        );
+const attackerDamageResult =
+    dealDamage(
+        attacker,
+        getDamage(
+            target,
+            getPower(
+                target
+            )
+        ),
+        target.card,
+        true
+    );
 
 
     //==================================
@@ -3375,16 +3389,18 @@ function resumeBattleAfterHydra(){
                 // ブロッカーへの
                 // 戦闘ダメージ
                 //----------------------------------
-
-                const blockerDamageResult =
-                    dealDamage(
-                        blocker,
-                        getPower(
-                            attacker
-                        ),
-                        attacker.card,
-                        true
-                    );
+const blockerDamageResult =
+    dealDamage(
+        blocker,
+        getDamage(
+            attacker,
+            getPower(
+                attacker
+            )
+        ),
+        attacker.card,
+        true
+    );
 
 
                 //----------------------------------
@@ -3602,15 +3618,18 @@ function resumeBattleAfterHydra(){
 
         if(step === 1){
 
-            const attackerDamageResult =
-                dealDamage(
-                    attacker,
-                    getPower(
-                        target
-                    ),
-                    target.card,
-                    true
-                );
+const attackerDamageResult =
+    dealDamage(
+        attacker,
+        getDamage(
+            target,
+            getPower(
+                target
+            )
+        ),
+        target.card,
+        true
+    );
 
 
             //----------------------------------
@@ -6192,24 +6211,28 @@ console.log(
 );
 
 
-        //----------------------------------
-        // ダメージ交換
-        //----------------------------------
+//----------------------------------
+// ダメージ交換
+// ダメージブースト対応
+//----------------------------------
 
-        dealDamage(
-            target,
-            getPower(
-                attackingSummon
-            )
-        );
+// 攻撃側が与えるダメージ
+dealDamage(
+    target,
+    getDamage(
+        attackingSummon,
+        getPower(attackingSummon)
+    )
+);
 
-
-        dealDamage(
-            attackingSummon,
-            getPower(
-                target
-            )
-        );
+// 防御側が与える反撃ダメージ
+dealDamage(
+    attackingSummon,
+    getDamage(
+        target,
+        getPower(target)
+    )
+);
 
 
         //----------------------------------
@@ -6288,19 +6311,20 @@ console.log(
     // プレイヤーへのダメージ
     //----------------------------------
 
-    damagePlayer(
+damagePlayer(
 
-        PLAYER,
+    PLAYER,
 
-        getPower(
-            attackingSummon
-        ),
+    getDamage(
+        attackingSummon,
+        getPower(attackingSummon)
+    ),
 
-        false,
+    false,
 
-        attackingSummon.card
+    attackingSummon.card
 
-    );
+);
 
 
     //----------------------------------
@@ -7402,15 +7426,18 @@ function continuePlayerBlockBattleDamage(
     // ① ブロッカーから攻撃者へのダメージ
     //==================================
 
-    const attackerDamageResult =
-        dealDamage(
-            attacker,
+const attackerDamageResult =
+    dealDamage(
+        attacker,
+        getDamage(
+            blocker,
             getPower(
                 blocker
-            ),
-            blocker.card,
-            true
-        );
+            )
+        ),
+        blocker.card,
+        true
+    );
 
 
     //----------------------------------
@@ -7510,15 +7537,18 @@ function continuePlayerBlockBattleDamage(
     }
     else{
 
-        const blockerDamageResult =
-            dealDamage(
-                blocker,
-                getPower(
-                    attacker
-                ),
-                attacker.card,
-                true
-            );
+const blockerDamageResult =
+    dealDamage(
+        blocker,
+        getDamage(
+            attacker,
+            getPower(
+                attacker
+            )
+        ),
+        attacker.card,
+        true
+    );
 
 
         //----------------------------------
@@ -8065,15 +8095,18 @@ function continueCpuBlockBattleDamage(
     }
     else{
 
-        const blockerDamageResult =
-            dealDamage(
-                blocker,
-                getPower(
-                    attacker
-                ),
-                attacker.card,
-                true
-            );
+const blockerDamageResult =
+    dealDamage(
+        blocker,
+        getDamage(
+            attacker,
+            getPower(
+                attacker
+            )
+        ),
+        attacker.card,
+        true
+    );
 
 
         //==================================

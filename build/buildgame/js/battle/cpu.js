@@ -1919,43 +1919,40 @@ console.log(
 // CPU攻撃対象選択
 //======================================
 
-function selectCpuAttackTarget(
-    attacker
-){
+function selectCpuAttackTarget(attacker){
 
     //----------------------------------
     // 攻撃サモン確認
     //----------------------------------
 
     if(!attacker){
-
         return PLAYER;
-
     }
 
-
     //----------------------------------
-    // CPUの攻撃力
+    // CPUの攻撃力と実ダメージ
     //----------------------------------
 
     const attackerPower =
-        getPower(
-            attacker
-        );
+        getPower(attacker);
 
+    const attackerDamage =
+        getDamage(
+            attacker,
+            attackerPower
+        );
 
     console.log(
         "CPU攻撃対象判定",
         attacker.card.name,
         "攻撃力=",
-        attackerPower
+        attackerPower,
+        "実ダメージ=",
+        attackerDamage
     );
-
 
     //==================================
     // ブロック不可サモン
-    //
-    // 複数能力対応
     //==================================
 
     if(
@@ -1971,11 +1968,8 @@ function selectCpuAttackTarget(
             "→ PLAYERを直接攻撃"
         );
 
-
         return PLAYER;
-
     }
-
 
     //==================================
     // カーススモーク
@@ -1983,147 +1977,84 @@ function selectCpuAttackTarget(
     //==================================
 
     const curseSmokeRestingTargets =
-        playerField.filter(
-            summon => {
+        playerField.filter(summon => {
 
-                if(
-                    !summon ||
-                    !summon.card
-                ){
-
-                    return false;
-
-                }
-
-
-                if(summon.destroyed){
-
-                    return false;
-
-                }
-
-
-                //----------------------------------
-                // シーサーペント
-                // アタック対象にできない
-                //----------------------------------
-
-                if(
-                    hasSummonAbility(
-                        summon,
-                        "cannotBeAttacked"
-                    )
-                ){
-
-                    console.log(
-                        "CPU攻撃対象から除外：",
-                        summon.card.name,
-                        "アタック対象不可"
-                    );
-
-
-                    return false;
-
-                }
-
-
-                if(!summon.isRest){
-
-                    return false;
-
-                }
-
-
-                if(
-                    !isCurseSmokeTarget(
-                        summon
-                    )
-                ){
-
-                    return false;
-
-                }
-
-
-//----------------------------------
-// ドライアド等を考慮した
-// 予測最終ダメージ
-//----------------------------------
-
-const expectedDamage =
-    getHydraExpectedDamage(
-        summon,
-        attackerPower
-    );
-
-
-console.log(
-    "CPU：カーススモーク対象",
-    "攻撃ダメージ予測",
-    {
-        attacker:
-            attacker.card.name,
-
-        target:
-            summon.card.name,
-
-        attackerPower:
-            attackerPower,
-
-        expectedDamage:
-            expectedDamage
-    }
-);
-
-
-//----------------------------------
-// 最終ダメージ0なら
-// 攻撃対象にしない
-//----------------------------------
-
-if(
-    expectedDamage <= 0
-){
-
-    console.log(
-        "CPU攻撃対象から除外：",
-        summon.card.name,
-        "カーススモーク対象だが",
-        "軽減後ダメージ0"
-    );
-
-
-    return false;
-
-}
-
-
-return true;
-
+            if(!summon || !summon.card){
+                return false;
             }
-        );
 
+            if(summon.destroyed){
+                return false;
+            }
 
-    //----------------------------------
-    // カーススモーク状態の
-    // 横向きサモンあり
-    //----------------------------------
+            // シーサーペント
+            if(
+                hasSummonAbility(
+                    summon,
+                    "cannotBeAttacked"
+                )
+            ){
+                console.log(
+                    "CPU攻撃対象から除外：",
+                    summon.card.name,
+                    "アタック対象不可"
+                );
 
-    if(
-        curseSmokeRestingTargets.length >
-        0
-    ){
+                return false;
+            }
+
+            if(!summon.isRest){
+                return false;
+            }
+
+            if(!isCurseSmokeTarget(summon)){
+                return false;
+            }
+
+            //----------------------------------
+            // ダメージブースト対応
+            //----------------------------------
+
+            const expectedDamage =
+                getHydraExpectedDamage(
+                    summon,
+                    attackerDamage
+                );
+
+            console.log(
+                "CPU：カーススモーク対象",
+                "攻撃ダメージ予測",
+                {
+                    attacker: attacker.card.name,
+                    target: summon.card.name,
+                    attackerPower,
+                    expectedDamage
+                }
+            );
+
+            if(expectedDamage <= 0){
+
+                console.log(
+                    "CPU攻撃対象から除外：",
+                    summon.card.name,
+                    "軽減後ダメージ0"
+                );
+
+                return false;
+            }
+
+            return true;
+        });
+
+    if(curseSmokeRestingTargets.length > 0){
 
         curseSmokeRestingTargets.sort(
-            (a,b) =>
-                getPower(b) -
-                getPower(a)
+            (a, b) =>
+                getPower(b) - getPower(a)
         );
-
 
         const target =
             curseSmokeRestingTargets[0];
-
 
         console.log(
             "CPU攻撃対象：",
@@ -2135,11 +2066,8 @@ return true;
             attackerPower
         );
 
-
         return target;
-
     }
-
 
     //==================================
     // カーススモーク
@@ -2148,98 +2076,52 @@ return true;
     //==================================
 
     const curseSmokeVerticalTargets =
-        playerField.filter(
-            summon => {
+        playerField.filter(summon => {
 
-                if(
-                    !summon ||
-                    !summon.card
-                ){
-
-                    return false;
-
-                }
-
-
-                if(summon.destroyed){
-
-                    return false;
-
-                }
-
-
-                if(summon.isRest){
-
-                    return false;
-
-                }
-
-
-                return (
-                    isCurseSmokeTarget(
-                        summon
-                    )
-                );
-
+            if(!summon || !summon.card){
+                return false;
             }
-        );
 
+            if(summon.destroyed){
+                return false;
+            }
+
+            if(summon.isRest){
+                return false;
+            }
+
+            return isCurseSmokeTarget(summon);
+        });
 
     //----------------------------------
     // PLAYER側の有効な縦向きサモン
     //----------------------------------
 
     const allVerticalSummons =
-        playerField.filter(
-            summon => {
+        playerField.filter(summon => {
 
-                if(
-                    !summon ||
-                    !summon.card
-                ){
-
-                    return false;
-
-                }
-
-
-                if(summon.destroyed){
-
-                    return false;
-
-                }
-
-
-                if(summon.isRest){
-
-                    return false;
-
-                }
-
-
-                if(
-                    typeof isOgreBattleLocked ===
-                        "function" &&
-                    isOgreBattleLocked(
-                        summon
-                    )
-                ){
-
-                    return false;
-
-                }
-
-
-                return true;
-
+            if(!summon || !summon.card){
+                return false;
             }
-        );
 
+            if(summon.destroyed){
+                return false;
+            }
 
-    //----------------------------------
-    // 唯一のブロッカーが
-    // カーススモーク対象ならPLAYERへ
-    //----------------------------------
+            if(summon.isRest){
+                return false;
+            }
+
+            if(
+                typeof isOgreBattleLocked ===
+                    "function" &&
+                isOgreBattleLocked(summon)
+            ){
+                return false;
+            }
+
+            return true;
+        });
 
     if(
         allVerticalSummons.length === 1 &&
@@ -2256,148 +2138,94 @@ return true;
             "→ PLAYERへ攻撃してブロックを誘う"
         );
 
-
         return PLAYER;
-
     }
-
 
     //==================================
     // バジリスク
     // ドラゴン・クラーケン対策
     //==================================
 
-    if(
-        attacker.card.name ===
-            "バジリスク"
-    ){
+    if(attacker.card.name === "バジリスク"){
 
         const dragonKrakenTargets =
-            playerField.filter(
-                summon => {
+            playerField.filter(summon => {
 
-                    if(summon.destroyed){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // シーサーペント
-                    // アタック対象にできない
-                    //----------------------------------
-
-                    if(
-                        hasSummonAbility(
-                            summon,
-                            "cannotBeAttacked"
-                        )
-                    ){
-
-                        console.log(
-                            "CPU攻撃対象から除外：",
-                            summon.card.name,
-                            "アタック対象不可"
-                        );
-
-
-                        return false;
-
-                    }
-
-
-if(!summon.isRest){
-
-    return false;
-
-}
-
-
-const name =
-    summon.card.name;
-
-
-//----------------------------------
-// ドラゴン・クラーケン以外
-//----------------------------------
-
-if(
-    name !== "ドラゴン" &&
-    name !== "クラーケン"
-){
-
-    return false;
-
-}
-
-
-//----------------------------------
-// ドライアド等を考慮した
-// 予測最終ダメージ
-//----------------------------------
-
-const expectedDamage =
-    getHydraExpectedDamage(
-        summon,
-        attackerPower
-    );
-
-
-console.log(
-    "CPU：バジリスク特殊攻撃",
-    "ダメージ予測",
-    {
-        target:
-            summon.card.name,
-
-        attackerPower:
-            attackerPower,
-
-        expectedDamage:
-            expectedDamage
-    }
-);
-
-
-//----------------------------------
-// 最終ダメージ0なら
-// 攻撃対象にしない
-//----------------------------------
-
-if(
-    expectedDamage <= 0
-){
-
-    console.log(
-        "CPU攻撃対象から除外：",
-        summon.card.name,
-        "バジリスク特殊攻撃だが",
-        "軽減後ダメージ0"
-    );
-
-
-    return false;
-
-}
-
-
-return true;
-
+                if(summon.destroyed){
+                    return false;
                 }
-            );
 
+                // シーサーペント
+                if(
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeAttacked"
+                    )
+                ){
 
-        if(
-            dragonKrakenTargets.length > 0
-        ){
+                    console.log(
+                        "CPU攻撃対象から除外：",
+                        summon.card.name,
+                        "アタック対象不可"
+                    );
+
+                    return false;
+                }
+
+                if(!summon.isRest){
+                    return false;
+                }
+
+                const name =
+                    summon.card.name;
+
+                if(
+                    name !== "ドラゴン" &&
+                    name !== "クラーケン"
+                ){
+                    return false;
+                }
+
+                //----------------------------------
+                // ダメージブースト対応
+                //----------------------------------
+
+                const expectedDamage =
+                    getHydraExpectedDamage(
+                        summon,
+                        attackerDamage
+                    );
+
+                console.log(
+                    "CPU：バジリスク特殊攻撃",
+                    "ダメージ予測",
+                    {
+                        target: summon.card.name,
+                        attackerPower,
+                        expectedDamage
+                    }
+                );
+
+                if(expectedDamage <= 0){
+
+                    console.log(
+                        "CPU攻撃対象から除外：",
+                        summon.card.name,
+                        "軽減後ダメージ0"
+                    );
+
+                    return false;
+                }
+
+                return true;
+            });
+
+        if(dragonKrakenTargets.length > 0){
 
             dragonKrakenTargets.sort(
-                (a,b) =>
-                    getPower(b) -
-                    getPower(a)
+                (a, b) =>
+                    getPower(b) - getPower(a)
             );
-
 
             console.log(
                 "CPU攻撃対象：バジリスクで",
@@ -2405,21 +2233,17 @@ return true;
                 "を優先攻撃"
             );
 
-
             return dragonKrakenTargets[0];
-
         }
-
     }
 
-//==================================
-// 通常
-// ① 横向きサモン
-//==================================
+    //==================================
+    // 通常
+    // ① 横向きサモン
+    //==================================
 
-const restingSummons =
-    playerField.filter(
-        summon => {
+    const restingSummons =
+        playerField.filter(summon => {
 
             //----------------------------------
             // 基本確認
@@ -2430,17 +2254,10 @@ const restingSummons =
                 !summon.card ||
                 summon.destroyed
             ){
-
                 return false;
-
             }
 
-
-            //----------------------------------
             // シーサーペント
-            // アタック対象にできない
-            //----------------------------------
-
             if(
                 hasSummonAbility(
                     summon,
@@ -2454,57 +2271,32 @@ const restingSummons =
                     "アタック対象不可"
                 );
 
-
                 return false;
-
             }
-
-
-            //----------------------------------
-            // 横向きのみ
-            //----------------------------------
 
             if(!summon.isRest){
-
                 return false;
-
             }
 
-
             //----------------------------------
-            // ドライアド等を考慮した
-            // 予測最終ダメージ
+            // ダメージブースト対応
             //----------------------------------
 
             const expectedDamage =
                 getHydraExpectedDamage(
                     summon,
-                    attackerPower
+                    attackerDamage
                 );
-
 
             console.log(
                 "CPU：サモン攻撃ダメージ予測",
                 {
-                    attacker:
-                        attacker.card.name,
-
-                    target:
-                        summon.card.name,
-
-                    attackerPower:
-                        attackerPower,
-
-                    expectedDamage:
-                        expectedDamage
+                    attacker: attacker.card.name,
+                    target: summon.card.name,
+                    attackerPower,
+                    expectedDamage
                 }
             );
-
-
-            //----------------------------------
-            // 最終ダメージ0なら
-            // 攻撃対象にしない
-            //----------------------------------
 
             if(expectedDamage <= 0){
 
@@ -2514,57 +2306,35 @@ const restingSummons =
                     "軽減後ダメージ0"
                 );
 
-
                 return false;
-
             }
 
-
             //----------------------------------
-            // 軽減後ダメージで
-            // 対象を倒せるか確認
+            // 軽減後ダメージで倒せるか確認
             //----------------------------------
 
             return (
-                getPower(
-                    summon
-                ) <
+                getPower(summon) <
                 expectedDamage
             );
+        });
 
-        }
-    );
+    if(restingSummons.length > 0){
 
+        restingSummons.sort(
+            (a, b) =>
+                getPower(b) - getPower(a)
+        );
 
-//----------------------------------
-// 横向きサモンがある場合
-//----------------------------------
+        console.log(
+            "CPU攻撃対象：横向きサモン",
+            restingSummons[0].card.name,
+            "power=",
+            getPower(restingSummons[0])
+        );
 
-if(
-    restingSummons.length > 0
-){
-
-    restingSummons.sort(
-        (a,b) =>
-            getPower(b) -
-            getPower(a)
-    );
-
-
-    console.log(
-        "CPU攻撃対象：横向きサモン",
-        restingSummons[0].card.name,
-        "power=",
-        getPower(
-            restingSummons[0]
-        )
-    );
-
-
-    return restingSummons[0];
-
-}
-
+        return restingSummons[0];
+    }
 
     //==================================
     // ② 実際にブロック可能な
@@ -2572,57 +2342,35 @@ if(
     //==================================
 
     const blockableVerticalSummons =
-        playerField.filter(
-            summon => {
+        playerField.filter(summon => {
 
-                if(summon.destroyed){
-
-                    return false;
-
-                }
-
-
-                if(summon.isRest){
-
-                    return false;
-
-                }
-
-
-                if(
-                    typeof isOgreBattleLocked ===
-                        "function" &&
-                    isOgreBattleLocked(
-                        summon
-                    )
-                ){
-
-                    console.log(
-                        "CPU攻撃対象評価から除外：",
-                        summon.card.name,
-                        "現在ブロック不可"
-                    );
-
-
-                    return false;
-
-                }
-
-
-                return true;
-
+            if(summon.destroyed){
+                return false;
             }
-        );
 
+            if(summon.isRest){
+                return false;
+            }
 
-    //----------------------------------
-    // ブロック可能サモンなし
-    //----------------------------------
+            if(
+                typeof isOgreBattleLocked ===
+                    "function" &&
+                isOgreBattleLocked(summon)
+            ){
 
-    if(
-        blockableVerticalSummons.length ===
-        0
-    ){
+                console.log(
+                    "CPU攻撃対象評価から除外：",
+                    summon.card.name,
+                    "現在ブロック不可"
+                );
+
+                return false;
+            }
+
+            return true;
+        });
+
+    if(blockableVerticalSummons.length === 0){
 
         console.log(
             "CPU攻撃対象：",
@@ -2630,11 +2378,8 @@ if(
             "→ PLAYER"
         );
 
-
         return PLAYER;
-
     }
-
 
     //----------------------------------
     // 攻撃者以下のパワーの
@@ -2648,7 +2393,6 @@ if(
                 attackerPower
         );
 
-
     if(canAttackPlayer){
 
         console.log(
@@ -2657,11 +2401,8 @@ if(
             "→ PLAYER"
         );
 
-
         return PLAYER;
-
     }
-
 
     //==================================
     // ③ その他
@@ -2671,9 +2412,7 @@ if(
         "CPU攻撃対象：プレイヤー"
     );
 
-
     return PLAYER;
-
 }
 
 //======================================
@@ -4101,16 +3840,43 @@ function selectCpuCoolSummonTarget(
 
 function selectCpuMagiaTarget(card){
 
+    //----------------------------------
+    // カード確認
+    //----------------------------------
+
     if(
         !card ||
-        !card.effect ||
-        !card.effect.target
+        !card.effect
+    ){
+        return null;
+    }
+
+    //==================================
+    // ダメージブースト
+    // CPU自身を対象にする
+    //==================================
+
+    if(
+        card.effect.type ===
+        "summonDamageBoost"
     ){
 
-        return null;
+        console.log(
+            "CPU：ダメージブースト対象",
+            "CPU自身"
+        );
+
+        return ENEMY;
 
     }
 
+    //----------------------------------
+    // 通常の対象確認
+    //----------------------------------
+
+    if(!card.effect.target){
+        return null;
+    }
 
     const targets =
         card.effect.target;
@@ -5627,22 +5393,14 @@ function recoverEnemyCostCards(){
 
 function cpuFinishTurn(){
 
-    console.log(
-        "CPU行動終了"
-    );
+    console.log("CPU行動終了");
 
     //==================================
     // コンセントレイト
     // ターン終了直前に使用
     //==================================
 
-    if(
-        concentrateCostDown.enemy <= 0
-    ){
-
-        //----------------------------------
-        // 手札からコンセントレイトを探す
-        //----------------------------------
+    if(concentrateCostDown.enemy <= 0){
 
         const concentrateCard =
             enemyHandCards.find(
@@ -5653,24 +5411,15 @@ function cpuFinishTurn(){
 
         if(concentrateCard){
 
-            //----------------------------------
-            // 現在のコスト
-            //----------------------------------
-
             const currentCost =
                 getCurrentCardCost(
                     concentrateCard,
                     ENEMY
                 );
 
-            //----------------------------------
-            // 使用可能か確認
-            //----------------------------------
-
             if(
                 canPlayCardByLimit(ENEMY) &&
-                enemyHandCards.length - 1 >=
-                    currentCost
+                enemyHandCards.length - 1 >= currentCost
             ){
 
                 console.log(
@@ -5678,23 +5427,13 @@ function cpuFinishTurn(){
                     concentrateCard.name
                 );
 
-                //----------------------------------
-                // CPU自身を対象に使用
-                //----------------------------------
-
                 const result =
                     cpuMagia(
                         concentrateCard,
                         ENEMY
                     );
 
-                //----------------------------------
-                // ファストコール解決待ち
-                //----------------------------------
-
-                if(
-                    result === "WAIT_FAST_CALL"
-                ){
+                if(result === "WAIT_FAST_CALL"){
 
                     console.log(
                         "CPU：コンセントレイト",
@@ -5702,12 +5441,7 @@ function cpuFinishTurn(){
                     );
 
                     return;
-
                 }
-
-                //----------------------------------
-                // 使用成功
-                //----------------------------------
 
                 if(result === true){
 
@@ -5722,22 +5456,14 @@ function cpuFinishTurn(){
                     );
 
                     return;
-
                 }
-
-                //----------------------------------
-                // 使用失敗
-                //----------------------------------
 
                 console.log(
                     "CPU：コンセントレイト使用失敗",
                     "通常のターン終了へ"
                 );
-
             }
-
         }
-
     }
 
     //==================================
@@ -5746,26 +5472,18 @@ function cpuFinishTurn(){
 
     cpuWaiting = false;
 
-    //----------------------------------
-    // モーダルを閉じる
-    //----------------------------------
-
     closeHandModal();
-
     closeSummonActionModal();
-
     closeCoolModal();
-
     closeEnemyCoolModal();
-
     closeCostView();
 
-//==================================
-// CPUターン終了
-// サモン終了時能力を順番に解決
-//==================================
+    //==================================
+    // CPUターン終了
+    // サモン終了時能力を順番に解決
+    //==================================
 
-game.state = TURN_STATE.END;
+    game.state = TURN_STATE.END;
 
 onTurnEnd(() => {
 
@@ -5773,9 +5491,31 @@ onTurnEnd(() => {
         "CPUターン終了時サモン能力：解決完了"
     );
 
-    //----------------------------------
+    //==================================
+    // ゲーム終了確認
+    // ファイアドレイクなどの能力で
+    // ライフが0になった場合
+    // レジストを発動しない
+    //==================================
+
+    if(
+        game.playerLife <= 0 ||
+        game.enemyLife <= 0 ||
+        battleGameEnding ||
+        battleGameConceded
+    ){
+
+        console.log(
+            "CPUターン終了時：ゲーム終了のためレジスト判定を中止"
+        );
+
+        return;
+
+    }
+
+    //==================================
     // ターン終了時レジスト判定
-    //----------------------------------
+    //==================================
 
     checkTurnEndResist();
 
@@ -5861,6 +5601,11 @@ console.log(
 // CPUブロック判断
 //======================================
 
+//======================================
+// CPUブロック判断
+// ダメージブースト対応
+//======================================
+
 function cpuShouldBlock(
     blockers,
     attacker
@@ -5883,14 +5628,32 @@ function cpuShouldBlock(
 
     }
 
+    //----------------------------------
+    // 攻撃者確認
+    //----------------------------------
+
+    if(!attacker){
+
+        console.log(
+            "CPUブロック判断：攻撃者なし"
+        );
+
+        return false;
+
+    }
 
     //----------------------------------
-    // 攻撃者のパワー
+    // 攻撃者のパワーと実ダメージ
     //----------------------------------
 
     const attackerPower =
         getPower(attacker);
 
+    const attackerDamage =
+        getDamage(
+            attacker,
+            attackerPower
+        );
 
     console.log(
         "CPUブロック判断",
@@ -5901,46 +5664,50 @@ function cpuShouldBlock(
             attackerPower:
                 attackerPower,
 
+            attackerDamage:
+                attackerDamage,
+
             blockers:
                 blockers.map(
                     summon => ({
+
                         name:
                             summon.card.name,
 
                         power:
-                            getPower(summon)
+                            getPower(summon),
+
+                        damage:
+                            getDamage(
+                                summon,
+                                getPower(summon)
+                            )
+
                     })
                 )
         }
     );
 
-
     //----------------------------------
-    // まず攻撃をレジストで
+    // レジストで攻撃ダメージを
     // 1以下にできるか確認
     //----------------------------------
 
-    const attackDamage =
-        attackerPower;
-
-
     const resistCanReduce =
         cpuCanReduceAttackToOne(
-            attackDamage
+            attackerDamage
         );
-
 
     console.log(
         "CPUブロック判断：レジスト評価",
         {
             attackDamage:
-                attackDamage,
+                attackerDamage,
 
             resistCanReduce:
                 resistCanReduce
         }
     );
-
 
     //----------------------------------
     // ブロッカー評価
@@ -5950,39 +5717,71 @@ function cpuShouldBlock(
 
     let bestScore = -Infinity;
 
-
     for(
         const blocker
         of blockers
     ){
 
+        //----------------------------------
+        // ブロッカーのパワー
+        //----------------------------------
+
         const blockerPower =
             getPower(blocker);
 
+        //----------------------------------
+        // ブロッカーが与える実ダメージ
+        //----------------------------------
+
+        const blockerDamage =
+            getDamage(
+                blocker,
+                blockerPower
+            );
 
         //----------------------------------
-        // 攻撃者を倒せる
+        // ブロッカーが受ける実ダメージ
         //----------------------------------
+
+        const receivedDamage =
+            attackerDamage;
+
+        //----------------------------------
+        // 攻撃者を倒せるか
+        //----------------------------------
+
+        const canDestroyAttacker =
+            blockerDamage >
+            attackerPower;
+
+        //----------------------------------
+        // ブロッカーが倒されるか
+        //----------------------------------
+
+        const blockerWillBeDestroyed =
+            receivedDamage >
+            blockerPower;
+
+        //==================================
+        // 攻撃者を倒せて
+        // ブロッカーが生き残る
+        //==================================
 
         if(
-            blockerPower >
-            attackerPower
+            canDestroyAttacker &&
+            !blockerWillBeDestroyed
         ){
 
-            const score =
-                1000;
-
+            const score = 1000;
 
             if(
                 score >
                 bestScore
             ){
 
-                bestScore =
-                    score;
+                bestScore = score;
 
-                bestBlocker =
-                    blocker;
+                bestBlocker = blocker;
 
             }
 
@@ -5990,30 +5789,25 @@ function cpuShouldBlock(
 
         }
 
-
-        //----------------------------------
+        //==================================
         // 相打ち
-        //----------------------------------
+        //==================================
 
         if(
-            blockerPower ===
-            attackerPower
+            canDestroyAttacker &&
+            blockerWillBeDestroyed
         ){
 
-            const score =
-                900;
-
+            const score = 900;
 
             if(
                 score >
                 bestScore
             ){
 
-                bestScore =
-                    score;
+                bestScore = score;
 
-                bestBlocker =
-                    blocker;
+                bestBlocker = blocker;
 
             }
 
@@ -6021,46 +5815,67 @@ function cpuShouldBlock(
 
         }
 
-
-        //----------------------------------
-        // ここからはブロッカーが
-        // 攻撃者に倒されるケース
-        //----------------------------------
-
-        //----------------------------------
-        // レジストでも1以下に
-        // できないならブロック
-        //----------------------------------
+        //==================================
+        // 攻撃者を倒せないが
+        // ブロッカーは生き残る
+        //==================================
 
         if(
-            !resistCanReduce
+            !blockerWillBeDestroyed
         ){
+
+            // 既存の判断方針を維持
+            // レジストで対応できない場合に
+            // ブロックを優先する
+
+            if(!resistCanReduce){
+
+                const score = 800;
+
+                if(
+                    score >
+                    bestScore
+                ){
+
+                    bestScore = score;
+
+                    bestBlocker = blocker;
+
+                }
+
+            }
+
+            continue;
+
+        }
+
+        //==================================
+        // ブロッカーが倒されるケース
+        //==================================
+
+        if(!resistCanReduce){
 
             //----------------------------------
-            // パワー差が大きいほど
+            // ダメージ差が大きいほど
             // ブロック優先度を上げる
             //----------------------------------
 
-            const powerDifference =
-                attackerPower -
+            const damageDifference =
+                receivedDamage -
                 blockerPower;
-
 
             const score =
                 500 +
-                powerDifference;
-
+                damageDifference;
 
             if(
                 score >
                 bestScore
             ){
 
-                bestScore =
-                    score;
+                bestScore = score;
 
-                bestBlocker =
-                    blocker;
+                bestBlocker = blocker;
 
             }
 
@@ -6068,10 +5883,8 @@ function cpuShouldBlock(
 
         }
 
-
         //----------------------------------
-        // レジストで防げるなら
-        // 無理にブロックしない
+        // レジストで対応可能
         //----------------------------------
 
         console.log(
@@ -6081,14 +5894,11 @@ function cpuShouldBlock(
 
     }
 
-
     //----------------------------------
     // ブロックしない
     //----------------------------------
 
-    if(
-        !bestBlocker
-    ){
+    if(!bestBlocker){
 
         console.log(
             "CPUブロック判断：今回はブロックしない"
@@ -6098,7 +5908,6 @@ function cpuShouldBlock(
 
     }
 
-
     //----------------------------------
     // 選択したブロッカーを保存
     //----------------------------------
@@ -6106,14 +5915,12 @@ function cpuShouldBlock(
     cpuSelectedBlocker =
         bestBlocker;
 
-
     console.log(
         "CPUブロック判断：ブロックする",
         bestBlocker.card.name,
         "score=",
         bestScore
     );
-
 
     return true;
 
@@ -11444,6 +11251,49 @@ function createCpuMagiaAction(card){
 
     }
 
+
+    //==================================
+    // ダメージブースト使用条件
+    //==================================
+
+    if(
+        card.effect?.type ===
+        "summonDamageBoost"
+    ){
+
+        //----------------------------------
+        // 攻撃可能なCPUサモン
+        //----------------------------------
+
+        const attackers =
+            enemyField.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    summon.owner === ENEMY &&
+                    !summon.isRest &&
+                    summon.attackReady
+            );
+
+        //----------------------------------
+        // 攻撃可能サモンがいない
+        //----------------------------------
+
+        if(
+            attackers.length === 0
+        ){
+
+            console.log(
+                "CPU：ダメージブースト温存",
+                "攻撃可能なサモンなし"
+            );
+
+            return null;
+
+        }
+
+    }
+
         //----------------------------------
     // CPUでは使用しないマギア
     //----------------------------------
@@ -12927,6 +12777,93 @@ if(
     );
 
 }
+
+    //==================================
+    // ダメージブースト評価
+    //==================================
+
+    if(
+        card.effect?.type ===
+        "summonDamageBoost"
+    ){
+
+        //----------------------------------
+        // 攻撃可能サモンを取得
+        //----------------------------------
+
+        const attackers =
+            enemyField.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    summon.owner === ENEMY &&
+                    !summon.isRest &&
+                    summon.attackReady
+            );
+
+        //----------------------------------
+        // ブースト増加量
+        //----------------------------------
+
+        const boost =
+            Number(card.effect.value) || 0;
+
+        //----------------------------------
+        // 攻撃可能数に応じて加点
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            attackers.length * boost * 18,
+            "ダメージブースト：攻撃可能数"
+        );
+
+        //----------------------------------
+        // 直接攻撃で倒せる可能性
+        // ※ブロックやレジストは未考慮
+        //----------------------------------
+
+        const totalDirectDamage =
+            attackers.reduce(
+                (total, summon) => {
+
+                    return total +
+                        getDamage(
+                            summon,
+                            getPower(summon)
+                        ) +
+                        boost;
+
+                },
+                0
+            );
+
+        if(
+            totalDirectDamage >=
+            game.playerLife
+        ){
+
+            addCpuActionPoints(
+                action,
+                45,
+                "ダメージブースト：決着可能性"
+            );
+
+        }
+
+        console.log(
+            "CPU：ダメージブースト評価",
+            {
+                attackers:
+                    attackers.length,
+                boost,
+                totalDirectDamage,
+                playerLife:
+                    game.playerLife
+            }
+        );
+
+    }
 
 
 
@@ -17111,13 +17048,12 @@ function cpuUseSummonAbility(
                 );
 
 
-                damagePlayer(
-                    PLAYER,
-                    value,
-                    false,
-                    source.card
-                );
-
+damagePlayer(
+    PLAYER,
+    getDamage(source, value),
+    false,
+    source.card
+);
             }
 
 
@@ -17211,11 +17147,11 @@ function cpuUseSummonAbility(
                     !target.destroyed
                 ){
 
-                    dealDamage(
-                        target,
-                        value,
-                        source.card
-                    );
+dealDamage(
+    target,
+    getDamage(source, value),
+    source.card
+);
 
 
                     console.log(
@@ -19119,3 +19055,28 @@ function getCpuMultiShieldCost(damage, availableCards){
     );
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

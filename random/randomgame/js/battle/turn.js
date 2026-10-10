@@ -263,6 +263,18 @@ function onTurnEnd(
         abilityQueue.length === 0
     ){
 
+        //----------------------------------
+        // ターン終了時の一時効果を解除
+        //----------------------------------
+
+        resetTemporaryPower(turnPlayer);
+
+        resetSummonDamageBoost(turnPlayer);
+
+        //----------------------------------
+        // ターン終了処理へ
+        //----------------------------------
+
         if(
             typeof onComplete ===
             "function"
@@ -296,6 +308,18 @@ function onTurnEnd(
                 queueIndex >=
                 abilityQueue.length
             ){
+
+                //----------------------------------
+                // ターン終了時の一時効果を解除
+                //----------------------------------
+
+                resetTemporaryPower(turnPlayer);
+
+                resetSummonDamageBoost(turnPlayer);
+
+                //----------------------------------
+                // ターン終了処理へ
+                //----------------------------------
 
                 if(
                     typeof onComplete ===
@@ -475,106 +499,76 @@ function onTurnEnd(
             // ファイアドレイク
             //==================================
 
-            if(
-                item.type ===
-                "turnEndDamageCurrentPlayer"
-            ){
+if(item.type === "turnEndDamageCurrentPlayer"){
 
-                //----------------------------------
-                // ダメージ値
-                //----------------------------------
+    //----------------------------------
+    // 基本ダメージ
+    //----------------------------------
 
-                const damage =
-                    Number(
-                        currentAbility.value
-                    ) || 1;
+    const baseDamage =
+        Number(currentAbility.value) || 1;
 
+    //----------------------------------
+    // ダメージブースト適用
+    //----------------------------------
 
-                //----------------------------------
-                // 対象
-                //----------------------------------
+    const damage =
+        getDamage(
+            summon,
+            baseDamage
+        );
 
-                const targetName =
-                    turnPlayer === PLAYER
-                        ? "PLAYER"
-                        : "CPU";
+    //----------------------------------
+    // 対象表示
+    //----------------------------------
 
+    const targetName =
+        turnPlayer === PLAYER
+            ? "PLAYER"
+            : "CPU";
 
-                console.log(
-                    "ターン終了時ダメージ能力発動",
-                    "能力保持サモン=",
-                    summon.card.name,
-                    "対象=",
-                    targetName,
-                    "ダメージ=",
-                    damage
-                );
+    //----------------------------------
+    // バトルログ
+    //----------------------------------
 
+    addBattleLog(
+        `${summon.card.name}：${targetName}に${damage}ダメージ`
+    );
 
-                //----------------------------------
-                // バトルログ
-                //----------------------------------
+    //----------------------------------
+    // ダメージ処理
+    //----------------------------------
 
-                addBattleLog(
-                    `${summon.card.name}：${targetName}に${damage}ダメージ`
-                );
+    damagePlayer(
+        turnPlayer,
+        damage,
+        true,
+        summon.card
+    );
 
+    //----------------------------------
+    // 勝敗確認
+    //----------------------------------
 
-                //----------------------------------
-                // ダメージ
-                //
-                // ファイアドレイクの能力には
-                // レジストが発生しない仕様
-                //----------------------------------
+    if(
+        game.playerLife <= 0 ||
+        game.enemyLife <= 0
+    ){
+        onComplete?.();
+        return;
+    }
 
-                damagePlayer(
-                    turnPlayer,
-                    damage,
-                    true,
-                    summon.card
-                );
+    //----------------------------------
+    // 次の終了時能力へ
+    //----------------------------------
 
+    setTimeout(
+        resolveNextAbility,
+        1500
+    );
 
-                //----------------------------------
-                // ゲーム終了確認
-                //----------------------------------
-
-                if(
-                    game.playerLife <= 0 ||
-                    game.enemyLife <= 0
-                ){
-
-                    console.log(
-                        "ターン終了時ダメージによりゲーム終了"
-                    );
-
-
-                    if(
-                        typeof onComplete ===
-                        "function"
-                    ){
-
-                        onComplete();
-
-                    }
-
-                    return;
-
-                }
-
-
-                //----------------------------------
-                // 次の能力へ
-                //----------------------------------
-
-                setTimeout(
-                    resolveNextAbility,
-                    1500
-                );
-
-                return;
-
-            }
+    return;
+}
 
 
             //==================================
