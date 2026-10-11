@@ -8105,17 +8105,23 @@ case "prevent": {
 
     if(
         event?.type !==
-        GAME_EVENT.BEFORE_PLAYER_DAMAGE
+            GAME_EVENT.BEFORE_PLAYER_DAMAGE ||
+        event?.player !== ENEMY
     ){
         return 0;
     }
 
     //----------------------------------
-    // PLAYERのコスト枚数
+    // PLAYERのコストゾーン枚数
     //----------------------------------
 
-    return playerCostCards.length;
+    const playerCostCount =
+        board.costCards.length;
 
+    return Math.min(
+        damage,
+        playerCostCount
+    );
 }
 
             case "liquidVeil":{

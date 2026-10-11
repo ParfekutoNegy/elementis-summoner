@@ -690,29 +690,14 @@ activateResist(
 
 
 //----------------------------------
-// ファストコールの場合は
-// サモンの召喚完了まで待機
-//----------------------------------
-
-//======================================
-// レジスト終了判定
-//======================================
+// レジスト終了処理
 //
-// ファストコール：召喚完了待機
-// バトルボム：対象選択完了待機
-// ヒートストレングス：対象選択完了待機
-//======================================
-
-if(
-    !isFastCall &&
-    !battleBombSelecting &&
-    !heatStrengthSelecting &&
-    !snowStormSelecting
-){
-
-    finishResist();
-
-}
+// 通常レジストは activateResist() 側で
+// 2秒後に finishResist() を実行する。
+//
+// 対象選択が必要な特殊レジストは
+// それぞれの専用処理で終了する。
+//----------------------------------
 
 updateButtons();
 
@@ -1858,17 +1843,38 @@ if(choosingOwner === ENEMY){
 
     snowStormTargetCandidates = [];
 
-    //----------------------------------
-    // クールゾーンへ移動
-    //----------------------------------
+//----------------------------------
+// クールゾーンへ移動
+//----------------------------------
 
-    moveLamiaTargetToCool(
-        target
-    );
+moveLamiaTargetToCool(
+    target
+);
 
-    snowStormSourceCard = null;
+snowStormSourceCard = null;
 
-    return;
+//----------------------------------
+// スノーストーム解決完了
+// ターン終了時レジスト処理を再開
+//----------------------------------
+
+console.log(
+    "スノーストーム：CPU対象選択完了 → finishResist"
+);
+
+setTimeout(() => {
+
+    if(
+        currentResistEvent?.type ===
+        GAME_EVENT.ENEMY_TURN_END &&
+        !snowStormSelecting
+    ){
+        finishResist();
+    }
+
+}, 0);
+
+return;
 }
 
 //----------------------------------
@@ -2834,6 +2840,25 @@ function finishResist(){
         return;
 
     }
+
+    //----------------------------------
+// レジストのコスト選択中は
+// 終了処理を進めない
+//----------------------------------
+
+if(
+    resistUsingCard &&
+    resistCostConfirm
+){
+
+    console.log(
+        "finishResist：レジストコスト処理中のため待機",
+        resistUsingCard.name
+    );
+
+    return;
+
+}
 
     //======================================
     // AFTER_PLAYER_DAMAGE
