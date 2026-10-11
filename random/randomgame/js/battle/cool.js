@@ -841,7 +841,7 @@ function confirmCoolRecovery(){
 //======================================
 
 if(
-    [38, 48].includes(
+    [38, 48,56,64].includes(
         Number(card.id)
     )
 ){

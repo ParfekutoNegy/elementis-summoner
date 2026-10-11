@@ -205,3 +205,91 @@ function battleBombCondition(event){
     );
 
 }
+
+//======================================
+// ハイスピード条件
+// サモンがバトルで
+// ダメージを受けるとき
+//======================================
+
+function highSpeedCondition(event){
+
+    console.log(
+        "highSpeedCondition",
+        {
+            type: event?.type,
+            sourceType: event?.sourceType,
+            isBattleDamage: event?.isBattleDamage,
+            target: event?.target?.card?.name,
+            damage: event?.damage
+        }
+    );
+
+    //----------------------------------
+    // サモンへのダメージのみ
+    //----------------------------------
+
+    if(
+        event?.type !==
+        GAME_EVENT.BEFORE_SUMMON_DAMAGE
+    ){
+        return false;
+    }
+
+    //----------------------------------
+    // バトルダメージのみ
+    //----------------------------------
+
+    if(
+        event.isBattleDamage !== true
+    ){
+        return false;
+    }
+
+    //----------------------------------
+    // 対象サモン確認
+    //----------------------------------
+
+    if(
+        !event.target ||
+        !(event.target instanceof Summon)
+    ){
+        return false;
+    }
+
+    //----------------------------------
+    // 1以上のダメージを受けるとき
+    //----------------------------------
+
+    return (
+        Number(event.damage) > 0
+    );
+
+}
+
+//==================================
+// カウンタースラッシュ
+//
+// 自分がダメージを受けたとき
+//==================================
+
+function counterSlashCondition(event){
+
+    if(
+        !event ||
+        event.type !==
+            GAME_EVENT.AFTER_PLAYER_DAMAGE
+    ){
+        return false;
+    }
+
+    // 実際にダメージを受けた場合のみ
+    if(
+        Number(event.damage) <= 0
+    ){
+        return false;
+    }
+
+    return true;
+
+}

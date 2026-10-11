@@ -535,20 +535,22 @@ if(item.type === "turnEndDamageCurrentPlayer"){
         `${summon.card.name}：${targetName}に${damage}ダメージ`
     );
 
-    //----------------------------------
-    // ダメージ処理
-    //----------------------------------
+//----------------------------------
+// ダメージ処理
+//----------------------------------
 
-    damagePlayer(
-        turnPlayer,
-        damage,
-        true,
-        summon.card
-    );
+const damageResult = damagePlayer(
+    turnPlayer,
+    damage,
+    true,
+    summon.card
+);
 
-    //----------------------------------
-    // 勝敗確認
-    //----------------------------------
+//----------------------------------
+// ダメージ確定後の続き
+//----------------------------------
+
+const continueAfterDamage = () => {
 
     if(
         game.playerLife <= 0 ||
@@ -558,16 +560,37 @@ if(item.type === "turnEndDamageCurrentPlayer"){
         return;
     }
 
-    //----------------------------------
-    // 次の終了時能力へ
-    //----------------------------------
-
     setTimeout(
         resolveNextAbility,
         1500
     );
 
+};
+
+//----------------------------------
+// ネレイド能力選択待機
+//----------------------------------
+
+if(damageResult === "WAIT_NEREID"){
+
+    console.log(
+        "ファイア・ドレイク：ネレイド選択待機"
+    );
+
+    nereidTurnEndResume =
+        continueAfterDamage;
+
     return;
+
+}
+
+//----------------------------------
+// ネレイド待機なし
+//----------------------------------
+
+continueAfterDamage();
+
+return;
 }
 
 

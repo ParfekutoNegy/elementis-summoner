@@ -2062,6 +2062,76 @@ finishResist();
 }
 
 //======================================
+// カウンタースラッシュ
+//
+// 自分がダメージを受けたとき、
+// 相手プレイヤーに1ダメージ
+//======================================
+
+function counterSlash(card, event){
+
+    //----------------------------------
+    // 発動イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        event.type !==
+            GAME_EVENT.AFTER_PLAYER_DAMAGE
+    ){
+
+        console.log(
+            "カウンタースラッシュ：発動条件不一致"
+        );
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 反撃対象
+    //----------------------------------
+
+    const targetPlayer =
+        event.player === PLAYER
+            ? ENEMY
+            : PLAYER;
+
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "カウンタースラッシュ発動",
+        "対象=",
+        targetPlayer
+    );
+
+
+    addBattleLog(
+        `${card.name}：相手に1ダメージ`
+    );
+
+
+    //----------------------------------
+    // 反撃ダメージ
+    //
+    // 既存のレジストイベントとの
+    // 重複を避けるため、
+    // この段階では直接適用しない
+    //----------------------------------
+
+    event.counterSlashTarget =
+        targetPlayer;
+
+    event.counterSlashDamage =
+        1;
+
+}
+
+//======================================
 // レジスト効果一覧
 //======================================
 
@@ -2085,6 +2155,8 @@ const resistEffects = {
     prevent,
     earthDefense,
     flexibleSand,
+    highSpeed,
+    counterSlash,
 
     snowStorm,
 
@@ -2764,6 +2836,218 @@ function finishResist(){
     }
 
     //======================================
+    // AFTER_PLAYER_DAMAGE
+    // ダメージ後レジスト専用終了処理
+    //======================================
+
+    if(
+        currentResistEvent.type ===
+            GAME_EVENT.AFTER_PLAYER_DAMAGE
+    ){
+
+        console.log(
+            "ダメージ後レジスト：終了処理"
+        );
+
+
+        //----------------------------------
+        // イベント情報を保存
+        //----------------------------------
+
+        const event =
+            currentResistEvent;
+
+
+        //----------------------------------
+        // カウンタースラッシュの反撃情報
+        //----------------------------------
+
+        const counterTarget =
+            event.counterSlashTarget ?? null;
+
+        const counterDamage =
+            event.counterSlashDamage ?? 0;
+
+
+        //----------------------------------
+        // 元の処理へ戻る関数
+        //----------------------------------
+
+        let resumed = false;
+
+        const resumeOriginal = () => {
+
+            if(resumed){
+                return;
+            }
+
+            resumed = true;
+
+            //----------------------------------
+            // 専用再開関数
+            //----------------------------------
+
+            if(
+                typeof event.resume === "function"
+            ){
+
+                event.resume();
+
+                return;
+
+            }
+
+            //----------------------------------
+            // CPUターン再開
+            //----------------------------------
+
+            if(
+                game.currentPlayer === ENEMY &&
+                cpuWaiting
+            ){
+
+                setTimeout(() => {
+
+                    continueCpuTurn();
+
+                }, 500);
+
+                return;
+
+            }
+
+            //----------------------------------
+            // 攻撃終了
+            //----------------------------------
+
+            if(isAttacking()){
+
+                finishAttack();
+
+            }
+
+        };
+
+
+        //----------------------------------
+        // 使用済みフラグ解除
+        //----------------------------------
+
+        selectableResistCards.forEach(card => {
+
+            card.setSelected(false);
+            card.setHighlight(false);
+            card.usedThisEvent = false;
+
+        });
+
+        enemyHandCards.forEach(card => {
+
+            card.usedThisEvent = false;
+
+        });
+
+        enemyCoolCards.forEach(card => {
+
+            card.usedThisEvent = false;
+
+        });
+
+
+        //----------------------------------
+        // レジスト状態解除
+        //----------------------------------
+
+        currentResistEvent = null;
+
+        resistMode = false;
+        resistUsingCard = null;
+        resistCostConfirm = false;
+
+        selectedResistCostCards = [];
+        selectableResistCards = [];
+
+        resistPassedThisEvent = false;
+
+        updateButtons();
+
+
+        //==================================
+        // カウンタースラッシュ
+        // 反撃ダメージ
+        //==================================
+
+        if(
+            counterTarget !== null &&
+            counterDamage > 0
+        ){
+
+            console.log(
+                "カウンタースラッシュ：反撃開始",
+                counterTarget,
+                counterDamage
+            );
+
+
+            const result =
+                damagePlayer(
+                    counterTarget,
+                    counterDamage,
+                    false,
+                    null,
+                    resumeOriginal
+                );
+
+
+            console.log(
+                "カウンタースラッシュ：処理結果",
+                result
+            );
+
+
+            //----------------------------------
+            // ネレイド選択待機
+            //----------------------------------
+
+            if(result === "WAIT_NEREID"){
+
+                console.log(
+                    "カウンタースラッシュ：ネレイド待機"
+                );
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 予期しないレジスト待機
+            //----------------------------------
+
+            if(result === "WAIT_RESIST"){
+
+                console.warn(
+                    "カウンタースラッシュ：予期しないレジスト待機"
+                );
+
+                return;
+
+            }
+
+        }
+
+
+        //----------------------------------
+        // 元の処理を再開
+        //----------------------------------
+
+        resumeOriginal();
+
+        return;
+
+    }
+
+    //======================================
 // スノーストーム
 // ターン終了時レジスト解決完了
 //======================================
@@ -3280,25 +3564,55 @@ if(
             // すでに適用済み
             //----------------------------------
 
-            if(finalDamage > 0){
+if(finalDamage > 0){
 
-                const damageTarget =
-                    currentResistEvent.player === PLAYER
-                        ? "PLAYER"
-                        : "CPU";
-
-
-                addBattleLog(
-                    `${damageTarget}：${finalDamage}ダメージ`
-                );
+    const damageTarget =
+        currentResistEvent.player === PLAYER
+            ? "PLAYER"
+            : "CPU";
 
 
-                applyPlayerDamage(
-                    currentResistEvent.player,
-                    finalDamage
-                );
+    addBattleLog(
+        `${damageTarget}：${finalDamage}ダメージ`
+    );
 
-            }
+
+    //----------------------------------
+    // ダメージ対象と元イベントを保存
+    //----------------------------------
+
+    const damagedPlayer =
+        currentResistEvent.player;
+
+    const beforeEvent =
+        currentResistEvent;
+
+
+    //----------------------------------
+    // ダメージ確定
+    //----------------------------------
+
+    applyPlayerDamage(
+        damagedPlayer,
+        finalDamage
+    );
+
+
+    //----------------------------------
+    // AFTER_PLAYER_DAMAGE
+    // 次の段階で専用レジスト判定を追加
+    //----------------------------------
+
+    console.log(
+        "レジスト後ダメージ確定",
+        {
+            player: damagedPlayer,
+            damage: finalDamage,
+            source: beforeEvent.source
+        }
+    );
+
+}
 
         }
 
@@ -3444,13 +3758,71 @@ if(
     // 後続処理用情報保存
     //----------------------------------
 
-    const wasPlayerDamage =
-        currentResistEvent.type ===
-            GAME_EVENT.BEFORE_PLAYER_DAMAGE;
+const wasPlayerDamage =
+    currentResistEvent.type ===
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE;
 
 
-    const attacker =
-        currentResistEvent.attacker;
+const attacker =
+    currentResistEvent.attacker;
+
+//==================================
+// 元のダメージ処理の再開関数を保存
+//==================================
+
+const originalDamageResume =
+
+    wasPlayerDamage &&
+    typeof currentResistEvent.resume === "function"
+
+        ? currentResistEvent.resume
+
+        : null;
+
+
+
+
+//==================================
+// カウンタースラッシュ用
+// ダメージ後イベント情報を保存
+//==================================
+
+const afterDamageInfo =
+
+    wasPlayerDamage &&
+    currentResistEvent.damage > 0
+
+        ? {
+
+            player:
+                currentResistEvent.player,
+
+            damage:
+                currentResistEvent.damage,
+
+            source:
+                currentResistEvent.source,
+
+            sourceType:
+                currentResistEvent.sourceType,
+
+            element:
+                currentResistEvent.element,
+
+            //==================================
+            // 元のダメージ処理から
+            // 引き継いだ再開関数
+            //==================================
+
+            resume:
+                typeof currentResistEvent.resume ===
+                    "function"
+                    ? currentResistEvent.resume
+                    : null
+
+        }
+
+        : null;
 
 
     //----------------------------------
@@ -3480,11 +3852,76 @@ if(
     // 「プレイしない」状態解除
     //----------------------------------
 
-    resistPassedThisEvent =
-        false;
+resistPassedThisEvent =
+    false;
 
 
-    updateButtons();
+updateButtons();
+
+
+//==================================
+// AFTER_PLAYER_DAMAGE
+//
+// ダメージ確定後のレジスト判定
+//==================================
+
+if(afterDamageInfo){
+
+    console.log(
+        "レジスト後：AFTER_PLAYER_DAMAGE",
+        afterDamageInfo
+    );
+
+
+    const afterResist =
+        emitGameEvent({
+
+            type:
+                GAME_EVENT.AFTER_PLAYER_DAMAGE,
+
+            ...afterDamageInfo
+
+        });
+
+
+    //----------------------------------
+    // ダメージ後レジスト待機
+    //----------------------------------
+
+    if(afterResist){
+
+        console.log(
+            "ダメージ後レジスト待機"
+        );
+
+        return;
+
+    }
+
+}
+
+//==================================
+// プレイヤーダメージ処理の再開
+//==================================
+
+// AFTER_PLAYER_DAMAGEでレジストが発動した場合は
+// すでに上の処理でreturnしているため、
+// ここには到達しない。
+
+if(
+    wasPlayerDamage &&
+    typeof originalDamageResume === "function"
+){
+
+    console.log(
+        "BEFORE_PLAYER_DAMAGE終了：元の処理を再開"
+    );
+
+    originalDamageResume();
+
+    return;
+
+}
 
     //==================================
 // アースクェイク
@@ -5071,6 +5508,35 @@ function illusionFog(card){
 
 }
 
+//======================================
+// ハイスピード
+// バトルによるサモンダメージを0にする
+//======================================
+
+function highSpeed(card, event){
+
+    if(
+        !event ||
+        event.type !== GAME_EVENT.BEFORE_SUMMON_DAMAGE
+    ){
+        return;
+    }
+
+    console.log(
+        "ハイスピード発動",
+        event.target?.card?.name,
+        "軽減前ダメージ=",
+        event.damage
+    );
+
+    event.damage = 0;
+
+    console.log(
+        "ハイスピード：バトルダメージ0"
+    );
+
+}
+
 function startFastCallSummonCost(){
 
     const card = fastCallSelectedSummon;
@@ -5474,3 +5940,4 @@ function flexibleSand(card){
     );
 
 }
+

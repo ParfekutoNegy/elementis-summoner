@@ -74,6 +74,8 @@ let nereidDamageEvent = null;
 
 let nereidSelectableSummons = [];
 
+let nereidTurnEndResume = null;
+
 //==================================================
 // ネレイド
 // マギア待機
@@ -2701,30 +2703,59 @@ function continueAttackAfterAttackAbility(
         }
 
 
-// ブロックなし
-damagePlayer(
+//==================================
+// ブロックなし：PLAYERへダメージ
+//==================================
+
+const damageResult = damagePlayer(
+
     PLAYER,
+
     getDamage(
         attackingSummon,
         getPower(attackingSummon)
     ),
+
     false,
-    attackingSummon.card
+
+    attackingSummon.card,
+
+    () => {
+
+        console.log(
+            "PLAYERへの攻撃：ダメージ処理完了"
+        );
+
+        setTimeout(() => {
+
+            resolveBattle();
+            finishAttack();
+
+        }, 1000);
+
+    }
+
 );
 
+//----------------------------------
+// レジスト・ネレイド待機
+//----------------------------------
 
-        // レジスト・ネレイド待機
-        if(
-            resistMode ||
-            nereidDamageWaiting
-        ){
+if(
+    damageResult === "WAIT_RESIST" ||
+    damageResult === "WAIT_NEREID"
+){
 
-            console.log(
-                "ダメージ処理待機中なので戦闘終了停止"
-            );
+    console.log(
+        "PLAYERへの攻撃：ダメージ処理待機",
+        damageResult
+    );
 
-            return "WAIT_RESIST";
-        }
+    return damageResult;
+
+}
+
+
     }
 
 
@@ -4863,6 +4894,17 @@ if(!data){
     const fromResist =
         !!data.event;
 
+        //----------------------------------
+// 専用再開関数を取得
+//----------------------------------
+
+const damageResume =
+    typeof data.resume === "function"
+        ? data.resume
+        : null;
+
+
+
 
     //----------------------------------
     // 状態解除
@@ -4928,22 +4970,121 @@ if(!data){
         );
 
 
+//----------------------------------
+// AFTER_PLAYER_DAMAGE
+//----------------------------------
+
+const afterDamageEvent = {
+
+    type:
+        GAME_EVENT.AFTER_PLAYER_DAMAGE,
+
+    player:
+        data.player,
+
+    damage:
+        finalDamage
+
+};
+
+
+//----------------------------------
+// ダメージ後レジスト判定
+//----------------------------------
+
+const afterResist =
+    emitGameEvent(
+        afterDamageEvent
+    );
+
+
+if(afterResist){
+
+    console.log(
+        "ネレイド後：ダメージ後レジスト待機"
+    );
+
+    //----------------------------------
+    // 元の再開処理を保存
+    //----------------------------------
+
+    afterDamageEvent.resume = () => {
+
+        console.log(
+            "ネレイド後：元の処理を再開"
+        );
+
         //----------------------------------
-        // AFTER_PLAYER_DAMAGE
+        // 専用再開関数を優先
         //----------------------------------
 
-        emitGameEvent({
+        if(damageResume){
 
-            type:
-                GAME_EVENT.AFTER_PLAYER_DAMAGE,
+            damageResume();
 
-            player:
-                data.player,
+            return;
 
-            damage:
-                finalDamage
+        }
 
-        });
+        //----------------------------------
+        // マギア待機
+        //----------------------------------
+
+        if(
+            typeof nereidMagiaWaiting !==
+                "undefined" &&
+            nereidMagiaWaiting
+        ){
+
+            resumeMagiaAfterNereid();
+
+            return;
+
+        }
+
+        //----------------------------------
+        // レジスト経由
+        //----------------------------------
+
+        if(fromResist){
+
+            currentResistEvent = null;
+
+            resolveBattle();
+
+            finishAttack();
+
+            clearHandSelection();
+
+            updateGameState();
+
+            return;
+
+        }
+
+        //----------------------------------
+        // ターン終了時能力
+        //----------------------------------
+
+        if(
+            typeof nereidTurnEndResume ===
+                "function"
+        ){
+
+            const resume =
+                nereidTurnEndResume;
+
+            nereidTurnEndResume = null;
+
+            resume();
+
+        }
+
+    };
+
+    return;
+
+}
 
     }
     else{
@@ -4954,6 +5095,22 @@ if(!data){
 
     }
 
+
+//==================================
+// 専用再開関数がある場合
+//==================================
+
+if(damageResume){
+
+    console.log(
+        "ネレイド：保存された処理を再開"
+    );
+
+    damageResume();
+
+    return;
+
+}
 
     //==================================
     // マギア待機から来た場合
@@ -5058,13 +5215,38 @@ if(!data){
     }
 
 
-    //==================================
-    // 通常ダメージ経路
-    //==================================
+//==================================
+// ターン終了時能力から来た場合
+//==================================
+
+if(
+    typeof nereidTurnEndResume ===
+        "function"
+){
+
+    const resume =
+        nereidTurnEndResume;
+
+    nereidTurnEndResume =
+        null;
 
     console.log(
-        "ネレイド処理完了：通常ダメージ経路"
+        "ネレイド処理完了：ターン終了時能力を再開"
     );
+
+    resume();
+
+    return;
+
+}
+
+//==================================
+// 通常ダメージ経路
+//==================================
+
+console.log(
+    "ネレイド処理完了：通常ダメージ経路"
+);
 
 }
 
@@ -5380,7 +5562,8 @@ function damagePlayer(
     player,
     damage,
     skipResist = false,
-    sourceCard = null
+    sourceCard = null,
+    onComplete = null
 ){
 
     console.log(
@@ -5537,19 +5720,56 @@ function damagePlayer(
         // ネレイド
         //----------------------------------
 
-        if(
+        const nereidUsed =
             checkNereidDamagePrevent(
                 player,
                 damage,
                 null
-            )
-        ){
-
-            console.log(
-                "ネレイド能力選択待機"
             );
 
-            return "WAIT_NEREID";
+
+        if(nereidUsed){
+
+            //----------------------------------
+            // PLAYER：能力選択待機
+            //----------------------------------
+
+            if(player === PLAYER){
+
+                console.log(
+                    "PLAYERネレイド：能力選択待機"
+                );
+
+
+                //----------------------------------
+                // ネレイド終了後の再開処理を保存
+                //----------------------------------
+
+                if(
+                    nereidDamageEvent &&
+                    typeof onComplete === "function"
+                ){
+
+                    nereidDamageEvent.resume =
+                        onComplete;
+
+                }
+
+
+                return "WAIT_NEREID";
+
+            }
+
+
+            //----------------------------------
+            // CPU：ダメージ無効化済み
+            //----------------------------------
+
+            console.log(
+                "CPUネレイド：ダメージ無効"
+            );
+
+            return "DONE";
 
         }
 
@@ -5592,27 +5812,36 @@ function damagePlayer(
     // レジストイベント作成
     //==================================
 
-    const event = {
+const event = {
 
-        type:
-            GAME_EVENT.BEFORE_PLAYER_DAMAGE,
+    type:
+        GAME_EVENT.BEFORE_PLAYER_DAMAGE,
 
-        player:
-            player,
+    player:
+        player,
 
-        damage:
-            damage,
+    damage:
+        damage,
 
-        source:
-            sourceCard,
+    source:
+        sourceCard,
 
-        sourceType:
-            sourceCard?.type,
+    sourceType:
+        sourceCard?.type,
 
-        element:
-            sourceCard?.elementType
+    element:
+        sourceCard?.elementType,
 
-    };
+    //==================================
+    // レジスト終了後の再開処理
+    //==================================
+
+    resume:
+        typeof onComplete === "function"
+            ? onComplete
+            : null
+
+};
 
 
     //----------------------------------
@@ -5672,20 +5901,56 @@ function damagePlayer(
     // ネレイド
     //==================================
 
-    if(
+    const nereidUsed =
         checkNereidDamagePrevent(
             player,
             finalDamage,
             null
-        )
-    ){
-
-        console.log(
-            "ネレイド能力選択待機"
         );
 
 
-        return "WAIT_NEREID";
+    if(nereidUsed){
+
+        //----------------------------------
+        // PLAYER：能力選択待機
+        //----------------------------------
+
+        if(player === PLAYER){
+
+            console.log(
+                "PLAYERネレイド：能力選択待機"
+            );
+
+
+            //----------------------------------
+            // ネレイド終了後の再開処理を保存
+            //----------------------------------
+
+            if(
+                nereidDamageEvent &&
+                typeof onComplete === "function"
+            ){
+
+                nereidDamageEvent.resume =
+                    onComplete;
+
+            }
+
+
+            return "WAIT_NEREID";
+
+        }
+
+
+        //----------------------------------
+        // CPU：ダメージ無効化済み
+        //----------------------------------
+
+        console.log(
+            "CPUネレイド：ダメージ無効"
+        );
+
+        return "DONE";
 
     }
 
@@ -5719,27 +5984,78 @@ function damagePlayer(
     );
 
 
-    //----------------------------------
+    //==================================
     // AFTER_PLAYER_DAMAGE
-    //----------------------------------
+    //
+    // 実際にダメージを受けた後の
+    // レジスト発動判定
+    //==================================
 
     if(finalDamage > 0){
 
-        emitGameEvent({
+const afterDamageEvent = {
 
-            type:
-                GAME_EVENT.AFTER_PLAYER_DAMAGE,
+    type:
+        GAME_EVENT.AFTER_PLAYER_DAMAGE,
 
-            player:
-                player,
+    player:
+        player,
 
-            damage:
-                finalDamage
+    damage:
+        finalDamage,
 
-        });
+    source:
+        sourceCard,
+
+    sourceType:
+        sourceCard?.type,
+
+    element:
+        sourceCard?.elementType,
+
+    //----------------------------------
+    // ダメージ後レジスト終了時の
+    // 再開処理
+    //----------------------------------
+
+    resume:
+        typeof onComplete === "function"
+            ? onComplete
+            : null
+
+};
+
+
+        //----------------------------------
+        // ダメージ後レジスト確認
+        //----------------------------------
+
+        const afterResist =
+            emitGameEvent(
+                afterDamageEvent
+            );
+
+
+        //----------------------------------
+        // レジスト待機
+        //----------------------------------
+
+        if(afterResist){
+
+            console.log(
+                "AFTER_PLAYER_DAMAGE：レジスト待機"
+            );
+
+            return "WAIT_RESIST";
+
+        }
 
     }
 
+
+    //==================================
+    // ダメージ処理完了
+    //==================================
 
     return "DONE";
 
@@ -6221,41 +6537,66 @@ console.log(
 //----------------------------------
 
 // 攻撃側が与えるダメージ
-dealDamage(
+const targetDamageResult = dealDamage(
     target,
     getDamage(
         attackingSummon,
         getPower(attackingSummon)
-    )
+    ),
+    attackingSummon.card,
+    true
 );
 
+// レジスト・ヒュドラ待機
+if(
+    targetDamageResult === "WAIT_RESIST" ||
+    targetDamageResult === "WAIT_HYDRA"
+){
+    hydraBattleWaiting = true;
+    hydraBattleAttacker = attackingSummon;
+    hydraBattleTarget = target;
+    hydraBattleStep = 1;
+
+    return;
+}
+
 // 防御側が与える反撃ダメージ
-dealDamage(
+const attackerDamageResult = dealDamage(
     attackingSummon,
     getDamage(
         target,
         getPower(target)
-    )
+    ),
+    target.card,
+    true
 );
 
+// レジスト・ヒュドラ待機
+if(
+    attackerDamageResult === "WAIT_RESIST" ||
+    attackerDamageResult === "WAIT_HYDRA"
+){
+    hydraBattleWaiting = true;
+    hydraBattleAttacker = attackingSummon;
+    hydraBattleTarget = target;
+    hydraBattleStep = 2;
 
-        //----------------------------------
-        // 戦闘解決
-        //----------------------------------
+    return;
+}
 
-        setTimeout(
-            () => {
+//----------------------------------
+// 戦闘解決
+//----------------------------------
 
-                resolveBattle();
+setTimeout(() => {
 
-                finishAttack();
+    resolveBattle(() => {
+        finishSummonBattleWithBattleBomb();
+    });
 
-            },
-            1000
-        );
+}, 1000);
 
-
-        return;
+return;
 
     }
 

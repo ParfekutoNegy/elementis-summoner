@@ -115,6 +115,13 @@ let cpuAttackQueue = [];
 
 let cpuAttackIndex = 0;
 
+//======================================
+// コンセントレイト
+// 次にプレイするCPU行動を予約
+//======================================
+
+let cpuConcentrateReservedAction = null;
+
 
 //==================================================
 // ブレイクスルー使用後
@@ -5417,10 +5424,10 @@ function cpuFinishTurn(){
                     ENEMY
                 );
 
-            if(
-                canPlayCardByLimit(ENEMY) &&
-                enemyHandCards.length - 1 >= currentCost
-            ){
+if(
+    canPlayCardByLimit(ENEMY) &&
+    enemyHandCards.length - 1 - currentCost >= 2
+){
 
                 console.log(
                     "CPU：ターン終了前にコンセントレイト使用",
@@ -8224,10 +8231,18 @@ case "flexibleSand":
 case "rapidMove":
     return damage;
 
-            case "illusionFog":
-                return damage;
+case "illusionFog":
+    return damage;
 
-            case "sandProtect":
+//======================================
+// ハイスピード
+// バトルによるサモンダメージを0にする
+//======================================
+
+case "highSpeed":
+    return damage;
+
+case "sandProtect":
 
                 if(damage === 1){
                     return 1;
@@ -15022,10 +15037,53 @@ function cpuExecuteBestAction(){
     // 最善行動を取得
     //----------------------------------
 
-    const bestAction =
-        selectBestCpuAction(
-            actions
+let bestAction =
+    selectBestCpuAction(
+        actions
+    );
+
+//======================================
+// コンセントレイト予約行動
+//======================================
+
+if(cpuConcentrateReservedAction){
+
+    const reserved =
+        cpuConcentrateReservedAction;
+
+    // 予約は今回の再評価で解除
+    cpuConcentrateReservedAction = null;
+
+    // 現在も実行候補に存在するか確認
+    const availableAction =
+        actions.find(action =>
+
+            action.type === reserved.type &&
+            action.card === reserved.card &&
+            action.target === reserved.target &&
+            action.ownSummon === reserved.ownSummon
+
         );
+
+    if(availableAction){
+
+        bestAction = availableAction;
+
+        console.log(
+            "CPU：コンセントレイト予約行動を優先",
+            bestAction.card.name
+        );
+
+    }
+    else{
+
+        console.log(
+            "CPU：予約行動が使用不可のため通常選択"
+        );
+
+    }
+
+}
 
 
     //----------------------------------
@@ -15105,11 +15163,10 @@ if(
             // 使用可能か確認
             //----------------------------------
 
-            if(
-                canPlayCardByLimit(ENEMY) &&
-                enemyHandCards.length - 1 >=
-                    concentrateCost
-            ){
+if(
+    canPlayCardByLimit(ENEMY) &&
+    enemyHandCards.length - 1 - concentrateCost >= 2
+){
 
                 console.log(
                     "CPU：高コストカードの前にコンセントレイト",
@@ -15140,15 +15197,25 @@ if(
                 // 使用成功
                 //----------------------------------
 
-                if(result === true){
+if(result === true){
 
-                    setTimeout(
-                        runCpuTurnStep,
-                        2000
-                    );
+    // コンセントレイト使用前に選んだ行動を保存
+    cpuConcentrateReservedAction = {
+        ...bestAction
+    };
 
-                    return;
-                }
+    console.log(
+        "CPU：コンセントレイト後の行動予約",
+        bestAction.card.name
+    );
+
+    setTimeout(
+        runCpuTurnStep,
+        2000
+    );
+
+    return;
+}
 
                 //----------------------------------
                 // 使用失敗なら通常行動へ

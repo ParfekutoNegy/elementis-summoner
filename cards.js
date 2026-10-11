@@ -1222,24 +1222,31 @@ const CARD_LIST = [
             ]
         },
     }, 
-    {
-        id: 79,
-        name:"ハイスピード",
-        type: "レジスト",
-        element: "風",
-        cost: 1,
-        series:"mythology",
-        image: "images/079-ハイスピード.jpg"
-    }, 
-    {
-        id: 80,
-        name:"カウンタースラッシュ",
-        type: "レジスト",
-        element: "風",
-        cost: 1,
-        series:"mythology",
-        image: "images/080-カウンタースラッシュ.jpg"
-    }, 
+{
+    id: 79,
+    name:"ハイスピード",
+    type: "レジスト",
+    element: "風",
+    cost: 1,
+    series:"mythology",
+    image: "images/079-ハイスピード.jpg",
+    trigger:"beforeSummonDamage",
+    condition:highSpeedCondition,
+    effect:"highSpeed",
+    condi:"サモンがバトルでダメージを受けるとき",
+    text:"サモン１体を対象にし、受けるダメージを０にする。"
+},
+{
+    id: 80,
+    name: "カウンタースラッシュ",
+    type: "レジスト",
+    element: "風",
+    cost: 1,
+    series: "mythology",
+    image: "images/080-カウンタースラッシュ.jpg",
+    trigger: "afterPlayerDamage",
+    effect: "counterSlash"
+},
     {
         id: 81,
         name:"ネレイド",
