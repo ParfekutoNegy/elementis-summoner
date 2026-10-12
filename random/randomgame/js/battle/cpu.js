@@ -6424,16 +6424,6 @@ if(card.effect === "snowStorm"){
 
 }
 
-        //----------------------------------
-        // このイベントで使用済み
-        //----------------------------------
-
-        if(card.usedThisEvent){
-
-            continue;
-
-        }
-
 
 //----------------------------------
 // 発動タイミング確認
@@ -6464,6 +6454,89 @@ if(!isCpuFastCallEvent){
         }
 
     }
+
+}
+
+//======================================
+// リコイルショック
+// CPU使用条件
+//======================================
+
+if(card.effect === "recoilShock"){
+
+    //----------------------------------
+    // 攻撃してきたサモンを取得
+    //----------------------------------
+
+    const attacker = playerField.find(
+        summon =>
+            summon.card === event.source &&
+            !summon.destroyed
+    );
+
+    // 攻撃元が存在しなければ使用しない
+    if(!attacker){
+        continue;
+    }
+
+    //----------------------------------
+    // 変動後のパワーを取得
+    //----------------------------------
+
+    const power = getPower(attacker);
+
+    //----------------------------------
+    // ドライアドのダメージ軽減
+    //----------------------------------
+
+    let reduction = 0;
+
+    playerField.forEach(summon => {
+
+        if(!summon || summon.destroyed){
+            return;
+        }
+
+        const ability = getSummonAbility(
+            summon,
+            "reduceOwnSummonDamage"
+        );
+
+        if(ability){
+            reduction += ability.value ?? 1;
+        }
+
+    });
+
+    //----------------------------------
+    // リコイルショックの実ダメージ
+    //----------------------------------
+
+    const actualDamage = Math.max(
+        0,
+        3 - reduction
+    );
+
+    //----------------------------------
+    // 破壊できない場合は使用しない
+    //----------------------------------
+
+    if(actualDamage < power){
+        continue;
+    }
+
+    //----------------------------------
+    // 使用候補
+    //----------------------------------
+
+    console.log(
+        "CPUリコイルショック：使用候補",
+        attacker.card.name,
+        "パワー=",
+        power,
+        "実ダメージ=",
+        actualDamage
+    );
 
 }
 

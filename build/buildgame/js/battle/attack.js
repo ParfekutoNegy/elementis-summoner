@@ -3127,12 +3127,36 @@ const attackerDamageResult =
 }
 
 
+
+
 //==================================================
 // ヒュドラ
 // 一時停止していた戦闘を再開
 //==================================================
 
 function resumeBattleAfterHydra(){
+
+    //======================================
+    // リコイルショック
+    // ヒュドラ能力解決後
+    //======================================
+
+    if(
+        typeof recoilShockHydraResume === "function"
+    ){
+
+        const resume = recoilShockHydraResume;
+
+        recoilShockHydraResume = null;
+
+        console.log(
+            "リコイルショック：ヒュドラ能力解決完了"
+        );
+
+        resume();
+
+        return;
+    }
 
     console.log(
         "================================"
@@ -4309,7 +4333,8 @@ function getNereidDamagePreventSummons(
 function checkNereidDamagePrevent(
     player,
     damage,
-    event = null
+    event = null,
+    sourceCard = null
 ){
 
     //----------------------------------
@@ -4373,18 +4398,31 @@ function checkNereidDamagePrevent(
         // ダメージ情報保存
         //----------------------------------
 
-        nereidDamageEvent = {
+nereidDamageEvent = {
 
-            player:
-                player,
+    player:
+        player,
 
-            damage:
-                damage,
+    damage:
+        damage,
 
-            event:
-                event
+    event:
+        event,
 
-        };
+    source:
+        event?.source ?? sourceCard,
+
+    sourceType:
+        event?.sourceType ??
+        sourceCard?.type ??
+        null,
+
+    element:
+        event?.element ??
+        sourceCard?.elementType ??
+        null
+
+};
 
 
         //----------------------------------
@@ -4983,7 +5021,16 @@ const afterDamageEvent = {
         data.player,
 
     damage:
-        finalDamage
+        finalDamage,
+
+    source:
+        data.source,
+
+    sourceType:
+        data.sourceType,
+
+    element:
+        data.element
 
 };
 
@@ -5720,12 +5767,13 @@ function damagePlayer(
         // ネレイド
         //----------------------------------
 
-        const nereidUsed =
-            checkNereidDamagePrevent(
-                player,
-                damage,
-                null
-            );
+const nereidUsed =
+    checkNereidDamagePrevent(
+        player,
+        finalDamage,
+        null,
+        sourceCard
+    );
 
 
         if(nereidUsed){
@@ -5901,12 +5949,13 @@ const event = {
     // ネレイド
     //==================================
 
-    const nereidUsed =
-        checkNereidDamagePrevent(
-            player,
-            finalDamage,
-            null
-        );
+const nereidUsed =
+    checkNereidDamagePrevent(
+        player,
+        finalDamage,
+        null,
+        sourceCard
+    );
 
 
     if(nereidUsed){
@@ -6859,22 +6908,53 @@ if(!currentResistEvent){
     );
 
 
-    //----------------------------------
-    // AFTERイベント
-    //----------------------------------
+//----------------------------------
+// AFTER_PLAYER_DAMAGE
+// ダメージ元の情報を引き継ぐ
+//----------------------------------
 
-    emitGameEvent({
+const afterDamageEvent = {
 
-        type:
-            GAME_EVENT.AFTER_PLAYER_DAMAGE,
+    type:
+        GAME_EVENT.AFTER_PLAYER_DAMAGE,
 
-        player:
-            event.player,
+    player:
+        event.player,
 
-        damage:
-            finalDamage
+    damage:
+        finalDamage,
 
-    });
+    source:
+        event.source,
+
+    sourceType:
+        event.sourceType,
+
+    element:
+        event.element
+
+};
+
+//----------------------------------
+// ダメージ後レジスト判定
+//----------------------------------
+
+const afterResist =
+    emitGameEvent(afterDamageEvent);
+
+//----------------------------------
+// レジスト選択待機
+//----------------------------------
+
+if(afterResist){
+
+    console.log(
+        "レジスト後：AFTER_PLAYER_DAMAGE待機"
+    );
+
+    return;
+
+}
 
 
     //----------------------------------

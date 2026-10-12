@@ -100,6 +100,13 @@ function registerFastCallSummon(){
 
 }
 
+//======================================
+// リコイルショック
+// ヒュドラ解決後の再開処理
+//======================================
+
+let recoilShockHydraResume = null;
+
 
 //--------------------------------------
 // 相手ターン用の召喚回数をリセット
@@ -2138,6 +2145,107 @@ function counterSlash(card, event){
 }
 
 //======================================
+// リコイルショック
+//
+// 自分がサモンからダメージを
+// 受けたとき、ダメージ元の
+// サモン1体に3ダメージ
+//======================================
+
+function recoilShock(card, event){
+
+    //----------------------------------
+    // 発動イベント確認
+    //----------------------------------
+
+    if(
+        !event ||
+        event.type !==
+            GAME_EVENT.AFTER_PLAYER_DAMAGE
+    ){
+        console.log(
+            "リコイルショック：発動条件不一致"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // ダメージ元の確認
+    //----------------------------------
+
+    if(
+        event.sourceType !== "サモン" ||
+        !event.source ||
+        Number(event.damage) <= 0
+    ){
+        console.log(
+            "リコイルショック：サモン由来ではない"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // ダメージ元のサモンを取得
+    //----------------------------------
+
+    const sourceField =
+        event.player === PLAYER
+            ? enemyField
+            : playerField;
+
+    const target =
+        sourceField.find(summon =>
+            summon instanceof Summon &&
+            !summon.destroyed &&
+            summon.card === event.source
+        );
+
+    //----------------------------------
+    // 対象確認
+    //----------------------------------
+
+    if(!target){
+
+        console.log(
+            "リコイルショック：対象サモンなし"
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // ダメージ情報を保存
+    //----------------------------------
+
+    event.recoilShockTarget =
+        target;
+
+    event.recoilShockDamage =
+        3;
+
+    event.recoilShockSourceCard =
+        card;
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "リコイルショック発動",
+        "対象=",
+        target.card.name,
+        "ダメージ=3"
+    );
+
+    addBattleLog(
+        `${card.name}：${target.card.name}に3ダメージ`
+    );
+
+}
+
+//======================================
 // レジスト効果一覧
 //======================================
 
@@ -2163,6 +2271,7 @@ const resistEffects = {
     flexibleSand,
     highSpeed,
     counterSlash,
+    recoilShock,
 
     snowStorm,
 
@@ -2822,6 +2931,65 @@ if(
 }
 
 //======================================
+// ダメージ後：追加レジスト確認
+//======================================
+
+function checkNextAfterDamageResist(event){
+
+    if(
+        !event ||
+        event.type !== GAME_EVENT.AFTER_PLAYER_DAMAGE
+    ){
+        return false;
+    }
+
+    // 「プレイしない」が選択された場合
+    if(resistPassedThisEvent){
+        return false;
+    }
+
+    //==================================
+    // PLAYER
+    //==================================
+
+    if(event.player === PLAYER){
+
+        // 現在の手札から使用可能な
+        // レジストを再検索
+        const resistCards =
+            findResistCards(event);
+
+if(resistCards.length > 0){
+
+    console.log(
+        "ダメージ後：追加レジスト選択",
+        resistCards.map(card => card.name)
+    );
+
+    //==================================
+    // 元のダメージイベントを再設定
+    //==================================
+
+    currentResistEvent = event;
+
+    //==================================
+    // 追加レジスト選択開始
+    //==================================
+
+    showResistSelection(
+        resistCards,
+        event
+    );
+
+    return true;
+}
+    }
+
+    return false;
+}
+
+
+//======================================
 // レジスト終了
 //======================================
 
@@ -2865,33 +3033,66 @@ if(
     // ダメージ後レジスト専用終了処理
     //======================================
 
-    if(
-        currentResistEvent.type ===
-            GAME_EVENT.AFTER_PLAYER_DAMAGE
-    ){
+if(
+    currentResistEvent.type ===
+        GAME_EVENT.AFTER_PLAYER_DAMAGE
+){
 
-        console.log(
-            "ダメージ後レジスト：終了処理"
-        );
-
-
-        //----------------------------------
-        // イベント情報を保存
-        //----------------------------------
-
-        const event =
-            currentResistEvent;
+    console.log(
+        "ダメージ後レジスト：終了処理"
+    );
 
 
-        //----------------------------------
-        // カウンタースラッシュの反撃情報
-        //----------------------------------
+    //----------------------------------
+    // イベント情報を保存
+    //----------------------------------
 
-        const counterTarget =
-            event.counterSlashTarget ?? null;
+    const event =
+        currentResistEvent;
+
+
+    //==================================
+    // 今回プレイしないを選択したか保存
+    //==================================
+
+    const afterDamagePassed =
+        resistPassedThisEvent;
+
+
+    //----------------------------------
+    // カウンタースラッシュの反撃情報
+    //----------------------------------
+
+    const counterTarget =
+        event.counterSlashTarget ?? null;
 
         const counterDamage =
             event.counterSlashDamage ?? 0;
+
+            //----------------------------------
+// リコイルショックの反撃情報
+//----------------------------------
+
+const recoilTarget =
+    event.recoilShockTarget ?? null;
+
+const recoilDamage =
+    event.recoilShockDamage ?? 0;
+
+const recoilSourceCard =
+    event.recoilShockSourceCard ?? null;
+
+    //======================================
+// 今回の反撃情報を消去
+// 次のレジストで二重発動させない
+//======================================
+
+event.counterSlashTarget = null;
+event.counterSlashDamage = 0;
+
+event.recoilShockTarget = null;
+event.recoilShockDamage = 0;
+event.recoilShockSourceCard = null;
 
 
         //----------------------------------
@@ -2900,13 +3101,46 @@ if(
 
         let resumed = false;
 
-        const resumeOriginal = () => {
+const resumeOriginal = () => {
 
-            if(resumed){
-                return;
-            }
+    if(resumed){
+        return;
+    }
 
-            resumed = true;
+    resumed = true;
+
+    //==================================
+    // ダメージ後：追加レジスト確認
+    //==================================
+
+    if(!afterDamagePassed){
+
+        if(checkNextAfterDamageResist(event)){
+
+            console.log(
+                "追加レジスト選択へ移行"
+            );
+
+            return;
+        }
+    }
+
+    // 追加レジストがなければ
+    // 以下の既存処理で元の行動へ戻る
+
+    //==================================
+// ダメージ後レジストの完全終了
+//==================================
+
+// 追加で使えるレジストがない、
+// または「プレイしない」が選ばれた場合
+// ここで選択状態を初期化する
+
+resistPassedThisEvent = false;
+
+console.log(
+    "ダメージ後レジスト：すべて解決完了"
+);
 
             //----------------------------------
             // 専用再開関数
@@ -2979,22 +3213,26 @@ if(
         });
 
 
-        //----------------------------------
-        // レジスト状態解除
-        //----------------------------------
+//----------------------------------
+// レジスト状態解除
+//----------------------------------
 
-        currentResistEvent = null;
+// 元のイベントは一時保存した
+// event から引き続き参照する
+currentResistEvent = null;
 
-        resistMode = false;
-        resistUsingCard = null;
-        resistCostConfirm = false;
+resistMode = false;
+resistUsingCard = null;
+resistCostConfirm = false;
 
-        selectedResistCostCards = [];
-        selectableResistCards = [];
+selectedResistCostCards = [];
+selectableResistCards = [];
 
-        resistPassedThisEvent = false;
+// 「プレイしない」の選択状態は
+// afterDamagePassed に保存済み
+// 追加選択を開始するときまで保持する
 
-        updateButtons();
+updateButtons();
 
 
         //==================================
@@ -3060,6 +3298,133 @@ if(
             }
 
         }
+
+        //==================================
+// リコイルショック
+// ダメージ元のサモンに3ダメージ
+//==================================
+
+if(
+    recoilTarget &&
+    recoilDamage > 0
+){
+
+    //----------------------------------
+    // 対象が場に残っているか確認
+    //----------------------------------
+
+    const targetField =
+        recoilTarget.owner === PLAYER
+            ? playerField
+            : enemyField;
+
+    const targetExists =
+        targetField.includes(recoilTarget) &&
+        !recoilTarget.destroyed;
+
+    if(targetExists){
+
+        console.log(
+            "リコイルショック：反撃開始",
+            recoilTarget.card.name,
+            recoilDamage
+        );
+
+        //----------------------------------
+        // サモンにダメージ
+        //----------------------------------
+
+        const result =
+            dealDamage(
+                recoilTarget,
+                recoilDamage,
+                recoilSourceCard,
+                false
+            );
+
+        console.log(
+            "リコイルショック：処理結果",
+            result
+        );
+
+        //----------------------------------
+        // ヒュドラの能力選択待機
+        //----------------------------------
+
+if(result === "WAIT_HYDRA"){
+
+    console.log(
+        "リコイルショック：ヒュドラ待機"
+    );
+
+    //----------------------------------
+    // ヒュドラ解決後の処理を保存
+    //----------------------------------
+
+    recoilShockHydraResume = () => {
+
+        //----------------------------------
+        // 破壊判定
+        //----------------------------------
+
+        resolveDestroy();
+
+        //----------------------------------
+        // 破壊されたサモンをクールへ
+        //----------------------------------
+
+        removeDestroyedSummons();
+
+        console.log(
+            "リコイルショック：ヒュドラ解決後の破壊処理完了"
+        );
+
+        //----------------------------------
+        // 次のレジスト選択へ
+        //----------------------------------
+
+        resumeOriginal();
+
+    };
+
+    return;
+}
+
+        //----------------------------------
+        // レジスト選択待機
+        //----------------------------------
+
+        if(result === "WAIT_RESIST"){
+
+            console.log(
+                "リコイルショック：レジスト待機"
+            );
+
+            return;
+
+        }
+
+        //----------------------------------
+// リコイルショックの破壊処理
+//----------------------------------
+
+resolveDestroy();
+
+removeDestroyedSummons();
+
+console.log(
+    "リコイルショック：破壊処理完了"
+);
+
+    }else{
+
+        console.log(
+            "リコイルショック：対象が場に存在しない"
+        );
+
+    }
+
+}
 
 
         //----------------------------------
@@ -3327,13 +3692,10 @@ if(
             // 使用可能CPUレジスト取得
             //----------------------------------
 
-            const cpuResistCards =
-                findCpuResistCards(
-                    currentResistEvent
-                ).filter(
-                    card =>
-                        !card.usedThisEvent
-                );
+const cpuResistCards =
+    findCpuResistCards(
+        currentResistEvent
+    );
 
 
             //----------------------------------
@@ -3458,13 +3820,10 @@ if(
                 !resistPassedThisEvent
             ){
 
-                const resistCards =
-                    findResistCards(
-                        currentResistEvent
-                    ).filter(
-                        card =>
-                            !card.usedThisEvent
-                    );
+const resistCards =
+    findResistCards(
+        currentResistEvent
+    );
 
 
                 //----------------------------------

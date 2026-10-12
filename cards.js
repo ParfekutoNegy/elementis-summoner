@@ -1129,7 +1129,11 @@ const CARD_LIST = [
         element: "火",
         cost: 1,
         series:"mythology",
-        image: "images/072-リコイルショック.jpg"
+        image: "images/072-リコイルショック.jpg",
+            condi:"自分がサモンからダメージを受けたとき",
+            text:"自分にダメージを与えたサモン１体を対象にし、３ダメージを与える。",
+            trigger: "afterPlayerDamage",
+            effect: "recoilShock"
     },
     {
         id: 73,
@@ -1244,6 +1248,8 @@ const CARD_LIST = [
     cost: 1,
     series: "mythology",
     image: "images/080-カウンタースラッシュ.jpg",
+    condi:"自分がサモンからダメージを受けたとき",
+    text:"相手を対象にし、１ダメージを与える。",
     trigger: "afterPlayerDamage",
     effect: "counterSlash"
 },
