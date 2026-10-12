@@ -2353,7 +2353,7 @@ function tutorialStep2AfterUseButton(){
 
 
         setTutorialMessage(
-            "選べる対象が発光します。\nここでは相手プレイヤーを選んでください。。"
+            "選べる対象が発光します。\nここでは相手プレイヤーを選んでください。"
         );
 
 
