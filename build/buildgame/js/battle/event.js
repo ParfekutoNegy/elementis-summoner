@@ -755,10 +755,15 @@ if(
                 )
                 : "プレイヤー";
 
-        return (
-            `${targetName}は${damage}ダメージを受けます。<br>\n\n` +
-            "レジストをプレイしますか？"
-        );
+const damageMessage =
+    event.type === GAME_EVENT.AFTER_PLAYER_DAMAGE
+        ? `${targetName}はダメージを受けました。`
+        : `${targetName}は${damage}ダメージを受けます。`;
+
+return (
+    `${damageMessage}<br>` +
+    "レジストをプレイしますか？"
+);
 
     }
 
