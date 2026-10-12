@@ -5730,7 +5730,7 @@ function damagePlayer(
 const nereidUsed =
     checkNereidDamagePrevent(
         player,
-        finalDamage,
+        damage,
         null,
         sourceCard
     );

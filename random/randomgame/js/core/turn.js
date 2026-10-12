@@ -1423,6 +1423,54 @@ function startCpuTurn(){
     game.state =
         TURN_STATE.START;
 
+        //==================================
+// CPU：デリュージ使用予定判定
+// ターン開始時に1回だけ判定
+//==================================
+
+cpuDelugePlannedThisTurn = false;
+
+const playerSummonCount =
+    playerField.filter(
+        summon =>
+            summon &&
+            !summon.destroyed
+    ).length;
+
+const cpuSummonCount =
+    enemyField.filter(
+        summon =>
+            summon &&
+            !summon.destroyed
+    ).length;
+
+const hasDeluge =
+    enemyHandCards.some(
+        card =>
+            card.effect?.type === "deluge"
+    );
+
+if(
+    playerSummonCount - cpuSummonCount >= 2 &&
+    delugeUsed[ENEMY] === false &&
+    hasDeluge
+){
+
+    cpuDelugePlannedThisTurn = true;
+
+}
+
+console.log(
+    "CPU：デリュージ使用予定判定",
+    {
+        playerSummonCount,
+        cpuSummonCount,
+        hasDeluge,
+        alreadyUsed: delugeUsed[ENEMY],
+        planned: cpuDelugePlannedThisTurn
+    }
+);
+
 
 //==================================================
 // ターン開始
