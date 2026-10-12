@@ -1110,6 +1110,133 @@ function startMagiaCost(){
 
 }
 
+//==================================
+// デリュージ専用解決処理
+//==================================
+
+function startDelugeResolution(
+    resolvedMagia,
+    resolvedTarget
+){
+
+    console.log(
+        "デリュージ：専用解決開始",
+        resolvedMagia.owner
+    );
+
+    //----------------------------------
+// デリュージ使用履歴を記録
+//----------------------------------
+
+delugeUsed[resolvedMagia.owner] = true;
+
+console.log(
+    "デリュージ使用済み：",
+    resolvedMagia.owner
+);
+
+    //----------------------------------
+    // 手札から削除
+    //----------------------------------
+
+    if(resolvedMagia.owner === PLAYER){
+
+        board.handCards =
+            board.handCards.filter(
+                card => card !== resolvedMagia
+            );
+
+    }
+    else{
+
+        enemyHandCards =
+            enemyHandCards.filter(
+                card => card !== resolvedMagia
+            );
+
+    }
+
+    //----------------------------------
+    // CPUの追加行動を待機
+    //----------------------------------
+
+    if(resolvedMagia.owner === ENEMY){
+
+        cpuWaiting = true;
+
+    }
+
+    //----------------------------------
+    // マギア自身をクールへ
+    //----------------------------------
+
+    resolvedMagia.area = "cool";
+
+    board.addCoolCard(
+        resolvedMagia,
+        resolvedMagia.owner
+    );
+
+    //----------------------------------
+    // マギア選択状態解除
+    //----------------------------------
+
+    resetMagiaState();
+
+    summonCard = null;
+    selectedCostCards = [];
+    costConfirm = false;
+
+    updateButtons();
+
+    //----------------------------------
+    // クール時誘発能力終了後の処理
+    //----------------------------------
+
+    battleResolveAfterCallback = () => {
+
+        console.log(
+            "デリュージ：クール時誘発能力解決完了"
+        );
+
+        //----------------------------------
+        // CPUの対象ハイライト解除
+        //----------------------------------
+
+        if(
+            resolvedMagia.owner === ENEMY &&
+            typeof clearCpuMagiaTargetHighlight ===
+                "function"
+        ){
+
+            clearCpuMagiaTargetHighlight(
+                resolvedTarget
+            );
+
+        }
+
+        //----------------------------------
+        // ターン強制終了
+        //----------------------------------
+
+        finishDelugeTurn();
+
+    };
+
+    //----------------------------------
+    // クール時誘発能力を並べ替え
+    //----------------------------------
+
+    sortCoolTriggerQueue();
+
+    //----------------------------------
+    // クール時誘発能力を解決
+    //----------------------------------
+
+    startCoolTriggerResolution();
+
+}
+
 function resolveMagia(){
 
     //----------------------------------
@@ -1451,6 +1578,28 @@ function resolveMagia(){
 
         return;
     }
+
+    //==================================
+// デリュージ専用処理
+//==================================
+
+if(
+    resolvedMagia.effect?.type ===
+        "deluge"
+){
+
+    console.log(
+        "デリュージ：専用解決処理へ移行"
+    );
+
+    startDelugeResolution(
+        resolvedMagia,
+        resolvedTarget
+    );
+
+    return;
+
+}
 
 
     //==================================
@@ -2547,6 +2696,31 @@ function clearMagiaHighlight(){
 //======================================
 
 function canUseMagia(card){
+
+        //==================================
+    // デリュージ使用制限
+    // 1ゲームにつき各プレイヤー1回
+    //==================================
+
+    if(
+        card?.effect?.type === "deluge"
+    ){
+
+        const owner =
+            card.owner ?? game.currentPlayer;
+
+        if(delugeUsed[owner] === true){
+
+            console.log(
+                "デリュージ使用不可：使用済み",
+                owner
+            );
+
+            return false;
+
+        }
+
+    }
 
     //----------------------------------
     // 対象指定なし

@@ -1337,7 +1337,13 @@ const CARD_LIST = [
         element: "水",
         cost: 5,
         series:"mythology",
-        image: "images/087-デリュージ.jpg"
+        image: "images/087-デリュージ.jpg",
+        tag:"自分と相手",
+        text:"すべてのサモンをクールゾーンに置き、ターンを終了する。『デリュージ』は１度しかプレイできない。",
+        effect: {
+            type: "deluge",
+            target: ["player", "enemy"]
+        }
     },
     {
         id: 88,

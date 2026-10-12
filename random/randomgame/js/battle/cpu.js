@@ -3859,6 +3859,25 @@ function selectCpuMagiaTarget(card){
     }
 
     //==================================
+// デリュージ
+// 全サモンをクールゾーンに置く
+// 対象選択はCPU自身に固定
+//==================================
+
+if(
+    card.effect.type === "deluge"
+){
+
+    console.log(
+        "CPU：デリュージ対象",
+        "CPU自身"
+    );
+
+    return ENEMY;
+
+}
+
+    //==================================
     // ダメージブースト
     // CPU自身を対象にする
     //==================================
@@ -10412,6 +10431,63 @@ function selectBestCpuAction(
             b.points - a.points
     );
 
+    //==================================
+// デリュージ専用行動優先順位
+//
+// ① アタック・サモン能力
+// ② デリュージ
+//==================================
+
+if(cpuDelugePlannedThisTurn){
+
+    const delugeAction =
+        actions.find(
+            action =>
+                action.type === "MAGIA" &&
+                action.card?.effect?.type === "deluge"
+        );
+
+    if(delugeAction){
+
+        const beforeDelugeActions =
+            actions.filter(
+                action =>
+                    action.type === "ATTACK" ||
+                    action.type === "ABILITY"
+            );
+
+        //----------------------------------
+        // アタック・能力が残っている
+        //----------------------------------
+
+        if(beforeDelugeActions.length > 0){
+
+            console.log(
+                "CPU：デリュージ前の行動を優先",
+                beforeDelugeActions[0].type,
+                beforeDelugeActions[0].card?.name
+            );
+
+            return beforeDelugeActions[0];
+
+        }
+
+        //----------------------------------
+        // アタック・能力がない
+        // デリュージを使用
+        //----------------------------------
+
+        console.log(
+            "CPU：アタック・能力完了",
+            "デリュージを使用"
+        );s
+
+        return delugeAction;
+
+    }
+
+}
+
 
     //----------------------------------
     // 候補表示
@@ -11344,6 +11420,38 @@ function createCpuMagiaAction(card){
 
     }
 
+//==================================
+// デリュージ専用使用条件
+// ・1ゲーム1回
+// ・CPUターン開始時に使用予定が成立
+//==================================
+
+if(card.effect?.type === "deluge"){
+
+    if(delugeUsed[ENEMY] === true){
+
+        console.log(
+            "CPU：デリュージ候補外",
+            "このゲームでは使用済み"
+        );
+
+        return null;
+
+    }
+
+    if(!cpuDelugePlannedThisTurn){
+
+        console.log(
+            "CPU：デリュージ候補外",
+            "ターン開始時の使用条件不成立"
+        );
+
+        return null;
+
+    }
+
+}
+
 
     //==================================
     // ダメージブースト使用条件
@@ -12011,28 +12119,35 @@ if(
             game.playerLife;
 
 
-    //----------------------------------
-    // 通常の手札温存
-    //----------------------------------
+//----------------------------------
+// 通常の手札温存
+//
+// デリュージ使用予定の場合は
+// 手札温存制限を適用しない
+//----------------------------------
 
-    if(
-        !canIgnoreHandLimit &&
-        !isPlayerLethal &&
-        enemyHandCards.length
-            - 1
-            - currentCost
-            < 2
-    ){
+if(
+    !canIgnoreHandLimit &&
+    !isPlayerLethal &&
+    !(
+        card.effect?.type === "deluge" &&
+        cpuDelugePlannedThisTurn
+    ) &&
+    enemyHandCards.length
+        - 1
+        - currentCost
+        < 2
+){
 
-        console.log(
-            "CPUポイント評価：マギア候補外",
-            card.name,
-            "手札温存"
-        );
+    console.log(
+        "CPUポイント評価：マギア候補外",
+        card.name,
+        "手札温存"
+    );
 
-        return null;
+    return null;
 
-    }
+}
 
 
     //----------------------------------
@@ -12449,6 +12564,29 @@ else if(
         10,
         "マギア基本点"
     );
+
+    //==================================
+// デリュージ
+// 使用予定ターンは最優先
+//==================================
+
+if(
+    card.effect?.type === "deluge" &&
+    cpuDelugePlannedThisTurn
+){
+
+    addCpuActionPoints(
+        action,
+        10000,
+        "デリュージ使用予定：最優先"
+    );
+
+    console.log(
+        "CPU：デリュージ最優先候補",
+        card.name
+    );
+
+}
 
 
     //==================================
@@ -14329,12 +14467,12 @@ function createCpuActions(){
 if(
     canPlayCardByLimit(
         ENEMY
-    )
+    ) &&
+    !cpuDelugePlannedThisTurn
 ){
 
     const summonActions =
         createCpuSummonActions();
-
 
     actions.push(
         ...summonActions
@@ -15613,6 +15751,25 @@ if(
             return;
 
         }
+
+        //==================================
+// デリュージ
+// ターン終了処理に移行するため
+// CPUの次の行動を予約しない
+//==================================
+
+if(
+    card.effect?.type === "deluge"
+){
+
+    console.log(
+        "CPU：デリュージ使用後",
+        "ターン終了処理待ち"
+    );
+
+    return;
+
+}
 
 
         //----------------------------------

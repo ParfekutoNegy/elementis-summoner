@@ -45,3 +45,16 @@ function switchPlayer(){
 
 }
 
+//==================================
+// デリュージ使用履歴
+// 1ゲームにつき各プレイヤー1回
+//==================================
+
+const delugeUsed = {
+    player: false,
+    enemy: false
+};
+
+// CPUがこのターンにデリュージを使用する予定か
+let cpuDelugePlannedThisTurn = false;
+

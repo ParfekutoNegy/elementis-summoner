@@ -1776,6 +1776,22 @@ enemyMatchStartingCards = [];
 
 function setupGame(){
 
+        //==================================
+    // デリュージ使用履歴リセット
+    // 1ゲームごとにPLAYER・CPUを初期化
+    //==================================
+
+    delugeUsed[PLAYER] = false;
+    delugeUsed[ENEMY] = false;
+
+    console.log(
+        "デリュージ使用履歴リセット",
+        {
+            player: delugeUsed[PLAYER],
+            enemy: delugeUsed[ENEMY]
+        }
+    );
+
     //----------------------------------
     // フィールドデータ初期化
     //----------------------------------

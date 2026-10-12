@@ -1260,6 +1260,62 @@ case "damageAllEnemySummons":
         }
 
         //==================================
+// デリュージ
+// すべてのサモンをクールゾーンに置く
+//==================================
+
+case "deluge":{
+
+    console.log(
+        "デリュージ発動",
+        "使用者=",
+        card.owner
+    );
+
+    //----------------------------------
+    // 両プレイヤーのサモンを取得
+    //----------------------------------
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
+
+    //----------------------------------
+    // すべてクールゾーンへ移動
+    //----------------------------------
+
+    allSummons.forEach(summon => {
+
+        if(!summon || !summon.card){
+            return;
+        }
+
+        // すでに場から離れている場合は除外
+        if(
+            !playerField.includes(summon) &&
+            !enemyField.includes(summon)
+        ){
+            return;
+        }
+
+        moveLamiaTargetToCool(summon);
+
+        addBattleLog(
+            `デリュージ：${summon.card.name}をクールゾーンに置いた`
+        );
+
+    });
+
+    console.log(
+        "デリュージ：全サモンの移動処理完了"
+    );
+
+    return "DONE";
+
+}
+
+        //==================================
 // サモンをクールゾーンに置く
 //
 // インフェルノ

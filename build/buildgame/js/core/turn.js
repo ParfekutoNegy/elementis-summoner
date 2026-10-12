@@ -16,6 +16,58 @@ function startTurn(){
         game.currentPlayer
     );
 
+    //==================================
+// CPU：デリュージ使用予定判定
+// ターン開始時に1回だけ判定
+//==================================
+
+cpuDelugePlannedThisTurn = false;
+
+if(game.currentPlayer === ENEMY){
+
+    const playerSummonCount =
+        playerField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    const cpuSummonCount =
+        enemyField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed
+        ).length;
+
+    const hasDeluge =
+        enemyHandCards.some(
+            card =>
+                card.effect?.type === "deluge"
+        );
+
+    if(
+        playerSummonCount - cpuSummonCount >= 2 &&
+        delugeUsed[ENEMY] === false &&
+        hasDeluge
+    ){
+
+        cpuDelugePlannedThisTurn = true;
+
+    }
+
+    console.log(
+        "CPU：デリュージ使用予定判定",
+        {
+            playerSummonCount,
+            cpuSummonCount,
+            hasDeluge,
+            alreadyUsed: delugeUsed[ENEMY],
+            planned: cpuDelugePlannedThisTurn
+        }
+    );
+
+}
+
 
     //==================================================
     // ターン開始
@@ -839,6 +891,104 @@ function finishTurnEnd(){
         startCpuTurn();
 
     }
+
+}
+
+//==================================
+// デリュージ専用ターン終了
+// PLAYER・CPU共通
+//==================================
+
+function finishDelugeTurn(){
+
+    //----------------------------------
+    // ゲーム終了確認
+    //----------------------------------
+
+    if(
+        battleGameEnding ||
+        battleGameConceded ||
+        game.playerLife <= 0 ||
+        game.enemyLife <= 0
+    ){
+        return;
+    }
+
+    console.log(
+        "デリュージ：ターン強制終了",
+        game.currentPlayer
+    );
+
+    //----------------------------------
+    // CPUの追加行動を停止
+    //----------------------------------
+
+    if(game.currentPlayer === ENEMY){
+
+        cpuTurnStep = 4;
+        cpuWaiting = true;
+
+    }
+
+    //----------------------------------
+    // ターン終了状態へ
+    //----------------------------------
+
+    game.state = TURN_STATE.END;
+
+    //----------------------------------
+    // 操作状態解除
+    //----------------------------------
+
+    resetMagiaState();
+
+    summonCard = null;
+    selectedCostCards = [];
+    costConfirm = false;
+
+    closeHandModal();
+    closeSummonActionModal();
+    closeCoolModal();
+    closeEnemyCoolModal();
+    closeCostView();
+
+    resetAttackState();
+
+    selectedHandCard = null;
+    selectedSummon = null;
+
+    resetActionButtons();
+    updateButtons();
+
+    //----------------------------------
+    // 一時パワー解除
+    //----------------------------------
+
+    resetTemporaryPower(PLAYER);
+    resetTemporaryPower(ENEMY);
+
+    //----------------------------------
+    // ターン終了時能力
+    //----------------------------------
+
+    onTurnEnd(() => {
+
+        if(
+            battleGameEnding ||
+            battleGameConceded ||
+            game.playerLife <= 0 ||
+            game.enemyLife <= 0
+        ){
+            return;
+        }
+
+        //----------------------------------
+        // ターン終了時レジスト
+        //----------------------------------
+
+        checkTurnEndResist();
+
+    });
 
 }
 
