@@ -2034,6 +2034,7 @@ function showPlayerDamageNumber(target, damage){
 // カード使用可能判定
 //======================================
 
+
 function canUseCard(card){
 
     //----------------------------------
@@ -2126,6 +2127,90 @@ function canUseCard(card){
     //----------------------------------
 
     if(card.type === "マギア"){
+
+
+        //==================================
+        // イミテーション
+        //
+        // 相手クールゾーンのマギアを
+        // コピーして使用する
+        //==================================
+
+        if(
+            card.effect?.type === "imitation" &&
+            card.effect?.target?.includes(
+                "enemyCoolMagia"
+            )
+        ){
+
+            //----------------------------------
+            // コピー可能なマギアの存在確認
+            //----------------------------------
+
+            const imitationTargets =
+                getImitationTargets();
+
+            if(imitationTargets.length === 0){
+
+                console.log(
+                    "イミテーション使用不可：",
+                    "コピー可能なマギアが存在しません"
+                );
+
+                return false;
+
+            }
+
+
+            //----------------------------------
+            // プレイ枚数制限
+            //
+            // イミテーション自身＋コピー先
+            // 合計2枚分の枠が必要
+            //----------------------------------
+
+            const playCount =
+                getCardPlayCount(PLAYER);
+
+            const playLimit =
+                getCardPlayLimit(PLAYER);
+
+            if(playCount + 2 > playLimit){
+
+                console.log(
+                    "イミテーション使用不可：",
+                    "プレイ枚数上限",
+                    playCount,
+                    "+ 2 >",
+                    playLimit
+                );
+
+                return false;
+
+            }
+
+
+            //----------------------------------
+            // コスト確認
+            //
+            // イミテーション自身のコストのみ
+            //----------------------------------
+
+            if(!canPayCost(card)){
+
+                return false;
+
+            }
+
+
+            //----------------------------------
+            // 使用可能
+            //----------------------------------
+
+            return true;
+
+        }
+
 
 
         //==================================
@@ -2225,6 +2310,7 @@ function canUseCard(card){
     return false;
 
 }
+
 //======================================
 // 手札使用可能発光
 //======================================
@@ -2537,73 +2623,78 @@ function hasMagiaTarget(card){
     }
 
 
-    //----------------------------------
-    // 敵サモン対象
-    //----------------------------------
+//----------------------------------
+// 敵サモン対象
+//----------------------------------
 
-    if(
-        targets.includes(
-            "enemySummon"
-        )
-    ){
+if(targets.includes("enemySummon")){
 
-        if(
-            enemyField.some(
-                summon =>
-                    summon &&
-                    !summon.destroyed
-            )
-        ){
+    const hasTarget = enemyField.some(summon => {
 
-            return true;
-
+        if(!summon || summon.destroyed){
+            return false;
         }
 
-    }
-
-
-    //----------------------------------
-    // 敵プレイヤー対象
-    //----------------------------------
-
-    if(
-        targets.includes(
-            "enemy"
-        )
-    ){
+        if(
+            typeof isMagiaTargetBlocked === "function" &&
+            isMagiaTargetBlocked(card, summon)
+        ){
+            return false;
+        }
 
         return true;
 
+    });
+
+    if(hasTarget){
+        return true;
     }
 
+}
 
-    //----------------------------------
-    // 自分サモン対象
-    //----------------------------------
 
-    if(
-        targets.includes(
-            "selfSummon"
-        ) ||
-        targets.includes(
-            "playerSummon"
-        )
-    ){
+//----------------------------------
+// 敵プレイヤー対象
+//----------------------------------
 
-        if(
-            playerField.some(
-                summon =>
-                    summon &&
-                    !summon.destroyed
-            )
-        ){
+if(targets.includes("enemy")){
 
-            return true;
+    return true;
 
+}
+
+
+//----------------------------------
+// 自分サモン対象
+//----------------------------------
+
+if(
+    targets.includes("selfSummon") ||
+    targets.includes("playerSummon")
+){
+
+    const hasTarget = playerField.some(summon => {
+
+        if(!summon || summon.destroyed){
+            return false;
         }
 
+        if(
+            typeof isMagiaTargetBlocked === "function" &&
+            isMagiaTargetBlocked(card, summon)
+        ){
+            return false;
+        }
+
+        return true;
+
+    });
+
+    if(hasTarget){
+        return true;
     }
 
+}
 
     //----------------------------------
     // 自分対象
@@ -2621,6 +2712,103 @@ function hasMagiaTarget(card){
 
 
     return false;
+
+}
+
+//======================================
+// イミテーション
+// コピー可能なマギアの確認
+//======================================
+
+function getImitationTargets(){
+
+    //----------------------------------
+    // 相手クールゾーン
+    //----------------------------------
+
+    const coolCards =
+        board.enemyCoolCards || [];
+
+
+            //==================================
+    // ケルベロス
+    // 相手クールゾーン対象制限
+    //==================================
+
+    const hasCerberus =
+        enemyField.some(summon => {
+
+            if(
+                !summon ||
+                summon.destroyed
+            ){
+                return false;
+            }
+
+            return (
+                summon.card?.name ===
+                "ケルベロス"
+            );
+
+        });
+
+    //----------------------------------
+    // ケルベロスが存在する場合
+    //----------------------------------
+
+    if(hasCerberus){
+
+        console.log(
+            "イミテーション使用不可：",
+            "相手の場にケルベロスが存在"
+        );
+
+        return [];
+
+    }
+
+    //----------------------------------
+    // コピー候補を抽出
+    //----------------------------------
+
+    return coolCards.filter(card => {
+
+        //----------------------------------
+        // マギア以外は対象外
+        //----------------------------------
+
+        if(
+            !card ||
+            card.type !== "マギア"
+        ){
+
+            return false;
+
+        }
+
+//----------------------------------
+// PLAYERが使用するコピーカードを作成
+//----------------------------------
+
+const copiedCard = {
+    ...card,
+    owner: PLAYER,
+    area: "imitationCopy"
+};
+
+//----------------------------------
+// コピー後の状態で対象を確認
+//----------------------------------
+
+if(!hasMagiaTarget(copiedCard)){
+
+    return false;
+
+}
+
+        return true;
+
+    });
 
 }
 

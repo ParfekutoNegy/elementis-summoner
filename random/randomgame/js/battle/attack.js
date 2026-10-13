@@ -5447,24 +5447,58 @@ function resumeMagiaAfterNereid(){
             resolveBattle();
 
 
-            //----------------------------------
-            // マギアをクールへ
-            //----------------------------------
+//==================================
+// ネレイド解決後のマギア終了処理
+//==================================
 
-            resolvedMagia.area =
-                "cool";
+if(
+    resolvedMagia.area ===
+        "imitationCopy"
+){
 
+    //----------------------------------
+    // コピーしたマギア
+    // クールゾーンには追加しない
+    //----------------------------------
 
-            board.addCoolCard(
-                resolvedMagia,
-                resolvedMagia.owner
-            );
+    console.log(
+        "ネレイド後：イミテーションのコピー効果解決完了",
+        resolvedMagia.name
+    );
 
+    //----------------------------------
+    // コピー状態を解除
+    //----------------------------------
 
-            console.log(
-                "ネレイド後：マギア効果解決完了 → クールへ",
-                resolvedMagia.name
-            );
+    imitationCopyResolving = false;
+
+    imitationTargetCard = null;
+
+    console.log(
+        "イミテーション：ネレイド後のコピー状態解除完了"
+    );
+
+}
+else{
+
+    //----------------------------------
+    // 通常マギアはクールへ
+    //----------------------------------
+
+    resolvedMagia.area =
+        "cool";
+
+    board.addCoolCard(
+        resolvedMagia,
+        resolvedMagia.owner
+    );
+
+    console.log(
+        "ネレイド後：マギア効果解決完了 → クールへ",
+        resolvedMagia.name
+    );
+
+}
 
 
             //==================================

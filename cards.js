@@ -1321,15 +1321,21 @@ const CARD_LIST = [
         series:"mythology",
         image: "images/085-アイスジェイル.jpg"
     },
-    {
-        id: 86,
-        name:"イミテーション",
-        type: "マギア",
-        element: "水",
-        cost: 1,
-        series:"mythology",
-        image: "images/086-イミテーション.jpg"
-    },
+{
+    id: 86,
+    name: "イミテーション",
+    type: "マギア",
+    element: "水",
+    cost: 1,
+    series: "mythology",
+    image: "images/086-イミテーション.jpg",
+    tag:"相手のクールゾーンのマギア１枚",
+    text:"コストを支払わず対象をプレイする。",
+    effect: {
+        type: "imitation",
+        target: ["enemyCoolMagia"]
+    }
+},
     {
         id: 87,
         name:"デリュージ",
