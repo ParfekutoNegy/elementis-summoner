@@ -5941,7 +5941,24 @@ if(
     )
 ){
 
+//==================================
+// イミテーション
+// コピーしたマギアの対象選択中は
+// 行動案内を消さない
+//==================================
+
+if(
+    !(
+        typeof imitationCopyResolving !== "undefined" &&
+        imitationCopyResolving &&
+        typeof magiaTargetMode !== "undefined" &&
+        magiaTargetMode
+    )
+){
+
     hideActionGuide();
+
+}
 
 }
 
@@ -6703,9 +6720,13 @@ const actionRunning =
             "undefined" &&
         attackResolving
     ) ||
-    coolRecoveryMode ||
-    magiaTargetMode ||
-    summonAbilityTargetMode ||
+coolRecoveryMode ||
+magiaTargetMode ||
+(
+    typeof imitationTargetMode !== "undefined" &&
+    imitationTargetMode
+) ||
+summonAbilityTargetMode ||
     summonAbilityCostMode ||
     nereidDamageWaiting ||
 
@@ -6728,6 +6749,127 @@ const actionRunning =
 }
 
 resetActionButtons();
+
+//======================================
+// イミテーション
+// 相手クールゾーンのマギア選択中
+//======================================
+
+if(
+    typeof imitationTargetMode !== "undefined" &&
+    imitationTargetMode
+){
+
+    //----------------------------------
+    // アクションエリア表示
+    //----------------------------------
+
+    actionArea.style.display = "flex";
+
+    //----------------------------------
+    // キャンセルボタン
+    //----------------------------------
+
+    cancelButton.style.display =
+        "inline-block";
+
+    cancelButton.textContent =
+        "キャンセル";
+
+    cancelButton.onclick = ()=>{
+
+        //----------------------------------
+        // 相手クールモーダルを閉じる
+        //----------------------------------
+
+        const modal =
+            document.getElementById(
+                "enemy-cool-modal"
+            );
+
+        if(modal){
+
+            modal.style.display = "none";
+
+            modal.classList.remove(
+                "active"
+            );
+
+        }
+
+        //----------------------------------
+        // 選択状態を終了
+        //----------------------------------
+
+        imitationTargetMode = false;
+        imitationTargetCard = null;
+
+        //----------------------------------
+        // マギア状態をリセット
+        //----------------------------------
+
+        resetMagiaState();
+
+        hideActionGuide();
+
+        //----------------------------------
+        // 表示更新
+        //----------------------------------
+
+        updateGameState();
+        updateButtons();
+
+    };
+
+
+    //----------------------------------
+    // 対象未選択
+    // 決定ボタンは表示しない
+    //----------------------------------
+
+    if(!imitationTargetCard){
+
+        confirmButton.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 対象選択済み
+    // 決定ボタン表示
+    //----------------------------------
+
+    confirmButton.style.display =
+        "inline-block";
+
+    confirmButton.textContent =
+        "決定";
+
+    confirmButton.onclick = ()=>{
+
+        //----------------------------------
+        // 選択したカードを取得
+        //----------------------------------
+
+        const selectedCard =
+            imitationTargetCard;
+
+        //----------------------------------
+        // コピー対象を確定
+        //----------------------------------
+
+        selectImitationTarget(
+            selectedCard
+        );
+
+    };
+
+    return;
+
+}
 
 //======================================
 // スノーストーム
@@ -8806,72 +8948,97 @@ function openEnemyCoolModal(){
                 card.image;
 
 
-            img.className =
-                "cool-card";
+img.className =
+    "cool-card";
+
+//==================================
+// イミテーション対象選択中
+// コピー可能なマギアを発光
+//==================================
+
+if(
+    typeof imitationTargetMode !== "undefined" &&
+    imitationTargetMode
+){
+
+    const imitationTargets =
+        getImitationTargets();
+
+    if(imitationTargets.includes(card)){
+
+        img.classList.add(
+            "imitation-selectable"
+        );
+
+    }
+
+}
 
 
 img.onclick = ()=>{
 
-    //----------------------------------
+    //==================================
     // イミテーション対象選択中
-    //----------------------------------
+    //==================================
 
     if(
         typeof imitationTargetMode !== "undefined" &&
         imitationTargetMode
     ){
 
-        //----------------------------------
-        // マギア以外は選択不可
-        //----------------------------------
+        const imitationTargets =
+            getImitationTargets();
 
-//----------------------------------
-// イミテーション
-// コピー可能なマギアのみ選択
-//----------------------------------
-
-const imitationTargets =
-    getImitationTargets();
-
-if(!imitationTargets.includes(card)){
-
-    console.log(
-        "イミテーション：",
-        "コピーできないマギアです",
-        card.name
-    );
-
-    return;
-
-}
+        if(!imitationTargets.includes(card)){
+            return;
+        }
 
         //----------------------------------
-        // 対象カードを確認
+        // 選択対象を記録
         //----------------------------------
 
-        console.log(
-            "イミテーション：コピー対象選択",
-            card.name
+        imitationTargetCard = card;
+        magiaTarget = card;
+
+        //----------------------------------
+        // 選択枠を更新
+        //----------------------------------
+
+        list.querySelectorAll(
+            ".imitation-selected"
+        ).forEach(element=>{
+
+            element.classList.remove(
+                "imitation-selected"
+            );
+
+        });
+
+        img.classList.add(
+            "imitation-selected"
         );
 
         //----------------------------------
-        // 対象決定処理
-        // （次のSTEPで実装）
+        // 左側のカード詳細表示
         //----------------------------------
 
-        selectImitationTarget(card);
+        showCardInfo(card);
+
+        //----------------------------------
+        // ボタン更新
+        //----------------------------------
+
+        updateButtons();
 
         return;
 
     }
 
     //----------------------------------
-    // 通常時は従来どおりカード情報表示
+    // 通常時のカード情報表示
     //----------------------------------
 
-    showCardInfo(
-        card
-    );
+    showCardInfo(card);
 
 };
 
@@ -13468,6 +13635,26 @@ function showActionGuide(message){
 
 function hideActionGuide(){
 
+
+console.trace(
+    "★ hideActionGuide 呼び出し元",
+    {
+        magiaCard:
+            typeof magiaCard !== "undefined"
+                ? magiaCard?.name
+                : null,
+
+        magiaTargetMode:
+            typeof magiaTargetMode !== "undefined"
+                ? magiaTargetMode
+                : null,
+
+        imitationCopyResolving:
+            typeof imitationCopyResolving !== "undefined"
+                ? imitationCopyResolving
+                : null
+    }
+);
     console.log(
         "★ hideActionGuide 呼び出し"
     );

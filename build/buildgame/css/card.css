@@ -562,7 +562,44 @@
 
 }
 
+/*========================================
+ イミテーション
+ 相手クールゾーンの選択可能カード
+ クール回収と同じ発光
+========================================*/
 
+#enemy-cool-modal
+.cool-card.imitation-selectable{
+
+    outline:4px solid #00d8ff;
+
+    outline-offset:2px;
+
+    cursor:pointer;
+
+    animation:
+        coolRecoveryTargetFlash
+        0.8s
+        infinite;
+
+}
+
+
+/*========================================
+ イミテーション
+ 選択済みカード
+========================================*/
+
+#enemy-cool-modal
+.cool-card.imitation-selected{
+
+    outline:4px solid #ffffff;
+
+    outline-offset:2px;
+
+    animation:none;
+
+}
 
 /*========================================
  クール回収発光アニメーション
