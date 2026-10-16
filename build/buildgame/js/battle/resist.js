@@ -3082,6 +3082,24 @@ console.log(
 
             }
 
+            //==================================
+// ダメージ後レジスト終了
+// 停止中マギアを優先して再開
+//==================================
+
+if(
+    typeof resistMagiaWaiting !== "undefined" &&
+    resistMagiaWaiting
+){
+    console.log(
+        "AFTER_PLAYER_DAMAGE終了：停止中マギアを再開"
+    );
+
+    resumeMagiaAfterResist();
+
+    return;
+}
+
             //----------------------------------
             // CPUターン再開
             //----------------------------------

@@ -6797,18 +6797,40 @@ if(
 
         }
 
-        //----------------------------------
-        // 選択状態を終了
-        //----------------------------------
+ //----------------------------------
+// コピーしたイミテーションか確認
+//----------------------------------
 
-        imitationTargetMode = false;
-        imitationTargetCard = null;
+const isCopiedImitation =
+    magiaCard?.area === "imitationCopy" &&
+    magiaCard?.effect?.type === "imitation";
 
-        //----------------------------------
-        // マギア状態をリセット
-        //----------------------------------
+//----------------------------------
+// 対象選択状態を終了
+//----------------------------------
 
-        resetMagiaState();
+imitationTargetMode = false;
+imitationTargetCard = null;
+
+//----------------------------------
+// コピー処理中の状態を解除
+//----------------------------------
+
+if(isCopiedImitation){
+
+    imitationCopyResolving = false;
+
+    console.log(
+        "コピーしたイミテーション：対象選択をキャンセル"
+    );
+
+}
+
+//----------------------------------
+// マギア状態をリセット
+//----------------------------------
+
+resetMagiaState();
 
         hideActionGuide();
 
@@ -7985,6 +8007,21 @@ else if(
         canUseMagia(
             selectedHandCard
         );
+
+console.log(
+    "★ マギアプレイ判定",
+    {
+        card: selectedHandCard.name,
+        canUse: canUse,
+        canPayCost: canPayCost(selectedHandCard),
+        playCount: getCardPlayCount(PLAYER),
+        playLimit: getCardPlayLimit(PLAYER),
+        canPlayByLimit: canPlayCardByLimit(PLAYER),
+        magiaCard: magiaCard?.name ?? null,
+        magiaTargetMode: magiaTargetMode
+    }
+);
+
 
         if(
     selectedHandCard.name ===

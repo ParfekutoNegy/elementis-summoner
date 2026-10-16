@@ -1200,11 +1200,36 @@ if(
         card.name
     );
 
+//==================================
+// イミテーション：コスト処理
+//==================================
+
+if(
+    magiaCard.area === "imitationCopy"
+){
+
     //----------------------------------
-    // イミテーションのコスト選択へ
+    // コピーしたイミテーション
+    // 追加コストなしで効果を解決
+    //----------------------------------
+
+    console.log(
+        "コピーしたイミテーション：追加コストなしで解決"
+    );
+
+    resolveMagia();
+
+}
+else{
+
+    //----------------------------------
+    // 手札から使用したイミテーション
+    // 通常どおりコストを支払う
     //----------------------------------
 
     startMagiaCost();
+
+}
 
 }
 
@@ -1239,13 +1264,22 @@ if(imitationCopyResolving){
 
     costConfirm = false;
 
-    //----------------------------------
-    // コピーしたマギアの効果解決
-    //----------------------------------
+//==================================
+// イミテーション
+// コピーしたマギアの対象選択完了
+// 行動案内を解除
+//==================================
 
-    resolveMagia();
+hideActionGuide();
 
-    return;
+
+//----------------------------------
+// コピーしたマギアの効果解決
+//----------------------------------
+
+resolveMagia();
+
+return;
 }
 
     //----------------------------------
@@ -1566,17 +1600,38 @@ if(isCpuImitation){
         // CPUが使用可能なマギアか確認
         //----------------------------------
 
-        validImitationTarget =
-            playerCoolCards.includes(
-                originalCard
-            ) &&
-            originalCard.type === "マギア" &&
-            originalCard.effect?.type !== "imitation" &&
-            hasMagiaTarget({
-                ...originalCard,
-                owner: ENEMY,
-                area: "imitationCopy"
-            });
+//==================================
+// CPU：イミテーションのコピー対象確認
+//==================================
+
+const copiedTargetCard = {
+    ...originalCard,
+    owner: ENEMY,
+    area: "imitationCopy"
+};
+
+//----------------------------------
+// コピーしたイミテーションからは
+// イミテーションを再選択しない
+//----------------------------------
+
+const isRepeatedImitation =
+    imitationCard.area === "imitationCopy" &&
+    originalCard.effect?.type === "imitation";
+
+//----------------------------------
+// 適正なコピー対象か確認
+//----------------------------------
+
+validImitationTarget =
+    playerCoolCards.includes(originalCard) &&
+    originalCard.type === "マギア" &&
+    !isRepeatedImitation &&
+    (
+        originalCard.effect?.type === "imitation"
+            ? selectCpuMagiaTarget(copiedTargetCard) !== null
+            : hasMagiaTarget(copiedTargetCard)
+    );
 
     }
 
@@ -1603,9 +1658,88 @@ if(!validImitationTarget){
     return;
 }
 
+
+//==================================
+// STEP 150
+// イミテーションのプレイ枚数制限
+//==================================
+
+if(
+    !canPlayCardByLimit(
+        imitationOwner
+    )
+){
+
+    console.log(
+        "イミテーション：プレイ枚数上限のためコピー不可",
+        {
+            count:
+                getCardPlayCount(
+                    imitationOwner
+                ),
+
+            limit:
+                getCardPlayLimit(
+                    imitationOwner
+                )
+        }
+    );
+
     //----------------------------------
-    // コピーカード生成
+    // コピー処理を終了
     //----------------------------------
+
+    imitationCopyResolving = false;
+
+    imitationTargetMode = false;
+
+    imitationTargetCard = null;
+
+    //----------------------------------
+    // マギア状態を初期化
+    //----------------------------------
+
+    resetMagiaState();
+
+    //----------------------------------
+    // 案内表示を解除
+    //----------------------------------
+
+    hideActionGuide();
+
+    //----------------------------------
+    // 画面を更新
+    //----------------------------------
+
+    updateGameState();
+
+    updateButtons();
+
+    //----------------------------------
+    // CPUの場合は次の行動へ
+    //----------------------------------
+
+    if(
+        imitationOwner === ENEMY &&
+        game.currentPlayer === ENEMY &&
+        game.state === TURN_STATE.PLAYING
+    ){
+
+        cpuWaiting = false;
+
+        setTimeout(
+            () => {
+                runCpuTurnStep();
+            },
+            500
+        );
+
+    }
+
+    return;
+
+}
+
 
 //==================================
 // コピーカード生成
@@ -1703,25 +1837,46 @@ else{
 
 }
 
-//----------------------------------
-// イミテーションをクールへ
-//----------------------------------
+//==================================
+// イミテーション自身のクール処理
+//==================================
 
-imitationCard.area = "cool";
-
-board.addCoolCard(
-    imitationCard,
-    imitationOwner
-);
+if(
+    imitationCard.area !== "imitationCopy"
+){
 
     //----------------------------------
-    // ログ
+    // 通常使用したイミテーション
+    // クールゾーンへ移動
     //----------------------------------
+
+    imitationCard.area = "cool";
+
+    board.addCoolCard(
+        imitationCard,
+        imitationOwner
+    );
 
     console.log(
         "イミテーション自身の解決完了 → クールへ",
         imitationCard.name
     );
+
+}
+else{
+
+    //----------------------------------
+    // コピーしたイミテーション
+    // 実体をクールゾーンへ置かない
+    //----------------------------------
+
+    console.log(
+        "コピーしたイミテーション：クール追加なし",
+        imitationCard.name
+    );
+
+}
+
 
     //==================================
     // コピーしたマギアの対象選択へ
@@ -1857,11 +2012,60 @@ if(copiedTarget === null){
     return;
 }
 
+//==================================
+// CPU：コピーしたマギアの対象設定
+//==================================
+
+if(
+    copiedCard.effect?.type === "imitation"
+){
+
     //----------------------------------
-    // CPUの使用対象を設定
+    // コピーしたイミテーションの場合
+    // 次にコピーするマギアを保存
+    //----------------------------------
+
+    imitationTargetCard = copiedTarget;
+
+    console.log(
+        "CPU：コピーしたイミテーションの次のコピー対象",
+        copiedTarget.name
+    );
+
+}
+else{
+
+    //----------------------------------
+    // 通常のコピーしたマギア
     //----------------------------------
 
     magiaTarget = copiedTarget;
+
+}
+
+    //==================================
+// CPU：イミテーションでコピーした
+// マギアを右側の使用カードに表示
+//==================================
+
+//==================================
+// CPU：イミテーションの表示後に
+// コピーしたマギアを表示・解決
+//==================================
+
+cpuWaiting = true;
+
+setTimeout(() => {
+
+    //----------------------------------
+    // コピーしたマギアを右側に表示
+    //----------------------------------
+
+    showCpuCardAction(
+        copiedCard,
+        "MAGIA",
+        copiedTarget
+    );
 
     console.log(
         "CPU：コピーしたマギアの対象決定",
@@ -1870,17 +2074,43 @@ if(copiedTarget === null){
     );
 
     //----------------------------------
-    // 効果解決
+    // コピーしたマギアの効果解決
     //----------------------------------
 
     resolveMagia();
 
-    return;
+}, 2000);
+
+return;
+}
+
+//==================================
+// PLAYER：コピーしたマギアの対象選択
+//==================================
+
+//----------------------------------
+// コピーしたイミテーションの場合
+//----------------------------------
+
+if(
+    copiedCard.effect?.type === "imitation"
+){
+
+    //----------------------------------
+    // 1回目のコピー対象情報を解除
+    // 次のコピー対象を選び直す
+    //----------------------------------
+
+    imitationTargetCard = null;
+
+    console.log(
+        "PLAYER：コピーしたイミテーションの対象を再選択"
+    );
+
 }
 
 //----------------------------------
-// PLAYERの場合
-// 従来どおり手動選択
+// コピーしたマギアの対象選択を開始
 //----------------------------------
 
 startMagiaTargetSelect(
@@ -2440,21 +2670,31 @@ if(
         resolvedMagia.name
     );
 
-    //----------------------------------
-    // コピー状態を解除
-    //----------------------------------
+//----------------------------------
+// コピー状態を解除
+//----------------------------------
 
-    imitationCopyResolving = false;
+imitationCopyResolving = false;
 
-    imitationTargetCard = null;
+imitationTargetCard = null;
 
-    //----------------------------------
-    // 確認ログ
-    //----------------------------------
 
-    console.log(
-        "イミテーション：コピー状態解除完了"
-    );
+//==================================
+// イミテーション
+// コピーしたマギアの解決完了
+// 行動案内を解除
+//==================================
+
+hideActionGuide();
+
+
+//----------------------------------
+// 確認ログ
+//----------------------------------
+
+console.log(
+    "イミテーション：コピー状態解除完了"
+);
         //==================================
     // CPU：イミテーション解決後
     // 次の行動へ
@@ -2894,8 +3134,7 @@ if(imitationCopyResolving){
 if(
     magiaCard.effect?.target?.includes(
         "enemyCoolMagia"
-    ) &&
-    !imitationCopyResolving
+    )
 ){
 
     //----------------------------------
@@ -4231,13 +4470,48 @@ function canUseMagia(card){
         // コピー可能なマギアを確認
         //----------------------------------
 
-        if(
-            card.effect?.type === "imitation"
-        ){
+if(
+    card.effect?.type === "imitation"
+){
 
-            return getImitationTargets().length > 0;
+    //==================================
+    // STEP 154
+    // イミテーションのプレイ枚数制限
+    //==================================
 
-        }
+    const remainingPlays =
+        getCardPlayLimit(PLAYER) -
+        getCardPlayCount(PLAYER);
+
+    //----------------------------------
+    // イミテーション自身と
+    // コピーするマギアの2枚分が必要
+    //----------------------------------
+
+    if(
+        remainingPlays < 2
+    ){
+
+        console.log(
+            "イミテーション使用不可：コピー分のプレイ枠なし",
+            {
+                remaining: remainingPlays,
+                count: getCardPlayCount(PLAYER),
+                limit: getCardPlayLimit(PLAYER)
+            }
+        );
+
+        return false;
+
+    }
+
+    //----------------------------------
+    // コピー可能なマギアの確認
+    //----------------------------------
+
+    return getImitationTargets().length > 0;
+
+}
 
 
         //----------------------------------

@@ -2808,45 +2808,42 @@ if(
 
 function getImitationTargets(){
 
-    //----------------------------------
-    // 相手クールゾーン
-    //----------------------------------
-
     const coolCards =
         board.enemyCoolCards || [];
 
-
-            //==================================
-    // ケルベロス
-    // 相手クールゾーン対象制限
-    //==================================
+    //----------------------------------
+    // ケルベロスによる使用制限
+    //----------------------------------
 
     const hasCerberus =
-        enemyField.some(summon => {
-
-            if(
-                !summon ||
-                summon.destroyed
-            ){
-                return false;
-            }
-
-            return (
-                summon.card?.name ===
-                "ケルベロス"
-            );
-
-        });
-
-    //----------------------------------
-    // ケルベロスが存在する場合
-    //----------------------------------
+        enemyField.some(
+            summon =>
+                summon &&
+                !summon.destroyed &&
+                summon.card?.name === "ケルベロス"
+        );
 
     if(hasCerberus){
+        return [];
+    }
+
+    //==================================
+    // STEP 151
+    // コピー可能な残りプレイ枚数
+    //==================================
+
+    const remainingPlays =
+        getCardPlayLimit(PLAYER) -
+        getCardPlayCount(PLAYER);
+
+    //----------------------------------
+    // すでに上限に達している
+    //----------------------------------
+
+    if(remainingPlays <= 0){
 
         console.log(
-            "イミテーション使用不可：",
-            "相手の場にケルベロスが存在"
+            "イミテーション：プレイ枚数上限のためコピー対象なし"
         );
 
         return [];
@@ -2854,50 +2851,114 @@ function getImitationTargets(){
     }
 
     //----------------------------------
-    // コピー候補を抽出
+    // コピーしたイミテーションか確認
     //----------------------------------
 
-    return coolCards.filter(card => {
+    const isCopiedImitation =
+        magiaCard?.area === "imitationCopy";
 
-        //----------------------------------
-        // マギア以外は対象外
-        //----------------------------------
+    //==================================
+    // コピー可能なマギアを抽出
+    //==================================
+
+    return coolCards.filter(card=>{
 
         if(
             !card ||
             card.type !== "マギア"
         ){
-
             return false;
+        }
+
+        //==================================
+        // イミテーションの場合
+        //==================================
+
+if(
+    card.effect?.type === "imitation"
+){
+
+    //==================================
+    // STEP 155
+    // ジャックフロストによる制限
+    //==================================
+
+    if(
+        getCardPlayLimit(PLAYER) === 2
+    ){
+
+        console.log(
+            "イミテーション：プレイ2枚制限中のため連続コピー不可"
+        );
+
+        return false;
+
+    }
+
+    //----------------------------------
+    // コピーしたイミテーションから
+    // 再びイミテーションは選べない
+    //----------------------------------
+
+    if(isCopiedImitation){
+        return false;
+    }
+
+            //----------------------------------
+            // イミテーションをコピーすると
+            // さらにもう1枚プレイするため
+            // 残り2枚以上必要
+            //----------------------------------
+
+            if(remainingPlays < 2){
+                return false;
+            }
+
+            //----------------------------------
+            // 使用可能な通常マギアがあるか
+            //----------------------------------
+
+            return coolCards.some(otherCard=>{
+
+                if(
+                    !otherCard ||
+                    otherCard.type !== "マギア" ||
+                    otherCard.effect?.type === "imitation"
+                ){
+                    return false;
+                }
+
+                const copiedOtherCard = {
+                    ...otherCard,
+                    owner: PLAYER,
+                    area: "imitationCopy"
+                };
+
+                return hasMagiaTarget(
+                    copiedOtherCard
+                );
+
+            });
 
         }
 
-//----------------------------------
-// PLAYERが使用するコピーカードを作成
-//----------------------------------
+        //==================================
+        // 通常マギアの場合
+        //==================================
 
-const copiedCard = {
-    ...card,
-    owner: PLAYER,
-    area: "imitationCopy"
-};
+        const copiedCard = {
+            ...card,
+            owner: PLAYER,
+            area: "imitationCopy"
+        };
 
-//----------------------------------
-// コピー後の状態で対象を確認
-//----------------------------------
-
-if(!hasMagiaTarget(copiedCard)){
-
-    return false;
-
-}
-
-        return true;
+        return hasMagiaTarget(
+            copiedCard
+        );
 
     });
 
 }
-
 //======================================
 // レジスト使用可能判定
 //======================================
