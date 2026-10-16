@@ -2431,11 +2431,24 @@ function updateHandHighlight(){
 // マギア対象存在判定
 //======================================
 
-//======================================
-// マギア対象存在判定
-//======================================
-
 function hasMagiaTarget(card){
+
+        //==================================
+    // マギア使用者に応じたフィールド
+    //==================================
+
+    const isCpu =
+        card.owner === ENEMY;
+
+    const ownField =
+        isCpu
+            ? enemyField
+            : playerField;
+
+    const opponentField =
+        isCpu
+            ? playerField
+            : enemyField;
 
 
     //----------------------------------
@@ -2472,6 +2485,80 @@ function hasMagiaTarget(card){
 
 
     //==================================
+    // イミテーションコピー専用
+    // 自分のヨコ向きサモン
+    //==================================
+
+    if(
+        card.area === "imitationCopy" &&
+        targets.includes("horizontalSummon")
+    ){
+
+        const hasTarget =
+            ownField.some(summon => {
+
+                if(
+                    !summon ||
+                    summon.destroyed ||
+                    !summon.isRest
+                ){
+                    return false;
+                }
+
+                if(
+                    typeof isMagiaTargetBlocked === "function" &&
+                    isMagiaTargetBlocked(
+                        card,
+                        summon
+                    )
+                ){
+                    return false;
+                }
+
+                return true;
+
+            });
+
+        if(hasTarget){
+            return true;
+        }
+
+    }
+
+        //==================================
+    // イミテーションコピー専用
+    // 自分のクールゾーンのサモン
+    //==================================
+
+    if(
+        card.area === "imitationCopy" &&
+        card.effect.type === "playSummonFromCool" &&
+        targets.includes("playerCoolSummon")
+    ){
+
+        const hasTarget =
+            Array.isArray(enemyCoolCards) &&
+            enemyCoolCards.some(
+                coolCard =>
+                    coolCard &&
+                    coolCard.type === "サモン"
+            );
+
+        if(hasTarget){
+
+            console.log(
+                "CPU：コピーしたマギアのクールゾーン対象あり",
+                card.name
+            );
+
+            return true;
+
+        }
+
+    }
+
+
+    //==================================
     // サモン対象の条件付き判定
     //
     // トルネード等
@@ -2481,7 +2568,6 @@ function hasMagiaTarget(card){
         condition &&
         condition.orientation
     ){
-
         const orientation =
             condition.orientation;
 
@@ -2503,9 +2589,9 @@ function hasMagiaTarget(card){
             )
         ){
 
-            targetSummons.push(
-                ...enemyField
-            );
+targetSummons.push(
+    ...opponentField
+);
 
         }
 
@@ -2523,9 +2609,9 @@ function hasMagiaTarget(card){
             )
         ){
 
-            targetSummons.push(
-                ...playerField
-            );
+targetSummons.push(
+    ...ownField
+);
 
         }
 
@@ -2629,7 +2715,7 @@ function hasMagiaTarget(card){
 
 if(targets.includes("enemySummon")){
 
-    const hasTarget = enemyField.some(summon => {
+    const hasTarget = opponentField.some(summon => {
 
         if(!summon || summon.destroyed){
             return false;
@@ -2673,7 +2759,7 @@ if(
     targets.includes("playerSummon")
 ){
 
-    const hasTarget = playerField.some(summon => {
+  const hasTarget = ownField.some(summon => {
 
         if(!summon || summon.destroyed){
             return false;
