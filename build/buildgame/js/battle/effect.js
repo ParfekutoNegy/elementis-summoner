@@ -1702,11 +1702,137 @@ break;
 
         }
 
+        
+
+        //==================================
+        // メモリーシャッフル
+        // 相手クールゾーンのカードを
+        // 相手の手札へ戻す
+        //==================================
+
+        case "memoryShuffle":{
+
+            //----------------------------------
+            // 効果を受けるプレイヤー
+            //----------------------------------
+
+            const targetOwner =
+                card.owner === PLAYER
+                    ? ENEMY
+                    : PLAYER;
+
+            //----------------------------------
+            // 対象のクールゾーン
+            //----------------------------------
+
+            const coolCards =
+                targetOwner === ENEMY
+                    ? board.enemyCoolCards
+                    : board.playerCoolCards;
+
+            //----------------------------------
+            // 対象確認
+            //----------------------------------
+
+            if(
+                !target ||
+                !coolCards.includes(target)
+            ){
+
+                console.warn(
+                    "メモリーシャッフル：対象が不正",
+                    target?.name
+                );
+
+                return "INVALID";
+            }
+
+            //----------------------------------
+            // クールゾーンから削除
+            //----------------------------------
+
+            board.removeCoolCard(
+                target,
+                targetOwner
+            );
+
+            //----------------------------------
+            // 表向きに戻す
+            //----------------------------------
+
+            target.setFaceDown(false);
+
+            //----------------------------------
+            // 手札へ移動
+            //----------------------------------
+
+            target.area =
+                targetOwner === ENEMY
+                    ? "enemyHand"
+                    : "hand";
+
+            if(targetOwner === ENEMY){
+
+                enemyHandCards.push(target);
+
+            }
+            else{
+
+                board.addHandCard(target);
+
+            }
+
+            //----------------------------------
+            // 表示更新
+            //----------------------------------
+
+            board.updateCoolCount();
+
+            updateEnemyZoneDisplay();
+
+            updateHandCostDisplay();
+
+            updateGameState();
+
+            //==================================
+            // 相手の次のクール回収を禁止
+            //==================================
+
+            memoryShuffleCoolRecoveryBlocked[targetOwner] =
+                true;
+
+            console.log(
+                "メモリーシャッフル：次のクール回収禁止を設定",
+                targetOwner
+            );
+
+            //----------------------------------
+            // バトルログ
+            //----------------------------------
+
+            addBattleLog(
+                `メモリーシャッフル：${target.name}を相手の手札に戻した`
+            );
+
+            console.log(
+                "メモリーシャッフル解決",
+                {
+                    user: card.owner,
+                    target: target.name,
+                    targetOwner
+                }
+            );
+
+            return "DONE";
+        }
+
         //==================================
         // 手札へ戻す
         //==================================
 
         case "returnToHand":{
+
+            
 
 
             //==================================
@@ -2801,11 +2927,10 @@ if(
     // 自分対象
     //----------------------------------
 
-    if(
-        targets.includes(
-            "self"
-        )
-    ){
+if(
+    targets.includes("self") ||
+    targets.includes("player")
+){
 
         return true;
 

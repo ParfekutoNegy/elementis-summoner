@@ -1206,8 +1206,15 @@ const CARD_LIST = [
         element: "風",
         cost: 1,
         series:"mythology",
-        image: "images/077-メモリーシャッフル.jpg"
-    }, 
+        image: "images/077-メモリーシャッフル.jpg",
+effect: {
+    type: "memoryShuffle",
+    target: ["enemyCoolCard"]
+},
+    tag:"相手のクールゾーンのカード１枚",
+    text:"対象を相手の手札に加える。相手は次のターン開始時、クールゾーンのカードを手札に加えられない。",
+    },
+
     {
         id: 78,
         name:"カーススモーク",

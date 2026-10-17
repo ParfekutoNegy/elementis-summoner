@@ -6026,14 +6026,23 @@ const nereidUsed =
     );
 
 
-    //==================================
-    // AFTER_PLAYER_DAMAGE
-    //
-    // 実際にダメージを受けた後の
-    // レジスト発動判定
-    //==================================
+//==================================
+// AFTER_PLAYER_DAMAGE
+//
+// ダメージを受けた後、
+// ライフが残っている場合のみ
+// ダメージ後レジストを確認
+//==================================
 
-    if(finalDamage > 0){
+const remainingLife =
+    player === PLAYER
+        ? game.playerLife
+        : game.enemyLife;
+
+if(
+    finalDamage > 0 &&
+    remainingLife > 0
+){
 
 const afterDamageEvent = {
 

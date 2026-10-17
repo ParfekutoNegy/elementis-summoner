@@ -1233,6 +1233,85 @@ else{
 
 }
 
+//==================================
+// メモリーシャッフル
+// 対象カード決定
+//==================================
+
+function selectMemoryShuffleTarget(card){
+
+    //----------------------------------
+    // メモリーシャッフル使用中か確認
+    //----------------------------------
+
+    if(
+        !magiaCard ||
+        !magiaCard.effect?.target?.includes(
+            "enemyCoolCard"
+        ) ||
+        !magiaTargetMode
+    ){
+        return;
+    }
+
+    //----------------------------------
+    // 相手クールゾーンのカードか確認
+    //----------------------------------
+
+    if(
+        !card ||
+        !board.enemyCoolCards.includes(card)
+    ){
+
+        console.log(
+            "メモリーシャッフル：対象外",
+            card?.name
+        );
+
+        return;
+    }
+
+    //----------------------------------
+    // 対象を記録
+    //----------------------------------
+
+    magiaTarget = card;
+
+    magiaTargetMode = false;
+
+    clearMagiaHighlight();
+
+    //----------------------------------
+    // 相手クールモーダルを閉じる
+    //----------------------------------
+
+    const modal =
+        document.getElementById(
+            "enemy-cool-modal"
+        );
+
+    if(modal){
+
+        modal.style.display = "none";
+
+        modal.classList.remove(
+            "active"
+        );
+    }
+
+    console.log(
+        "メモリーシャッフル：対象決定",
+        card.name
+    );
+
+    //----------------------------------
+    // コスト選択へ
+    //----------------------------------
+
+    startMagiaCost();
+
+}
+
 //=========================
 // マギアコスト選択開始
 //=========================
@@ -3060,7 +3139,67 @@ function startMagiaTargetSelect(card){
 
     magiaTargetMode = true;
 
-        //==================================
+
+
+    //==================================
+    // メモリーシャッフル
+    // 相手クールゾーンのカードを対象にする
+    //==================================
+
+    if(
+        magiaCard.effect?.target?.includes(
+            "enemyCoolCard"
+        )
+    ){
+
+        //----------------------------------
+        // 相手クールゾーンの対象確認
+        //----------------------------------
+
+        const targets =
+            board.enemyCoolCards || [];
+
+        if(targets.length === 0){
+
+            console.log(
+                "メモリーシャッフル：対象カードなし"
+            );
+
+            resetMagiaState();
+
+            return;
+        }
+
+        //----------------------------------
+        // 対象選択案内
+        //----------------------------------
+
+        showActionGuide(
+            "相手のクールゾーンからカードを1枚選んでください"
+        );
+
+        //----------------------------------
+        // 相手クールゾーンを開く
+        //----------------------------------
+
+        const modal =
+            document.getElementById(
+                "enemy-cool-modal"
+            );
+
+        if(
+            modal &&
+            window.getComputedStyle(modal).display === "none"
+        ){
+
+            openEnemyCoolModal();
+
+        }
+
+        return;
+    }
+
+    //==================================
     // イミテーション
     // 対象不要マギアのコピー処理
     //==================================
@@ -4523,6 +4662,27 @@ if(
             coolCard =>
                 coolCard &&
                 coolCard.type === "マギア"
+        );
+
+    }
+
+        //==================================
+    // メモリーシャッフル
+    // 相手クールゾーンのカード
+    //==================================
+
+    if(
+        targets.includes("enemyCoolCard")
+    ){
+
+        //----------------------------------
+        // 相手クールゾーンに
+        // カードが1枚以上ある場合のみ使用可能
+        //----------------------------------
+
+        return (
+            Array.isArray(board.enemyCoolCards) &&
+            board.enemyCoolCards.length > 0
         );
 
     }
@@ -8372,6 +8532,43 @@ function finishCrystalPeeping(){
             costConfirm:
                 costConfirm
         }
+    );
+
+}
+
+//==================================
+// ゲーム切り替え時
+// 強制コスト・スフィンクス状態初期化
+//==================================
+
+function resetForceCostAbilityState(){
+
+    //----------------------------------
+    // 強制コスト選択状態
+    //----------------------------------
+
+    forceCostMode = false;
+
+    forceCostPlayer = null;
+
+    selectedForceCostCard = null;
+
+    forceCostSource = null;
+
+
+    //----------------------------------
+    // スフィンクス攻撃待機状態
+    //----------------------------------
+
+    sphinxAttackWaiting = false;
+
+    sphinxAttackAttacker = null;
+
+    sphinxAttackTarget = null;
+
+
+    console.log(
+        "強制コスト・スフィンクス状態初期化完了"
     );
 
 }

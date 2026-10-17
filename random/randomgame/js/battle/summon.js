@@ -7211,9 +7211,7 @@ function canCpuAttackDamagePlayer(
         !attacker ||
         attacker.destroyed
     ){
-
         return false;
-
     }
 
 
@@ -7228,6 +7226,18 @@ function canCpuAttackDamagePlayer(
 
 
     //----------------------------------
+    // ダメージブーストを反映した
+    // 実際の攻撃ダメージ
+    //----------------------------------
+
+    const attackDamage =
+        getDamage(
+            attacker,
+            attackPower
+        );
+
+
+    //----------------------------------
     // ガーゴイル等を考慮した
     // 予測最終ダメージ
     //----------------------------------
@@ -7235,7 +7245,7 @@ function canCpuAttackDamagePlayer(
     const expectedDamage =
         getExpectedPlayerDamage(
             PLAYER,
-            attackPower
+            attackDamage
         );
 
 
@@ -7248,6 +7258,9 @@ function canCpuAttackDamagePlayer(
             attackPower:
                 attackPower,
 
+            attackDamage:
+                attackDamage,
+
             expectedDamage:
                 expectedDamage
         }
@@ -7255,7 +7268,7 @@ function canCpuAttackDamagePlayer(
 
 
     //----------------------------------
-    // 1以上通るなら攻撃する意味あり
+    // 最終ダメージが1以上なら攻撃
     //----------------------------------
 
     return (

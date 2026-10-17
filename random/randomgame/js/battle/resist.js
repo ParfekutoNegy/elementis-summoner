@@ -4264,10 +4264,20 @@ updateButtons();
 //==================================
 // AFTER_PLAYER_DAMAGE
 //
-// ダメージ確定後のレジスト判定
+// ダメージ確定後、
+// 対象プレイヤーのライフが
+// 残っている場合のみ発動
 //==================================
 
-if(afterDamageInfo){
+const afterDamageRemainingLife =
+    afterDamageInfo?.player === PLAYER
+        ? game.playerLife
+        : game.enemyLife;
+
+if(
+    afterDamageInfo &&
+    afterDamageRemainingLife > 0
+){
 
     console.log(
         "レジスト後：AFTER_PLAYER_DAMAGE",

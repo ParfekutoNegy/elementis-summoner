@@ -1776,21 +1776,42 @@ enemyMatchStartingCards = [];
 
 function setupGame(){
 
-        //==================================
-    // デリュージ使用履歴リセット
-    // 1ゲームごとにPLAYER・CPUを初期化
-    //==================================
+//==================================
+// デリュージ使用履歴リセット
+// 1ゲームごとにPLAYER・CPUを初期化
+//==================================
 
-    delugeUsed[PLAYER] = false;
-    delugeUsed[ENEMY] = false;
+delugeUsed[PLAYER] = false;
+delugeUsed[ENEMY] = false;
 
-    console.log(
-        "デリュージ使用履歴リセット",
-        {
-            player: delugeUsed[PLAYER],
-            enemy: delugeUsed[ENEMY]
-        }
-    );
+console.log(
+    "デリュージ使用履歴リセット",
+    {
+        player: delugeUsed[PLAYER],
+        enemy: delugeUsed[ENEMY]
+    }
+);
+
+
+//==================================
+// メモリーシャッフル
+// クール回収禁止状態リセット
+// 1ゲームごとにPLAYER・CPUを初期化
+//==================================
+
+memoryShuffleCoolRecoveryBlocked[PLAYER] = false;
+memoryShuffleCoolRecoveryBlocked[ENEMY] = false;
+
+console.log(
+    "メモリーシャッフル回収禁止リセット",
+    {
+        player:
+            memoryShuffleCoolRecoveryBlocked[PLAYER],
+
+        enemy:
+            memoryShuffleCoolRecoveryBlocked[ENEMY]
+    }
+);
 
     //----------------------------------
     // フィールドデータ初期化
@@ -6014,6 +6035,110 @@ summonAbilityTargetMode ||
 resetActionButtons();
 
 //======================================
+// メモリーシャッフル
+// 相手クールゾーンのカード選択中
+//======================================
+
+if(
+    magiaTargetMode &&
+    magiaCard?.effect?.target?.includes(
+        "enemyCoolCard"
+    )
+){
+
+    //----------------------------------
+    // アクションエリア表示
+    //----------------------------------
+
+    actionArea.style.display = "flex";
+
+    //----------------------------------
+    // キャンセルボタン
+    //----------------------------------
+
+    cancelButton.style.display =
+        "inline-block";
+
+    cancelButton.textContent =
+        "キャンセル";
+
+    cancelButton.onclick = ()=>{
+
+        //----------------------------------
+        // 相手クールモーダルを閉じる
+        //----------------------------------
+
+        const modal =
+            document.getElementById(
+                "enemy-cool-modal"
+            );
+
+        if(modal){
+
+            modal.style.display = "none";
+
+            modal.classList.remove(
+                "active"
+            );
+        }
+
+        //----------------------------------
+        // マギア状態リセット
+        //----------------------------------
+
+        resetMagiaState();
+
+        hideActionGuide();
+
+        updateGameState();
+
+        updateButtons();
+
+    };
+
+    //----------------------------------
+    // 対象未選択
+    //----------------------------------
+
+    if(
+        !magiaTarget ||
+        !board.enemyCoolCards.includes(
+            magiaTarget
+        )
+    ){
+
+        confirmButton.style.display =
+            "none";
+
+        return;
+    }
+
+    //----------------------------------
+    // 対象選択済み
+    // 決定ボタン表示
+    //----------------------------------
+
+    confirmButton.style.display =
+        "inline-block";
+
+    confirmButton.textContent =
+        "決定";
+
+    confirmButton.onclick = ()=>{
+
+        const selectedCard =
+            magiaTarget;
+
+        selectMemoryShuffleTarget(
+            selectedCard
+        );
+
+    };
+
+    return;
+}
+
+//======================================
 // イミテーション
 // 相手クールゾーンのマギア選択中
 //======================================
@@ -8182,6 +8307,24 @@ img.className =
     "cool-card";
 
 //==================================
+// メモリーシャッフル
+// 相手クールゾーンの全カードを発光
+//==================================
+
+if(
+    magiaTargetMode &&
+    magiaCard?.effect?.target?.includes(
+        "enemyCoolCard"
+    )
+){
+
+    img.classList.add(
+        "imitation-selectable"
+    );
+
+}
+
+//==================================
 // イミテーション対象選択中
 // コピー可能なマギアを発光
 //==================================
@@ -8206,6 +8349,57 @@ if(
 
 
 img.onclick = ()=>{
+
+    //==================================
+    // メモリーシャッフル対象選択中
+    //==================================
+
+    if(
+        magiaTargetMode &&
+        magiaCard?.effect?.target?.includes(
+            "enemyCoolCard"
+        )
+    ){
+
+        //----------------------------------
+        // 対象カードを記録
+        //----------------------------------
+
+        magiaTarget = card;
+
+        //----------------------------------
+        // 選択枠を更新
+        //----------------------------------
+
+        list.querySelectorAll(
+            ".imitation-selected"
+        ).forEach(element=>{
+
+            element.classList.remove(
+                "imitation-selected"
+            );
+
+        });
+
+        img.classList.add(
+            "imitation-selected"
+        );
+
+        //----------------------------------
+        // カード詳細表示
+        //----------------------------------
+
+        showCardInfo(card);
+
+        //----------------------------------
+        // ボタン更新
+        //----------------------------------
+
+        updateButtons();
+
+        return;
+
+    }
 
     //==================================
     // イミテーション対象選択中
@@ -13626,6 +13820,12 @@ function concedeGame(){
 
     resetAttackState();
 
+    //==================================
+// 投了時：能力待機状態を解除
+//==================================
+
+resetForceCostAbilityState();
+
 
     //==================================
     // 右下操作ボタンを完全にリセット
@@ -13708,9 +13908,29 @@ function startNextGame(winner){
     // ゲーム終了状態解除
     //----------------------------------
 
-    battleGameConceded = false;
-
     battleGameEnding = false;
+
+        //==================================
+// 次ゲーム開始前
+// 前ゲームの能力待機状態を初期化
+//==================================
+
+resetForceCostAbilityState();
+
+
+    //==================================
+    // メモリーシャッフル初期化
+    // 次のゲームへ回収禁止を持ち越さない
+    //==================================
+
+    memoryShuffleCoolRecoveryBlocked[PLAYER] = false;
+
+    memoryShuffleCoolRecoveryBlocked[ENEMY] = false;
+
+    console.log(
+        "次のゲーム開始：メモリーシャッフル初期化完了"
+    );
+
 
     //==================================
     // ダメージブースト初期化
@@ -14260,6 +14480,20 @@ if(homeButton){
     //----------------------------------
 
     battleGameEnding = false;
+
+
+    //==================================
+    // メモリーシャッフル初期化
+    // 新しいマッチへ効果を持ち越さない
+    //==================================
+
+    memoryShuffleCoolRecoveryBlocked[PLAYER] = false;
+
+    memoryShuffleCoolRecoveryBlocked[ENEMY] = false;
+
+    console.log(
+        "リスタート：メモリーシャッフル初期化完了"
+    );
 
 
     //----------------------------------
