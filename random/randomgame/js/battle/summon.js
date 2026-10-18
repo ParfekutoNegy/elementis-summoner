@@ -415,11 +415,50 @@ function getPower(summon){
     // 相手クール1枚につきパワー＋1
     //==================================
 
+
+    //==================================
+    // ワーム
+    // 場にいる間のみ
+    // 相手クール1枚につきパワー＋1
+    //==================================
+
     const enemyCoolPowerAbility =
         getSummonAbility(
             summon,
             "powerUpByEnemyCool"
         );
+
+    //----------------------------------
+    // 実際にフィールドに存在するか
+    //----------------------------------
+
+    const isOnField =
+        playerField.includes(summon) ||
+        enemyField.includes(summon);
+
+    //----------------------------------
+    // 場にいる場合のみ能力適用
+    //----------------------------------
+
+    if(
+        enemyCoolPowerAbility &&
+        isOnField
+    ){
+
+        const opponentCoolCards =
+            summon.owner === PLAYER
+                ? enemyCoolCards
+                : board.playerCoolCards;
+
+        const value =
+            enemyCoolPowerAbility.value ?? 1;
+
+        power +=
+            opponentCoolCards.length *
+            value;
+
+    }
+
 
 
     if(
@@ -816,6 +855,16 @@ card.refresh();
     }
 
     updateEnemyZoneDisplay();
+
+
+    //==================================
+    // 動的パワー表示更新
+    //
+    // ワーム・ミノタウロス等
+    // 召喚直後に現在パワーを反映
+    //==================================
+
+    refreshDynamicPowerSummons();
 
     //----------------------------------
     // 召喚ターンは攻撃不可

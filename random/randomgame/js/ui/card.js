@@ -639,6 +639,28 @@ updateCurrentPower(summon){
 
     }
 
+    //==================================
+// 場以外では現在パワーを非表示
+//==================================
+
+const isOnField =
+    (
+        playerField.includes(summon) ||
+        enemyField.includes(summon)
+    );
+
+if(!isOnField){
+
+    this.currentPowerElement.style.display =
+        "none";
+
+    this.currentPowerElement.textContent =
+        "";
+
+    return;
+
+}
+
 
     //----------------------------------
     // 元のパワー
