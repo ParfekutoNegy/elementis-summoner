@@ -182,24 +182,40 @@ function handleScreenRotation(){
         window.innerHeight >
         window.innerWidth;
 
-    if(isPortrait === lastPortrait){
-        return;
+    //----------------------------------
+    // 縦横が変化した場合
+    //----------------------------------
+
+    if(isPortrait !== lastPortrait){
+
+        lastPortrait = isPortrait;
+
+        //----------------------------------
+        // 回転中は画面を隠す
+        //----------------------------------
+
+        container.classList.add(
+            "is-rotating"
+        );
+
     }
 
-    lastPortrait = isPortrait;
-
     //----------------------------------
-    // 回転中は画面を隠す
+    // 回転中のタイマーを更新
     //----------------------------------
 
-    container.classList.add(
-        "is-rotating"
-    );
+    if(
+        !container.classList.contains(
+            "is-rotating"
+        )
+    ){
+        return;
+    }
 
     clearTimeout(rotationTimer);
 
     //----------------------------------
-    // 回転完了後に再表示
+    // 画面サイズが安定したら再表示
     //----------------------------------
 
     rotationTimer = setTimeout(
@@ -207,15 +223,13 @@ function handleScreenRotation(){
 
             resizeGame();
 
-            requestAnimationFrame(
-                () => {
+            requestAnimationFrame(() => {
 
-                    container.classList.remove(
-                        "is-rotating"
-                    );
+                container.classList.remove(
+                    "is-rotating"
+                );
 
-                }
-            );
+            });
 
         },
         300
