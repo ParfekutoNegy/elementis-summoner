@@ -13791,7 +13791,7 @@ if(
 
         addCpuActionPoints(
             action,
-            40,
+            80,
             "アイスジェイル：自サモン保護"
         );
 

@@ -13027,18 +13027,27 @@ if(
             :
             false;
 
+            //==================================
+// アイスジェイル
+// 効果中はアタック不可
+//==================================
+
+const attackBlockedByIceJail =
+    summon.iceJail?.active === true;
+
 
     //----------------------------------
     // アタック可能
     //----------------------------------
 
-    if(
-        game.currentPlayer === PLAYER &&
-        attackReady &&
-        !summon.isRest &&
-        !summon.destroyed &&
-        !battleLocked
-    ){
+if(
+    game.currentPlayer === PLAYER &&
+    attackReady &&
+    !summon.isRest &&
+    !summon.destroyed &&
+    !battleLocked &&
+    !attackBlockedByIceJail
+){
 
         actionArea.style.display =
             "flex";

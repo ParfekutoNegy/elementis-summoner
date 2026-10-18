@@ -1857,9 +1857,29 @@ function isOgreBattleLocked(summon){
 // 攻撃可能判定
 //======================================
 
+
 function canAttack(target){
 
     if(!attackingSummon){
+
+        return false;
+
+    }
+
+
+    //==================================
+    // アイスジェイル
+    // 効果中はアタック不可
+    //==================================
+
+    if(
+        attackingSummon.iceJail?.active === true
+    ){
+
+        console.log(
+            "アイスジェイルにより攻撃不可：",
+            attackingSummon.card.name
+        );
 
         return false;
 
@@ -1875,27 +1895,28 @@ function canAttack(target){
             attackingSummon,
             "summonTurnAttack"
         );
-//----------------------------------
-// メドゥーサ
-// 召喚ターンアタック禁止
-//----------------------------------
 
-if(
-    isSummonTurnAttackPrevented(
-        attackingSummon
-    )
-){
 
-    console.log(
-        "メドゥーサの能力により",
-        "場に出たターンは攻撃不可",
-        attackingSummon.card.name
-    );
+    //----------------------------------
+    // メドゥーサ
+    // 召喚ターンアタック禁止
+    //----------------------------------
 
-    return false;
+    if(
+        isSummonTurnAttackPrevented(
+            attackingSummon
+        )
+    ){
 
-}
+        console.log(
+            "メドゥーサの能力により",
+            "場に出たターンは攻撃不可",
+            attackingSummon.card.name
+        );
 
+        return false;
+
+    }
 
 
     //----------------------------------
@@ -1920,7 +1941,9 @@ if(
     // 行動済みサモン
     //----------------------------------
 
-    if(attackingSummon.isRest){
+    if(
+        attackingSummon.isRest
+    ){
 
         console.log(
             "行動済みサモン"
@@ -1935,7 +1958,9 @@ if(
     // サモン攻撃の場合
     //----------------------------------
 
-    if(target instanceof Summon){
+    if(
+        target instanceof Summon
+    ){
 
         //----------------------------------
         // 自分の場のサモンには攻撃不可
@@ -1958,9 +1983,7 @@ if(
 
         //==================================
         // シーサーペント
-        //
-        // 相手のサモンは
-        // このカードにアタックできない
+        // このカードはアタックされない
         //==================================
 
         if(
@@ -1985,7 +2008,9 @@ if(
         // タテ向きサモンへの攻撃
         //----------------------------------
 
-        if(!target.isRest){
+        if(
+            !target.isRest
+        ){
 
             //----------------------------------
             // タテ向き攻撃可能能力
@@ -2028,6 +2053,7 @@ if(
     return true;
 
 }
+
 
 //======================================
 // 戦闘実行
@@ -7093,13 +7119,12 @@ if(afterResist){
 // 場の使用可能表示更新
 //======================================
 
+
 function updateAttackHighlight(){
 
     //==================================================
     // ドッペルゲンガー
     // コピー対象選択中
-    //
-    // 通常の行動可能サモン発光は行わない
     //==================================================
 
     if(
@@ -7112,11 +7137,6 @@ function updateAttackHighlight(){
             "ドッペルゲンガー対象選択中：",
             "サモン通常発光なし"
         );
-
-
-        //----------------------------------
-        // 行動可能サモンの黄色発光を解除
-        //----------------------------------
 
         playerField.forEach(
             summon => {
@@ -7135,7 +7155,6 @@ function updateAttackHighlight(){
             }
         );
 
-
         return;
 
     }
@@ -7149,11 +7168,41 @@ function updateAttackHighlight(){
         summon => {
 
             //----------------------------------
+            // 基本確認
+            //----------------------------------
+
+            if(
+                !summon ||
+                !summon.view
+            ){
+
+                return;
+
+            }
+
+
+            //----------------------------------
+            // 他の行動中か
+            //----------------------------------
+
+            const actionLocked =
+
+                !!summonCard ||
+
+                !!magiaCard ||
+
+                !!resistUsingCard ||
+
+                !!attackMode;
+
+
+            //----------------------------------
             // オーガ等
-            // 強敵存在時の戦闘不可確認
+            // 戦闘禁止判定
             //----------------------------------
 
             const battleLocked =
+
                 typeof isOgreBattleLocked ===
                     "function"
                     ?
@@ -7165,26 +7214,24 @@ function updateAttackHighlight(){
 
 
             //----------------------------------
-            // 召喚ターン攻撃可能能力
+            // 召喚ターン攻撃能力
             //----------------------------------
 
             const canAttackOnSummonTurn =
+
                 hasSummonAbility(
                     summon,
                     "summonTurnAttack"
                 );
 
 
-            //==================================
+            //----------------------------------
             // メドゥーサ
-            //
-            // 相手のサモンは
-            // 能力や効果にかかわらず
-            // 場に出たターンは
-            // アタックできない
-            //==================================
+            // 召喚ターン攻撃禁止
+            //----------------------------------
 
             const summonTurnAttackPrevented =
+
                 typeof isSummonTurnAttackPrevented ===
                     "function"
                     ?
@@ -7196,6 +7243,20 @@ function updateAttackHighlight(){
 
 
             //----------------------------------
+            // 攻撃準備状態
+            //----------------------------------
+
+            const attackReadyNow =
+
+                summon.attackReady ||
+
+                (
+                    canAttackOnSummonTurn &&
+                    !summonTurnAttackPrevented
+                );
+
+
+            //----------------------------------
             // アタック可能判定
             //----------------------------------
 
@@ -7203,28 +7264,17 @@ function updateAttackHighlight(){
 
                 game.currentPlayer === PLAYER &&
 
-                (
-                    summon.attackReady ||
-
-                    (
-                        canAttackOnSummonTurn &&
-                        !summonTurnAttackPrevented
-                    )
-                ) &&
-
-                !summon.isRest &&
+                !actionLocked &&
 
                 !summon.destroyed &&
 
-                !battleLocked &&
+                !summon.isRest &&
 
-                !summonCard &&
+!battleLocked &&
 
-                !magiaCard &&
+summon.iceJail?.active !== true &&
 
-                !resistUsingCard &&
-
-                !attackMode;
+attackReadyNow;
 
 
             //----------------------------------
@@ -7233,13 +7283,7 @@ function updateAttackHighlight(){
 
             const canUseAbilityNow =
 
-                !summonCard &&
-
-                !magiaCard &&
-
-                !resistUsingCard &&
-
-                !attackMode &&
+                !actionLocked &&
 
                 typeof canUseSummonAbility ===
                     "function" &&
@@ -7250,18 +7294,19 @@ function updateAttackHighlight(){
 
 
             //----------------------------------
-            // 発光
-            //
-            // アタック可能
-            // または
-            // 起動能力使用可能
+            // 発光判定
             //----------------------------------
 
             const canAct =
 
                 canAttackNow ||
+
                 canUseAbilityNow;
 
+
+            //----------------------------------
+            // 発光反映
+            //----------------------------------
 
             summon.view.setHighlight(
                 canAct
@@ -7271,6 +7316,7 @@ function updateAttackHighlight(){
     );
 
 }
+
 
 //==================================================
 // サモンが現在ブロックされないか
