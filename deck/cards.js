@@ -287,15 +287,21 @@ const cards = [
         series:"basic",
         image: "images/032-グラウンドウォール.jpg"
     },
-    {
-        id: 33,
-        name:"オーガ",
-        type: "サモン",
-        element: "火",
-        cost: 1,
-        series:"folklore",
-        image: "images/033-オーガ.jpg"
+{
+    id: 33,
+    name: "オーガ",
+    type: "サモン",
+    element: "火",
+    cost: 1,
+    power: 3,
+    series: "folklore",
+
+    ability: {
+        type: "cannotBattleAgainstStrongEnemy"
     },
+
+    image: "images/033-オーガ.jpg"
+},
     {
         id: 34,
         name:"ファイア・ドレイク",
@@ -474,7 +480,7 @@ const cards = [
         element: "水",
         cost: 1,
         series:"folklore",
-        image: "images/053-オブリビオンレイン.jpg"
+        image: "images/053-オブリビオンレイン.jpg",
     },
     {
         id: 54,

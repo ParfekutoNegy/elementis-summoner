@@ -36,9 +36,9 @@ document.addEventListener(
 
 function initializeBuildScreen(){
 
-    const regulationSelect =
-        document.getElementById(
-            "regulation-select"
+    const regulationButtons =
+        document.querySelectorAll(
+            ".regulation-button"
         );
 
     const lifeSelect =
@@ -51,20 +51,66 @@ function initializeBuildScreen(){
     // レギュレーション変更
     // ----------------------------------------
 
-    regulationSelect.addEventListener(
-        "change",
-        () => {
+    regulationButtons.forEach(
+        button => {
 
-            selectedRegulation =
-                regulationSelect.value;
+            button.addEventListener(
+                "click",
+                () => {
 
-            selectedDeckId = null;
+                    const regulation =
+                        button.dataset.regulation;
 
-            updateLifeOptions();
+                    if(
+                        selectedRegulation === regulation
+                    ){
+                        return;
+                    }
 
-            updateDeckList();
+                    selectedRegulation =
+                        regulation;
 
-            updateStartButton();
+                    selectedDeckId = null;
+
+
+                    // --------------------------------
+                    // 選択中ボタンの表示更新
+                    // --------------------------------
+
+                    regulationButtons.forEach(
+                        otherButton => {
+
+                            otherButton.classList.toggle(
+                                "selected",
+                                otherButton === button
+                            );
+
+                        }
+                    );
+
+
+                    // --------------------------------
+                    // ライフ設定更新
+                    // --------------------------------
+
+                    updateLifeOptions();
+
+
+                    // --------------------------------
+                    // デッキ一覧更新
+                    // --------------------------------
+
+                    updateDeckList();
+
+
+                    // --------------------------------
+                    // ゲーム開始ボタン更新
+                    // --------------------------------
+
+                    updateStartButton();
+
+                }
+            );
 
         }
     );
@@ -89,9 +135,16 @@ function initializeBuildScreen(){
     );
 
 
-    selectedRegulation =
-        regulationSelect.value;
+    // ----------------------------------------
+    // 初期レギュレーション
+    // ----------------------------------------
 
+    selectedRegulation = "all";
+
+
+    // ----------------------------------------
+    // 初期ライフ
+    // ----------------------------------------
 
     selectedLife =
         Number(
@@ -99,7 +152,10 @@ function initializeBuildScreen(){
         );
 
 
+    // ----------------------------------------
     // 初期状態
+    // ----------------------------------------
+
     updateLifeOptions();
 
     loadSavedDecks();
@@ -525,6 +581,13 @@ function updateDeckList(){
                         デッキリストを見る
 
                     </button>
+                    <button
+    type="button"
+    class="deck-edit-button">
+
+    デッキ編集
+
+</button>
 
                 </div>
 
@@ -593,6 +656,32 @@ function updateDeckList(){
             );
 
         }
+
+        // ====================================================
+// デッキ編集ボタン
+// ====================================================
+
+const editButton =
+    deckElement.querySelector(
+        ".deck-edit-button"
+    );
+
+if(editButton){
+
+    editButton.addEventListener(
+        "click",
+        (event) => {
+
+            event.stopPropagation();
+
+            editDeck(
+                deck.id
+            );
+
+        }
+    );
+
+}
 
 
         // ====================================================
@@ -1495,5 +1584,34 @@ function closeDeckListModal(){
 
     modal.style.display =
         "none";
+
+}
+
+// ============================================================
+// デッキ編集画面へ移動
+// ============================================================
+
+function editDeck(deckId){
+
+    const decks =
+        JSON.parse(
+            localStorage.getItem("decks")
+        ) || {};
+
+    // 対象デッキの存在確認
+    if(!decks[deckId]){
+
+        alert(
+            "編集するデッキが見つかりません。"
+        );
+
+        return;
+
+    }
+
+    // デッキIDをURLに付けて移動
+window.location.href =
+    "../deck/deck.html?editDeck=" +
+    encodeURIComponent(deckId);
 
 }

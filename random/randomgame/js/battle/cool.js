@@ -805,6 +805,21 @@ if(isRecoveryBlocked){
     modal.style.display =
         "block";
 
+        //----------------------------------
+// 回収中は×ボタンを無効化
+//----------------------------------
+
+const closeButton =
+    document.getElementById(
+        "close-cool-x-button"
+    );
+
+if(closeButton){
+
+    closeButton.disabled = true;
+
+}
+
 
     //----------------------------------
     // アクションボタン更新
@@ -934,6 +949,21 @@ if(
 
     coolRecoveryMode =
         false;
+
+        //----------------------------------
+// 回収完了後は×ボタンを有効化
+//----------------------------------
+
+const closeButton =
+    document.getElementById(
+        "close-cool-x-button"
+    );
+
+if(closeButton){
+
+    closeButton.disabled = false;
+
+}
 
 
     //----------------------------------

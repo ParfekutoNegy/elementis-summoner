@@ -48,39 +48,49 @@
 
     <section id="settings-section">
 
-        <!-- レギュレーション -->
+<!-- =========================
+     レギュレーション
+========================= -->
 
-        <div class="setting-box">
+<div class="setting-box regulation-setting-box">
 
-            <label
-                for="regulation-select">
+    <label>
+        レギュレーション
+    </label>
 
-                レギュレーション
+    <div id="regulation-buttons">
 
-            </label>
+        <button
+            type="button"
+            class="regulation-button"
+            data-regulation="basic">
+            ベーシック
+        </button>
 
-            <select
-                id="regulation-select">
+        <button
+            type="button"
+            class="regulation-button"
+            data-regulation="folklore">
+            フォークロア
+        </button>
 
-                <option value="all">
-                    オールカード
-                </option>
+        <button
+            type="button"
+            class="regulation-button"
+            data-regulation="mythology">
+            ミソロジー
+        </button>
 
-                <option value="basic">
-                    ベーシック
-                </option>
+        <button
+            type="button"
+            class="regulation-button selected"
+            data-regulation="all">
+            オールカード
+        </button>
 
-                <option value="folklore">
-                    フォークロア
-                </option>
+    </div>
 
-                <option value="mythology">
-                    ミソロジー
-                </option>
-
-            </select>
-
-        </div>
+</div>
 
 
         <!-- ライフ -->

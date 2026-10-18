@@ -497,7 +497,43 @@ updateDeckList();
 // デッキ一覧画面表示
 //----------------------------------
 
-showDeckListScreen();
+// ============================================================
+// 初期画面表示
+// ビルドルールからのデッキ編集に対応
+// ============================================================
+
+const editDeckId =
+    new URLSearchParams(
+        window.location.search
+    ).get("editDeck");
+
+
+if(editDeckId){
+
+    // 保存デッキの存在確認
+    const savedDecks =
+        JSON.parse(
+            localStorage.getItem("decks")
+        ) || {};
+
+    if(savedDecks[editDeckId]){
+
+        // 指定デッキを読み込んで編集画面へ
+        loadSavedDeck(editDeckId);
+
+    }else{
+
+        // 対象が見つからなければ一覧へ
+        showDeckListScreen();
+
+    }
+
+}else{
+
+    // 通常起動は従来どおり一覧へ
+    showDeckListScreen();
+
+}
 
 
 //==================================================
