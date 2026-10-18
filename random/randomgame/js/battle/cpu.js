@@ -5277,132 +5277,51 @@ if(
     }
 
 
+
     //==================================
     // フォローウィンド
-    // 召喚したばかりで
-    // 攻撃できないCPUサモンのみ対象
+    // 有効な攻撃対象の選択を統一
     //==================================
 
     if(
-        card.name ===
-        "フォローウィンド"
+        card.name === "フォローウィンド"
     ){
 
-        const candidates =
-            enemyField.filter(
-                summon => {
-
-                    //----------------------------------
-                    // マギア対象不可
-                    //----------------------------------
-
-                    if(
-                        isMagiaTargetBlocked(
-                            card,
-                            summon
-                        )
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // 横向きなら対象外
-                    //----------------------------------
-
-                    if(
-                        summon.isRest
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // すでに攻撃可能なら対象外
-                    //----------------------------------
-
-                    if(
-                        summon.attackReady
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // summonTurnAttack持ちは対象外
-                    //
-                    // 複数能力・ドッペルゲンガーの
-                    // コピー能力にも対応
-                    //----------------------------------
-
-                    if(
-                        hasSummonAbility(
-                            summon,
-                            "summonTurnAttack"
-                        )
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // ここまで来たら
-                    // 「召喚ターンで攻撃できないサモン」
-                    //----------------------------------
-
-                    return true;
-
-                }
-            );
-
-
         //----------------------------------
-        // 対象なし
+        // 専用関数で使用対象を取得
         //----------------------------------
 
-        if(
-            candidates.length === 0
-        ){
+        const plan =
+            getCpuFollowWindTarget();
+
+        //----------------------------------
+        // 有効な対象なし
+        //----------------------------------
+
+        if(!plan){
 
             console.log(
-                "CPU：フォローウィンド対象なし"
+                "CPU：フォローウィンド対象なし",
+                "有効な攻撃が見込めない"
             );
 
             return null;
 
         }
 
-
         //----------------------------------
         // 対象決定
         //----------------------------------
 
-        const target =
-            candidates[
-                Math.floor(
-                    Math.random() *
-                    candidates.length
-                )
-            ];
-
-
         console.log(
             "CPU：フォローウィンド対象",
-            target.card.name
+            plan.target.card?.name
         );
 
-
-        return target;
+        return plan.target;
 
     }
+
 
 
     //==================================
@@ -5590,17 +5509,145 @@ if(
         }
 
 
+
         //----------------------------------
-        // 対象決定
+        // 攻撃改善がある対象だけを抽出
+        //----------------------------------
+
+        const usefulCandidates =
+            candidates.filter(
+                summon => {
+
+                    // オーガ系の攻撃制限
+                    if(
+                        typeof isOgreBattleLocked === "function" &&
+                        isOgreBattleLocked(summon)
+                    ){
+                        return false;
+                    }
+
+                    const currentPower =
+                        getPower(summon);
+
+                    const beforeDamage =
+                        getDamage(
+                            summon,
+                            currentPower
+                        );
+
+                    const afterDamage =
+                        getDamage(
+                            summon,
+                            currentPower + 2
+                        );
+
+                    // ダメージが増えないなら対象外
+                    if(
+                        afterDamage <= beforeDamage
+                    ){
+                        return false;
+                    }
+
+                    //----------------------------------
+                    // ブロック不可なら本体攻撃を改善
+                    //----------------------------------
+
+                    if(
+                        hasSummonAbility(
+                            summon,
+                            "cannotBeBlocked"
+                        )
+                    ){
+                        return true;
+                    }
+
+                    //----------------------------------
+                    // ブロック可能なPLAYERサモン
+                    //----------------------------------
+
+                    const blockers =
+                        playerField.filter(
+                            enemy =>
+                                enemy &&
+                                enemy.owner === PLAYER &&
+                                !enemy.destroyed &&
+                                !enemy.isRest &&
+                                !(
+                                    typeof isOgreBattleLocked === "function" &&
+                                    isOgreBattleLocked(enemy)
+                                )
+                        );
+
+                    //----------------------------------
+                    // ブロッカー不在なら本体攻撃改善
+                    //----------------------------------
+
+                    if(
+                        blockers.length === 0
+                    ){
+                        return true;
+                    }
+
+                    //----------------------------------
+                    // 強化後に初めて倒せる相手がいるか
+                    //----------------------------------
+
+                    return blockers.some(
+                        blocker => {
+
+                            // ブロック時にダメージを受けない
+                            if(
+                                hasSummonAbility(
+                                    blocker,
+                                    "noDamageWhenBlocking"
+                                )
+                            ){
+                                return false;
+                            }
+
+                            const blockerPower =
+                                getPower(blocker);
+
+                            return (
+                                beforeDamage < blockerPower &&
+                                afterDamage >= blockerPower
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+        //----------------------------------
+        // 有効な対象がいない
+        //----------------------------------
+
+        if(
+            usefulCandidates.length === 0
+        ){
+
+            console.log(
+                "CPU：バーニングエナジー対象なし",
+                "攻撃改善効果なし"
+            );
+
+            return null;
+
+        }
+
+        //----------------------------------
+        // 有効な対象からランダム選択
         //----------------------------------
 
         const target =
-            candidates[
+            usefulCandidates[
                 Math.floor(
                     Math.random() *
-                    candidates.length
+                    usefulCandidates.length
                 )
             ];
+
 
 
         console.log(
@@ -9935,16 +9982,23 @@ function getCpuFollowWindTarget(){
     }
 
 
-    const target =
-        enemyField.find(
+
+    //==================================
+    // フォローウィンド
+    // 有効な攻撃ができる対象を選択
+    //==================================
+
+    const candidates =
+        enemyField.filter(
             summon => {
 
-                if(!summon){
-
+                if(
+                    !summon ||
+                    summon.destroyed ||
+                    summon.owner !== ENEMY
+                ){
                     return false;
-
                 }
-
 
                 //----------------------------------
                 // マギア対象不可
@@ -9956,44 +10010,20 @@ function getCpuFollowWindTarget(){
                         summon
                     )
                 ){
-
                     return false;
-
                 }
-
 
                 //----------------------------------
                 // すでに攻撃可能
                 //----------------------------------
 
-                if(
-                    summon.attackReady
-                ){
-
+                if(summon.attackReady){
                     return false;
-
                 }
 
-
-                //----------------------------------
-                // 横向き
-                //----------------------------------
-
-                if(
-                    summon.isRest
-                ){
-
+                if(summon.isRest){
                     return false;
-
                 }
-
-
-                //----------------------------------
-                // 召喚ターン攻撃可能能力持ち
-                //
-                // すでに攻撃できるので
-                // フォローウィンド対象外
-                //----------------------------------
 
                 if(
                     hasSummonAbility(
@@ -10001,23 +10031,134 @@ function getCpuFollowWindTarget(){
                         "summonTurnAttack"
                     )
                 ){
-
                     return false;
-
                 }
 
+                //----------------------------------
+                // 戦闘制限
+                //----------------------------------
 
-                return true;
+                if(
+                    typeof isOgreBattleLocked ===
+                        "function" &&
+                    isOgreBattleLocked(summon)
+                ){
+                    return false;
+                }
+
+                //----------------------------------
+                // 攻撃ダメージ
+                //----------------------------------
+
+                const damage =
+                    getDamage(
+                        summon,
+                        getPower(summon)
+                    );
+
+                if(damage <= 0){
+                    return false;
+                }
+
+                //----------------------------------
+                // ブロック可能な相手サモン
+                //----------------------------------
+
+                const blockers =
+                    playerField.filter(
+                        enemy =>
+                            enemy &&
+                            enemy.owner === PLAYER &&
+                            !enemy.destroyed &&
+                            !enemy.isRest &&
+                            !(
+                                typeof isOgreBattleLocked ===
+                                    "function" &&
+                                isOgreBattleLocked(enemy)
+                            )
+                    );
+
+                //----------------------------------
+                // ブロック不可なら直接攻撃可能
+                //----------------------------------
+
+                if(
+                    hasSummonAbility(
+                        summon,
+                        "cannotBeBlocked"
+                    )
+                ){
+                    return true;
+                }
+
+                //----------------------------------
+                // ブロッカーなしなら直接攻撃可能
+                //----------------------------------
+
+                if(blockers.length === 0){
+                    return true;
+                }
+
+                //----------------------------------
+                // 倒せるブロッカーがいるか
+                //----------------------------------
+
+                return blockers.some(
+                    blocker => {
+
+                        if(
+                            hasSummonAbility(
+                                blocker,
+                                "noDamageWhenBlocking"
+                            )
+                        ){
+                            return false;
+                        }
+
+                        return (
+                            damage >=
+                            getPower(blocker)
+                        );
+
+                    }
+                );
 
             }
         );
 
+    //----------------------------------
+    // 有効な対象なし
+    //----------------------------------
 
-    if(!target){
+    if(candidates.length === 0){
+
+        console.log(
+            "CPU：フォローウィンド対象なし",
+            "有効な攻撃が見込めない"
+        );
 
         return null;
-
     }
+
+    //----------------------------------
+    // 有効候補からランダム選択
+    //----------------------------------
+
+    const target =
+        candidates[
+            Math.floor(
+                Math.random() *
+                candidates.length
+            )
+        ];
+
+    console.log(
+        "CPU：フォローウィンド対象決定",
+        target.card?.name,
+        "候補数=",
+        candidates.length
+    );
+
 
 
     const currentCost =
@@ -10759,6 +10900,7 @@ function isCpuAttackSetupMagia(card){
 // CPU：攻撃セットアップマギア使用判定
 //======================================
 
+
 function cpuShouldUseAttackSetupMagia(
     card
 ){
@@ -10772,8 +10914,51 @@ function cpuShouldUseAttackSetupMagia(
     }
 
 
+    //==================================
+    // フォローウィンド専用判定
+    //==================================
+
+    if(
+        card.name === "フォローウィンド"
+    ){
+
+        //----------------------------------
+        // 使用後に有効な攻撃ができる
+        // サモンがいるか確認
+        //----------------------------------
+
+        const plan =
+            getCpuFollowWindTarget();
+
+        if(!plan){
+
+            console.log(
+                "CPU：フォローウィンド候補外",
+                "有効な使用対象なし"
+            );
+
+            return false;
+
+        }
+
+        //----------------------------------
+        // 使用候補
+        //----------------------------------
+
+        console.log(
+            "CPU：フォローウィンド使用候補",
+            "対象=",
+            plan.target.card?.name
+        );
+
+        return true;
+
+    }
+
+
     //----------------------------------
-    // 攻撃可能なサモンがない
+    // その他の攻撃セットアップマギア
+    // 既存処理を維持
     //----------------------------------
 
     if(
@@ -10800,10 +10985,10 @@ function cpuShouldUseAttackSetupMagia(
         card.name
     );
 
-
     return true;
 
 }
+
 
 //======================================
 // ドラゴン・クラーケン判定
@@ -13383,16 +13568,53 @@ if(
 
     }
 
+    
+    //==================================
+    // フォローウィンド
+    // 使用対象を1回だけ決定
+    //==================================
+
+    let followWindPlan = null;
+
+    if(
+        card.name === "フォローウィンド"
+    ){
+
+        followWindPlan =
+            getCpuFollowWindTarget();
+
+        if(!followWindPlan){
+
+            console.log(
+                "CPU：フォローウィンド候補外",
+                "有効な使用対象なし"
+            );
+
+            return null;
+
+        }
+
+        console.log(
+            "CPU：フォローウィンド対象確定",
+            followWindPlan.target.card?.name
+        );
+
+    }
+
+
 
     //----------------------------------
     // 攻撃セットアップ用マギア
     //----------------------------------
 
+
     if(
+        !followWindPlan &&
         !cpuShouldUseAttackSetupMagia(
             card
         )
     ){
+
 
         console.log(
             "CPUポイント評価：マギア候補外",
@@ -13518,13 +13740,33 @@ if(
 let target;
 
 
-//======================================
-// インフェルノ
-//======================================
+    //==================================
+    // フォローウィンド
+    // 確定済みの対象を使用
+    //==================================
 
-if(
-    infernoTarget
-){
+    if(
+        followWindPlan
+    ){
+
+        target =
+            followWindPlan.target;
+
+        console.log(
+            "CPU：フォローウィンド確定対象を使用",
+            target.card?.name
+        );
+
+    }
+
+    //==================================
+    // インフェルノ
+    //==================================
+
+    else if(
+        infernoTarget
+    ){
+
 
     target =
         infernoTarget;
@@ -13732,6 +13974,259 @@ else if(
         );
 
         return null;
+
+    }
+
+
+
+    //==================================
+    // バーニングエナジー
+    // 使用前の攻撃有効性確認
+    //==================================
+
+    if(
+        card.name === "バーニングエナジー"
+    ){
+
+        //----------------------------------
+        // 強化対象が攻撃可能か
+        //----------------------------------
+
+        if(
+            target.owner !== ENEMY ||
+            target.destroyed ||
+            target.isRest ||
+            (
+                !target.attackReady &&
+                !hasSummonAbility(
+                    target,
+                    "summonTurnAttack"
+                )
+            ) ||
+            (
+                typeof isOgreBattleLocked === "function" &&
+                isOgreBattleLocked(target)
+            )
+        ){
+
+            console.log(
+                "CPU：バーニングエナジー候補外",
+                "強化対象が攻撃不可"
+            );
+
+            return null;
+
+        }
+
+        //----------------------------------
+        // 使用後の攻撃ダメージを予測
+        //----------------------------------
+
+        const currentPower =
+            getPower(target);
+
+        const boostedDamage =
+            getDamage(
+                target,
+                currentPower + 2
+            );
+
+        //----------------------------------
+        // プレイヤー側のブロッカー
+        //----------------------------------
+
+        const blockers =
+            playerField.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    !summon.isRest &&
+                    summon.owner === PLAYER &&
+                    !(
+                        typeof isOgreBattleLocked === "function" &&
+                        isOgreBattleLocked(summon)
+                    )
+            );
+
+        let usefulAttack = false;
+
+        //----------------------------------
+        // ブロック不可なら本体攻撃可能
+        //----------------------------------
+
+        if(
+            hasSummonAbility(
+                target,
+                "cannotBeBlocked"
+            )
+        ){
+
+            usefulAttack =
+                boostedDamage > 0;
+
+        }
+
+        //----------------------------------
+        // ブロッカーがいない場合
+        //----------------------------------
+
+        else if(
+            blockers.length === 0
+        ){
+
+            usefulAttack =
+                boostedDamage > 0;
+
+        }
+
+        //----------------------------------
+        // ブロッカーがいる場合
+        //----------------------------------
+
+        else{
+
+            usefulAttack =
+                blockers.some(
+                    blocker => {
+
+                        // ゴーレム等のブロック時無傷
+                        if(
+                            hasSummonAbility(
+                                blocker,
+                                "noDamageWhenBlocking"
+                            )
+                        ){
+
+                            return false;
+
+                        }
+
+                        return (
+                            boostedDamage >=
+                            getPower(blocker)
+                        );
+
+                    }
+                );
+
+        }
+
+
+        //----------------------------------
+        // 強化前の攻撃ダメージ
+        //----------------------------------
+
+        const currentAttackDamage =
+            getDamage(
+                target,
+                currentPower
+            );
+
+        //----------------------------------
+        // 強化前から倒せるブロッカー
+        //----------------------------------
+
+        const alreadyKillable =
+            blockers.some(
+                blocker => {
+
+                    if(
+                        hasSummonAbility(
+                            blocker,
+                            "noDamageWhenBlocking"
+                        )
+                    ){
+                        return false;
+                    }
+
+                    return (
+                        currentAttackDamage >=
+                        getPower(blocker)
+                    );
+
+                }
+            );
+
+        //----------------------------------
+        // 強化後に初めて倒せるブロッカー
+        //----------------------------------
+
+        const newlyKillable =
+            blockers.some(
+                blocker => {
+
+                    if(
+                        hasSummonAbility(
+                            blocker,
+                            "noDamageWhenBlocking"
+                        )
+                    ){
+                        return false;
+                    }
+
+                    const blockerPower =
+                        getPower(blocker);
+
+                    return (
+                        currentAttackDamage <
+                            blockerPower &&
+                        boostedDamage >=
+                            blockerPower
+                    );
+
+                }
+            );
+
+        //----------------------------------
+        // バーニングエナジー使用価値
+        //----------------------------------
+
+        const cannotBeBlocked =
+            hasSummonAbility(
+                target,
+                "cannotBeBlocked"
+            );
+
+        const improvesPlayerDamage =
+            (
+                blockers.length === 0 ||
+                cannotBeBlocked
+            ) &&
+            boostedDamage >
+                currentAttackDamage;
+
+        const improvesAttack =
+            usefulAttack &&
+            (
+                newlyKillable ||
+                improvesPlayerDamage
+            );
+
+        //----------------------------------
+        // 攻撃が改善しなければ使用しない
+        //----------------------------------
+
+        if(!improvesAttack){
+
+            console.log(
+                "CPU：バーニングエナジー候補外",
+                "強化による攻撃改善なし",
+                "対象=",
+                target.card?.name,
+                "強化前ダメージ=",
+                currentAttackDamage,
+                "強化後ダメージ=",
+                boostedDamage,
+                "強化前撃破可能=",
+                alreadyKillable,
+                "新規撃破可能=",
+                newlyKillable
+            );
+
+            return null;
+
+        }
+
 
     }
 
@@ -14777,326 +15272,135 @@ if(
     }
 
 
+
     //==================================
     // バーニングエナジー
+    // 使用前判定済みの対象を評価
     //==================================
 
     if(
-        card.name ===
-        "バーニングエナジー"
+        card.name === "バーニングエナジー"
     ){
 
         //----------------------------------
-        // 攻撃可能なCPUサモンを取得
+        // 実際に強化するサモン
         //----------------------------------
 
-        const attackableSummons =
-            enemyField.filter(
-                summon => {
+        const currentPower =
+            getPower(target);
 
-                    //----------------------------------
-                    // 基本確認
-                    //----------------------------------
-
-                    if(
-                        !summon ||
-                        summon.destroyed
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // ヨコ向きなら攻撃不可
-                    //----------------------------------
-
-                    if(
-                        summon.isRest
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // オーガ系の戦闘制限
-                    //----------------------------------
-
-                    if(
-                        typeof isOgreBattleLocked ===
-                            "function" &&
-                        isOgreBattleLocked(
-                            summon
-                        )
-                    ){
-
-                        return false;
-
-                    }
-
-
-                    //----------------------------------
-                    // 通常の攻撃可能判定
-                    //----------------------------------
-
-                    if(
-                        summon.attackReady
-                    ){
-
-                        return true;
-
-                    }
-
-
-                    //----------------------------------
-                    // 召喚ターン攻撃可能
-                    //
-                    // 複数能力対応
-                    //----------------------------------
-
-                    if(
-                        hasSummonAbility(
-                            summon,
-                            "summonTurnAttack"
-                        )
-                    ){
-
-                        return true;
-
-                    }
-
-
-                    return false;
-
-                }
+        const beforeDamage =
+            getDamage(
+                target,
+                currentPower
             );
 
+        const afterDamage =
+            getDamage(
+                target,
+                currentPower + 2
+            );
 
         //----------------------------------
-        // 攻撃可能なサモンがいない
+        // 攻撃改善量
         //----------------------------------
 
-        if(
-            attackableSummons.length === 0
-        ){
-
-            addCpuActionPoints(
-                action,
-                -100,
-                "バーニングエナジー：攻撃可能サモンなし"
+        const damageIncrease =
+            Math.max(
+                0,
+                afterDamage - beforeDamage
             );
 
+        //----------------------------------
+        // 使用前判定を通過した場合のみ加点
+        //----------------------------------
 
-            console.log(
-                "CPU：バーニングエナジー",
-                "攻撃可能なサモンなし → -100"
-            );
+        addCpuActionPoints(
+            action,
+            30 + damageIncrease * 10,
+            "バーニングエナジー：攻撃改善"
+        );
 
-        }
-        else{
+        //----------------------------------
+        // ログ
+        //----------------------------------
 
-            //----------------------------------
-            // 相手のサモンを確認
-            //----------------------------------
-
-            const enemyTargets =
-                playerField.filter(
-                    summon => {
-
-                        if(!summon){
-
-                            return false;
-
-                        }
-
-
-                        return true;
-
-                    }
-                );
-
-
-            let createsNewVerticalAttack =
-                false;
-
-
-            let createsNewHorizontalAttack =
-                false;
-
-
-            //----------------------------------
-            // 攻撃可能サモンごとに確認
-            //----------------------------------
-
-            for(
-                const attacker
-                of attackableSummons
-            ){
-
-                const currentPower =
-                    getPower(
-                        attacker
-                    );
-
-
-                const boostedPower =
-                    currentPower + 2;
-
-
-                for(
-                    const target
-                    of enemyTargets
-                ){
-
-                    const targetPower =
-                        getPower(
-                            target
-                        );
-
-
-                    const canKillBefore =
-                        currentPower >=
-                        targetPower;
-
-
-                    const canKillAfter =
-                        boostedPower >=
-                        targetPower;
-
-
-                    if(
-                        !canKillBefore &&
-                        canKillAfter
-                    ){
-
-                        //----------------------------------
-                        // ヨコ向き
-                        //----------------------------------
-
-                        if(
-                            target.isRest
-                        ){
-
-                            createsNewHorizontalAttack =
-                                true;
-
-
-                            console.log(
-                                "CPU：バーニングエナジーで",
-                                "新規ヨコ向きサモン撃破可能",
-                                "攻撃者=",
-                                attacker.card?.name,
-                                "使用前=",
-                                currentPower,
-                                "使用後=",
-                                boostedPower,
-                                "対象=",
-                                target.card?.name,
-                                "対象パワー=",
-                                targetPower
-                            );
-
-                        }
-
-
-                        //----------------------------------
-                        // タテ向き
-                        //----------------------------------
-
-                        else{
-
-                            createsNewVerticalAttack =
-                                true;
-
-
-                            console.log(
-                                "CPU：バーニングエナジーで",
-                                "新規タテ向きサモン撃破可能",
-                                "攻撃者=",
-                                attacker.card?.name,
-                                "使用前=",
-                                currentPower,
-                                "使用後=",
-                                boostedPower,
-                                "対象=",
-                                target.card?.name,
-                                "対象パワー=",
-                                targetPower
-                            );
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-
-            if(
-                createsNewVerticalAttack
-            ){
-
-                addCpuActionPoints(
-                    action,
-                    50,
-                    "バーニングエナジーで新規タテ向き撃破"
-                );
-
-            }
-
-
-            if(
-                createsNewHorizontalAttack
-            ){
-
-                addCpuActionPoints(
-                    action,
-                    30,
-                    "バーニングエナジーで新規ヨコ向き撃破"
-                );
-
-            }
-
-
-            console.log(
-                "CPU：バーニングエナジー評価",
-                "タテ向き新規撃破=",
-                createsNewVerticalAttack,
-                "ヨコ向き新規撃破=",
-                createsNewHorizontalAttack
-            );
-
-        }
+        console.log(
+            "CPU：バーニングエナジー評価",
+            "対象=",
+            target.card?.name,
+            "強化前ダメージ=",
+            beforeDamage,
+            "強化後ダメージ=",
+            afterDamage,
+            "追加点=",
+            30 + damageIncrease * 10
+        );
 
     }
+
 
 
     //==================================
     // フォローウィンド
+    // 使用後の攻撃価値を評価
     //==================================
 
     if(
-        card.name ===
-        "フォローウィンド"
+        card.name === "フォローウィンド"
     ){
 
-        if(
-            cpuHasMeaningfulAttack()
-        ){
+        //----------------------------------
+        // 実際に攻撃可能にするサモン
+        //----------------------------------
 
-            addCpuActionPoints(
-                action,
-                35,
-                "攻撃準備"
+        const targetPower =
+            getPower(target);
+
+        const attackDamage =
+            getDamage(
+                target,
+                targetPower
             );
 
-        }
+        //----------------------------------
+        // 攻撃可能化の基本評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            35,
+            "フォローウィンド：攻撃可能化"
+        );
+
+        //----------------------------------
+        // 攻撃ダメージ評価
+        //----------------------------------
+
+        addCpuActionPoints(
+            action,
+            attackDamage * 5,
+            "フォローウィンド：攻撃ダメージ"
+        );
+
+        //----------------------------------
+        // 評価ログ
+        //----------------------------------
+
+        console.log(
+            "CPU：フォローウィンド評価",
+            "対象=",
+            target.card?.name,
+            "パワー=",
+            targetPower,
+            "攻撃ダメージ=",
+            attackDamage,
+            "追加点=",
+            35 + attackDamage * 5
+        );
 
     }
+
 
 
     //==================================
@@ -15482,14 +15786,37 @@ const attackDamage =
         // 倒せるブロッカー
         //----------------------------------
 
+
 const killable =
     blockers.filter(
-        blocker =>
-            attackDamage >=
-            getPower(
-                blocker
-            )
+        blocker => {
+
+            //----------------------------------
+            // ブロック時にダメージを受けない
+            // サモンは撃破対象から除外
+            //----------------------------------
+
+            if(
+                hasSummonAbility(
+                    blocker,
+                    "noDamageWhenBlocking"
+                )
+            ){
+                return false;
+            }
+
+            //----------------------------------
+            // 攻撃ダメージで撃破可能
+            //----------------------------------
+
+            return (
+                attackDamage >=
+                getPower(blocker)
+            );
+
+        }
     );
+
 
 
         if(
