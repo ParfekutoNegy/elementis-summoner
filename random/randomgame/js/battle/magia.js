@@ -4932,6 +4932,30 @@ function isMagiaTargetBlocked(
 
     }
 
+        //==================================
+    // アイスジェイル
+    //
+    // 効果中はマギアの対象にならない
+    // 自分・相手のマギア両方を禁止
+    //==================================
+
+    if(
+        target.iceJail?.active === true
+    ){
+
+        console.log(
+            "アイスジェイル：マギア対象不可",
+            target.card?.name,
+            "cardOwner=",
+            card.owner,
+            "targetOwner=",
+            target.owner
+        );
+
+        return true;
+
+    }
+
 
     //----------------------------------
     // 相手のマギア対象にならない

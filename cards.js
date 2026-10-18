@@ -1326,9 +1326,16 @@ effect: {
         element: "水",
         cost: 1,
         series:"mythology",
-        image: "images/085-アイスジェイル.jpg"
+        image: "images/085-アイスジェイル.jpg",
+        effect: {
+            target: ["enemySummon", "playerSummon"],
+            type: "iceJail"
+        },
+        tag: "サモン１体",
+        text: "次の相手のターン中、対象はアタックとブロックができず、マギアと能力の対象として選べない。"
     },
-{
+    
+    {
     id: 86,
     name: "イミテーション",
     type: "マギア",

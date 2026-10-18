@@ -1704,6 +1704,101 @@ break;
         }
 
         //==================================
+// アイスジェイル
+//
+// 次の相手ターン中、対象サモンは
+// ・アタック不可
+// ・ブロック不可
+// ・マギアの対象不可
+// ・能力の対象不可
+//==================================
+
+case "iceJail":{
+
+    //----------------------------------
+    // 対象サモン確認
+    //----------------------------------
+
+    if(
+        !target ||
+        !(target instanceof Summon) ||
+        !target.card ||
+        target.destroyed ||
+        (
+            !playerField.includes(target) &&
+            !enemyField.includes(target)
+        )
+    ){
+
+        console.warn(
+            "アイスジェイル：対象が不正",
+            target
+        );
+
+        return "INVALID";
+
+    }
+
+    //----------------------------------
+    // 使用者
+    //----------------------------------
+
+    const sourcePlayer =
+        card.owner === ENEMY
+            ? ENEMY
+            : PLAYER;
+
+    //----------------------------------
+    // 効果が適用されるターン
+    // 使用者から見た相手ターン
+    //----------------------------------
+
+    const targetTurnPlayer =
+        sourcePlayer === PLAYER
+            ? ENEMY
+            : PLAYER;
+
+    //----------------------------------
+    // 効果を予約
+    //----------------------------------
+
+    target.iceJail = {
+
+        sourcePlayer:
+            sourcePlayer,
+
+        targetTurnPlayer:
+            targetTurnPlayer,
+
+        active:
+            false
+
+    };
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
+
+    console.log(
+        "アイスジェイル：効果予約",
+        {
+            summon: target.card.name,
+            summonOwner: target.owner,
+            sourcePlayer,
+            targetTurnPlayer,
+            active: false
+        }
+    );
+
+    addBattleLog(
+        `アイスジェイル：${target.card.name}に効果を付与`
+    );
+
+    return "DONE";
+
+}
+
+        //==================================
         // メモリーシャッフル
         // 相手クールゾーンのカードを
         // 相手の手札へ戻す
@@ -3331,5 +3426,115 @@ function clearSummonTemporaryEffects(summon){
         "場を離れるため一時強化解除",
         summon.card?.name
     );
+
+}
+
+//==================================
+// アイスジェイル
+// 指定プレイヤーのターン開始時に有効化
+//==================================
+
+function activateIceJailForTurn(turnPlayer){
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
+
+    allSummons.forEach(summon => {
+
+        if(
+            !summon ||
+            summon.destroyed ||
+            !summon.iceJail
+        ){
+            return;
+        }
+
+        const iceJail = summon.iceJail;
+
+        if(
+            iceJail.targetTurnPlayer !== turnPlayer
+        ){
+            return;
+        }
+
+        if(iceJail.active){
+            return;
+        }
+
+        iceJail.active = true;
+
+        console.log(
+            "アイスジェイル：効果有効化",
+            {
+                summon: summon.card?.name,
+                owner: summon.owner,
+                turnPlayer: turnPlayer
+            }
+        );
+
+        addBattleLog(
+            `アイスジェイル：${summon.card.name}の制限が有効になった`
+        );
+
+    });
+
+}
+
+//==================================
+// アイスジェイル
+// 指定プレイヤーのターン終了時に解除
+//==================================
+
+function clearIceJailForTurn(turnPlayer){
+
+    const allSummons = [
+        ...playerField,
+        ...enemyField
+    ];
+
+    allSummons.forEach(summon => {
+
+        if(
+            !summon ||
+            !summon.iceJail
+        ){
+            return;
+        }
+
+        const iceJail =
+            summon.iceJail;
+
+        //----------------------------------
+        // このターンに有効だった効果のみ解除
+        //----------------------------------
+
+        if(
+            iceJail.targetTurnPlayer !== turnPlayer ||
+            iceJail.active !== true
+        ){
+            return;
+        }
+
+        //----------------------------------
+        // 効果解除
+        //----------------------------------
+
+        delete summon.iceJail;
+
+        console.log(
+            "アイスジェイル：効果解除",
+            {
+                summon: summon.card?.name,
+                turnPlayer: turnPlayer
+            }
+        );
+
+        addBattleLog(
+            `アイスジェイル：${summon.card.name}の制限が解除された`
+        );
+
+    });
 
 }

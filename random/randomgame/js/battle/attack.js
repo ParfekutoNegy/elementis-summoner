@@ -752,6 +752,24 @@ function startAttack(summon){
 
     }
 
+        //==================================
+    // アイスジェイル
+    // 効果中はアタック禁止
+    //==================================
+
+    if(
+        summon.iceJail?.active === true
+    ){
+
+        console.log(
+            "アイスジェイル：アタック禁止",
+            summon.card.name
+        );
+
+        return;
+
+    }
+
 
     //----------------------------------
     // 召喚ターン攻撃可能能力
@@ -1154,6 +1172,27 @@ if(
 
     }
 
+       //==================================
+    // アイスジェイル
+    // 強制アタック禁止
+    //==================================
+
+    if(
+        summon.iceJail?.active === true
+    ){
+
+        console.log(
+            "アイスジェイル：強制アタック禁止",
+            summon.card?.name
+        );
+
+
+        startNextForcedAttack();
+
+        return;
+
+    } 
+
 
     //----------------------------------
     // 現在も能力を持っているか
@@ -1453,6 +1492,34 @@ if(
 
                     startNextForcedAttack();
 
+
+                    return;
+
+                }
+
+                                //==================================
+                // アイスジェイル
+                // CPU強制アタック実行直前
+                //==================================
+
+                if(
+                    summon.iceJail?.active === true
+                ){
+
+                    console.log(
+                        "CPU強制アタック中止：アイスジェイル",
+                        summon.card?.name
+                    );
+
+
+                    forcedAttackMode =
+                        false;
+
+                    attackingSummon =
+                        null;
+
+
+                    startNextForcedAttack();
 
                     return;
 
@@ -7547,6 +7614,25 @@ function findBlockSummons(){
         //----------------------------------
 
         if(summon.destroyed){
+
+            continue;
+
+        }
+
+                //==================================
+        // アイスジェイル
+        // 効果中はブロック禁止
+        //==================================
+
+        if(
+            summon.iceJail?.active === true
+        ){
+
+            console.log(
+                "アイスジェイル：ブロック禁止",
+                summon.card?.name
+            );
+
 
             continue;
 

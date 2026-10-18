@@ -16711,6 +16711,28 @@ function canTargetBySummonAbility(
 
     }
 
+        //==================================
+    // アイスジェイル
+    //
+    // 効果中のサモンは
+    // 自分・相手のサモン能力の
+    // 対象に選べない
+    //==================================
+
+    if(
+        target instanceof Summon &&
+        target.iceJail?.active === true
+    ){
+
+        console.log(
+            "アイスジェイル：サモン能力対象不可",
+            target.card?.name
+        );
+
+        return false;
+
+    }
+
 
     //----------------------------------
     // 能力使用者

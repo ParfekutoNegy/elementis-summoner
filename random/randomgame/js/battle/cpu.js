@@ -1037,6 +1037,24 @@ function createCpuAttackQueue(){
 
                 }
 
+                                //==================================
+                // アイスジェイル
+                // 効果中はブロッカーとして扱わない
+                //==================================
+
+                if(
+                    summon.iceJail?.active === true
+                ){
+
+                    console.log(
+                        "CPUブロッカー評価：アイスジェイルにより除外",
+                        summon.card?.name
+                    );
+
+                    return false;
+
+                }
+
 
                 //----------------------------------
                 // 横向きはブロック不可
@@ -1253,6 +1271,24 @@ if(
                     !summon ||
                     !summon.card
                 ){
+
+                    return false;
+
+                }
+
+                //==================================
+                // アイスジェイル
+                // 効果中はアタック禁止
+                //==================================
+
+                if(
+                    summon.iceJail?.active === true
+                ){
+
+                    console.log(
+                        "CPU：アイスジェイルによりアタック禁止",
+                        summon.card.name
+                    );
 
                     return false;
 
@@ -2011,12 +2047,17 @@ function cpuNextAttack(){
 //----------------------------------
 // 攻撃不能になっていた場合
 //
-// オーガのアタック禁止能力にも対応
+// ・行動済み
+// ・場から離れた
+// ・破壊済み
+// ・オーガのアタック禁止
+// ・アイスジェイルのアタック禁止
 //----------------------------------
 
 if(
     !attacker ||
     attacker.isRest ||
+    attacker.destroyed ||
     !enemyField.includes(
         attacker
     ) ||
@@ -2026,8 +2067,26 @@ if(
         isOgreBattleLocked(
             attacker
         )
+    ) ||
+    (
+        attacker.iceJail?.active === true
     )
 ){
+
+    //----------------------------------
+    // アイスジェイルのログ
+    //----------------------------------
+
+    if(
+        attacker?.iceJail?.active === true
+    ){
+
+        console.log(
+            "CPU：アイスジェイルによりアタック中止",
+            attacker.card?.name
+        );
+
+    }
 
         //----------------------------------
         // ★追加
@@ -4605,6 +4664,99 @@ if(
         return ENEMY;
 
     }
+
+//==================================
+// アイスジェイル
+// CPU専用対象選択
+//==================================
+
+if(
+    card.effect.type === "iceJail"
+){
+
+//----------------------------------
+// CPUが先攻の第1ターンか判定
+//----------------------------------
+
+const isCpuFirstTurn =
+    game.turn === 1 &&
+    game.currentPlayer === ENEMY;
+
+
+    //----------------------------------
+    // CPU先攻第1ターン
+    //----------------------------------
+
+    if(isCpuFirstTurn){
+
+        const candidates =
+            enemyField.filter(
+                summon =>
+                    summon &&
+                    !summon.destroyed &&
+                    summon.owner === ENEMY &&
+                    summon.summonedTurn === game.turn &&
+                    !isMagiaTargetBlocked(
+                        card,
+                        summon
+                    )
+            );
+
+        if(candidates.length === 0){
+            return null;
+        }
+
+        const target = candidates[0];
+
+        console.log(
+            "CPU：アイスジェイル先攻第1ターン",
+            target.card.name
+        );
+
+        return target;
+
+    }
+
+
+    //----------------------------------
+    // その他のターン
+    // PLAYERの高パワーサモン
+    //----------------------------------
+
+    const candidates =
+        playerField.filter(
+            summon =>
+                summon &&
+                !summon.destroyed &&
+                summon.owner === PLAYER &&
+                !summon.iceJail &&
+                !isMagiaTargetBlocked(
+                    card,
+                    summon
+                )
+        );
+
+    if(candidates.length === 0){
+        return null;
+    }
+
+    candidates.sort(
+        (a,b) =>
+            getPower(b) - getPower(a)
+    );
+
+    const target = candidates[0];
+
+    console.log(
+        "CPU：アイスジェイル対象",
+        target.card.name,
+        "power=",
+        getPower(target)
+    );
+
+    return target;
+
+}
 
 //----------------------------------
 // 通常の対象確認
@@ -11486,6 +11638,57 @@ if(cpuDelugePlannedThisTurn){
 
 }
 
+//==================================
+// アイスジェイル
+// CPU先攻第1ターン
+// 召喚を先に行う
+//==================================
+
+if(
+    game.turn === 1 &&
+    game.currentPlayer === ENEMY &&
+    !cpuSummonUsedThisTurn
+){
+
+    //----------------------------------
+    // アイスジェイルを所持
+    //----------------------------------
+
+    const hasIceJail =
+        enemyHandCards.some(
+            card =>
+                card.effect?.type ===
+                "iceJail"
+        );
+
+    if(hasIceJail){
+
+        //----------------------------------
+        // 使用可能なサモン候補
+        //----------------------------------
+
+        const summonAction =
+            actions.find(
+                action =>
+                    action.type === "SUMMON"
+            );
+
+        if(summonAction){
+
+            console.log(
+                "CPU：アイスジェイル準備",
+                "先にサモン召喚",
+                summonAction.card?.name
+            );
+
+            return summonAction;
+
+        }
+
+    }
+
+}
+
 
     //----------------------------------
     // 候補表示
@@ -13571,6 +13774,53 @@ else if(
         10,
         "マギア基本点"
     );
+
+    //==================================
+// アイスジェイル
+// CPU使用ポイント評価
+//==================================
+
+if(
+    card.effect?.type === "iceJail"
+){
+
+    //----------------------------------
+    // CPU自身のサモンを対象
+    // 先攻第1ターン
+    //----------------------------------
+
+    if(
+        target.owner === ENEMY
+    ){
+
+        addCpuActionPoints(
+            action,
+            40,
+            "アイスジェイル：自サモン保護"
+        );
+
+    }
+
+    //----------------------------------
+    // PLAYERのサモンを対象
+    //----------------------------------
+
+    else if(
+        target.owner === PLAYER
+    ){
+
+        const targetPower =
+            getPower(target);
+
+        addCpuActionPoints(
+            action,
+            30 + targetPower * 5,
+            "アイスジェイル：敵サモン封印"
+        );
+
+    }
+
+}
 
     //==================================
 // デリュージ
