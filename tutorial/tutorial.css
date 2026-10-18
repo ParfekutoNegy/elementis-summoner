@@ -1522,3 +1522,180 @@ Menu Button
         );
 
 }
+
+/* ==========================================
+   チュートリアル全体の回転表示
+========================================== */
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+/* ゲーム＋説明パネルをまとめて回転 */
+#tutorial-layout {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+
+    width: 1280px;
+    height: 812px;
+
+    overflow: hidden;
+    background: #000;
+
+    transform-origin: center center;
+    transition: none !important;
+
+    touch-action: none;
+    overscroll-behavior: none;
+}
+
+/* ゲーム領域：1280 × 720 */
+#tutorial-layout #tutorial-game-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: auto;
+
+    width: 1280px;
+    height: 720px;
+
+    overflow: hidden;
+    background: #000;
+}
+
+/* 既存のバトルCSSによるfixed配置を解除 */
+#tutorial-layout #tutorial-game-area #game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: auto;
+
+    width: 1280px;
+    height: 720px;
+
+    overflow: hidden;
+}
+
+/* バトル画面自体は回転しない */
+#tutorial-layout #battle-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+
+    width: 1280px;
+    height: 720px;
+
+    margin: 0;
+    transform: translate(-50%, -50%);
+    transform-origin: center center;
+    transition: none !important;
+}
+
+/* 説明パネルをゲーム画面の下に配置 */
+#tutorial-layout #tutorial-panel {
+    position: absolute;
+    top: 720px;
+    bottom: auto;
+    left: 0;
+    right: auto;
+
+    width: 1280px;
+    height: 92px;
+
+    grid-template-columns: 115px minmax(0, 1fr) 96px;
+    column-gap: 6px;
+    padding: 5px 7px;
+}
+
+/* 既存の狭い画面用メディアクエリを上書き */
+#tutorial-layout #tutorial-navigation {
+    width: 96px;
+    min-width: 96px;
+}
+
+#tutorial-layout #tutorial-next-button {
+    width: 90px;
+}
+
+/* 回転中は画面全体を隠す */
+#tutorial-layout.is-rotating {
+    visibility: hidden;
+}
+
+/* ==========================================
+   チュートリアル説明パネル
+   文字サイズ調整
+========================================== */
+
+/* STEP番号 */
+#tutorial-layout #tutorial-step-label {
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+/* 説明文 */
+#tutorial-layout #tutorial-message {
+    font-size: 22px;
+    line-height: 1.4;
+    font-weight: 600;
+}
+
+/* 次へボタン */
+#tutorial-layout #tutorial-next-button {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* ==========================================
+   チュートリアル下部バー
+   領域幅・ボタンサイズ調整
+========================================== */
+
+/* 下部バーの3列の幅を変更 */
+#tutorial-layout #tutorial-panel {
+
+    grid-template-columns:
+        190px
+        minmax(0, 1fr)
+        150px;
+
+    column-gap: 8px;
+
+}
+
+/* 左側タイトル欄 */
+#tutorial-layout #tutorial-step-area {
+
+    padding-right: 10px;
+
+}
+
+/* 右側ボタン領域 */
+#tutorial-layout #tutorial-navigation {
+
+    width: 150px;
+    min-width: 150px;
+
+    justify-content: center;
+
+}
+
+/* 次へボタン */
+#tutorial-layout #tutorial-next-button {
+
+    width: 140px;
+    height: 58px;
+
+    font-size: 18px;
+
+    border-radius: 10px;
+
+}

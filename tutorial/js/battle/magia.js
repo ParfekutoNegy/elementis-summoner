@@ -980,7 +980,38 @@ function clearMagiaHighlight(){
 // マギア使用可能判定
 //======================================
 
+
 function canUseMagia(card){
+
+    //==================================
+    // デリュージ使用制限
+    // 1ゲームにつき各プレイヤー1回
+    //==================================
+
+    if(
+        card?.effect?.type === "deluge"
+    ){
+
+        const owner =
+            card.owner ?? game.currentPlayer;
+
+        if(delugeUsed[owner] === true){
+
+            console.log(
+                "デリュージ使用不可：使用済み",
+                owner
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    //----------------------------------
+    // 対象指定なし
+    //----------------------------------
 
     if(
         !card ||
@@ -996,14 +1027,216 @@ function canUseMagia(card){
     const targets =
         card.effect.target;
 
+    const condition =
+        card.effect.condition;
 
-    //----------------------------------
+
+    //==================================
+    // マギア対象サモン共通判定
+    //
+    // アイスジェイル・クラーケン等
+    // 向き条件も確認
+    //==================================
+
+    const canTargetSummon = (
+        summon,
+        orientation = null
+    ) => {
+
+        //----------------------------------
+        // 存在確認
+        //----------------------------------
+
+        if(
+            !summon ||
+            summon.destroyed
+        ){
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // タテ向き条件
+        //----------------------------------
+
+        if(
+            orientation === "vertical" &&
+            summon.isRest
+        ){
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // ヨコ向き条件
+        //----------------------------------
+
+        if(
+            orientation === "horizontal" &&
+            !summon.isRest
+        ){
+
+            return false;
+
+        }
+
+
+        //----------------------------------
+        // マギア対象選択制限
+        //----------------------------------
+
+        if(
+            typeof isMagiaTargetBlocked ===
+                "function" &&
+            isMagiaTargetBlocked(
+                card,
+                summon
+            )
+        ){
+
+            return false;
+
+        }
+
+
+        return true;
+
+    };
+
+
+    //==================================
+    // 向き条件付きサモン
+    //
+    // トルネード等
+    //
+    // effect.condition.orientation
+    //==================================
+
+    if(
+        condition &&
+        condition.orientation
+    ){
+
+        const orientation =
+            condition.orientation;
+
+        const targetSummons = [];
+
+
+        //----------------------------------
+        // 自分サモン
+        //----------------------------------
+
+        if(
+            targets.includes("playerSummon") ||
+            targets.includes("selfSummon")
+        ){
+
+            targetSummons.push(
+                ...playerField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 相手サモン
+        //----------------------------------
+
+        if(
+            targets.includes("enemySummon")
+        ){
+
+            targetSummons.push(
+                ...enemyField
+            );
+
+        }
+
+
+        //----------------------------------
+        // 条件に合う対象を確認
+        //----------------------------------
+
+        const canUseTarget =
+            targetSummons.some(
+                summon =>
+                    canTargetSummon(
+                        summon,
+                        orientation
+                    )
+            );
+
+
+        console.log(
+            "マギア使用可能判定：向き条件",
+            {
+                card: card.name,
+                orientation: orientation,
+                result: canUseTarget
+            }
+        );
+
+
+        return canUseTarget;
+
+    }
+
+
+    //==================================
+    // horizontalSummon
+    //
+    // 自分・相手のヨコ向きサモン
+    //==================================
+
+    if(
+        targets.includes(
+            "horizontalSummon"
+        )
+    ){
+
+        const fieldSummons = [
+            ...playerField,
+            ...enemyField
+        ];
+
+
+        const canUseTarget =
+            fieldSummons.some(
+                summon =>
+                    canTargetSummon(
+                        summon,
+                        "horizontal"
+                    )
+            );
+
+
+        console.log(
+            "マギア使用可能判定：horizontalSummon",
+            card.name,
+            canUseTarget
+        );
+
+
+        return canUseTarget;
+
+    }
+
+
+    //==================================
     // 自分サモン
-    //----------------------------------
+    //==================================
 
     if(
         targets.includes("playerSummon") &&
-        playerField.length > 0
+        playerField.some(
+            summon =>
+                canTargetSummon(summon)
+        )
     ){
 
         return true;
@@ -1011,13 +1244,34 @@ function canUseMagia(card){
     }
 
 
-    //----------------------------------
+    //==================================
+    // selfSummon
+    // 自分サモンの別指定形式
+    //==================================
+
+    if(
+        targets.includes("selfSummon") &&
+        playerField.some(
+            summon =>
+                canTargetSummon(summon)
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //==================================
     // 相手サモン
-    //----------------------------------
+    //==================================
 
     if(
         targets.includes("enemySummon") &&
-        enemyField.length > 0
+        enemyField.some(
+            summon =>
+                canTargetSummon(summon)
+        )
     ){
 
         return true;
@@ -1025,97 +1279,97 @@ function canUseMagia(card){
     }
 
 
-    //----------------------------------
-    // 自分タテ向き
-    //----------------------------------
+    //==================================
+    // 自分タテ向きサモン
+    //==================================
 
     if(
-        targets.includes("playerVerticalSummon")
+        targets.includes(
+            "playerVerticalSummon"
+        ) &&
+        playerField.some(
+            summon =>
+                canTargetSummon(
+                    summon,
+                    "vertical"
+                )
+        )
     ){
 
-        if(
-            playerField.some(
-                summon =>
-                    !summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
+        return true;
 
     }
 
 
-    //----------------------------------
-    // 自分ヨコ向き
-    //----------------------------------
+    //==================================
+    // 自分ヨコ向きサモン
+    //==================================
 
     if(
-        targets.includes("playerHorizontalSummon")
+        targets.includes(
+            "playerHorizontalSummon"
+        ) &&
+        playerField.some(
+            summon =>
+                canTargetSummon(
+                    summon,
+                    "horizontal"
+                )
+        )
     ){
 
-        if(
-            playerField.some(
-                summon =>
-                    summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
+        return true;
 
     }
 
 
-    //----------------------------------
-    // 相手タテ向き
-    //----------------------------------
+    //==================================
+    // 相手タテ向きサモン
+    //==================================
 
     if(
-        targets.includes("enemyVerticalSummon")
+        targets.includes(
+            "enemyVerticalSummon"
+        ) &&
+        enemyField.some(
+            summon =>
+                canTargetSummon(
+                    summon,
+                    "vertical"
+                )
+        )
     ){
 
-        if(
-            enemyField.some(
-                summon =>
-                    !summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
+        return true;
 
     }
 
 
-    //----------------------------------
-    // 相手ヨコ向き
-    //----------------------------------
+    //==================================
+    // 相手ヨコ向きサモン
+    //==================================
 
     if(
-        targets.includes("enemyHorizontalSummon")
+        targets.includes(
+            "enemyHorizontalSummon"
+        ) &&
+        enemyField.some(
+            summon =>
+                canTargetSummon(
+                    summon,
+                    "horizontal"
+                )
+        )
     ){
 
-        if(
-            enemyField.some(
-                summon =>
-                    summon.isRest
-            )
-        ){
-
-            return true;
-
-        }
+        return true;
 
     }
 
 
-    //----------------------------------
-    // 自分
-    //----------------------------------
+    //==================================
+    // 自分プレイヤー
+    //==================================
 
     if(
         targets.includes("player")
@@ -1126,9 +1380,9 @@ function canUseMagia(card){
     }
 
 
-    //----------------------------------
-    // 相手
-    //----------------------------------
+    //==================================
+    // 相手プレイヤー
+    //==================================
 
     if(
         targets.includes("enemy")
@@ -1139,23 +1393,168 @@ function canUseMagia(card){
     }
 
 
-//----------------------------------
-// 自分クールゾーンのカード
-//----------------------------------
+    //==================================
+    // 自分クールゾーンのカード
+    //==================================
 
-if(
-    targets.includes("playerCoolCard") &&
-    board.playerCoolCards.length > 0
-){
+    if(
+        targets.includes(
+            "playerCoolCard"
+        ) &&
+        board.playerCoolCards.length > 0
+    ){
 
-    return true;
+        return true;
+
+    }
+
+
+    //==================================
+    // 自分クールゾーンのサモン
+    //
+    // クレイクリエイト等
+    //==================================
+
+    if(
+        targets.includes(
+            "playerCoolSummon"
+        ) &&
+        board.playerCoolCards.some(
+            coolCard =>
+                coolCard &&
+                coolCard.type === "サモン"
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //==================================
+    // 自分クールゾーンのマギア
+    //==================================
+
+    if(
+        targets.includes(
+            "playerCoolMagia"
+        ) &&
+        board.playerCoolCards.some(
+            coolCard =>
+                coolCard &&
+                coolCard.type === "マギア"
+        )
+    ){
+
+        return true;
+
+    }
+
+
+    //==================================
+    // 相手クールゾーンのマギア
+    //
+    // イミテーション等
+    //==================================
+
+    if(
+        targets.includes(
+            "enemyCoolMagia"
+        )
+    ){
+
+        //----------------------------------
+        // イミテーション
+        //----------------------------------
+
+        if(
+            card.effect?.type === "imitation"
+        ){
+
+            //==================================
+            // プレイ枚数制限
+            //
+            // イミテーション自身と
+            // コピーするマギアの2枚分
+            //==================================
+
+            const remainingPlays =
+                getCardPlayLimit(PLAYER) -
+                getCardPlayCount(PLAYER);
+
+
+            if(
+                remainingPlays < 2
+            ){
+
+                console.log(
+                    "イミテーション使用不可：コピー分のプレイ枠なし",
+                    {
+                        remaining: remainingPlays,
+                        count: getCardPlayCount(PLAYER),
+                        limit: getCardPlayLimit(PLAYER)
+                    }
+                );
+
+
+                return false;
+
+            }
+
+
+            //----------------------------------
+            // コピー可能なマギアの確認
+            //----------------------------------
+
+            return (
+                getImitationTargets().length > 0
+            );
+
+        }
+
+
+        //----------------------------------
+        // その他の効果
+        //----------------------------------
+
+        return board.enemyCoolCards.some(
+            coolCard =>
+                coolCard &&
+                coolCard.type === "マギア"
+        );
+
+    }
+
+
+    //==================================
+    // メモリーシャッフル
+    // 相手クールゾーンのカード
+    //==================================
+
+    if(
+        targets.includes(
+            "enemyCoolCard"
+        )
+    ){
+
+        return (
+            Array.isArray(
+                board.enemyCoolCards
+            ) &&
+            board.enemyCoolCards.length > 0
+        );
+
+    }
+
+
+    //==================================
+    // 使用可能対象なし
+    //==================================
+
+    return false;
 
 }
 
-
-return false;
-
-}
 
 
 

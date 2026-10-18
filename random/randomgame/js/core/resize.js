@@ -1,3 +1,10 @@
+
+"use strict";
+
+//==================================
+// チュートリアル画面サイズ調整
+//==================================
+
 function resizeGame(){
 
     const game =
@@ -24,29 +31,69 @@ function resizeGame(){
 
 
     //----------------------------------
+    // 実際の表示領域
+    //----------------------------------
+
+    const viewport =
+        window.visualViewport;
+
+    const width = viewport
+        ? viewport.width
+        : window.innerWidth;
+
+    const height = viewport
+        ? viewport.height
+        : window.innerHeight;
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+
+    //----------------------------------
+    // コンテナサイズ
+    //----------------------------------
+
+    container.style.width =
+        `${width}px`;
+
+    container.style.height =
+        `${height}px`;
+
+
+    //----------------------------------
+    // 縦横判定
+    //----------------------------------
+
+    const isPortrait =
+        height > width;
+
+
+    //----------------------------------
     // 表示倍率
     //----------------------------------
 
-    const scale =
-        Math.min(
-            window.innerWidth / baseWidth,
-            window.innerHeight / baseHeight
+    let scale;
+
+    if(isPortrait){
+
+        scale = Math.min(
+            width / baseHeight,
+            height / baseWidth
         );
 
+    }else{
 
-    //----------------------------------
-    // ゲーム画面
-    //----------------------------------
+        scale = Math.min(
+            width / baseWidth,
+            height / baseHeight
+        );
 
-    game.style.transform =
-        `
-        translate(-50%, -50%)
-        scale(${scale})
-        `;
+    }
 
 
     //----------------------------------
-    // 基準サイズを維持
+    // ゲーム画面の基準サイズ
     //----------------------------------
 
     game.style.width =
@@ -57,13 +104,27 @@ function resizeGame(){
 
 
     //----------------------------------
-    // モーダル用の表示倍率を保存
-    //
-    // モーダルは battle-screen 内にあるため
-    // 通常ならゲーム画面と一緒に縮小される。
-    //
-    // そこで現在の倍率をCSS変数として渡し、
-    // モーダル側で逆倍率を適用する。
+    // 回転・拡大縮小
+    //----------------------------------
+
+    if(isPortrait){
+
+        game.style.transform =
+            `translate(-50%, -50%)
+             rotate(90deg)
+             scale(${scale})`;
+
+    }else{
+
+        game.style.transform =
+            `translate(-50%, -50%)
+             scale(${scale})`;
+
+    }
+
+
+    //----------------------------------
+    // モーダル用倍率
     //----------------------------------
 
     game.style.setProperty(
@@ -73,15 +134,236 @@ function resizeGame(){
 
 }
 
+
+//==================================
+// リサイズ予約
+//==================================
+
+let resizeTimer = null;
+
+function scheduleResize(){
+
+    requestAnimationFrame(
+        resizeGame
+    );
+
+    clearTimeout(resizeTimer);
+
+    resizeTimer = setTimeout(
+        resizeGame,
+        300
+    );
+
+}
+
+
+//==================================
+// 画面回転中の表示制御
+//==================================
+
+let rotationTimer = null;
+
+let lastPortrait =
+    window.innerHeight >
+    window.innerWidth;
+
+function handleScreenRotation(){
+
+    const container =
+        document.getElementById(
+            "game-container"
+        );
+
+    if(!container){
+        return;
+    }
+
+    const isPortrait =
+        window.innerHeight >
+        window.innerWidth;
+
+    if(isPortrait === lastPortrait){
+        return;
+    }
+
+    lastPortrait = isPortrait;
+
+    //----------------------------------
+    // 回転中は画面を隠す
+    //----------------------------------
+
+    container.classList.add(
+        "is-rotating"
+    );
+
+    clearTimeout(rotationTimer);
+
+    //----------------------------------
+    // 回転完了後に再表示
+    //----------------------------------
+
+    rotationTimer = setTimeout(
+        () => {
+
+            resizeGame();
+
+            requestAnimationFrame(
+                () => {
+
+                    container.classList.remove(
+                        "is-rotating"
+                    );
+
+                }
+            );
+
+        },
+        300
+    );
+
+}
+
+
+//==================================
+// イベント登録
+//==================================
+
 window.addEventListener(
     "resize",
-    resizeGame
+    scheduleResize
+);
+
+window.addEventListener(
+    "resize",
+    handleScreenRotation
 );
 
 window.addEventListener(
     "orientationchange",
-    resizeGame
+    scheduleResize
+);
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        scheduleResize
+    );
+
+    window.visualViewport.addEventListener(
+        "resize",
+        handleScreenRotation
+    );
+
+}
+
+
+//==================================
+// 初期表示
+//==================================
+
+scheduleResize();
+
+
+//==================================
+// タッチ操作による拡大防止
+//==================================
+
+//----------------------------------
+// ダブルタップ拡大防止
+//----------------------------------
+
+let lastTouchEnd = 0;
+
+document.addEventListener(
+    "touchend",
+    function(event){
+
+        const container =
+            document.getElementById(
+                "game-container"
+            );
+
+        if(
+            !container ||
+            !container.contains(event.target)
+        ){
+            return;
+        }
+
+        const now = Date.now();
+
+        if(now - lastTouchEnd <= 300){
+
+            event.preventDefault();
+
+        }
+
+        lastTouchEnd = now;
+
+    },
+    { passive: false }
 );
 
 
-resizeGame();
+//----------------------------------
+// ピンチ操作防止
+//----------------------------------
+
+document.addEventListener(
+    "touchmove",
+    function(event){
+
+        const container =
+            document.getElementById(
+                "game-container"
+            );
+
+        if(
+            container &&
+            container.contains(event.target) &&
+            event.touches.length >= 2
+        ){
+
+            event.preventDefault();
+
+        }
+
+    },
+    { passive: false }
+);
+
+
+//----------------------------------
+// Safariジェスチャー拡大防止
+//----------------------------------
+
+[
+    "gesturestart",
+    "gesturechange",
+    "gestureend"
+].forEach(eventName => {
+
+    document.addEventListener(
+        eventName,
+        function(event){
+
+            const container =
+                document.getElementById(
+                    "game-container"
+                );
+
+            if(
+                container &&
+                container.contains(event.target)
+            ){
+
+                event.preventDefault();
+
+            }
+
+        },
+        { passive: false }
+    );
+
+});

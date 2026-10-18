@@ -1673,3 +1673,120 @@
     pointer-events: none;
 
 }
+
+
+
+/* ======================================
+   バトル画面の回転表示対応
+====================================== */
+
+#game-container {
+
+    width: 100%;
+
+    height: 100vh;
+    height: 100dvh;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background: #000;
+
+}
+
+
+#battle-screen {
+
+    width: 1280px;
+    height: 720px;
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    transform-origin: center center;
+
+}
+
+/* ======================================
+   スマホ画面表示領域対応
+====================================== */
+
+html,
+body {
+
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+}
+
+#game-container {
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100dvh;
+
+    overflow: hidden;
+
+    background: #000;
+
+}
+
+#battle-screen {
+
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+
+    width: 1280px;
+    height: 720px;
+
+    transform-origin: center center;
+
+}
+
+/* ======================================
+   スマホの誤操作による画面移動防止
+====================================== */
+
+#game-container {
+
+    touch-action: none;
+
+    overscroll-behavior: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+
+    -webkit-touch-callout: none;
+
+}
+
+#battle-screen {
+
+    touch-action: none;
+
+    -webkit-user-select: none;
+    user-select: none;
+
+}
+
+#game-container.is-rotating #battle-screen {
+    visibility: hidden;
+}
+
+#battle-screen {
+    transition: none !important;
+}

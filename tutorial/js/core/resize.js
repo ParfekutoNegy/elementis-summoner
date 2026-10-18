@@ -1,407 +1,384 @@
-//==================================================
-// Elementis Summoner
-// Tutorial resize.js
-//
-// 基準画面
-// 1280 × 720
-//==================================================
 
+/* ==========================================
+   Elementis Summoner
+   Tutorial resize.js
 
-let tutorialResizeTimer1 =
-    null;
+   全体サイズ：1280 × 812
+   ゲーム画面：1280 × 720
+   説明パネル：1280 × 92
+========================================== */
 
-let tutorialResizeTimer2 =
-    null;
+(function(){
 
-let tutorialResizeTimer3 =
-    null;
-
-
-//==================================================
-// リサイズ本体
-//==================================================
-
-function resizeGame(){
-
-    const gameArea =
-        document.getElementById(
-            "tutorial-game-area"
-        );
-
-
-    const battleScreen =
-        document.getElementById(
-            "battle-screen"
-        );
-
-
-    if(!gameArea){
-
-        console.warn(
-            "tutorial-game-area が見つかりません"
-        );
-
-        return;
-
-    }
-
-
-    if(!battleScreen){
-
-        console.warn(
-            "battle-screen が見つかりません"
-        );
-
-        return;
-
-    }
-
+    "use strict";
 
     //----------------------------------
     // 基準サイズ
     //----------------------------------
 
-    const baseWidth =
-        1280;
+    const BASE_WIDTH = 1280;
+    const BASE_HEIGHT = 812;
+
+    let resizeTimer = null;
+    let rotationTimer = null;
+
+    let lastPortrait =
+        window.innerHeight > window.innerWidth;
 
 
-    const baseHeight =
-        720;
+    //==================================
+    // リサイズ本体
+    //==================================
 
+    function resizeGame(){
 
-    //----------------------------------
-    // 実際のゲーム表示領域
-    //----------------------------------
+        const layout =
+            document.getElementById(
+                "tutorial-layout"
+            );
 
-    const rect =
-        gameArea.getBoundingClientRect();
+        const battleScreen =
+            document.getElementById(
+                "battle-screen"
+            );
 
-
-    const areaWidth =
-        rect.width;
-
-
-    const areaHeight =
-        rect.height;
-
-
-    //----------------------------------
-    // サイズ確認
-    //----------------------------------
-
-    if(
-        areaWidth <= 0 ||
-        areaHeight <= 0
-    ){
-
-        console.warn(
-            "Tutorial resize：領域サイズ異常",
-            {
-                areaWidth,
-                areaHeight
-            }
-        );
-
-        return;
-
-    }
-
-
-    //----------------------------------
-    // X / Y倍率
-    //----------------------------------
-
-    const scaleX =
-        areaWidth /
-        baseWidth;
-
-
-    const scaleY =
-        areaHeight /
-        baseHeight;
-
-
-    //----------------------------------
-    // 画面内へ収める
-    //----------------------------------
-
-    const scale =
-        Math.min(
-            scaleX,
-            scaleY
-        );
-
-
-    //----------------------------------
-    // 基準サイズ固定
-    //----------------------------------
-
-    battleScreen.style.width =
-        baseWidth +
-        "px";
-
-
-    battleScreen.style.height =
-        baseHeight +
-        "px";
-
-
-    //----------------------------------
-    // 中央配置
-    //----------------------------------
-
-    battleScreen.style.top =
-        "50%";
-
-
-    battleScreen.style.left =
-        "50%";
-
-
-    //----------------------------------
-    // ★重要
-    //
-    // translate + scale を
-    // 必ず同じtransformに設定
-    //----------------------------------
-
-    battleScreen.style.transform =
-        `translate(-50%, -50%) scale(${scale})`;
-
-
-    battleScreen.style.transformOrigin =
-        "center center";
-
-
-    //----------------------------------
-    // 確認ログ
-    //----------------------------------
-
-    console.log(
-        "Tutorial resize",
-        {
-            innerWidth:
-                window.innerWidth,
-
-            innerHeight:
-                window.innerHeight,
-
-            visualWidth:
-                window.visualViewport
-                ? window.visualViewport.width
-                : null,
-
-            visualHeight:
-                window.visualViewport
-                ? window.visualViewport.height
-                : null,
-
-            areaWidth,
-            areaHeight,
-            scale
+        if(!layout || !battleScreen){
+            return;
         }
-    );
-
-}
 
 
-//==================================================
-// 安定した再リサイズ
-//==================================================
+        //----------------------------------
+        // 表示領域取得
+        //----------------------------------
 
-function refreshTutorialGameSize(){
+        const viewport =
+            window.visualViewport;
 
-    //----------------------------------
-    // 古いタイマー解除
-    //----------------------------------
+        const width = viewport
+            ? viewport.width
+            : window.innerWidth;
 
-    if(tutorialResizeTimer1){
+        const height = viewport
+            ? viewport.height
+            : window.innerHeight;
 
-        clearTimeout(
-            tutorialResizeTimer1
-        );
-
-    }
-
-
-    if(tutorialResizeTimer2){
-
-        clearTimeout(
-            tutorialResizeTimer2
-        );
-
-    }
+        if(width <= 0 || height <= 0){
+            return;
+        }
 
 
-    if(tutorialResizeTimer3){
+        //----------------------------------
+        // 縦横判定
+        //----------------------------------
 
-        clearTimeout(
-            tutorialResizeTimer3
-        );
-
-    }
-
-
-    //----------------------------------
-    // 次フレーム
-    //----------------------------------
-
-    requestAnimationFrame(
-        () => {
-
-            resizeGame();
+        const isPortrait =
+            height > width;
 
 
-            //----------------------------------
-            // さらに次フレーム
-            //----------------------------------
+        //----------------------------------
+        // 表示倍率
+        //----------------------------------
 
-            requestAnimationFrame(
-                () => {
+        let scale;
 
-                    resizeGame();
+        if(isPortrait){
 
-                }
+            // 90度回転後は
+            // 812 × 1280
+            scale = Math.min(
+                width / BASE_HEIGHT,
+                height / BASE_WIDTH
+            );
+
+        }else{
+
+            // 横持ちは通常表示
+            scale = Math.min(
+                width / BASE_WIDTH,
+                height / BASE_HEIGHT
             );
 
         }
-    );
 
 
-    //----------------------------------
-    // 100ms後
-    //----------------------------------
+        //----------------------------------
+        // レイアウト基準サイズ
+        //----------------------------------
 
-    tutorialResizeTimer1 =
-        setTimeout(
-            () => {
+        layout.style.width =
+            `${BASE_WIDTH}px`;
 
-                resizeGame();
+        layout.style.height =
+            `${BASE_HEIGHT}px`;
 
-            },
-            100
+
+        //----------------------------------
+        // 全体の回転・縮小
+        //----------------------------------
+
+        if(isPortrait){
+
+            layout.style.transform =
+                `translate(-50%, -50%)
+                 rotate(90deg)
+                 scale(${scale})`;
+
+        }else{
+
+            layout.style.transform =
+                `translate(-50%, -50%)
+                 scale(${scale})`;
+
+        }
+
+
+        //----------------------------------
+        // バトル画面は回転させない
+        //----------------------------------
+
+        battleScreen.style.width =
+            "1280px";
+
+        battleScreen.style.height =
+            "720px";
+
+        battleScreen.style.top =
+            "50%";
+
+        battleScreen.style.left =
+            "50%";
+
+        battleScreen.style.transform =
+            "translate(-50%, -50%)";
+
+        battleScreen.style.transformOrigin =
+            "center center";
+
+
+        //----------------------------------
+        // 表示倍率を保存
+        //----------------------------------
+
+        battleScreen.style.setProperty(
+            "--game-scale",
+            scale
         );
 
 
-    //----------------------------------
-    // 300ms後
-    //----------------------------------
+        //----------------------------------
+        // 確認ログ
+        //----------------------------------
 
-    tutorialResizeTimer2 =
-        setTimeout(
+        console.log(
+            "Tutorial resize",
+            {
+                isPortrait,
+                width,
+                height,
+                scale
+            }
+        );
+
+    }
+
+
+    //==================================
+    // リサイズ予約
+    //==================================
+
+    function refreshTutorialGameSize(){
+
+        requestAnimationFrame(
+            resizeGame
+        );
+
+        clearTimeout(resizeTimer);
+
+        resizeTimer = setTimeout(
+            resizeGame,
+            300
+        );
+
+    }
+
+
+    //==================================
+    // 回転検知
+    //==================================
+
+    function handleTutorialRotation(){
+
+        const layout =
+            document.getElementById(
+                "tutorial-layout"
+            );
+
+        if(!layout){
+            return;
+        }
+
+        const isPortrait =
+            window.innerHeight >
+            window.innerWidth;
+
+        if(isPortrait === lastPortrait){
+            return;
+        }
+
+        lastPortrait = isPortrait;
+
+        //----------------------------------
+        // 回転中は全体を非表示
+        //----------------------------------
+
+        layout.classList.add(
+            "is-rotating"
+        );
+
+        clearTimeout(rotationTimer);
+
+        rotationTimer = setTimeout(
             () => {
 
                 resizeGame();
+
+                requestAnimationFrame(
+                    () => {
+
+                        layout.classList.remove(
+                            "is-rotating"
+                        );
+
+                    }
+                );
 
             },
             300
         );
 
+    }
 
-    //----------------------------------
-    // 600ms後
-    //----------------------------------
 
-    tutorialResizeTimer3 =
-        setTimeout(
-            () => {
+    //==================================
+    // イベント登録
+    //==================================
 
-                resizeGame();
+    window.addEventListener(
+        "resize",
+        refreshTutorialGameSize
+    );
 
-            },
-            600
+    window.addEventListener(
+        "resize",
+        handleTutorialRotation
+    );
+
+    window.addEventListener(
+        "orientationchange",
+        refreshTutorialGameSize
+    );
+
+    if(window.visualViewport){
+
+        window.visualViewport.addEventListener(
+            "resize",
+            refreshTutorialGameSize
         );
 
-}
-
-
-//==================================================
-// 初回
-//==================================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        refreshTutorialGameSize();
+        window.visualViewport.addEventListener(
+            "resize",
+            handleTutorialRotation
+        );
 
     }
-);
 
 
-//==================================================
-// Window Resize
-//==================================================
+    //==================================
+    // タッチ操作による拡大防止
+    //==================================
 
-window.addEventListener(
-    "resize",
-    () => {
+    const gestureEvents = [
+        "gesturestart",
+        "gesturechange",
+        "gestureend"
+    ];
 
-        refreshTutorialGameSize();
+    gestureEvents.forEach(eventName => {
 
-    }
-);
+        document.addEventListener(
+            eventName,
+            function(event){
+
+                const layout =
+                    document.getElementById(
+                        "tutorial-layout"
+                    );
+
+                if(
+                    layout &&
+                    layout.contains(event.target)
+                ){
+                    event.preventDefault();
+                }
+
+            },
+            { passive: false }
+        );
+
+    });
 
 
-//==================================================
-// 端末回転
-//==================================================
+    document.addEventListener(
+        "touchmove",
+        function(event){
 
-window.addEventListener(
-    "orientationchange",
-    () => {
+            const layout =
+                document.getElementById(
+                    "tutorial-layout"
+                );
 
-        refreshTutorialGameSize();
+            if(
+                layout &&
+                layout.contains(event.target) &&
+                event.touches.length >= 2
+            ){
+                event.preventDefault();
+            }
 
-    }
-);
-
-
-//==================================================
-// Screen Orientation API
-//==================================================
-
-if(
-    screen.orientation &&
-    screen.orientation.addEventListener
-){
-
-    screen.orientation.addEventListener(
-        "change",
-        () => {
-
-            refreshTutorialGameSize();
-
-        }
+        },
+        { passive: false }
     );
 
-}
+
+    //==================================
+    // 既存関数との互換性
+    //==================================
+
+    window.resizeGame =
+        resizeGame;
+
+    window.refreshTutorialGameSize =
+        refreshTutorialGameSize;
+
+    window.resizeBattleScreen =
+        refreshTutorialGameSize;
 
 
-//==================================================
-// Visual Viewport
-//==================================================
+    //==================================
+    // 初期表示
+    //==================================
 
-if(window.visualViewport){
+    if(document.readyState === "loading"){
 
-    window.visualViewport.addEventListener(
-        "resize",
-        () => {
+        document.addEventListener(
+            "DOMContentLoaded",
+            refreshTutorialGameSize
+        );
 
-            refreshTutorialGameSize();
+    }else{
 
-        }
-    );
+        refreshTutorialGameSize();
 
-}
+    }
 
-
-//==================================================
-// 旧関数名互換
-//==================================================
-
-function resizeBattleScreen(){
-
-    refreshTutorialGameSize();
-
-}
+})();
