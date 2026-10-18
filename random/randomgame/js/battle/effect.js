@@ -2108,85 +2108,193 @@ case "forceCost":
 
 }
 
-function showDamageNumber(target, damage){
+// ============================================================
+// ダメージ数値表示（画面回転対応）
+// ============================================================
 
-
-    if(!target || !target.view){
-
-        return;
-
-    }
-
-
-    const element =
-        target.view.getElement();
-
-
+function createDamageNumber(
+    element,
+    damage,
+    duration
+){
 
     if(!element){
-
         return;
-
     }
 
+    const game =
+        document.getElementById(
+            "battle-screen"
+        );
+
+    if(!game){
+        return;
+    }
+
+    //----------------------------------
+    // 対象のゲーム内座標を取得
+    //----------------------------------
+
+    let x = 0;
+    let y = 0;
 
     const rect =
         element.getBoundingClientRect();
 
+    const gameRect =
+        game.getBoundingClientRect();
 
+    // battle-screen 内の座標へ変換
+    const matrix =
+        new DOMMatrixReadOnly(
+            getComputedStyle(game).transform
+        );
+
+    const scale =
+        Math.hypot(
+            matrix.a,
+            matrix.b
+        ) || 1;
+
+    const isRotated =
+        Math.abs(matrix.b) >
+        Math.abs(matrix.a);
+
+    if(isRotated){
+
+        // 90度回転時
+        x =
+            game.clientWidth / 2 +
+            (
+                rect.top +
+                rect.height / 2 -
+                (
+                    gameRect.top +
+                    gameRect.height / 2
+                )
+            ) / scale;
+
+        y =
+            game.clientHeight / 2 -
+            (
+                rect.left +
+                rect.width / 2 -
+                (
+                    gameRect.left +
+                    gameRect.width / 2
+                )
+            ) / scale;
+
+    }else{
+
+        // 通常表示時
+        x =
+            game.clientWidth / 2 +
+            (
+                rect.left +
+                rect.width / 2 -
+                (
+                    gameRect.left +
+                    gameRect.width / 2
+                )
+            ) / scale;
+
+        y =
+            game.clientHeight / 2 +
+            (
+                rect.top +
+                rect.height / 2 -
+                (
+                    gameRect.top +
+                    gameRect.height / 2
+                )
+            ) / scale;
+
+    }
+
+    //----------------------------------
+    // ダメージ数値作成
+    //----------------------------------
 
     const number =
         document.createElement("div");
 
-
     number.className =
         "damage-number";
-
 
     number.textContent =
         damage;
 
-
+    number.style.position =
+        "absolute";
 
     number.style.left =
-        (
-            rect.left +
-            rect.width / 2
-        )
-        + "px";
-
+        `${x}px`;
 
     number.style.top =
-        rect.top
-        + "px";
+        `${y - 70}px`;
 
+    number.style.pointerEvents =
+        "none";
 
-    document.body.appendChild(number);
+    //----------------------------------
+    // ゲーム画面内に追加
+    //----------------------------------
 
+    game.appendChild(number);
 
+    //----------------------------------
+    // 時間経過で削除
+    //----------------------------------
 
-    setTimeout(()=>{
+    setTimeout(() => {
 
         number.remove();
 
-    },800);
+    }, duration);
 
 }
 
-//======================================
-// プレイヤーダメージ表示
-//======================================
+// ============================================================
+// サモンへのダメージ表示
+// ============================================================
 
-function showPlayerDamageNumber(target, damage){
+function showDamageNumber(target, damage){
 
+    if(!target || !target.view){
+        return;
+    }
+
+    const element =
+        target.view.getElement();
+
+    if(!element){
+        return;
+    }
+
+    createDamageNumber(
+        element,
+        damage,
+        800
+    );
+
+}
+
+// ============================================================
+// プレイヤーへのダメージ表示
+// ============================================================
+
+function showPlayerDamageNumber(
+    target,
+    damage
+){
 
     const icon =
         document.getElementById(
             target === "enemy"
-            ? "enemy-player-icon"
-            : "player-icon"
+                ? "enemy-player-icon"
+                : "player-icon"
         );
-
 
     if(!icon){
 
@@ -2198,54 +2306,13 @@ function showPlayerDamageNumber(target, damage){
 
     }
 
-
-
-    const rect =
-        icon.getBoundingClientRect();
-
-
-
-    const number =
-        document.createElement("div");
-
-
-
-    number.className =
-        "damage-number";
-
-
-    number.textContent =
-        damage;
-
-
-
-    number.style.left =
-        (
-            rect.left +
-            rect.width / 2
-        )
-        + "px";
-
-
-    number.style.top =
-        rect.top
-        + "px";
-
-
-
-    document.body.appendChild(number);
-
-
-
-    setTimeout(()=>{
-
-        number.remove();
-
-    },1500);
-
+    createDamageNumber(
+        icon,
+        damage,
+        1500
+    );
 
 }
-
 
 //======================================
 // カード使用可能判定
