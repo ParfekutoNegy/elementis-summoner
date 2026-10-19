@@ -32,6 +32,7 @@ const CPU_DECK_LIST = [
   /*{
         id: "cpu_test",
         name: "test用デッキ",
+        regulation: "basic",
         strategy: "wind",
 
  cards: [
@@ -44,6 +45,7 @@ const CPU_DECK_LIST = [
    {
         id: "cpu_fire",
         name: "火属性デッキ",
+        regulation: "basic",
         strategy: "fire",
 
         cards: [
@@ -55,6 +57,7 @@ const CPU_DECK_LIST = [
     {
         id: "en-d",
         name: "えんD結論構築",
+        regulation: "basic",
         strategy: "water",
 
         cards: [
@@ -62,17 +65,112 @@ const CPU_DECK_LIST = [
             23, 7, 31, 16, 24
         ]
     },
+    {
+        id: "turoial",
+        name: "サンプルデッキ",
+        regulation: "basic",
+        strategy: "water",
+
+        cards: [
+            1, 11, 20, 7, 6,
+            5, 29, 31, 16, 32
+        ]
+    },
 
     {
         id: "cpu_wind",
         name: "風属性デッキ",
+        regulation: "basic",
         strategy: "wind",
 
         cards: [
             10, 11, 12, 13, 5,
             29, 16, 24, 23, 31
         ]
-    }
+    },
+    {
+        id:"fdgg",
+        name:"ファイアドレイク・ガーゴイル",
+        regulation:"all",
+        cards: [
+            34, 27, 58, 29, 7,
+            46, 55, 23, 16, 48
+        ]
+    },
+        {
+        id:"ybc",
+        name:"ワイバーンコントロール",
+        regulation:"all",
+        cards: [
+            35, 92, 78, 29, 7,
+            69, 23, 24, 31, 72
+        ]
+    },
+            {
+        id:"dragon",
+        name:"赤茶",
+        regulation:"all",
+        cards: [
+            4, 1, 28, 62, 6,
+            7, 86, 31, 64,96
+        ]
+    },
+                {
+        id:"ワーウルフ",
+        name:"ワーウルフ",
+        regulation:"folklore",
+        cards: [
+            42, 41, 34, 47, 38,
+            45, 46, 48, 63,39
+        ]
+    },
+                {
+        id:"風",
+        name:"風",
+        regulation:"all",
+        cards: [
+            42, 41, 10, 47, 45,
+            13, 5, 48, 40,24
+        ]
+    },
+    {
+        id:"土",
+        name:"土",
+        regulation:"folklore",
+        cards: [
+            60, 59, 58, 57, 62,
+            53, 55, 63, 64,40
+        ]
+    },
+    {
+        id:"20260618",
+        name:"20260618ゴウ",
+        regulation:"all",
+        cards: [
+            20, 26, 73, 41, 13,
+            16, 31, 32, 79,24
+        ]
+    },
+    {
+        id:"20260210",
+        name:"20260210プリン",
+        regulation:"all",
+        cards: [
+            28, 3, 25, 1, 6,
+            7, 86, 24, 31,16
+        ]
+    },
+    {
+        id:"20260424",
+        name:"20260424プリン",
+        regulation:"all",
+        cards: [
+            4, 35, 1, 11, 6,
+            7, 86, 16, 24,31
+        ]
+    },
+
+
 
 ];
 
@@ -89,20 +187,55 @@ let selectedCpuDeck = null;
 // マッチ開始時に1回だけ実行
 //==================================================
 
-function selectRandomCpuDeck(){
+//==================================================
+// CPUデッキをレギュレーション別にランダム選択
+//==================================================
+
+function selectRandomCpuDeck(
+    regulation
+){
 
     //----------------------------------
-    // CPUデッキをランダム選択
+    // 対応デッキを抽出
+    //----------------------------------
+
+    const availableDecks =
+        CPU_DECK_LIST.filter(
+            deck =>
+                deck.regulation === regulation
+        );
+
+
+    //----------------------------------
+    // 対応デッキなし
+    //----------------------------------
+
+    if(availableDecks.length === 0){
+
+        selectedCpuDeck = null;
+
+        console.warn(
+            "CPUデッキ未登録：",
+            regulation
+        );
+
+        return false;
+
+    }
+
+
+    //----------------------------------
+    // ランダム選択
     //----------------------------------
 
     const index =
         Math.floor(
             Math.random() *
-            CPU_DECK_LIST.length
+            availableDecks.length
         );
 
     selectedCpuDeck =
-        CPU_DECK_LIST[index];
+        availableDecks[index];
 
 
     //----------------------------------
@@ -115,6 +248,16 @@ function selectRandomCpuDeck(){
 
     console.log(
         "CPU使用デッキ決定"
+    );
+
+    console.log(
+        "レギュレーション：",
+        regulation
+    );
+
+    console.log(
+        "候補デッキ数：",
+        availableDecks.length
     );
 
     console.log(
@@ -140,6 +283,9 @@ function selectRandomCpuDeck(){
     console.log(
         "================================"
     );
+
+
+    return true;
 
 }
 

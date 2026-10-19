@@ -879,11 +879,35 @@ function startMatch(){
 
     battleGameConceded = false;
 
-    //----------------------------------
-    // CPUデッキ決定
-    //----------------------------------
+//----------------------------------
+// CPUデッキ決定
+// 選択レギュレーションを反映
+//----------------------------------
 
-    selectRandomCpuDeck();
+const selectedRegulation =
+    currentGameSettings?.regulation ??
+    "all";
+
+console.log(
+    "★ CPUデッキ選択レギュレーション：",
+    selectedRegulation
+);
+
+const cpuDeckSelected =
+    selectRandomCpuDeck(
+        selectedRegulation
+    );
+
+if(!cpuDeckSelected){
+
+    console.error(
+        "対応するCPUデッキがありません：",
+        selectedRegulation
+    );
+
+    return;
+
+}
 
     //----------------------------------
     // 新しいマッチのアイコン決定

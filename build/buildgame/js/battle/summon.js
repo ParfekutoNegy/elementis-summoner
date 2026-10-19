@@ -415,50 +415,11 @@ function getPower(summon){
     // 相手クール1枚につきパワー＋1
     //==================================
 
-
-    //==================================
-    // ワーム
-    // 場にいる間のみ
-    // 相手クール1枚につきパワー＋1
-    //==================================
-
     const enemyCoolPowerAbility =
         getSummonAbility(
             summon,
             "powerUpByEnemyCool"
         );
-
-    //----------------------------------
-    // 実際にフィールドに存在するか
-    //----------------------------------
-
-    const isOnField =
-        playerField.includes(summon) ||
-        enemyField.includes(summon);
-
-    //----------------------------------
-    // 場にいる場合のみ能力適用
-    //----------------------------------
-
-    if(
-        enemyCoolPowerAbility &&
-        isOnField
-    ){
-
-        const opponentCoolCards =
-            summon.owner === PLAYER
-                ? enemyCoolCards
-                : board.playerCoolCards;
-
-        const value =
-            enemyCoolPowerAbility.value ?? 1;
-
-        power +=
-            opponentCoolCards.length *
-            value;
-
-    }
-
 
 
     if(
@@ -696,17 +657,18 @@ function getDamage(summon, damage){
 // 共通召喚処理
 //======================================
 
+
 function executeSummon(card, owner){
 
     console.log(
-    "プレイヤー手札",
-    board.handCards.map(card => card.name)
-);
+        "プレイヤー手札",
+        board.handCards.map(card => card.name)
+    );
 
-console.log(
-    "CPU手札",
-    enemyHandCards.map(card => card.name)
-);
+    console.log(
+        "CPU手札",
+        enemyHandCards.map(card => card.name)
+    );
 
 
     if(!card){
@@ -721,11 +683,9 @@ console.log(
     //----------------------------------
 
     card.area =
-    owner === PLAYER
-    ?
-    "field"
-    :
-    "enemyField";
+        owner === PLAYER
+            ? "field"
+            : "enemyField";
 
     card.refresh();
 
@@ -737,30 +697,38 @@ console.log(
     if(owner === PLAYER){
 
         board.handCards =
-        board.handCards.filter(
-            c=>c !== card
-        );
+            board.handCards.filter(
+                c => c !== card
+            );
 
     }
     else{
 
         enemyHandCards =
-        enemyHandCards.filter(
-            c=>c !== card
-        );
+            enemyHandCards.filter(
+                c => c !== card
+            );
 
     }
 
-// ★追加確認
-console.log(
-    "削除後プレイヤー手札",
-    board.handCards.map(c=>c.name)
-);
 
-console.log(
-    "削除後CPU手札",
-    enemyHandCards.map(c=>c.name)
-);
+    //----------------------------------
+    // 手札削除後の確認ログ
+    //----------------------------------
+
+    console.log(
+        "削除後プレイヤー手札",
+        board.handCards.map(
+            c => c.name
+        )
+    );
+
+    console.log(
+        "削除後CPU手札",
+        enemyHandCards.map(
+            c => c.name
+        )
+    );
 
 
     //----------------------------------
@@ -768,43 +736,46 @@ console.log(
     //----------------------------------
 
     const summon =
-    new Summon(
-        card,
-        owner
+        new Summon(
+            card,
+            owner
+        );
+
+
+    //----------------------------------
+    // 召喚したターンを記録
+    //----------------------------------
+
+    summon.summonedTurn =
+        game.turn;
+
+    console.log(
+        "サモン召喚ターン記録",
+        summon.card.name,
+        "owner=",
+        owner,
+        "turn=",
+        summon.summonedTurn
     );
 
-    //----------------------------------
-// 召喚したターンを記録
-//----------------------------------
-
-summon.summonedTurn = game.turn;
-
-console.log(
-    "サモン召喚ターン記録",
-    summon.card.name,
-    "owner=",
-    owner,
-    "turn=",
-    summon.summonedTurn
-);
 
     //----------------------------------
-// 場の表示設定
-//----------------------------------
+    // 場の表示設定
+    //----------------------------------
 
-card.area =
-owner === PLAYER
-?
-"field"
-:
-"enemyField";
+    card.area =
+        owner === PLAYER
+            ? "field"
+            : "enemyField";
 
-card.refresh();
-
+    card.refresh();
 
 
     //----------------------------------
     // 場へ追加
+    //
+    // ★修正
+    // サモンの追加は1回だけ
     //----------------------------------
 
     if(owner === PLAYER){
@@ -822,26 +793,35 @@ card.refresh();
 
     }
 
+
     //----------------------------------
     // サモン能力
+    //
+    // ★修正
+    // 能力の適用も1回だけ
     //----------------------------------
 
-    applySummonAbility( 
+    applySummonAbility(
         summon
     );
 
+
+    //----------------------------------
+    // 手札コスト表示更新
+    //----------------------------------
+
     updateHandCostDisplay();
 
-    
+
     //----------------------------------
-    // 表示更新
+    // 場の表示更新
     //----------------------------------
 
     if(owner === PLAYER){
 
         board.setPlayerCards(
             playerField.map(
-                s=>s.view
+                s => s.view
             )
         );
 
@@ -850,41 +830,81 @@ card.refresh();
 
         board.setEnemyCards(
             enemyField.map(
-                s=>s.view
+                s => s.view
             )
         );
 
     }
 
-    updateEnemyZoneDisplay();
+
+//----------------------------------
+// CPU手札・ゾーン表示更新
+//----------------------------------
+
+updateEnemyZoneDisplay();
 
 
-    //==================================
-    // 動的パワー表示更新
-    //
-    // ワーム・ミノタウロス等
-    // 召喚直後に現在パワーを反映
-    //==================================
+//==================================
+// ★追加
+// 召喚直後の動的パワー表示更新
+//
+// ワーム
+// ミノタウロス
+// ドッペルゲンガー等
+//==================================
+
+if(
+    typeof refreshDynamicPowerSummons ===
+        "function"
+){
 
     refreshDynamicPowerSummons();
 
-    //----------------------------------
-    // 召喚ターンは攻撃不可
-    //----------------------------------
+}
+//----------------------------------
+// ワーム召喚直後の確認ログ
+//----------------------------------
 
-    summon.attackReady = false;
-
-
-    console.log(
-    "★ executeSummon 呼び出し",
+console.log(
+    "★召喚直後パワー確認",
+    "カード=",
+    summon.card.name,
     "owner=",
-    owner,
-    "PLAYER=",
-    PLAYER,
-    "card=",
-    card.name
+    summon.owner,
+    "基本パワー=",
+    summon.card.power,
+    "現在パワー=",
+    getPower(summon),
+    "PLAYERクール=",
+    board.playerCoolCards.length,
+    "CPUクール=",
+    board.enemyCoolCards.length,
+    "表示要素=",
+    summon.view?.currentPowerElement?.textContent
 );
 
+
+//----------------------------------
+// 召喚ターンは攻撃不可
+//----------------------------------
+
+summon.attackReady =
+    false;
+
+
+    //----------------------------------
+    // 召喚確認ログ
+    //----------------------------------
+
+    console.log(
+        "★ executeSummon 呼び出し",
+        "owner=",
+        owner,
+        "PLAYER=",
+        PLAYER,
+        "card=",
+        card.name
+    );
 
 
     console.log(
@@ -893,11 +913,18 @@ card.refresh();
         card.name
     );
 
+
+    //----------------------------------
+    // 手札コスト表示更新
+    //----------------------------------
+
     updateHandCostDisplay();
+
 
     return summon;
 
 }
+
 
 //==================================================
 // ドッペルゲンガー
@@ -1488,7 +1515,6 @@ if(fastCallDoppelgangerWaiting){
 return true;
 
 }
-
 //==================================================
 // サモン能力
 //==================================================
