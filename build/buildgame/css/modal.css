@@ -784,68 +784,7 @@
 
     margin-top:15px;
 
-}
-
-
-#summon-action-buttons button{
-
-    width:100%;
-
-    height:25px;
-
-    font-size:11px;
-
-}
-
-
-/*==================================================
-  サモン操作モーダル本体
-==================================================*/
-
-#summon-action-modal-content{
-
-    width:140px;
-
-    background:white;
-
-    border-radius:10px;
-
-    padding:8px;
-
-}
-
-
-/*==================================================
-  サモン画像
-==================================================*/
-
-#summon-info-image{
-
-    width:70px;
-
-    height:98px;
-
-    margin:auto;
-
-}
-
-
-/*==================================================
-  サモン操作ボタン
-==================================================*/
-
-#summon-action-buttons{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:6px;
-
-    margin-top:15px;
-
-    transform:
-        translateY(-1000px);
+    transform:translateY(-1000px);
 
 }
 
@@ -857,24 +796,6 @@
     height:25px;
 
     font-size:11px;
-
-}
-
-
-/*==================================================
-  サモン情報
-==================================================*/
-
-#summon-info-text{
-
-    font-size:12px;
-
-}
-
-
-#summon-info-text h2{
-
-    font-size:14px;
 
 }
 
@@ -1014,366 +935,282 @@
 
 }
 
-/* ================================================= */
-/* サイドデッキ入れ替えモーダル */
-/* ================================================= */
+/* =========================================================
+   サイドデッキ入れ替えモーダル（1280 × 720 基準）
+   左：選択カードの拡大表示
+   右上：メインデッキ 5列 × 2段
+   右下：サイドデッキ 3列 × 1段・説明文・完了ボタン
+   ※カード位置の最終設定を統合
+========================================================= */
 
-#side-deck-modal{
-
-    position:absolute;
-
-    inset:0;
-
-    display:none;
-
-    justify-content:center;
-
-    align-items:center;
-
-    background:rgba(10,8,5,0.82);
-
-    z-index:10000;
-
+#side-deck-modal {
+    position: absolute;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(10, 8, 5, 0.82);
+    z-index: 10000;
+    pointer-events: auto;
 }
 
-
-/* ================================================= */
-/* 内容 */
-/* ================================================= */
-
-#side-deck-modal-content{
-
-    width:1100px;
-
-    max-height:680px;
-
-    padding:25px;
-
-    box-sizing:border-box;
-
-    background:
-        linear-gradient(
-            145deg,
-            #3a3025,
-            #241e18
-        );
-
-    border:3px solid #8d7650;
-
-    border-radius:20px;
-
-    box-shadow:
-        0 10px 40px rgba(0,0,0,0.8),
-        inset 0 0 25px rgba(0,0,0,0.45);
-
-    text-align:center;
-
-    overflow:hidden;
-
+#side-deck-modal-content {
+    width: 1200px;
+    height: 690px;
+    padding: 15px 20px;
+    box-sizing: border-box;
+    background: linear-gradient(145deg, #3a3025, #241e18);
+    border: 3px solid #8d7650;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.8),
+                inset 0 0 25px rgba(0,0,0,.45);
+    text-align: center;
+    color: #fff;
+    overflow: hidden;
 }
 
-
-/* ================================================= */
-/* タイトル */
-/* ================================================= */
-
-#side-deck-modal-content h2{
-
-    margin:0 0 10px;
-
-    color:#f3dfad;
-
-    font-size:32px;
-
-    text-shadow:
-        0 2px 4px rgba(0,0,0,0.8);
-
+#side-deck-modal-content h2 {
+    margin: 0 0 8px;
+    color: #f3dfad;
+    font-size: 30px;
+    line-height: 1.2;
+    text-shadow: 0 2px 4px rgba(0,0,0,.8);
 }
 
-
-/* ================================================= */
-/* 説明 */
-/* ================================================= */
-
-#side-deck-description{
-
-    margin:0 0 20px;
-
-    color:#d8c9a8;
-
-    font-size:18px;
-
+#side-deck-description {
+    margin: 0 0 10px;
+    color: #d8c9a8;
+    font-size: 16px;
 }
 
-
-/* ================================================= */
-/* メイン・サイド表示 */
-/* ================================================= */
-
-#side-deck-change-area{
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:flex-start;
-
-    gap:30px;
-
+/* 左右レイアウト */
+#side-deck-change-area {
+    display: grid;
+    grid-template-columns: 475px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 25px;
+    row-gap: 12px;
+    width: 100%;
+    align-items: start;
+    box-sizing: border-box;
 }
 
-
-/* ================================================= */
-/* 各列 */
-/* ================================================= */
-
-.side-deck-column{
-
-    width:auto;
-
+/* 左：拡大カード */
+#side-change-preview {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 550px;
+    min-width: 0;
 }
 
-
-/* ================================================= */
-/* 列タイトル */
-/* ================================================= */
-
-.side-deck-column h3{
-
-    margin:0 0 10px;
-
-    padding:8px;
-
-    color:#ead7aa;
-
-    font-size:22px;
-
-    border-bottom:2px solid #806b48;
-
-    text-shadow:
-        0 2px 3px rgba(0,0,0,0.7);
-
+#side-change-preview-image {
+    display: block;
+    width: auto;
+    height: 540px;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.65);
 }
 
+#side-change-preview-image:not([src]),
+#side-change-preview-image[src=""] {
+    visibility: hidden;
+}
 
-/* ================================================= */
-/* カード一覧 */
-/* ================================================= */
+/* 右上：メインデッキ（現在の位置を維持） */
+#side-deck-change-area > .side-deck-column {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+    justify-self: start;
+}
 
+#side-deck-change-area .side-deck-column h3 {
+    margin: 0 0 8px;
+    padding: 5px;
+    color: #ead7aa;
+    font-size: 20px;
+    line-height: 1.2;
+    border-bottom: 2px solid #806b48;
+    text-shadow: 0 2px 3px rgba(0,0,0,.7);
+}
+
+/* デッキ一覧の共通デザイン */
 #side-change-main-list,
-#side-change-side-list{
+#side-change-side-list {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    background: linear-gradient(145deg, #5a4b3a, #403529);
+    border: 2px solid #806b48;
+    border-radius: 12px;
+    box-shadow: inset 0 0 15px rgba(0,0,0,.45),
+                0 4px 10px rgba(0,0,0,.45);
+}
 
-    display:grid;
+#side-change-main-list {
+    width: 100%;
+    grid-template-columns: repeat(5, 105px);
+    grid-template-rows: repeat(2, auto);
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+}
 
-    align-content:start;
+/* 右下：サイドデッキと完了ボタン */
+#side-change-bottom {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 15px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    justify-self: stretch;
+}
 
-    justify-content:center;
+#side-change-bottom .side-deck-column {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+}
 
-    gap:10px;
+#side-change-side-list {
+    width: max-content;
+    grid-template-columns: repeat(3, 105px);
+    grid-template-rows: auto;
+    justify-content: start;
+    gap: 8px;
+    padding: 12px;
+    padding-left: 45px;
+    padding-right: 45px;
+    box-sizing: content-box;
+}
 
-    padding:15px;
+/* カード画像・選択状態 */
+#side-deck-change-area .side-change-card {
+    width: 105px;
+    cursor: pointer;
+    transition: transform .15s, filter .15s;
+}
 
-    box-sizing:border-box;
+#side-deck-change-area .side-change-card:hover {
+    transform: translateY(-5px);
+    filter: brightness(1.15);
+}
 
-    background:
-        linear-gradient(
-            145deg,
-            #5a4b3a,
-            #403529
-        );
+#side-deck-change-area .side-change-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 7px;
+    box-shadow: 0 3px 8px rgba(0,0,0,.6);
+}
 
-    border:2px solid #806b48;
+#side-deck-change-area .side-change-selected {
+    transform: translateY(-5px);
+    filter: brightness(1.15);
+    outline: 3px solid #e6bd55;
+    outline-offset: 2px;
+    border-radius: 7px;
+    box-shadow: 0 0 12px rgba(230,189,85,.8);
+}
 
-    border-radius:12px;
+/* サイドデッキの空欄（裏面画像） */
+#side-deck-change-area .side-change-empty {
+    cursor: default;
+    opacity: .7;
+}
 
-    box-shadow:
-        inset 0 0 15px rgba(0,0,0,0.45),
-        0 4px 10px rgba(0,0,0,0.45);
+#side-deck-change-area .side-change-empty:hover {
+    transform: none;
+    filter: none;
+}
+
+/* 説明文と完了ボタン */
+#side-deck-change-help {
+    margin-top: 8px;
+    color: #cfc0a0;
+    font-size: 15px;
+    line-height: 1.3;
+}
+
+#side-change-button-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+#side-change-button-area #side-deck-change-help {
+    position: static;
+    width: 200px;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* デッキ入れ替え説明文の位置調整 */
+
+#side-change-button-area #side-deck-change-help{
+
+    text-align:left;
+
+    transform:translateY(-30px);
 
 }
 
-
-/* ================================================= */
-/* メインデッキ */
-/* 5 × 2 */
-/* ================================================= */
-
-#side-change-main-list{
-
-    width:650px;
-
-    grid-template-columns:
-        repeat(5, 85px);
-
-    grid-template-rows:
-        repeat(2, auto);
-
+#start-second-game-button {
+    width: 195px;
+    height: 60px;
+    padding: 0 10px;
+    box-sizing: border-box;
+    color: #fff3d0;
+    font-size: 20px;
+    font-weight: bold;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 2px solid #b8944d;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #6e542c, #3f2d17);
+    box-shadow: 0 4px 10px rgba(0,0,0,.6);
+    transition: transform .1s, filter .15s;
 }
 
-
-/* ================================================= */
-/* サイドデッキ */
-/* 3 × 1 */
-/* ================================================= */
-
-#side-change-side-list{
-
-    width:330px;
-
-    grid-template-columns:
-        repeat(3, 85px);
-
-    grid-template-rows:
-        auto;
-
+#side-change-bottom #start-second-game-button {
+    flex-shrink: 0;
+    width: 200px;
+    height: 60px;
+    margin: 0;
+    font-size: 20px;
 }
 
-
-/* ================================================= */
-/* 入れ替え用カード */
-/* ================================================= */
-
-.side-change-card{
-
-    width:85px;
-
-    cursor:pointer;
-
-    transition:
-        transform 0.15s,
-        filter 0.15s;
-
+#side-change-button-area #start-second-game-button {
+    width: 200px;
+    height: 60px;
+    margin: 0;
 }
 
-
-/* ================================================= */
-/* ホバー */
-/* ================================================= */
-
-.side-change-card:hover{
-
-    transform:translateY(-8px);
-
-    filter:brightness(1.15);
-
+#start-second-game-button:hover {
+    filter: brightness(1.2);
 }
 
-
-/* ================================================= */
-/* カード画像 */
-/* ================================================= */
-
-.side-change-card img{
-
-    width:100%;
-
-    display:block;
-
-    border-radius:7px;
-
-    box-shadow:
-        0 3px 8px rgba(0,0,0,0.6);
-
-}
-
-
-/* ================================================= */
-/* 選択中 */
-/* ================================================= */
-
-.side-change-selected{
-
-    transform:translateY(-10px);
-
-    filter:brightness(1.15);
-
-    outline:4px solid #e6bd55;
-
-    outline-offset:3px;
-
-    border-radius:7px;
-
-    box-shadow:
-        0 0 12px rgba(230,189,85,0.8);
-
-}
-
-
-/* ================================================= */
-/* 説明 */
-/* ================================================= */
-
-#side-deck-change-help{
-
-    margin-top:15px;
-
-    color:#cfc0a0;
-
-    font-size:16px;
-
-}
-
-
-/* ================================================= */
-/* 第2戦へ */
-/* ================================================= */
-
-#start-second-game-button{
-
-    margin-top:20px;
-
-    width:260px;
-
-    height:60px;
-
-    font-size:24px;
-
-    font-weight:bold;
-
-    color:#fff3d0;
-
-    cursor:pointer;
-
-    border:2px solid #b8944d;
-
-    border-radius:12px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #6e542c,
-            #3f2d17
-        );
-
-    box-shadow:
-        0 4px 10px rgba(0,0,0,0.6);
-
-    transition:
-        transform 0.1s,
-        filter 0.15s;
-
-}
-
-
-/* ================================================= */
-/* 第2戦へ ホバー */
-/* ================================================= */
-
-#start-second-game-button:hover{
-
-    filter:brightness(1.2);
-
-}
-
-
-/* ================================================= */
-/* 第2戦へ 押した瞬間 */
-/* ================================================= */
-
-#start-second-game-button:active{
-
-    transform:scale(0.96);
-
+#start-second-game-button:active {
+    transform: scale(.96);
 }
 
 /* =========================================================
@@ -1566,3 +1403,4 @@
         #55402d;
 
 }
+

@@ -438,6 +438,19 @@
 
                 <div id="side-deck-change-area">
 
+                    <!-- ================================= -->
+<!-- 選択カードの拡大表示 -->
+<!-- ================================= -->
+
+<div id="side-change-preview">
+
+    <img
+        id="side-change-preview-image"
+        alt="選択カード"
+    >
+
+</div>
+
 
                     <!-- ================================= -->
                     <!-- メインデッキ -->
@@ -458,49 +471,30 @@
                     <!-- ================================= -->
                     <!-- サイドデッキ -->
                     <!-- ================================= -->
+<div id="side-change-bottom">
 
-                    <div class="side-deck-column">
+    <div class="side-deck-column">
+        <h3>サイドデッキ</h3>
+        <div id="side-change-side-list"></div>
+    </div>
 
-                        <h3>
-                            サイドデッキ
-                        </h3>
+    <!-- 説明文と完了ボタン -->
+    <div id="side-change-button-area">
 
-                        <div id="side-change-side-list">
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-
-                <!-- ================================= -->
-                <!-- 説明 -->
-                <!-- ================================= -->
-
-                <div id="side-deck-change-help">
-
-                    カードをクリックすると
-                    メインデッキとサイドデッキを入れ替えます
-
-                </div>
-
-
-                <!-- ================================= -->
-                <!-- 第2戦開始 -->
-                <!-- ================================= -->
-
-                <button
-                    id="start-second-game-button"
-                    type="button"
-                >
-                    入れ替え完了
-                </button>
-
-
-            </div>
-
+        <div id="side-deck-change-help">
+            メインデッキとサイドデッキのカードをクリックで入れ替えることができます。
         </div>
+
+        <button
+            id="start-second-game-button"
+            type="button"
+        >
+            入れ替え完了
+        </button>
+
+    </div>
+
+</div>
 
 
         <!-- ============================================= -->

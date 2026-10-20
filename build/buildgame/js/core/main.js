@@ -16136,6 +16136,12 @@ selectedSideChangeSideIndex =
 
 
     //----------------------------------
+// 拡大表示を裏面に戻す
+//----------------------------------
+
+updateSideChangePreview(null);
+
+    //----------------------------------
     // カード表示
     //----------------------------------
 
@@ -16269,9 +16275,141 @@ function updateSideDeckChangeDisplay(){
         }
     );
 
+
+    //----------------------------------
+    // サイドデッキの空欄を裏面表示
+    //----------------------------------
+
+    const sideDeckMax = 3;
+
+    const emptyCount =
+        Math.max(
+            0,
+            sideDeckMax -
+            currentBuildSideDeck.length
+        );
+
+
+    for(
+        let i = 0;
+        i < emptyCount;
+        i++
+    ){
+
+        //----------------------------------
+        // 空欄用の要素
+        //----------------------------------
+
+        const emptyElement =
+            document.createElement(
+                "div"
+            );
+
+        emptyElement.className =
+            "side-change-card side-change-empty";
+
+
+        //----------------------------------
+        // 裏面画像
+        //----------------------------------
+
+        const image =
+            document.createElement(
+                "img"
+            );
+
+        image.src =
+            "../../images/ui/card-back.png";
+
+        image.alt =
+            "サイドデッキ空欄";
+
+
+        //----------------------------------
+        // 空欄は交換対象にしない
+        //----------------------------------
+
+        emptyElement.style.cursor =
+            "default";
+
+        emptyElement.appendChild(
+            image
+        );
+
+
+        //----------------------------------
+        // サイドデッキに追加
+        //----------------------------------
+
+        sideList.appendChild(
+            emptyElement
+        );
+
+    }
+
 }
+//======================================
+// サイドデッキ交換
+// 選択カードの拡大表示
+//======================================
+
+function updateSideChangePreview(card){
+
+    const previewImage =
+        document.getElementById(
+            "side-change-preview-image"
+        );
+
+    if(!previewImage){
+        return;
+    }
+
+    //----------------------------------
+    // 裏面画像
+    //----------------------------------
+
+    const backImage =
+        "../../images/ui/card-back.png";
 
 
+    //----------------------------------
+    // 未選択の場合
+    //----------------------------------
+
+    if(!card){
+
+        previewImage.src = backImage;
+
+        previewImage.alt =
+            "カード裏面";
+
+        return;
+
+    }
+
+
+    //----------------------------------
+    // 選択カードを表示
+    //----------------------------------
+
+    if(!card.image){
+
+        previewImage.src = backImage;
+
+        previewImage.alt =
+            "カード裏面";
+
+        return;
+
+    }
+
+    previewImage.src =
+        "../../" + card.image;
+
+    previewImage.alt =
+        card.name || "選択カード";
+
+}
 
 function createSideChangeCardElement(
     card,
@@ -16371,14 +16509,27 @@ image.alt =
     // クリック
     //----------------------------------
 
-    element.onclick = ()=>{
+element.onclick = ()=>{
 
-        swapSideDeckCard(
-            area,
-            index
-        );
+    //----------------------------------
+    // 拡大画像更新
+    //----------------------------------
 
-    };
+    updateSideChangePreview(
+        card
+    );
+
+
+    //----------------------------------
+    // カード交換処理
+    //----------------------------------
+
+    swapSideDeckCard(
+        area,
+        index
+    );
+
+};
 
 
     return element;
