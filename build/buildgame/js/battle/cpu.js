@@ -135,7 +135,6 @@ let cpuBreakthroughAttackSummon =
 //======================================
 // CPUターン初期化
 //======================================
-
 function resetCpuTurnState(){
 
     cpuTurnStep = 0;
@@ -147,6 +146,15 @@ function resetCpuTurnState(){
     cpuAttackIndex = 0;
 
     cpuWaiting = false;
+
+
+    //==================================
+    // インフェルノ抽選状態リセット
+    //==================================
+
+    cpuInfernoRolls =
+        new WeakMap();
+
 
     console.log(
         "CPUターン状態リセット"
@@ -12114,6 +12122,51 @@ function evaluateCpuSummonAction(
         "サモン基本点"
     );
 
+    //==================================
+// サモン展開ボーナス
+//==================================
+
+//==================================
+// CPUの場のサモン数
+//==================================
+
+const cpuSummonCount =
+    enemyField.filter(
+        summon =>
+            summon &&
+            !summon.destroyed
+    ).length;
+
+
+// 場のサモン数に応じた追加ポイント
+let summonBonus = 0;
+
+if(cpuSummonCount === 0){
+
+    summonBonus = 40;
+
+}else if(cpuSummonCount === 1){
+
+    summonBonus = 25;
+
+}else if(cpuSummonCount === 2){
+
+    summonBonus = 15;
+
+}
+
+
+// ポイント加算
+if(summonBonus > 0){
+
+    addCpuActionPoints(
+        action,
+        summonBonus,
+        "サモン展開ボーナス"
+    );
+
+}
+
 
 //==================================
 // コスト評価
@@ -13105,7 +13158,7 @@ if(
 
 
                 return (
-                    summonCost >= 3
+                    summonCost >= 2
                 );
 
             }
@@ -13123,7 +13176,7 @@ if(
         console.log(
             "CPUポイント評価：マギア候補外",
             card.name,
-            "コスト3以上のPLAYERサモンなし"
+            "コスト2以上のPLAYERサモンなし"
         );
 
         return null;
@@ -13170,6 +13223,87 @@ if(
                 infernoTarget.card?.cost
         }
     );
+
+    //==================================
+// インフェルノ使用確率
+//==================================
+
+// ゲーム全体のターン数
+const currentTurn =
+    Math.max(
+        1,
+        Number(game.turn) || 1
+    );
+
+// 対象サモンのコスト
+const targetCost =
+    Number(
+        infernoTarget.card.cost
+    ) || 0;
+
+// 使用確率（%）
+const useProbability =
+    Math.min(
+        100,
+        targetCost * 10 +
+        (currentTurn - 1) * 5
+    );
+
+//----------------------------------
+// 同一ターン中の再抽選を防止
+//----------------------------------
+
+let rollData =
+    cpuInfernoRolls.get(card);
+
+if(
+    !rollData ||
+    rollData.turn !== currentTurn
+){
+
+    rollData = {
+        turn: currentTurn,
+        roll: Math.random() * 100
+    };
+
+    cpuInfernoRolls.set(
+        card,
+        rollData
+    );
+
+}
+
+//----------------------------------
+// 使用判定
+//----------------------------------
+
+const shouldUseInferno =
+    rollData.roll < useProbability;
+
+console.log(
+    "CPU：インフェルノ使用抽選",
+    {
+        turn: currentTurn,
+        target:
+            infernoTarget.card.name,
+        cost: targetCost,
+        probability: useProbability,
+        roll: rollData.roll.toFixed(2),
+        result: shouldUseInferno
+            ? "使用候補"
+            : "温存"
+    }
+);
+
+//----------------------------------
+// 抽選失敗なら使用しない
+//----------------------------------
+
+if(!shouldUseInferno){
+
+    return null;
+
+}
 
 }
 
@@ -14264,6 +14398,24 @@ else if(
         "マギア基本点"
     );
 
+
+//==================================
+// インフェルノ
+// 使用抽選成功時の優先ポイント
+//==================================
+
+if(
+    card.effect?.type ===
+        "sendSummonToCool"
+){
+
+    addCpuActionPoints(
+        action,
+        500,
+        "インフェルノ使用抽選成功"
+    );
+
+}
     //==================================
 // アイスジェイル
 // CPU使用ポイント評価
@@ -15966,6 +16118,58 @@ const killable =
         attackPower * 3,
         "攻撃力評価"
     );
+
+    //==================================
+// summonTurnAttack持ちサモンへの攻撃
+// 横向きの場合は優先度を下げる
+//==================================
+
+if(
+    target !== PLAYER &&
+    target.isRest &&
+    hasSummonAbility(
+        target,
+        "summonTurnAttack"
+    )
+){
+
+    //----------------------------------
+    // 基本減点
+    //----------------------------------
+
+    addCpuActionPoints(
+        action,
+        -20,
+        "召喚ターン攻撃済みサモンへの攻撃"
+    );
+
+
+    //----------------------------------
+    // 相打ちになる場合
+    //----------------------------------
+
+    const counterDamage =
+        getDamage(
+            target,
+            getPower(target)
+        );
+
+    const isMutualDestruction =
+        attackDamage >= getPower(target) &&
+        counterDamage >= attackPower;
+
+
+    if(isMutualDestruction){
+
+        addCpuActionPoints(
+            action,
+            -60,
+            "召喚ターン攻撃済みサモンとの相打ち"
+        );
+
+    }
+
+}
 
 
     //----------------------------------
@@ -20834,13 +21038,21 @@ function cpuUseCatSithAbility(source){
     }
 
 
-    //----------------------------------
-    // UI更新
-    //----------------------------------
+//----------------------------------
+// UI更新
+//----------------------------------
 
-    updateCoolCount();
+if(
+    typeof board !== "undefined" &&
+    board &&
+    typeof board.updateCoolCount === "function"
+){
 
-    updateEnemyZoneDisplay();
+    board.updateCoolCount();
+
+}
+
+updateEnemyZoneDisplay();
 
 
     //----------------------------------
@@ -21580,3 +21792,10 @@ function getCpuMultiShieldCost(damage, availableCards){
     );
 
 }
+
+//==================================
+// インフェルノ使用抽選の保存
+//==================================
+
+let cpuInfernoRolls =
+    new WeakMap();
