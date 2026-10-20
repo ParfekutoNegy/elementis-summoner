@@ -8423,3 +8423,38 @@ function resetForceCostAbilityState(){
     );
 
 }
+
+//======================================
+// 投了時：マギア待機状態を解除
+//======================================
+
+function resetMagiaStateOnConcede(){
+
+    // 通常マギア
+    magiaCard = null;
+    magiaTarget = null;
+    magiaTargetMode = false;
+
+    magiaOwnSummonSelectMode = false;
+    magiaSelectedOwnSummon = null;
+
+    // レジスト待機
+    resistMagiaWaiting = false;
+    resistWaitingMagia = null;
+    resistWaitingMagiaTarget = null;
+    resistWaitingMagiaOwnSummon = null;
+
+    // CPUキャンセレーション
+    cpuCancellationWaiting = false;
+    cpuCancellationPending = null;
+
+    // ヒュドラ待機
+    hydraMagiaWaiting = false;
+    hydraWaitingMagia = null;
+    hydraWaitingMagiaTarget = null;
+    hydraWaitingMagiaOwnSummon = null;
+
+    // ハイライト
+    clearMagiaHighlight();
+
+}

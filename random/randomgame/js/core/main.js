@@ -13841,16 +13841,50 @@ function concedeGame(){
 
     closeCostView();
 
-
     //----------------------------------
-    // 攻撃状態を解除
-    //----------------------------------
+// 投了時：CPU使用カード表示を閉じる
+//----------------------------------
 
-    resetAttackState();
+if(
+    typeof hideEnemyPlayedCard ===
+        "function"
+){
+    hideEnemyPlayedCard();
+}
 
-    //==================================
-// 投了時：能力待機状態を解除
-//==================================
+
+//----------------------------------
+// 投了時：レジスト関連UIを閉じる
+//----------------------------------
+
+if(
+    typeof closeResistModal ===
+        "function"
+){
+    closeResistModal();
+}
+
+
+//----------------------------------
+// 投了時：CPU使用カード表示を再確認
+//----------------------------------
+
+const enemyCardDisplay =
+    document.getElementById(
+        "enemy-played-card"
+    );
+
+if(enemyCardDisplay){
+
+    enemyCardDisplay.style.display =
+        "none";
+
+}
+
+
+resetAttackState();
+
+resetMagiaStateOnConcede();
 
 resetForceCostAbilityState();
 
