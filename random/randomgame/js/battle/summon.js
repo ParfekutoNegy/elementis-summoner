@@ -1195,6 +1195,34 @@ function selectDoppelgangerTarget(
 
     }
 
+    
+    //==================================
+    // マーフォーク等の対象制限
+    // PLAYER・CPU共通
+    //==================================
+
+    if(
+        !canTargetBySummonAbility(
+            doppelgangerSource,
+            target
+        )
+    ){
+
+        console.log(
+            "ドッペルゲンガー：コピー対象不可",
+            {
+                source: doppelgangerSource.card?.name,
+                sourceOwner: doppelgangerSource.owner,
+                target: target.card?.name,
+                targetOwner: target.owner
+            }
+        );
+
+        return false;
+
+    }
+
+
 
     //----------------------------------
     // コピーを行うドッペルゲンガーを保存

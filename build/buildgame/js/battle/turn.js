@@ -878,6 +878,7 @@ let secondPlayer = null;
 function startMatch(){
 
     battleGameConceded = false;
+     battleGameEnding = false;
 
 //----------------------------------
 // CPUデッキ決定

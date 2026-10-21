@@ -866,6 +866,25 @@ onTurnEnd(() => {
     // ライフが0ならレジストを発動しない
     //----------------------------------
 
+
+    //----------------------------------
+    // ゲーム終了確認
+    // 停止原因を詳しく表示
+    //----------------------------------
+
+    console.log(
+        "★ ターン終了時のゲーム状態確認",
+        {
+            playerLife: game.playerLife,
+            enemyLife: game.enemyLife,
+            battleGameEnding: battleGameEnding,
+            battleGameConceded: battleGameConceded,
+            gameState: game.state,
+            currentPlayer: game.currentPlayer,
+            matchGameNumber: matchGameNumber
+        }
+    );
+
     if(
         game.playerLife <= 0 ||
         game.enemyLife <= 0 ||
@@ -880,6 +899,7 @@ onTurnEnd(() => {
         return;
 
     }
+
 
     //----------------------------------
     // ターン終了時レジスト判定

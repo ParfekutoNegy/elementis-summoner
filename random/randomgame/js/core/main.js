@@ -13747,6 +13747,19 @@ function concedeGame(){
         "===== PLAYER 投了 ====="
     );
 
+    
+console.trace(
+    "★ concedeGame 呼び出し元",
+    {
+        matchGameNumber,
+        battleGameConceded,
+        battleGameEnding,
+        gameState: game.state,
+        currentPlayer: game.currentPlayer
+    }
+);
+
+
 
     //----------------------------------
     // すでにゲーム終了なら無視
@@ -14150,6 +14163,7 @@ resetForceCostAbilityState();
     game.enemyLife = 5;
 
 
+
     //----------------------------------
     // 1戦分の盤面を初期化
     //----------------------------------
@@ -14157,11 +14171,29 @@ resetForceCostAbilityState();
     setupGame();
 
 
+    //==================================
+    // 次のゲームの終了フラグを解除
+    //==================================
+
+    battleGameConceded = false;
+    battleGameEnding = false;
+
+    console.log(
+        "★ setupGame後の終了フラグ",
+        {
+            battleGameConceded,
+            battleGameEnding,
+            matchGameNumber
+        }
+    );
+
+
     //----------------------------------
     // 勝利数は維持
     //----------------------------------
 
     updateWinStars();
+
 
 
     //----------------------------------
@@ -14186,6 +14218,18 @@ resetForceCostAbilityState();
         startCpuTurn();
 
     }
+
+    
+console.log(
+    "★ 第2戦初期化完了時の投了フラグ",
+    {
+        battleGameConceded,
+        battleGameEnding,
+        matchGameNumber,
+        gameState: game.state
+    }
+);
+
 
 
     console.log(
