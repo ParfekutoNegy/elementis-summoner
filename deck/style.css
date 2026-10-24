@@ -2139,3 +2139,46 @@ body,
     }
 
 }
+
+
+/* ==========================================
+   スマホ版 カード操作ボタン拡大
+========================================== */
+
+@media screen and (pointer:coarse){
+
+    /* ボタン全体をカード画像と同じ横幅に */
+
+    #card-modal .card-action-grid{
+        width:100%;
+        max-width:none;
+
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
+
+        gap:10px;
+
+        margin:0;
+        padding:0 5px;
+        box-sizing:border-box;
+    }
+
+    /* ボタンを押しやすいサイズに */
+
+    #card-modal .card-action-grid button{
+        width:100%;
+        min-height:65px;
+
+        padding:10px 5px;
+
+        font-size:clamp(15px,4vw,20px);
+        line-height:1.3;
+    }
+
+    /* 閉じるボタンは横幅いっぱい */
+
+    #card-modal #close-card-btn{
+        grid-column:1 / -1;
+    }
+
+}
