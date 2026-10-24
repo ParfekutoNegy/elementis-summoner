@@ -315,12 +315,77 @@ function resizeMenu(){
 
 
 // ============================================================
+// 回転・サイズ変更時の再計算
+// ============================================================
+
+let menuResizeTimers = [];
+
+function scheduleMenuResize(){
+
+    // ----------------------------------
+    // 前回のタイマーを解除
+    // ----------------------------------
+
+    menuResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    menuResizeTimers = [];
+
+
+    // ----------------------------------
+    // 即時更新
+    // ----------------------------------
+
+    resizeMenu();
+
+
+    // ----------------------------------
+    // 次の描画タイミングで更新
+    // ----------------------------------
+
+    requestAnimationFrame(
+        resizeMenu
+    );
+
+
+    // ----------------------------------
+    // 画面回転後の段階的な更新
+    // ----------------------------------
+
+    const delays = [
+        100,
+        300,
+        600
+    ];
+
+
+    delays.forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeMenu,
+                    delay
+                );
+
+            menuResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // 初期表示
 // ============================================================
 
 window.addEventListener(
     "DOMContentLoaded",
-    resizeMenu
+    scheduleMenuResize
 );
 
 
@@ -330,7 +395,7 @@ window.addEventListener(
 
 window.addEventListener(
     "resize",
-    resizeMenu
+    scheduleMenuResize
 );
 
 
@@ -340,7 +405,7 @@ window.addEventListener(
 
 window.addEventListener(
     "orientationchange",
-    resizeMenu
+    scheduleMenuResize
 );
 
 
@@ -352,7 +417,7 @@ if(window.visualViewport){
 
     window.visualViewport.addEventListener(
         "resize",
-        resizeMenu
+        scheduleMenuResize
     );
 
 }
