@@ -2056,3 +2056,68 @@ body,
         padding:8px 4px;
     }
 }
+
+/* ==========================================
+   カード詳細画面 余白・文字サイズ調整
+========================================== */
+
+@media screen and (pointer:coarse){
+
+    /* カード画像とボタン共通の左右余白 */
+
+#card-modal .card-modal-content{
+    width:100% !important;
+    max-width:none !important;
+
+    padding:0 40px !important;
+    box-sizing:border-box;
+}
+
+    /* カード画像 */
+
+    #card-modal .modal-card-image{
+        display:block;
+        width:100% !important;
+        max-width:100% !important;
+        height:auto !important;
+        max-height:none !important;
+    }
+
+    /* ボタンはカード画像と同じ横幅 */
+
+    #card-modal .card-action-grid{
+        width:100% !important;
+        max-width:100% !important;
+        padding:0 !important;
+        box-sizing:border-box;
+    }
+
+    /* ボタンの文字を大きく */
+
+    #card-modal .card-action-grid button{
+        min-height:88px;
+        font-size:32px !important;
+        line-height:1.3;
+        padding:12px 4px;
+    }
+
+}
+
+
+/* ==========================================
+   カード詳細画像 角丸設定
+========================================== */
+
+/* パソコン版 */
+#card-modal .modal-card-image{
+    border-radius:15px;
+}
+
+/* スマホ版（縦向き・横向き共通） */
+@media screen and (pointer:coarse){
+
+    #card-modal .modal-card-image{
+        border-radius:40px;
+    }
+
+}
