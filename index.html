@@ -30,9 +30,6 @@
 
 <body>
 
-
-<body>
-
 <div id="top-viewport">
 
     <div id="top-screen">
@@ -162,7 +159,7 @@
     </span>
 
     <span class="menu-description">
-        ルール詳細・最新情報・商品をHPで見る
+        ルール詳細・最新情報・商品を見る
     </span>
 
 </a>
@@ -222,6 +219,7 @@ if("serviceWorker" in navigator){
 // トップメニュー 縦表示固定
 // ============================================================
 
+
 function resizeMenu(){
 
     const viewport =
@@ -238,56 +236,70 @@ function resizeMenu(){
         return;
     }
 
+    //----------------------------------
+    // 実際の表示領域
+    //----------------------------------
 
-    // ----------------------------------
-    // 実際の画面サイズ
-    // ----------------------------------
+    const visual = window.visualViewport;
 
-    const visual =
-        window.visualViewport;
+    const width = visual
+        ? visual.width
+        : window.innerWidth;
 
-    const width =
-        visual
-            ? visual.width
-            : window.innerWidth;
-
-    const height =
-        visual
-            ? visual.height
-            : window.innerHeight;
-
+    const height = visual
+        ? visual.height
+        : window.innerHeight;
 
     if(width <= 0 || height <= 0){
         return;
     }
 
+    //----------------------------------
+    // 横向き判定
+    //----------------------------------
 
-    // ----------------------------------
-    // スマホ横向き判定
-    // ----------------------------------
-
-    const isLandscape =
-        width > height;
+    const isLandscape = width > height;
 
     const isTouchDevice =
         window.matchMedia(
             "(pointer: coarse)"
         ).matches;
 
+    //----------------------------------
+    // ホーム画面起動判定
+    //----------------------------------
 
-    if(
-        isLandscape &&
-        isTouchDevice
-    ){
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
 
-        // 横向き時は縦横を入れ替える
+    if(isLandscape && isTouchDevice){
 
-        const menuWidth =
-            height;
+        let menuWidth = height;
+        let menuHeight = width;
+        let scale = 1;
 
-        const menuHeight =
-            width;
+        //----------------------------------
+        // ブラウザ起動時だけ縮小調整
+        //----------------------------------
 
+        if(!isStandalone){
+
+            const referenceWidth = 390;
+
+            if(menuWidth < referenceWidth){
+
+                scale = menuWidth / referenceWidth;
+
+                menuWidth = referenceWidth;
+
+                menuHeight = width / scale;
+
+            }
+
+        }
 
         screen.style.setProperty(
             "--menu-width",
@@ -297,6 +309,11 @@ function resizeMenu(){
         screen.style.setProperty(
             "--menu-height",
             `${menuHeight}px`
+        );
+
+        screen.style.setProperty(
+            "--menu-scale",
+            `${scale}`
         );
 
     }else{
@@ -309,9 +326,14 @@ function resizeMenu(){
             "--menu-height"
         );
 
+        screen.style.removeProperty(
+            "--menu-scale"
+        );
+
     }
 
 }
+
 
 
 // ============================================================

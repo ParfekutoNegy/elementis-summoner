@@ -300,6 +300,8 @@ function getRandomCardIds(
     }
 
 
+
+
     //----------------------------------
     // 種類別に最低枚数を確保
     //----------------------------------
@@ -308,7 +310,6 @@ function getRandomCardIds(
 
     const selectedIds =
         new Set();
-
 
     for(const type of [
         "サモン",
@@ -357,12 +358,18 @@ function getRandomCardIds(
             );
 
         });
+
     }
+
+
 
 
     //----------------------------------
     // 残りのカードをランダム抽選
+    // 各種類は最大5枚まで
     //----------------------------------
+
+    const maxPerType = 5;
 
     const remainingCount =
         count - selectedCards.length;
@@ -377,14 +384,147 @@ function getRandomCardIds(
             )
         );
 
-    const additionalCards =
-        remainingCandidates.slice(
-            0,
-            remainingCount
+    //----------------------------------
+    // 現在の種類別枚数
+    //----------------------------------
+
+    const typeCounts = {
+        "サモン": 0,
+        "マギア": 0,
+        "レジスト": 0
+    };
+
+    selectedCards.forEach(card => {
+
+        typeCounts[card.type]++;
+
+    });
+
+    //----------------------------------
+    // 最大5枚を超えないよう追加
+    //----------------------------------
+
+    let addedCount = 0;
+
+    for(const card of remainingCandidates){
+
+        if(addedCount >= remainingCount){
+            break;
+        }
+
+        const type = card.type;
+
+        if(typeCounts[type] >= maxPerType){
+            continue;
+        }
+
+        selectedCards.push(card);
+
+        selectedIds.add(
+            Number(card.id)
         );
 
-    selectedCards.push(
-        ...additionalCards
+        typeCounts[type]++;
+
+        addedCount++;
+
+    }
+
+    //----------------------------------
+    // 10枚揃わなかった場合
+    //----------------------------------
+
+    if(selectedCards.length !== count){
+
+        console.error(
+            "オールカード抽選失敗：必要枚数不足",
+            {
+                expected: count,
+                actual: selectedCards.length,
+                typeCounts
+            }
+        );
+
+        return [];
+    }
+
+    //----------------------------------
+    // 最初のサモンを80%で
+    // コスト3以上から優先抽選
+    //----------------------------------
+
+    const summonIndex =
+        selectedCards.findIndex(
+            card =>
+                card.type === "サモン"
+        );
+
+    if(summonIndex !== -1){
+
+        const useHighCost =
+            Math.random() < 0.8;
+
+        if(useHighCost){
+
+            const currentSummon =
+                selectedCards[summonIndex];
+
+            const highCostCandidates =
+                availableCards.filter(
+                    card =>
+                        card.type === "サモン" &&
+                        Number(card.cost) >= 3 &&
+                        (
+                            Number(card.id) ===
+                            Number(currentSummon.id) ||
+                            !selectedIds.has(
+                                Number(card.id)
+                            )
+                        )
+                );
+
+            if(highCostCandidates.length > 0){
+
+                const replacement =
+                    highCostCandidates[
+                        Math.floor(
+                            Math.random() *
+                            highCostCandidates.length
+                        )
+                    ];
+
+                selectedCards[summonIndex] =
+                    replacement;
+
+                selectedIds.delete(
+                    Number(currentSummon.id)
+                );
+
+                selectedIds.add(
+                    Number(replacement.id)
+                );
+
+                console.log(
+                    "★ 最初のサモン優先抽選",
+                    {
+                        name: replacement.name,
+                        cost: replacement.cost
+                    }
+                );
+
+            }
+
+        }
+
+    }
+
+    //----------------------------------
+    // 最終的な種類別枚数を確認
+    //----------------------------------
+
+    console.log(
+        "★ オールカード種類別枚数",
+        typeCounts
     );
 
 
