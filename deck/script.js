@@ -587,7 +587,7 @@ function updateDeckList(){
             <div class="saved-deck-buttons">
                 <button
                 onclick="showDeckImageFromList('${deckId}')">
-                表示
+                出力
                 </button>
                 <button
                 onclick="copyDeckData('${deckId}')">
@@ -692,83 +692,104 @@ function closeFilterModal(){
 let selectedCard = null;
 let modalSource = null;
 
+
 function openCardModal(
     cardId,
     source = "list"
 ){
+
     cardId = Number(cardId);
+
     selectedCard = cardId;
     modalSource = source;
 
+    //----------------------------------
+    // カードデータ取得
+    //----------------------------------
+
     const card =
-    cards.find(c => c.id === cardId);
+        cards.find(
+            c => c.id === cardId
+        );
+
     if(!card){
         return;
     }
+
+    //----------------------------------
+    // カード画像
+    //----------------------------------
+
     document.getElementById(
         "modal-card-image"
     ).src = card.image;
+
+    //----------------------------------
+    // 操作ボタン取得
+    //----------------------------------
+
+    const mainBtn =
+        document.getElementById(
+            "main-btn"
+        );
+
+    const sideBtn =
+        document.getElementById(
+            "side-btn"
+        );
+
+    const candidateBtn =
+        document.getElementById(
+            "candidate-btn"
+        );
+
+    const deleteBtn =
+        document.getElementById(
+            "delete-card-btn"
+        );
+
+    //----------------------------------
+    // すべてのボタンを有効化
+    //----------------------------------
+
+    mainBtn.disabled = false;
+    sideBtn.disabled = false;
+    candidateBtn.disabled = false;
+    deleteBtn.disabled = false;
+
+    //----------------------------------
+    // 開いた場所によって無効化
+    //----------------------------------
+
+    if(modalSource === "main"){
+
+        mainBtn.disabled = true;
+
+    }else if(modalSource === "side"){
+
+        sideBtn.disabled = true;
+
+    }else if(modalSource === "candidate"){
+
+        candidateBtn.disabled = true;
+
+    }else{
+
+        // カード一覧から開いた場合
+        // 削除はできない
+
+        deleteBtn.disabled = true;
+
+    }
+
+    //----------------------------------
+    // モーダル表示
+    //----------------------------------
+
     document.getElementById(
         "card-modal"
     ).style.display = "flex";
-    const deleteBtn =
-    document.getElementById(
-        "delete-card-btn"
-    );
-    const sideBtn =
-    document.getElementById(
-        "side-btn"
-    );
-    const mainBtn =
-    document.getElementById(
-        "main-btn"
-    );
-    const candidateBtn =
-    document.getElementById(
-        "candidate-btn"
-    );
 
-    if(modalSource === "side"){
-        deleteBtn.style.display =
-        "inline-block";
-        sideBtn.style.display =
-        "none";
-        mainBtn.style.display =
-        "inline-block";
-        candidateBtn.style.display =
-        "inline-block";
-    }else if(
-        modalSource === "candidate"
-    ){
-        deleteBtn.style.display =
-        "inline-block";
-        sideBtn.style.display =
-        "inline-block";
-        mainBtn.style.display =
-        "inline-block";
-        candidateBtn.style.display =
-        "none";
-    }else if(
-        modalSource === "main"
-    ){
-        deleteBtn.style.display =
-        "inline-block";
-        sideBtn.style.display =
-        "inline-block";
-        mainBtn.style.display =
-        "none";
-        candidateBtn.style.display =
-        "inline-block";
-    }else{    
-        deleteBtn.style.display =
-        "none";
-        sideBtn.style.display =
-        "inline-block";
-        mainBtn.style.display =
-        "inline-block";
-        candidateBtn.style.display =
-        "inline-block";
-    }
 }
 
 function closeCardModal(){
@@ -1410,42 +1431,128 @@ function resetFilters(){
 
 let deckPinned = false;
 
+
+
 function toggleDeckPin(){
+
     const area =
-    document.getElementById(
-        "main-deck-section"
-    );
-    const spacer =
-    document.getElementById(
-        "main-deck-spacer"
-    );
-    const btn =
-    document.getElementById(
-        "pin-deck-btn"
-    );
-    deckPinned = !deckPinned;
-    if(deckPinned){
-        const height =
-        area.offsetHeight;
-        spacer.style.display =
-        "block";
-        spacer.style.height =
-        height + "px";
-        area.classList.add(
-            "deck-pinned"
+        document.getElementById(
+            "main-deck-section"
         );
-        btn.textContent =
-        "📍";
+
+    const spacer =
+        document.getElementById(
+            "main-deck-spacer"
+        );
+
+    const btn =
+        document.getElementById(
+            "pin-deck-btn"
+        );
+
+    if(!area || !spacer || !btn){
+        return;
+    }
+
+
+    //----------------------------------
+    // パソコン版か判定
+    //----------------------------------
+
+    const isPC =
+        window.matchMedia(
+            "(pointer: fine)"
+        ).matches;
+
+
+    //----------------------------------
+    // 固定状態切り替え
+    //----------------------------------
+
+    deckPinned = !deckPinned;
+
+
+    if(deckPinned){
+
+        //----------------------------------
+        // パソコン版
+        // 元のデッキ位置に空白を残さない
+        //----------------------------------
+
+        if(isPC){
+
+            spacer.style.display = "none";
+            spacer.style.height = "";
+
+            area.classList.add(
+                "deck-pinned"
+            );
+
+        }else{
+
+            //----------------------------------
+            // スマホ版
+            // 従来どおり余白を確保
+            //----------------------------------
+
+            const originalHeight =
+                area.getBoundingClientRect().height;
+
+            spacer.style.display = "block";
+
+            spacer.style.height =
+                originalHeight + "px";
+
+            area.classList.add(
+                "deck-pinned"
+            );
+
+            requestAnimationFrame(() => {
+
+                if(!deckPinned){
+                    return;
+                }
+
+                const fixedHeight =
+                    area.getBoundingClientRect().height;
+
+                spacer.style.height =
+                    Math.max(
+                        originalHeight,
+                        fixedHeight
+                    ) + "px";
+
+            });
+
+        }
+
+
+        //----------------------------------
+        // 固定ボタン
+        //----------------------------------
+
+        btn.textContent = "📍";
+
     }else{
+
+        //----------------------------------
+        // 固定解除
+        //----------------------------------
+
         area.classList.remove(
             "deck-pinned"
         );
-        spacer.style.display =
-        "none";
-        btn.textContent =
-        "📌";
+
+        spacer.style.display = "none";
+        spacer.style.height = "";
+
+        btn.textContent = "📌";
+
     }
+
 }
+
+
 
 function getNewDeckName(){
     const decks =

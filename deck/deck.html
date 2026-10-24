@@ -64,7 +64,7 @@
         id="deck-home-button"
         onclick="goToHome()">
 
-        ホーム画面へ戻る
+        ホームに戻る
 
     </button>
 
@@ -301,35 +301,53 @@
     <!-- カード一覧 -->
     <div id="card-area"></div>
     <!-- カード詳細 -->
-    <div id="card-modal" class="card-modal">
-        <div class="card-modal-content">
-            <div class="fake-close">×</div>
-            <img
-                id="modal-card-image"
-                class="modal-card-image"
-                onclick="closeCardModal()">
+
+<div id="card-modal" class="card-modal">
+    <div class="card-modal-content">
+
+        <img
+            id="modal-card-image"
+            class="modal-card-image"
+            alt="カード画像"
+        >
+
+        <div class="card-action-grid">
+
             <button
                 id="main-btn"
                 onclick="addToMainDeck()">
-                メインデッキに追加
+                メインに追加
             </button>
+
             <button
                 id="side-btn"
                 onclick="addToSideDeck()">
-                サイドデッキに追加
+                サイドに追加
             </button>
+
             <button
                 id="candidate-btn"
                 onclick="addToCandidate()">
                 検討中に追加
             </button>
+
             <button
                 id="delete-card-btn"
                 onclick="removeSelectedCard()">
                 削除
             </button>
+
+            <button
+                id="close-card-btn"
+                onclick="closeCardModal()">
+                閉じる
+            </button>
+
         </div>
+
     </div>
+</div>
+
     <div id="deck-name-overlay"></div>
 
 </div>

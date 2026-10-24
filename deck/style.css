@@ -1464,3 +1464,678 @@ body,
     }
 
 }
+
+/* =========================================================
+   Grimoire
+   パソコン専用コンパクトレイアウト
+   スマホ版には適用しない
+========================================================= */
+
+@media screen and (pointer: fine) {
+
+    /* ----------------------------------
+       デッキ一覧
+    ---------------------------------- */
+
+    #deck-list-screen {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 12px 24px 100px;
+    }
+
+    #title {
+        font-size: 20px;
+        margin: 10px 0 20px;
+    }
+
+    #title h1 {
+        font-size: 30px;
+    }
+
+    #saved-decks {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+        gap: 16px;
+        margin: 0;
+    }
+
+    .saved-deck-card {
+        margin: 0;
+    }
+
+    .saved-deck-thumbnail {
+        height: 160px;
+    }
+
+    .saved-deck-name {
+        font-size: 18px;
+        min-height: 28px;
+        margin-top: 8px;
+    }
+
+    .saved-deck-buttons {
+        gap: 6px;
+        margin: 8px 4px 12px;
+    }
+
+    .saved-deck-buttons button {
+        font-size: 14px;
+        min-width: 65px;
+        min-height: 34px;
+        padding: 5px 10px;
+    }
+
+
+    /* ----------------------------------
+       デッキ作成・読込ボタン
+    ---------------------------------- */
+
+    .floating-btn {
+        width: 64px;
+        height: 64px;
+
+        font-size: 34px;
+
+        border-width: 2px;
+        border-radius: 12px;
+
+        margin: 0;
+        padding: 0;
+    }
+
+    .floating-buttons {
+        right: 24px;
+        bottom: 105px;
+        gap: 12px;
+    }
+
+
+    /* ----------------------------------
+       下部固定ボタン
+    ---------------------------------- */
+
+    #deck-home-button-area {
+        height: 62px;
+        padding: 8px 16px;
+        gap: 12px;
+    }
+
+    #deck-home-button,
+    #deck-build-button {
+        font-size: 14px;
+        padding: 8px 18px;
+    }
+
+
+    /* ----------------------------------
+       デッキ編集画面
+    ---------------------------------- */
+
+    #builder-screen {
+        width: min(100%, 1100px);
+        margin: 0 auto;
+        padding: 12px 20px 80px;
+        box-sizing: border-box;
+    }
+
+    #main-deck-section {
+        margin: 0 0 12px;
+    }
+
+    #main-deck {
+        grid-template-columns:
+            repeat(5, minmax(0, 1fr));
+
+        gap: 6px;
+        padding: 12px;
+    }
+
+    #main-deck .deck-card-wrapper {
+        width: 100%;
+        max-width: 120px;
+        margin: 0;
+    }
+
+    #main-deck img {
+        width: 100%;
+        max-width: 120px;
+    }
+
+
+    /* ----------------------------------
+       サイドデッキ
+    ---------------------------------- */
+
+    #middle-section {
+        grid-template-columns: 3fr 2fr;
+        gap: 14px;
+    }
+
+    #sub-deck {
+        gap: 6px;
+        padding: 12px;
+    }
+
+    #sub-deck .deck-card-wrapper {
+        width: 100%;
+        max-width: 120px;
+    }
+
+    #sub-deck img {
+        max-width: 120px;
+    }
+
+
+    /* ----------------------------------
+       編集ボタン
+    ---------------------------------- */
+
+    #editor-section {
+        gap: 8px;
+    }
+
+    #editor-section button {
+        flex: 0 0 auto;
+
+        min-height: 40px;
+        padding: 8px 12px;
+
+        font-size: 14px;
+    }
+
+    #editor-section input {
+        height: 42px;
+        font-size: 16px;
+    }
+
+    .deck-name-input {
+        font-size: 16px;
+        padding: 8px 12px;
+        margin-bottom: 4px;
+    }
+
+
+    /* ----------------------------------
+       検討中カード
+    ---------------------------------- */
+
+    #candidate-area {
+        grid-template-columns:
+            repeat(8, minmax(0, 1fr));
+
+        gap: 6px;
+    }
+
+    #candidate-section {
+        padding: 10px;
+    }
+
+
+    /* ----------------------------------
+       カード検索一覧
+    ---------------------------------- */
+
+    #card-area {
+        grid-template-columns:
+            repeat(6, minmax(0, 1fr));
+
+        gap: 10px;
+        padding-bottom: 80px;
+    }
+
+    .card {
+        padding: 3px;
+    }
+
+    .card img {
+        border-radius: 8px;
+    }
+
+
+    /* ----------------------------------
+       フィルター・固定ボタン
+    ---------------------------------- */
+
+    .filter-fab {
+        right: 24px;
+        bottom: 90px;
+    }
+
+    .pin-fab {
+        right: 24px;
+        bottom: 166px;
+    }
+
+
+    /* ----------------------------------
+       フィルターモーダル
+    ---------------------------------- */
+
+    .modal-content {
+        width: min(700px, 90vw);
+
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+
+        max-height: 85vh;
+
+        padding: 20px;
+        padding-bottom: 24px;
+
+        font-size: 16px;
+    }
+
+    #search {
+        height: 42px;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    #seriesFilter {
+        width: 180px;
+        height: 40px;
+        font-size: 16px;
+    }
+
+    .elementButton {
+        margin: 8px;
+    }
+
+    .elementButton span {
+        width: 52px;
+        height: 52px;
+    }
+
+    .element-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .typeButton,
+    .costButton {
+        margin: 5px;
+    }
+
+    .typeButton span,
+    .costButton span {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    #reset-button {
+        margin-left: 12px;
+        font-size: 14px;
+    }
+
+    #apply-filter-button {
+        height: 44px;
+        font-size: 18px;
+        margin: 16px 0 0;
+    }
+
+
+    /* ----------------------------------
+       カード詳細モーダル
+    ---------------------------------- */
+
+    .modal-card-image {
+        width: auto;
+        max-width: min(320px, 70vw);
+        max-height: 58vh;
+        object-fit: contain;
+    }
+
+    .card-modal-content button {
+        width: 250px;
+        height: 40px;
+        font-size: 14px;
+    }
+
+    .card-modal-content {
+        gap: 6px;
+    }
+
+    .fake-close {
+        width: 40px;
+        height: 40px;
+        font-size: 32px;
+    }
+
+
+    /* ----------------------------------
+       デッキ画像プレビュー
+    ---------------------------------- */
+
+    #deck-image-screen #preview {
+        width: min(500px, 90%);
+        max-width: 500px;
+    }
+
+    .deck-image-btn {
+        font-size: 14px;
+        margin: 8px;
+        padding: 8px 14px;
+    }
+
+
+    /* ----------------------------------
+       固定メインデッキ：左上・横10列
+    ---------------------------------- */
+
+    #main-deck-section.deck-pinned {
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        right: auto;
+        transform: none;
+        width: 600px;
+        max-width: calc(100vw - 20px);
+        padding: 6px;
+        margin: 0 !important;
+        box-sizing: border-box;
+        z-index: 1000;
+        border: 2px solid #8b7853;
+        border-radius: 10px;
+        background: #f2ead6;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    #main-deck-section.deck-pinned #main-deck {
+        display: grid;
+        grid-template-columns: repeat(10, minmax(0, 1fr));
+        gap: 3px;
+        padding: 5px;
+        margin: 0;
+    }
+
+    #main-deck-section.deck-pinned .deck-card-wrapper {
+        width: 100%;
+        max-width: 50px;
+        min-width: 0;
+        margin: 0;
+    }
+
+    #main-deck-section.deck-pinned #main-deck img {
+        width: 100%;
+        max-width: 50px;
+        height: auto;
+    }
+
+    #main-deck-section.deck-pinned .move-buttons {
+        gap: 2px;
+    }
+
+    #main-deck-section.deck-pinned .move-buttons button {
+        width: 22px;
+        height: 20px;
+        font-size: 10px;
+        padding: 0;
+    }
+
+    #main-deck-section.deck-pinned .main-header {
+        margin: 0;
+    }
+
+}
+
+
+/* =========================================================
+   マウス操作環境：狭いウインドウでもコンパクト表示
+========================================================= */
+@media screen and (pointer: fine) and (max-width: 900px) {
+    #saved-decks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #builder-screen {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    #card-area {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #editor-section button {
+        font-size: 13px;
+        padding: 6px;
+    }
+}
+
+@media screen and (pointer: fine) and (max-width: 650px) {
+    /* 幅が狭くても編集操作を押しつぶさない */
+    #middle-section {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #title h1 {
+        font-size: clamp(16px, 5vw, 30px);
+    }
+
+    #deck-home-button,
+    #deck-build-button {
+        font-size: 14px;
+        min-width: 0;
+        padding: 8px 10px;
+    }
+
+    #saved-decks {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .saved-deck-buttons {
+        flex-wrap: wrap;
+    }
+
+    #candidate-area {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #card-area {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .modal-content {
+        box-sizing: border-box;
+        width: min(700px, 94vw);
+    }
+}
+
+
+/* ==========================================
+   カード詳細モーダル
+   操作ボタン 縦3段・5ボタン
+========================================== */
+
+/* モーダル全体 */
+
+#card-modal{
+    box-sizing:border-box;
+    padding:16px;
+    overflow-y:auto;
+}
+
+/* カード画像とボタンを縦に配置 */
+
+#card-modal .card-modal-content{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    gap:12px;
+
+    width:100%;
+    max-width:600px;
+
+    margin:auto;
+}
+
+/* カード画像 */
+
+#card-modal .modal-card-image{
+    display:block;
+
+    width:auto;
+    max-width:100%;
+    max-height:55vh;
+
+    object-fit:contain;
+}
+
+/* ボタン配置 */
+
+#card-modal .card-action-grid{
+    display:grid;
+
+    grid-template-columns:
+        repeat(2,minmax(0,1fr));
+
+    gap:10px;
+
+    width:100%;
+    max-width:560px;
+
+    margin:0;
+    padding:0;
+}
+
+/* 共通ボタン */
+
+#card-modal .card-action-grid button{
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    width:100%;
+    height:auto;
+    min-height:60px;
+
+    margin:0;
+    padding:10px 6px;
+
+    box-sizing:border-box;
+
+    font-size:clamp(13px,2.5vw,22px);
+    line-height:1.3;
+    text-align:center;
+
+    white-space:normal;
+}
+
+/* 削除ボタン */
+
+#card-modal #delete-card-btn{
+    background:linear-gradient(
+        to bottom,
+        #914c42,
+        #65332e
+    );
+
+    border-color:#512b26;
+}
+
+/* 閉じるボタン：3段目の横幅いっぱい */
+
+#card-modal #close-card-btn{
+    grid-column:1 / -1;
+
+    background:linear-gradient(
+        to bottom,
+        #665b4b,
+        #40382d
+    );
+}
+
+/* 使用不可ボタン */
+
+#card-modal .card-action-grid button:disabled{
+    background:#393631;
+
+    color:#817b72;
+    border-color:#56514a;
+
+    opacity:0.65;
+
+    cursor:not-allowed;
+
+    box-shadow:none;
+
+    transform:none;
+    filter:none;
+}
+
+/* 使用不可ボタンの押下演出も停止 */
+
+#card-modal .card-action-grid button:disabled:active,
+#card-modal .card-action-grid button:disabled.pressed{
+    transform:none;
+    filter:none;
+    box-shadow:none;
+}
+
+/* パソコン版 */
+
+@media screen and (pointer:fine){
+
+    #card-modal .card-modal-content{
+        max-width:420px;
+    }
+
+    #card-modal .card-action-grid{
+        max-width:420px;
+    }
+
+    #card-modal .card-action-grid button{
+        min-height:46px;
+        font-size:15px;
+    }
+
+    #card-modal .modal-card-image{
+        max-height:52vh;
+    }
+
+}
+
+
+/* ==========================================
+   カード詳細ボタン 横幅コンパクト化
+========================================== */
+
+/* ボタンエリアを狭くして中央配置 */
+
+#card-modal .card-action-grid{
+    width:85%;
+    max-width:340px;
+    margin-left:auto;
+    margin-right:auto;
+    gap:8px;
+}
+
+/* 各ボタンの大きさ */
+
+#card-modal .card-action-grid button{
+    min-height:48px;
+    padding:8px 4px;
+    font-size:clamp(12px,2.5vw,18px);
+}
+
+/* パソコン版 */
+
+@media screen and (pointer:fine){
+
+    #card-modal .card-action-grid{
+        width:100%;
+        max-width:300px;
+    }
+
+    #card-modal .card-action-grid button{
+        min-height:40px;
+        font-size:14px;
+    }
+
+}
