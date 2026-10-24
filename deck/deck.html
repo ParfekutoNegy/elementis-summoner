@@ -4,12 +4,18 @@
     <title>Grimoire - デッキ構築</title>
     <meta name="apple-mobile-web-app-title" content="Grimoire">
     <meta name="theme-color" content="#6e4d22">
+    
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+
+<div id="deck-viewport">
+
 <!-- =========================
      デッキ一覧画面
 ========================= -->
+
 
 <div id="deck-list-screen">
 
@@ -325,11 +331,164 @@
         </div>
     </div>
     <div id="deck-name-overlay"></div>
+
 </div>
 <!-- builder-screen 終了 -->
+
+</div>
+<!-- deck-viewport 終了 -->
+
+
 <script src="cards.js"></script>
 <script src="script.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+
+<script>
+
+// ============================================================
+// デッキ構築画面 縦表示固定
+// ============================================================
+
+
+function resizeDeckMenu(){
+
+    const viewport =
+        document.getElementById(
+            "deck-viewport"
+        );
+
+    if(!viewport){
+        return;
+    }
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+
+    // ----------------------------------
+    // 横向き時の仮想画面サイズ
+    // ----------------------------------
+
+    if(
+        isLandscape &&
+        isTouchDevice
+    ){
+
+        const portraitWidth = height;
+        const portraitHeight = width;
+
+        // viewport指定のないページの
+        // 従来のレイアウト幅を維持する
+        const layoutWidth =
+            Math.max(
+                portraitWidth,
+                980
+            );
+
+        const scale =
+            portraitWidth / layoutWidth;
+
+        viewport.style.setProperty(
+            "--deck-menu-width",
+            `${layoutWidth}px`
+        );
+
+        viewport.style.setProperty(
+            "--deck-menu-height",
+            `${portraitHeight / scale}px`
+        );
+
+        viewport.style.setProperty(
+            "--deck-menu-scale",
+            scale
+        );
+
+    }else{
+
+        viewport.style.removeProperty(
+            "--deck-menu-width"
+        );
+
+        viewport.style.removeProperty(
+            "--deck-menu-height"
+        );
+
+        viewport.style.removeProperty(
+            "--deck-menu-scale"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// 初期表示
+// ============================================================
+
+window.addEventListener(
+    "DOMContentLoaded",
+    resizeDeckMenu
+);
+
+
+// ============================================================
+// 画面サイズ変更
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    resizeDeckMenu
+);
+
+
+// ============================================================
+// スマホ回転
+// ============================================================
+
+window.addEventListener(
+    "orientationchange",
+    resizeDeckMenu
+);
+
+
+// ============================================================
+// iPhone表示領域変更
+// ============================================================
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        resizeDeckMenu
+    );
+
+}
+
+</script>
+
 </body>
 </html>

@@ -433,3 +433,48 @@ body {
     }
 
 }
+
+
+/* =========================================================
+   スマートフォン回転時の背景余白対策
+========================================================= */
+
+html{
+
+    background-color: #24170e;
+
+}
+
+body{
+
+    background-color: #24170e;
+
+}
+
+
+/* 横向き時の背景を画面全体に敷く */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+        background-color: #24170e;
+
+    }
+
+
+    #top-viewport{
+
+        background-color: #24170e;
+
+    }
+
+}
+
