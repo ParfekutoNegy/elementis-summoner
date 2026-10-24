@@ -2032,3 +2032,54 @@ body,
         padding:8px 4px;
     }
 }
+
+
+/* ==========================================
+   カード詳細画面 微調整
+   スマホ縦向き・90度回転表示対応
+========================================== */
+
+@media screen and (pointer:coarse){
+
+    /* カード画像とボタンの共通横幅 */
+
+    #card-modal .card-modal-content{
+        width:100% !important;
+        max-width:none !important;
+        padding:0 8px;
+        box-sizing:border-box;
+    }
+
+    /* カード画像 */
+
+    #card-modal .modal-card-image{
+        display:block;
+        width:100% !important;
+        max-width:100% !important;
+        height:auto !important;
+        max-height:none !important;
+        object-fit:contain;
+    }
+
+    /* ボタン全体：カード画像と同じ幅 */
+
+    #card-modal .card-action-grid{
+        width:100% !important;
+        max-width:100% !important;
+        box-sizing:border-box;
+        padding:0;
+        gap:10px;
+    }
+
+    /* ボタンの高さと文字サイズ */
+
+    #card-modal .card-action-grid button{
+        width:100%;
+        min-height:80px;
+        height:auto;
+        padding:12px 6px;
+        font-size:22px;
+        line-height:1.3;
+    }
+
+}
