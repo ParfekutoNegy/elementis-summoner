@@ -548,38 +548,6 @@ input[type="text"]{
     min-height:50px;
 }
 
-.card-modal{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.8);
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-}
-
-.card-modal-content{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-}
-
-.modal-card-image{
-    border-radius: 25px;
-    width:90vw;
-    max-width:1000px;
-    height:auto;
-}
-.card-modal-content button{
-    width:450px;
-    height:100px;
-    font-size:40px;
-}
-
 .deck-card-wrapper{
     display:flex;
     flex-direction:column;
@@ -1776,38 +1744,6 @@ body,
     }
 
 
-    /* ----------------------------------
-       カード詳細モーダル
-    ---------------------------------- */
-
-    .modal-card-image {
-        width: auto;
-        max-width: min(320px, 70vw);
-        max-height: 58vh;
-        object-fit: contain;
-    }
-
-    .card-modal-content button {
-        width: 250px;
-        height: 40px;
-        font-size: 14px;
-    }
-
-    .card-modal-content {
-        gap: 6px;
-    }
-
-    .fake-close {
-        width: 40px;
-        height: 40px;
-        font-size: 32px;
-    }
-
-
-    /* ----------------------------------
-       デッキ画像プレビュー
-    ---------------------------------- */
-
     #deck-image-screen #preview {
         width: min(500px, 90%);
         max-width: 500px;
@@ -1945,131 +1881,106 @@ body,
 }
 
 
-/* ==========================================
-   カード詳細モーダル
-   操作ボタン 縦3段・5ボタン
-========================================== */
-
-/* モーダル全体 */
+/* =========================================================
+   カード詳細モーダル：統合版
+   画像を表示領域の横幅に合わせる／操作ボタン2列＋閉じる
+   ※ 横向き時は #deck-viewport 内の回転座標に合わせる
+========================================================= */
 
 #card-modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
     box-sizing:border-box;
-    padding:16px;
+    margin:0;
+    padding:0;
+    background:rgba(0,0,0,.85);
+    z-index:9999;
+    justify-content:flex-start;
+    align-items:stretch;
+    overflow-x:hidden;
     overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
 }
-
-/* カード画像とボタンを縦に配置 */
 
 #card-modal .card-modal-content{
     display:flex;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
-
-    gap:12px;
-
+    justify-content:flex-start;
+    gap:10px;
+    box-sizing:border-box;
     width:100%;
-    max-width:600px;
-
-    margin:auto;
+    max-width:none;
+    margin:auto 0;
+    padding:10px 0 16px;
+    min-width:0;
 }
-
-/* カード画像 */
 
 #card-modal .modal-card-image{
     display:block;
-
-    width:auto;
-    max-width:100%;
-    max-height:55vh;
-
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    height:auto;
+    max-height:none;
+    margin:0;
+    border-radius:12px;
     object-fit:contain;
+    flex:none;
 }
-
-/* ボタン配置 */
 
 #card-modal .card-action-grid{
     display:grid;
-
-    grid-template-columns:
-        repeat(2,minmax(0,1fr));
-
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:10px;
-
+    box-sizing:border-box;
     width:100%;
-    max-width:560px;
-
+    max-width:none;
     margin:0;
-    padding:0;
+    padding:0 5px;
 }
-
-/* 共通ボタン */
 
 #card-modal .card-action-grid button{
     display:flex;
-
     align-items:center;
     justify-content:center;
-
+    box-sizing:border-box;
     width:100%;
     height:auto;
-    min-height:60px;
-
+    min-height:64px;
     margin:0;
-    padding:10px 6px;
-
-    box-sizing:border-box;
-
-    font-size:clamp(13px,2.5vw,22px);
+    padding:10px 5px;
+    font-size:clamp(15px,4vw,20px);
     line-height:1.3;
     text-align:center;
-
     white-space:normal;
+    touch-action:manipulation;
 }
 
-/* 削除ボタン */
-
 #card-modal #delete-card-btn{
-    background:linear-gradient(
-        to bottom,
-        #914c42,
-        #65332e
-    );
-
+    background:linear-gradient(to bottom,#914c42,#65332e);
     border-color:#512b26;
 }
 
-/* 閉じるボタン：3段目の横幅いっぱい */
-
 #card-modal #close-card-btn{
     grid-column:1 / -1;
-
-    background:linear-gradient(
-        to bottom,
-        #665b4b,
-        #40382d
-    );
+    background:linear-gradient(to bottom,#665b4b,#40382d);
 }
-
-/* 使用不可ボタン */
 
 #card-modal .card-action-grid button:disabled{
     background:#393631;
-
     color:#817b72;
     border-color:#56514a;
-
-    opacity:0.65;
-
+    opacity:.65;
     cursor:not-allowed;
-
     box-shadow:none;
-
     transform:none;
     filter:none;
 }
-
-/* 使用不可ボタンの押下演出も停止 */
 
 #card-modal .card-action-grid button:disabled:active,
 #card-modal .card-action-grid button:disabled.pressed{
@@ -2078,179 +1989,46 @@ body,
     box-shadow:none;
 }
 
-/* パソコン版 */
+/* スマホ横向き：回転後の仮想画面を基準にする。
+   100vw は端末の横幅を参照してしまうため使わない。 */
+@media screen and (orientation:landscape) and (pointer:coarse){
+    #deck-viewport #card-modal{
+        width:100%;
+        height:100%;
+    }
+    #deck-viewport #card-modal .card-modal-content,
+    #deck-viewport #card-modal .modal-card-image,
+    #deck-viewport #card-modal .card-action-grid{
+        width:100%;
+        max-width:none;
+    }
+}
 
+/* パソコン：従来どおりコンパクト表示 */
 @media screen and (pointer:fine){
-
+    #card-modal{
+        padding:12px;
+        justify-content:center;
+    }
     #card-modal .card-modal-content{
-        max-width:420px;
+        width:420px;
+        max-width:100%;
+        margin:auto;
+        gap:8px;
     }
-
-    #card-modal .card-action-grid{
-        max-width:420px;
-    }
-
-    #card-modal .card-action-grid button{
-        min-height:46px;
-        font-size:15px;
-    }
-
     #card-modal .modal-card-image{
+        width:auto;
+        max-width:min(320px,70vw);
         max-height:52vh;
     }
-
-}
-
-
-/* ==========================================
-   カード詳細ボタン 横幅コンパクト化
-========================================== */
-
-/* ボタンエリアを狭くして中央配置 */
-
-#card-modal .card-action-grid{
-    width:85%;
-    max-width:340px;
-    margin-left:auto;
-    margin-right:auto;
-    gap:8px;
-}
-
-/* 各ボタンの大きさ */
-
-#card-modal .card-action-grid button{
-    min-height:48px;
-    padding:8px 4px;
-    font-size:clamp(12px,2.5vw,18px);
-}
-
-/* パソコン版 */
-
-@media screen and (pointer:fine){
-
     #card-modal .card-action-grid{
         width:100%;
         max-width:300px;
+        gap:8px;
     }
-
     #card-modal .card-action-grid button{
         min-height:40px;
         font-size:14px;
+        padding:8px 4px;
     }
-
-}
-
-
-/* ==========================================
-   スマホ版 カード操作ボタン拡大
-========================================== */
-
-@media screen and (pointer:coarse){
-
-    /* ボタン全体をカード画像と同じ横幅に */
-
-    #card-modal .card-action-grid{
-        width:100%;
-        max-width:none;
-
-        grid-template-columns:
-            repeat(2,minmax(0,1fr));
-
-        gap:10px;
-
-        margin:0;
-        padding:0 5px;
-        box-sizing:border-box;
-    }
-
-    /* ボタンを押しやすいサイズに */
-
-    #card-modal .card-action-grid button{
-        width:100%;
-        min-height:65px;
-
-        padding:10px 5px;
-
-        font-size:clamp(15px,4vw,20px);
-        line-height:1.3;
-    }
-
-    /* 閉じるボタンは横幅いっぱい */
-
-    #card-modal #close-card-btn{
-        grid-column:1 / -1;
-    }
-
-}
-
-/* ==========================================
-   カード詳細画像 サイズ修正
-   スマホ縦向き・横向き対応
-========================================== */
-
-/* スマホ縦向き */
-
-@media screen and (pointer:coarse)
-       and (orientation:portrait){
-
-    #card-modal{
-        padding:0 !important;
-    }
-
-    #card-modal .card-modal-content{
-        width:100vw !important;
-        max-width:none !important;
-    }
-
-    #card-modal .modal-card-image{
-        display:block;
-
-        width:100vw !important;
-        max-width:100vw !important;
-
-        height:auto !important;
-        max-height:none !important;
-
-        object-fit:contain;
-    }
-
-    #card-modal .card-action-grid{
-        width:100% !important;
-        max-width:none !important;
-    }
-
-}
-
-
-/* スマホ横向き */
-
-@media screen and (pointer:coarse)
-       and (orientation:landscape){
-
-    #card-modal{
-        padding:0 !important;
-    }
-
-    #card-modal .card-modal-content{
-        width:100% !important;
-        max-width:none !important;
-    }
-
-    #card-modal .modal-card-image{
-        display:block;
-
-        width:100% !important;
-        max-width:none !important;
-
-        height:auto !important;
-        max-height:none !important;
-
-        object-fit:contain;
-    }
-
-    #card-modal .card-action-grid{
-        width:100% !important;
-        max-width:none !important;
-    }
-
 }
