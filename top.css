@@ -367,25 +367,38 @@ body {
 
     }
 
-    #top-screen{
 
-        position: absolute;
+#top-screen{
 
-        top: 0;
-        left: 0;
+    position: absolute;
 
-        width: var(--menu-width);
-        min-height: var(--menu-height);
+    top: 0;
+    left: 0;
 
-        transform-origin: top left;
+    width: var(--menu-width);
+    height: var(--menu-height);
+    min-height: 0;
 
-transform:
-    translateY(var(--menu-width))
-    rotate(-90deg);
+    transform-origin: top left;
 
-        overflow-y: auto;
+    transform:
+        translateY(
+            calc(
+                var(--menu-width) *
+                var(--menu-scale, 1)
+            )
+        )
+        rotate(-90deg)
+        scale(var(--menu-scale, 1));
 
-    }
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+
+}
+
 
     /* 横向きでもスマホ用レイアウトを維持 */
 
@@ -411,6 +424,7 @@ transform:
     #top-menu{
 
         gap: 14px;
+        flex-shrink: 0;
 
     }
 
