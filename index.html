@@ -30,7 +30,13 @@
 
 <body>
 
-<div id="top-screen">
+
+<body>
+
+<div id="top-viewport">
+
+    <div id="top-screen">
+
 
     <!-- =========================
          タイトル
@@ -60,7 +66,7 @@
             </span>
 
             <span class="menu-description">
-                カードリストからデッキを作る
+                カードリストからデッキを作成する
             </span>
 
         </a>
@@ -156,7 +162,7 @@
     </span>
 
     <span class="menu-description">
-        ルール詳細・最新情報はこちら
+        ルール詳細・最新情報・商品をHPで見る
     </span>
 
 </a>
@@ -169,13 +175,17 @@
          フッター
     ========================= -->
 
+
     <footer>
 
     </footer>
 
+    </div>
+
 </div>
 
 <script>
+
 
 if("serviceWorker" in navigator){
 
@@ -204,6 +214,151 @@ if("serviceWorker" in navigator){
 }
 
 </script>
+
+
+<script>
+
+// ============================================================
+// トップメニュー 縦表示固定
+// ============================================================
+
+function resizeMenu(){
+
+    const viewport =
+        document.getElementById(
+            "top-viewport"
+        );
+
+    const screen =
+        document.getElementById(
+            "top-screen"
+        );
+
+    if(!viewport || !screen){
+        return;
+    }
+
+
+    // ----------------------------------
+    // 実際の画面サイズ
+    // ----------------------------------
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+
+    // ----------------------------------
+    // スマホ横向き判定
+    // ----------------------------------
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+
+    if(
+        isLandscape &&
+        isTouchDevice
+    ){
+
+        // 横向き時は縦横を入れ替える
+
+        const menuWidth =
+            height;
+
+        const menuHeight =
+            width;
+
+
+        screen.style.setProperty(
+            "--menu-width",
+            `${menuWidth}px`
+        );
+
+        screen.style.setProperty(
+            "--menu-height",
+            `${menuHeight}px`
+        );
+
+    }else{
+
+        screen.style.removeProperty(
+            "--menu-width"
+        );
+
+        screen.style.removeProperty(
+            "--menu-height"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// 初期表示
+// ============================================================
+
+window.addEventListener(
+    "DOMContentLoaded",
+    resizeMenu
+);
+
+
+// ============================================================
+// 画面サイズ変更
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    resizeMenu
+);
+
+
+// ============================================================
+// スマホ回転
+// ============================================================
+
+window.addEventListener(
+    "orientationchange",
+    resizeMenu
+);
+
+
+// ============================================================
+// iPhone表示領域変更
+// ============================================================
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        resizeMenu
+    );
+
+}
+
+</script>
+
 
 </body>
 

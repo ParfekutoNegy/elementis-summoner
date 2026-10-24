@@ -910,3 +910,213 @@ Smartphone Landscape
     }
 
 }
+
+
+/* =========================================================
+   チュートリアルメニュー 回転表示
+========================================================= */
+
+#tutorial-menu-viewport{
+
+    width: 100%;
+
+    min-height: 100vh;
+    min-height: 100dvh;
+
+}
+
+
+/* =========================================================
+   スマートフォン横向き
+========================================================= */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+    }
+
+
+    /* ----------------------------------
+       回転する画面全体
+    ---------------------------------- */
+
+    #tutorial-menu-viewport{
+
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: var(--tutorial-menu-width);
+        height: var(--tutorial-menu-height);
+
+        transform-origin: top left;
+
+        transform:
+            translateX(var(--tutorial-menu-height))
+            rotate(90deg);
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        overscroll-behavior: contain;
+
+    }
+
+
+    /* ----------------------------------
+       メニュー画面
+    ---------------------------------- */
+
+    #tutorial-menu-screen{
+
+        width: 100%;
+
+        min-height: 100%;
+
+        padding: 17px 12px 22px;
+
+        display: flex;
+        flex-direction: column;
+
+        align-items: center;
+        justify-content: flex-start;
+
+    }
+
+
+    /* ----------------------------------
+       ヘッダー
+    ---------------------------------- */
+
+    #tutorial-menu-header{
+
+        width: 100%;
+
+        margin-bottom: 18px;
+
+    }
+
+
+    #tutorial-menu-title{
+
+        font-size: 25px;
+
+        letter-spacing: 2px;
+
+    }
+
+
+    #tutorial-menu-subtitle{
+
+        margin-top: 6px;
+
+        font-size: 16px;
+
+        letter-spacing: 6px;
+
+    }
+
+
+    #tutorial-menu-introduction{
+
+        margin-top: 0;
+
+        font-size: 13px;
+
+    }
+
+
+    /* ----------------------------------
+       STEP一覧
+    ---------------------------------- */
+
+    #tutorial-menu-list{
+
+        width: 100%;
+
+        grid-template-columns: 1fr;
+
+        gap: 13px;
+
+    }
+
+
+    /* ----------------------------------
+       STEPカード
+    ---------------------------------- */
+
+    .tutorial-menu-card{
+
+        min-height: 88px;
+
+        padding: 12px 15px;
+
+        border-radius: 12px;
+
+    }
+
+
+    .tutorial-menu-number{
+
+        margin-bottom: 4px;
+
+        font-size: 13px;
+
+    }
+
+
+    .tutorial-menu-card-title{
+
+        font-size: 17px;
+
+    }
+
+
+    .tutorial-menu-card-description{
+
+        margin-top: 6px;
+
+        font-size: 12px;
+
+        line-height: 1.45;
+
+    }
+
+
+    /* ----------------------------------
+       フッター
+    ---------------------------------- */
+
+    #tutorial-menu-footer{
+
+        width: 100%;
+
+        margin-top: 18px;
+
+    }
+
+
+    /* ----------------------------------
+       ホームに戻る
+    ---------------------------------- */
+
+    #tutorial-home-button{
+
+        min-width: 170px;
+
+        height: 44px;
+
+        font-size: 14px;
+
+    }
+
+}

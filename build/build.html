@@ -17,9 +17,13 @@
 
 </head>
 
+
 <body>
 
-<div id="build-screen">
+<div id="build-viewport">
+
+    <div id="build-screen">
+
 
     <!-- =========================
          ヘッダー
@@ -203,7 +207,7 @@
         type="button"
         onclick="backToHome()">
 
-        ホームへ戻る
+        ホームに戻る
 
     </button>
 
@@ -365,17 +369,153 @@
 
         </button>
 
+
     </div>
 
 </div>
 
+<!-- build-viewport 終了 -->
+</div>
 
 
 <script src="../deck/cards.js"></script>
 
 <script src="build.js"></script>
 
+<script>
+
+// ============================================================
+// ビルドルール画面 縦表示固定
+// ============================================================
+
+function resizeBuildMenu(){
+
+    const viewport =
+        document.getElementById(
+            "build-viewport"
+        );
+
+    if(!viewport){
+        return;
+    }
+
+
+    // ----------------------------------
+    // 表示領域
+    // ----------------------------------
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+
+    // ----------------------------------
+    // スマホ横向き判定
+    // ----------------------------------
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+
+    if(
+        isLandscape &&
+        isTouchDevice
+    ){
+
+        // 横向きでは縦横を入れ替える
+
+        viewport.style.setProperty(
+            "--build-menu-width",
+            `${height}px`
+        );
+
+        viewport.style.setProperty(
+            "--build-menu-height",
+            `${width}px`
+        );
+
+    }else{
+
+        viewport.style.removeProperty(
+            "--build-menu-width"
+        );
+
+        viewport.style.removeProperty(
+            "--build-menu-height"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// 初期表示
+// ============================================================
+
+window.addEventListener(
+    "DOMContentLoaded",
+    resizeBuildMenu
+);
+
+
+// ============================================================
+// 画面サイズ変更
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    resizeBuildMenu
+);
+
+
+// ============================================================
+// 画面回転
+// ============================================================
+
+window.addEventListener(
+    "orientationchange",
+    resizeBuildMenu
+);
+
+
+// ============================================================
+// iPhone表示領域変更
+// ============================================================
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        resizeBuildMenu
+    );
+
+}
+
+</script>
+
 </body>
+</html>
+
 
 </html>
 

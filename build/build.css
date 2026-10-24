@@ -1205,3 +1205,330 @@ body {
     cursor: pointer;
 
 }
+
+
+/* =========================================================
+   ビルドルール画面 回転表示
+========================================================= */
+
+#build-viewport{
+
+    width: 100%;
+    min-height: 100vh;
+
+}
+
+
+/* =========================================================
+   スマホ横向き
+========================================================= */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+    }
+
+
+    /* 回転する画面全体 */
+
+    #build-viewport{
+
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: var(--build-menu-width);
+        height: var(--build-menu-height);
+
+        transform-origin: top left;
+
+        transform:
+            translateX(var(--build-menu-height))
+            rotate(90deg);
+
+        overflow: hidden;
+
+    }
+
+
+    /* メイン画面 */
+
+    #build-screen{
+
+        width: 100%;
+        height: 100%;
+
+        min-height: 0;
+
+        padding: 20px 12px 120px;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        overscroll-behavior: contain;
+
+    }
+
+
+    /* スマホ用レイアウトを維持 */
+
+    #build-header{
+
+        margin-bottom: 18px;
+        padding-top: 5px;
+
+    }
+
+    #build-title-area h1{
+
+        font-size: 25px;
+        letter-spacing: 2px;
+
+    }
+
+    #build-title-area p{
+
+        font-size: 11px;
+
+    }
+
+    #settings-section{
+
+        grid-template-columns:
+            minmax(0, 2fr)
+            minmax(0, 1fr);
+
+        gap: 7px;
+        margin-bottom: 15px;
+
+    }
+
+    #settings-section .setting-box{
+
+        padding: 8px;
+        gap: 6px;
+
+    }
+
+    .setting-box label{
+
+        font-size: 12px;
+
+    }
+
+    #regulation-buttons{
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 5px;
+
+    }
+
+    .regulation-button{
+
+        min-height: 40px;
+        padding: 6px 2px;
+
+        font-size: 11px;
+
+    }
+
+    #life-select{
+
+        width: 100%;
+        padding: 8px 3px;
+        font-size: 13px;
+
+    }
+
+    #life-description{
+
+        font-size: 9px;
+        line-height: 1.3;
+
+    }
+
+    #saved-decks{
+
+        grid-template-columns: 1fr;
+        gap: 7px;
+
+    }
+
+    .saved-deck-card{
+
+        min-height: 86px;
+        gap: 7px;
+        padding: 6px;
+
+    }
+
+    .saved-deck-thumbnail{
+
+        width: 48px;
+        height: 67px;
+
+    }
+
+    .saved-deck-name{
+
+        font-size: 13px;
+
+    }
+
+    .deck-status{
+
+        font-size: 9px;
+
+    }
+
+    .deck-reason{
+
+        font-size: 8px;
+        line-height: 1.15;
+
+    }
+
+    .deck-buttons{
+
+        gap: 4px;
+        margin-top: 3px;
+
+    }
+
+    .deck-select-button,
+    .deck-list-view-button,
+    .deck-edit-button,
+    .deck-select-label{
+
+        padding: 3px 5px;
+        font-size: 8px;
+
+    }
+
+
+    /* 下部固定操作バー */
+
+    #fixed-action-area{
+
+        position: fixed;
+
+        left: 0;
+        right: 0;
+        bottom: 0;
+
+        width: 100%;
+
+        min-height: 68px;
+
+        padding: 8px 10px;
+        gap: 7px;
+
+    }
+
+    #back-button{
+
+        min-width: 80px;
+        padding: 10px 8px;
+        font-size: 12px;
+
+    }
+
+    #selected-deck-message{
+
+        min-width: 0;
+        flex: 1;
+        font-size: 12px;
+        line-height: 1.3;
+
+    }
+
+    .selected-deck-label{
+
+        font-size: 10px;
+
+    }
+
+    .selected-deck-name{
+
+        font-size: 12px;
+
+    }
+
+    #start-game-button{
+
+        min-width: 105px;
+        padding: 10px 8px;
+        font-size: 13px;
+
+    }
+
+
+    /* デッキリストモーダル */
+
+    .deck-list-modal{
+
+        position: fixed;
+        inset: 0;
+
+        padding: 8px;
+
+    }
+
+    .deck-list-modal-content{
+
+        width: 96%;
+        max-width: none;
+
+        max-height: 92%;
+
+        padding: 10px 8px 12px;
+        border-radius: 10px;
+
+    }
+
+    .deck-list-modal-header h2{
+
+        font-size: 17px;
+
+    }
+
+    .deck-list-group h3{
+
+        font-size: 13px;
+
+    }
+
+    .modal-card-grid{
+
+        gap: 4px;
+
+    }
+
+
+    /* レギュレーション説明モーダル */
+
+    .regulation-help-modal{
+
+        position: fixed;
+        inset: 0;
+
+    }
+
+    .regulation-help-content{
+
+        max-height: 85%;
+
+    }
+
+}

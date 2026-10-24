@@ -321,3 +321,115 @@ body {
     }
 
 }
+
+
+/* =========================================
+   トップメニュー 回転表示
+========================================= */
+
+#top-viewport{
+
+    width: 100%;
+
+    min-height: 100vh;
+
+}
+
+
+/* =========================================
+   スマホ横向き時の表示
+========================================= */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+    }
+
+    #top-viewport{
+
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+    }
+
+    #top-screen{
+
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: var(--menu-width);
+        min-height: var(--menu-height);
+
+        transform-origin: top left;
+
+        transform:
+            translateX(var(--menu-height))
+            rotate(90deg);
+
+        overflow-y: auto;
+
+    }
+
+    /* 横向きでもスマホ用レイアウトを維持 */
+
+    #top-screen{
+
+        padding: 35px 15px 20px;
+
+    }
+
+    #top-header{
+
+        margin-bottom: 35px;
+
+    }
+
+    #top-header h1{
+
+        font-size: 28px;
+        letter-spacing: 2px;
+
+    }
+
+    #top-menu{
+
+        gap: 14px;
+
+    }
+
+    .top-menu-button{
+
+        min-height: 82px;
+
+    }
+
+    .menu-title{
+
+        font-size: 20px;
+
+    }
+
+    .menu-description{
+
+        font-size: 11px;
+
+    }
+
+}

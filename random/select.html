@@ -16,7 +16,9 @@
 
 <body>
 
-<div id="random-select-screen">
+<div id="random-select-viewport">
+
+    <div id="random-select-screen">
 
     <!-- =========================
          タイトル
@@ -193,9 +195,143 @@
 
     </main>
 
+    </div>
+
 </div>
 
+
 <script src="select.js"></script>
+
+<script>
+
+// ============================================================
+// ランダムルール選択画面 縦表示固定
+// ============================================================
+
+function resizeRandomMenu(){
+
+    const viewport =
+        document.getElementById(
+            "random-select-viewport"
+        );
+
+    if(!viewport){
+        return;
+    }
+
+
+    // ----------------------------------
+    // 表示領域
+    // ----------------------------------
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+
+    // ----------------------------------
+    // スマホ横向き判定
+    // ----------------------------------
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+
+    if(
+        isLandscape &&
+        isTouchDevice
+    ){
+
+        // 横向き時は縦横を入れ替える
+
+        viewport.style.setProperty(
+            "--random-menu-width",
+            `${height}px`
+        );
+
+        viewport.style.setProperty(
+            "--random-menu-height",
+            `${width}px`
+        );
+
+    }else{
+
+        viewport.style.removeProperty(
+            "--random-menu-width"
+        );
+
+        viewport.style.removeProperty(
+            "--random-menu-height"
+        );
+
+    }
+
+}
+
+
+// ============================================================
+// 初期表示
+// ============================================================
+
+window.addEventListener(
+    "DOMContentLoaded",
+    resizeRandomMenu
+);
+
+
+// ============================================================
+// 画面サイズ変更
+// ============================================================
+
+window.addEventListener(
+    "resize",
+    resizeRandomMenu
+);
+
+
+// ============================================================
+// スマホ回転
+// ============================================================
+
+window.addEventListener(
+    "orientationchange",
+    resizeRandomMenu
+);
+
+
+// ============================================================
+// iPhone表示領域変更
+// ============================================================
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        resizeRandomMenu
+    );
+
+}
+
+</script>
 
 </body>
 </html>

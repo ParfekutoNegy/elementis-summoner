@@ -602,3 +602,199 @@ header h1 {
     }
 
 }
+
+
+/* =========================================================
+   ランダムルール選択画面 回転表示
+========================================================= */
+
+#random-select-viewport{
+
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+
+}
+
+
+/* =========================================================
+   スマホ横向き
+========================================================= */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
+
+    }
+
+
+    /* 回転する画面全体 */
+
+    #random-select-viewport{
+
+        position: fixed;
+
+        top: 0;
+        left: 0;
+
+        width: var(--random-menu-width);
+        height: var(--random-menu-height);
+
+        transform-origin: top left;
+
+        transform:
+            translateX(var(--random-menu-height))
+            rotate(90deg);
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        overscroll-behavior: contain;
+
+    }
+
+
+    /* メイン画面 */
+
+    #random-select-screen{
+
+        width: 100%;
+        max-width: none;
+
+        min-height: 100%;
+
+        margin: 0 auto;
+
+        padding:
+            12px
+            15px
+            90px;
+
+    }
+
+
+    /* スマホ用レイアウトを維持 */
+
+    header{
+
+        margin-bottom: 12px;
+
+    }
+
+    header h1{
+
+        font-size: 26px;
+        letter-spacing: 2px;
+
+    }
+
+    .select-guide{
+
+        margin-bottom: 10px;
+        font-size: 12px;
+
+    }
+
+    .rule-button{
+
+        min-height: 58px;
+
+        margin-bottom: 12px;
+        padding: 8px 12px;
+
+    }
+
+    .rule-name{
+
+        font-size: 20px;
+
+    }
+
+    #all-card-section{
+
+        margin-top: 14px;
+        padding: 12px;
+
+    }
+
+    #all-card-section h2{
+
+        font-size: 20px;
+
+    }
+
+    .setting-guide{
+
+        margin: 8px 0 10px;
+        font-size: 12px;
+
+    }
+
+    .setting-row{
+
+        gap: 8px;
+        margin-bottom: 6px;
+
+    }
+
+    .setting-row label{
+
+        width: 75px;
+        font-size: 15px;
+
+    }
+
+    .setting-row select{
+
+        width: 80px;
+        height: 36px;
+
+        font-size: 15px;
+
+    }
+
+    #setting-summary{
+
+        margin-top: 8px;
+        font-size: 12px;
+
+    }
+
+    #all-card-start{
+
+        min-height: 48px;
+
+        margin-top: 8px;
+        font-size: 16px;
+
+    }
+
+
+    /* ホームに戻るボタン */
+
+    .back-button{
+
+        position: fixed;
+
+        bottom: 12px;
+        left: 50%;
+
+        width: calc(100% - 30px);
+        max-width: 630px;
+
+        margin: 0;
+
+        transform: translateX(-50%);
+
+        z-index: 100;
+
+    }
+
+}
