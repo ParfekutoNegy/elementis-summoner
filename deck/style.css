@@ -1146,7 +1146,10 @@ h3{
         transform-origin: top left;
 
 
+
+
 transform:
+    translateX(0)
     translateY(
         calc(
             var(--deck-menu-width) *
@@ -1155,6 +1158,8 @@ transform:
     )
     rotate(-90deg)
     scale(var(--deck-menu-scale));
+
+
 
 
 overflow: auto;
@@ -1374,25 +1379,42 @@ overflow: auto;
 }
 
 
+
 /* =========================================================
    Grimoire デッキ構築画面
-   スマホ回転時の背景余白対策
+   スマホ回転時の背景統一
 ========================================================= */
 
-
 /* ----------------------------------
-   ページ全体の背景
+   縦向き・横向き共通の背景
 ---------------------------------- */
 
-html{
+html,
+body,
+#deck-viewport{
 
-    background-color: #24170e;
+    background:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(80,60,30,.06),
+            transparent 18%
+        ),
+        radial-gradient(
+            circle at 80% 70%,
+            rgba(120,90,40,.05),
+            transparent 20%
+        ),
+        radial-gradient(
+            circle at 45% 90%,
+            rgba(0,0,0,.03),
+            transparent 15%
+        ),
+        linear-gradient(
+            #e4d5b5,
+            #d8c7a3
+        );
 
-}
-
-body{
-
-    background-color: #24170e;
+    background-color: #d8c7a3;
 
 }
 
@@ -1407,18 +1429,37 @@ body{
     html,
     body{
 
-        background-color: #24170e;
+        width: 100%;
+        height: 100%;
+
+        overflow: hidden;
 
     }
 
-
-    /* ----------------------------------
-       回転画面の背景
-    ---------------------------------- */
-
     #deck-viewport{
 
-        background-color: #24170e;
+        background:
+            radial-gradient(
+                circle at 15% 20%,
+                rgba(80,60,30,.06),
+                transparent 18%
+            ),
+            radial-gradient(
+                circle at 80% 70%,
+                rgba(120,90,40,.05),
+                transparent 20%
+            ),
+            radial-gradient(
+                circle at 45% 90%,
+                rgba(0,0,0,.03),
+                transparent 15%
+            ),
+            linear-gradient(
+                #e4d5b5,
+                #d8c7a3
+            );
+
+        background-color: #d8c7a3;
 
     }
 

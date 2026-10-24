@@ -944,32 +944,34 @@ Smartphone Landscape
     }
 
 
-    /* ----------------------------------
-       回転する画面全体
-    ---------------------------------- */
 
-    #tutorial-menu-viewport{
+/* ----------------------------------
+   回転する画面全体
+---------------------------------- */
 
-        position: fixed;
+#tutorial-menu-viewport{
 
-        top: 0;
-        left: 0;
+    position: fixed;
 
-        width: var(--tutorial-menu-width);
-        height: var(--tutorial-menu-height);
+    top: 0;
+    left: 0;
 
-        transform-origin: top left;
+    width: var(--tutorial-menu-width);
+    height: var(--tutorial-menu-height);
 
-transform:
-    translateY(var(--menu-width))
-    rotate(-90deg);
+    transform-origin: top left;
 
-        overflow-y: auto;
-        overflow-x: hidden;
+    transform:
+        translateY(var(--tutorial-menu-width))
+        rotate(-90deg);
 
-        overscroll-behavior: contain;
+    overflow-y: auto;
+    overflow-x: hidden;
 
-    }
+    overscroll-behavior: contain;
+
+}
+
 
 
     /* ----------------------------------

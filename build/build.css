@@ -1239,25 +1239,31 @@ body {
 
     /* 回転する画面全体 */
 
-    #build-viewport{
 
-        position: fixed;
+/* ----------------------------------
+   回転する画面全体
+---------------------------------- */
 
-        top: 0;
-        left: 0;
+#build-viewport{
 
-        width: var(--build-menu-width);
-        height: var(--build-menu-height);
+    position: fixed;
 
-        transform-origin: top left;
+    top: 0;
+    left: 0;
 
-transform:
-    translateY(var(--menu-width))
-    rotate(-90deg);
+    width: var(--build-menu-width);
+    height: var(--build-menu-height);
 
-        overflow: hidden;
+    transform-origin: top left;
 
-    }
+    transform:
+        translateY(var(--build-menu-width))
+        rotate(-90deg);
+
+    overflow: hidden;
+
+}
+
 
 
     /* メイン画面 */

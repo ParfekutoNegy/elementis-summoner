@@ -635,30 +635,34 @@ header h1 {
     }
 
 
-    /* 回転する画面全体 */
 
-    #random-select-viewport{
+/* ----------------------------------
+   回転する画面全体
+---------------------------------- */
 
-        position: fixed;
+#random-select-viewport{
 
-        top: 0;
-        left: 0;
+    position: fixed;
 
-        width: var(--random-menu-width);
-        height: var(--random-menu-height);
+    top: 0;
+    left: 0;
 
-        transform-origin: top left;
+    width: var(--random-menu-width);
+    height: var(--random-menu-height);
 
-transform:
-    translateY(var(--menu-width))
-    rotate(-90deg);
+    transform-origin: top left;
 
-        overflow-y: auto;
-        overflow-x: hidden;
+    transform:
+        translateY(var(--random-menu-width))
+        rotate(-90deg);
 
-        overscroll-behavior: contain;
+    overflow-y: auto;
+    overflow-x: hidden;
 
-    }
+    overscroll-behavior: contain;
+
+}
+
 
 
     /* メイン画面 */
