@@ -649,9 +649,9 @@ header h1 {
 
         transform-origin: top left;
 
-        transform:
-            translateX(var(--random-menu-height))
-            rotate(90deg);
+transform:
+    translateY(var(--menu-width))
+    rotate(-90deg);
 
         overflow-y: auto;
         overflow-x: hidden;
@@ -794,6 +794,75 @@ header h1 {
         transform: translateX(-50%);
 
         z-index: 100;
+
+    }
+
+}
+
+/* =========================================================
+   ランダムルール選択画面
+   スマホ回転時の背景余白対策
+========================================================= */
+
+/* ----------------------------------
+   ページ全体の背景
+---------------------------------- */
+
+html{
+
+    background-color: #24170e;
+
+}
+
+body{
+
+    background-color: #24170e;
+
+}
+
+
+/* ----------------------------------
+   スマホ横向き
+---------------------------------- */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        width: 100%;
+        height: 100%;
+
+        min-height: 100%;
+
+        overflow: hidden;
+
+        background-color: #24170e;
+
+    }
+
+
+    /* ----------------------------------
+       回転画面の背景
+    ---------------------------------- */
+
+    #random-select-viewport{
+
+        background-color: #24170e;
+
+    }
+
+
+    /* ----------------------------------
+       回転後の画面全体
+    ---------------------------------- */
+
+    #random-select-screen{
+
+        min-height: 100%;
+
+        background-color: #24170e;
 
     }
 

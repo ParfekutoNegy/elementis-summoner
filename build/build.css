@@ -1251,9 +1251,9 @@ body {
 
         transform-origin: top left;
 
-        transform:
-            translateX(var(--build-menu-height))
-            rotate(90deg);
+transform:
+    translateY(var(--menu-width))
+    rotate(-90deg);
 
         overflow: hidden;
 

@@ -204,9 +204,10 @@
 
 <script>
 
-// ============================================================
-// ランダムルール選択画面 縦表示固定
-// ============================================================
+
+ // ============================================================
+ // ランダムルール選択画面 縦表示固定
+ // ============================================================
 
 function resizeRandomMenu(){
 
@@ -289,12 +290,77 @@ function resizeRandomMenu(){
 
 
 // ============================================================
+// 回転・サイズ変更時の再計算
+// ============================================================
+
+let randomResizeTimers = [];
+
+function scheduleRandomMenuResize(){
+
+    // ----------------------------------
+    // 前回のタイマーを解除
+    // ----------------------------------
+
+    randomResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    randomResizeTimers = [];
+
+
+    // ----------------------------------
+    // 即時更新
+    // ----------------------------------
+
+    resizeRandomMenu();
+
+
+    // ----------------------------------
+    // 次の描画タイミングで更新
+    // ----------------------------------
+
+    requestAnimationFrame(
+        resizeRandomMenu
+    );
+
+
+    // ----------------------------------
+    // 回転後の段階的な更新
+    // ----------------------------------
+
+    const delays = [
+        100,
+        300,
+        600
+    ];
+
+
+    delays.forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeRandomMenu,
+                    delay
+                );
+
+            randomResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // 初期表示
 // ============================================================
 
 window.addEventListener(
     "DOMContentLoaded",
-    resizeRandomMenu
+    scheduleRandomMenuResize
 );
 
 
@@ -304,7 +370,7 @@ window.addEventListener(
 
 window.addEventListener(
     "resize",
-    resizeRandomMenu
+    scheduleRandomMenuResize
 );
 
 
@@ -314,7 +380,7 @@ window.addEventListener(
 
 window.addEventListener(
     "orientationchange",
-    resizeRandomMenu
+    scheduleRandomMenuResize
 );
 
 
@@ -326,10 +392,11 @@ if(window.visualViewport){
 
     window.visualViewport.addEventListener(
         "resize",
-        resizeRandomMenu
+        scheduleRandomMenuResize
     );
 
 }
+
 
 </script>
 

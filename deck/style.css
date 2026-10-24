@@ -1147,13 +1147,13 @@ h3{
 
 
 transform:
-    translateX(
+    translateY(
         calc(
-            var(--deck-menu-height) *
+            var(--deck-menu-width) *
             var(--deck-menu-scale)
         )
     )
-    rotate(90deg)
+    rotate(-90deg)
     scale(var(--deck-menu-scale));
 
 
@@ -1368,6 +1368,57 @@ overflow: auto;
     #card-area{
 
         padding-bottom: 160px;
+
+    }
+
+}
+
+
+/* =========================================================
+   Grimoire デッキ構築画面
+   スマホ回転時の背景余白対策
+========================================================= */
+
+
+/* ----------------------------------
+   ページ全体の背景
+---------------------------------- */
+
+html{
+
+    background-color: #24170e;
+
+}
+
+body{
+
+    background-color: #24170e;
+
+}
+
+
+/* ----------------------------------
+   スマホ横向き
+---------------------------------- */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse){
+
+    html,
+    body{
+
+        background-color: #24170e;
+
+    }
+
+
+    /* ----------------------------------
+       回転画面の背景
+    ---------------------------------- */
+
+    #deck-viewport{
+
+        background-color: #24170e;
 
     }
 

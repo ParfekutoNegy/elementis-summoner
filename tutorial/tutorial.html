@@ -311,6 +311,11 @@ Tutorial Menu Screen
 // チュートリアルメニュー 縦表示固定
 // ============================================================
 
+
+ // ============================================================
+ // チュートリアルメニュー 縦表示固定
+ // ============================================================
+
 function resizeTutorialMenu(){
 
     const viewport =
@@ -392,12 +397,77 @@ function resizeTutorialMenu(){
 
 
 // ============================================================
+// 回転・サイズ変更時の再計算
+// ============================================================
+
+let tutorialResizeTimers = [];
+
+function scheduleTutorialMenuResize(){
+
+    // ----------------------------------
+    // 前回のタイマーを解除
+    // ----------------------------------
+
+    tutorialResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    tutorialResizeTimers = [];
+
+
+    // ----------------------------------
+    // 即時更新
+    // ----------------------------------
+
+    resizeTutorialMenu();
+
+
+    // ----------------------------------
+    // 次の描画タイミングで更新
+    // ----------------------------------
+
+    requestAnimationFrame(
+        resizeTutorialMenu
+    );
+
+
+    // ----------------------------------
+    // 回転後の段階的な更新
+    // ----------------------------------
+
+    const delays = [
+        100,
+        300,
+        600
+    ];
+
+
+    delays.forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeTutorialMenu,
+                    delay
+                );
+
+            tutorialResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // 初期表示
 // ============================================================
 
 window.addEventListener(
     "DOMContentLoaded",
-    resizeTutorialMenu
+    scheduleTutorialMenuResize
 );
 
 
@@ -407,7 +477,7 @@ window.addEventListener(
 
 window.addEventListener(
     "resize",
-    resizeTutorialMenu
+    scheduleTutorialMenuResize
 );
 
 
@@ -417,7 +487,7 @@ window.addEventListener(
 
 window.addEventListener(
     "orientationchange",
-    resizeTutorialMenu
+    scheduleTutorialMenuResize
 );
 
 
@@ -429,10 +499,11 @@ if(window.visualViewport){
 
     window.visualViewport.addEventListener(
         "resize",
-        resizeTutorialMenu
+        scheduleTutorialMenuResize
     );
 
 }
+
 
 </script>
 

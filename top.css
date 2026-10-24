@@ -379,9 +379,9 @@ body {
 
         transform-origin: top left;
 
-        transform:
-            translateX(var(--menu-height))
-            rotate(90deg);
+transform:
+    translateY(var(--menu-width))
+    rotate(-90deg);
 
         overflow-y: auto;
 

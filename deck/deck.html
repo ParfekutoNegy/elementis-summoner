@@ -351,6 +351,10 @@
 // ============================================================
 
 
+ // ============================================================
+ // デッキ構築画面 縦表示固定
+ // ============================================================
+
 function resizeDeckMenu(){
 
     const viewport =
@@ -361,6 +365,11 @@ function resizeDeckMenu(){
     if(!viewport){
         return;
     }
+
+
+    // ----------------------------------
+    // 実際の表示領域
+    // ----------------------------------
 
     const visual =
         window.visualViewport;
@@ -375,9 +384,15 @@ function resizeDeckMenu(){
             ? visual.height
             : window.innerHeight;
 
+
     if(width <= 0 || height <= 0){
         return;
     }
+
+
+    // ----------------------------------
+    // スマホ横向き判定
+    // ----------------------------------
 
     const isLandscape =
         width > height;
@@ -397,19 +412,26 @@ function resizeDeckMenu(){
         isTouchDevice
     ){
 
-        const portraitWidth = height;
-        const portraitHeight = width;
+        const portraitWidth =
+            height;
+
+        const portraitHeight =
+            width;
+
 
         // viewport指定のないページの
         // 従来のレイアウト幅を維持する
+
         const layoutWidth =
             Math.max(
                 portraitWidth,
                 980
             );
 
+
         const scale =
             portraitWidth / layoutWidth;
+
 
         viewport.style.setProperty(
             "--deck-menu-width",
@@ -446,12 +468,77 @@ function resizeDeckMenu(){
 
 
 // ============================================================
+// 回転・サイズ変更時の再計算
+// ============================================================
+
+let deckResizeTimers = [];
+
+function scheduleDeckMenuResize(){
+
+    // ----------------------------------
+    // 前回のタイマーを解除
+    // ----------------------------------
+
+    deckResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    deckResizeTimers = [];
+
+
+    // ----------------------------------
+    // 即時更新
+    // ----------------------------------
+
+    resizeDeckMenu();
+
+
+    // ----------------------------------
+    // 次の描画タイミングで更新
+    // ----------------------------------
+
+    requestAnimationFrame(
+        resizeDeckMenu
+    );
+
+
+    // ----------------------------------
+    // 回転後の段階的な更新
+    // ----------------------------------
+
+    const delays = [
+        100,
+        300,
+        600
+    ];
+
+
+    delays.forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeDeckMenu,
+                    delay
+                );
+
+            deckResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+// ============================================================
 // 初期表示
 // ============================================================
 
 window.addEventListener(
     "DOMContentLoaded",
-    resizeDeckMenu
+    scheduleDeckMenuResize
 );
 
 
@@ -461,7 +548,7 @@ window.addEventListener(
 
 window.addEventListener(
     "resize",
-    resizeDeckMenu
+    scheduleDeckMenuResize
 );
 
 
@@ -471,7 +558,7 @@ window.addEventListener(
 
 window.addEventListener(
     "orientationchange",
-    resizeDeckMenu
+    scheduleDeckMenuResize
 );
 
 
@@ -483,10 +570,11 @@ if(window.visualViewport){
 
     window.visualViewport.addEventListener(
         "resize",
-        resizeDeckMenu
+        scheduleDeckMenuResize
     );
 
 }
+
 
 </script>
 
