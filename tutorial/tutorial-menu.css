@@ -131,42 +131,25 @@ Main Title
 
 #tutorial-menu-title{
 
-    color:
-        #f0d088;
+    margin: 5px 0 8px;
 
-    font-size:
-        clamp(
-            28px,
-            4vw,
-            46px
-        );
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
 
-    font-weight:
-        700;
+    font-size: 34px;
 
-    letter-spacing:
-        5px;
+    font-weight: bold;
 
-    line-height:
-        1.1;
+    letter-spacing: 3px;
+
+    line-height: normal;
+
+    color: #f1dfb5;
 
     text-shadow:
-
-        0 2px 3px
-        rgba(
-            0,
-            0,
-            0,
-            0.9
-        ),
-
-        0 0 16px
-        rgba(
-            210,
-            164,
-            77,
-            0.15
-        );
+        0 3px 5px rgba(0, 0, 0, 0.7);
 
 }
 
@@ -201,14 +184,16 @@ Introduction
 
 #tutorial-menu-introduction{
 
-    margin-top:
-        13px;
+    margin: 0;
 
-    color:
-        #d6cab8;
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
 
-    font-size:
-        14px;
+    font-size: 13px;
+
+    color: #c9ae78;
 
 }
 
@@ -767,13 +752,12 @@ Smartphone Landscape
 
     #tutorial-menu-title{
 
-        font-size:
-            23px;
+        font-size: 25px;
 
-        letter-spacing:
-            3px;
+        letter-spacing: 2px;
 
     }
+
 
 
     #tutorial-menu-subtitle{
@@ -882,6 +866,46 @@ Smartphone Landscape
 
         font-size:
             11px;
+
+    }
+
+}
+
+/* ==========================================
+   チュートリアルタイトル
+   ビルドルールと統一
+========================================== */
+
+#tutorial-menu-title{
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    font-size: 34px;
+
+    font-weight: bold;
+
+    letter-spacing: 3px;
+
+    color: #f1dfb5;
+
+    text-shadow:
+        0 3px 5px rgba(0, 0, 0, 0.7);
+
+}
+
+
+/* スマートフォン */
+
+@media (max-width: 650px){
+
+    #tutorial-menu-title{
+
+        font-size: 25px;
+
+        letter-spacing: 2px;
 
     }
 

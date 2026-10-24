@@ -357,8 +357,36 @@ function updateDeckList(){
         );
 
 
+
+    // ========================================================
+    // 現在のレギュレーションで使用可能なデッキ数
+    // ========================================================
+
+    const availableDeckCount =
+        decks.filter(
+            deck => {
+
+                const result =
+                    checkDeckLegality(
+                        deck,
+                        selectedRegulation
+                    );
+
+                return (
+                    result.status === "legal"
+                );
+
+            }
+        ).length;
+
+
+    // ========================================================
+    // 使用可能デッキ数を表示
+    // ========================================================
+
     deckCount.textContent =
-        `${decks.length}個のデッキ`;
+        `${availableDeckCount}個のデッキが選択可能`;
+
 
 
     // ========================================================
@@ -491,10 +519,16 @@ function updateDeckList(){
                 : 0;
 
 
+
+        //----------------------------------
+        // 使用可能レギュレーション表示
+        //----------------------------------
+
         const reasonText =
-            getReasonText(
-                result
+            escapeHtml(
+                getDeckAvailableRegulations(deck)
             );
+
 
 
         // ====================================================
@@ -682,6 +716,40 @@ if(editButton){
     );
 
 }
+
+
+        // ====================================================
+        // デッキ枠全体をクリックして選択
+        // ====================================================
+
+        deckElement.addEventListener(
+            "click",
+            (event) => {
+
+                // 使用できないデッキは選択不可
+                if(
+                    result.status !== "legal"
+                ){
+                    return;
+                }
+
+                // デッキリスト・編集ボタンは除外
+                if(
+                    event.target.closest(
+                        ".deck-list-view-button, .deck-edit-button"
+                    )
+                ){
+                    return;
+                }
+
+                // デッキを選択
+                selectDeck(
+                    deck.id
+                );
+
+            }
+        );
+
 
 
         // ====================================================
@@ -942,6 +1010,88 @@ if(
 }
 
 
+
+function getDeckAvailableRegulations(deck){
+
+    //==================================
+    // 判定するレギュレーション一覧
+    //==================================
+
+    const regulations = [
+
+        {
+            id: "basic",
+            name: "ベーシック"
+        },
+
+        {
+            id: "folklore",
+            name: "フォークロア"
+        },
+
+        {
+            id: "mythology",
+            name: "ミソロジー"
+        },
+
+        {
+            id: "all",
+            name: "オールカード"
+        }
+
+    ];
+
+
+    //==================================
+    // 使用可能レギュレーション
+    //==================================
+
+    const available = [];
+
+
+    //==================================
+    // 全レギュレーションを判定
+    //==================================
+
+    for(const regulation of regulations){
+
+        const result =
+            checkDeckLegality(
+                deck,
+                regulation.id
+            );
+
+
+        if(
+            result.status === "legal"
+        ){
+
+            available.push(
+                regulation.name
+            );
+
+        }
+
+    }
+
+
+    //==================================
+    // 表示文字列
+    //==================================
+
+    return (
+        "使用可能レギュレーション　" +
+        (
+            available.length > 0
+                ? available.join("、")
+                : "なし"
+        )
+    );
+
+}
+
+
+
 // ============================================================
 // シリーズ名
 // ============================================================
@@ -1155,8 +1305,17 @@ function updateStartButton(){
     button.disabled = false;
 
 
-    message.textContent =
-        `選択中：${deck.name || "無名デッキ"}`;
+
+message.innerHTML = `
+    <div class="selected-deck-label">
+        選択中デッキ
+    </div>
+
+    <div class="selected-deck-name">
+        ${escapeHtml(deck.name || "無名デッキ")}
+    </div>
+`;
+
 
 }
 
@@ -1613,5 +1772,45 @@ function editDeck(deckId){
 window.location.href =
     "../deck/deck.html?editDeck=" +
     encodeURIComponent(deckId);
+
+}
+
+
+// ============================================================
+// レギュレーション説明を開く
+// ============================================================
+
+function openRegulationHelp(){
+
+    const modal =
+        document.getElementById(
+            "regulation-help-modal"
+        );
+
+    if(!modal){
+        return;
+    }
+
+    modal.style.display = "flex";
+
+}
+
+
+// ============================================================
+// レギュレーション説明を閉じる
+// ============================================================
+
+function closeRegulationHelp(){
+
+    const modal =
+        document.getElementById(
+            "regulation-help-modal"
+        );
+
+    if(!modal){
+        return;
+    }
+
+    modal.style.display = "none";
 
 }

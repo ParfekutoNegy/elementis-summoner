@@ -30,7 +30,7 @@
         <div id="build-title-area">
 
             <h1>
-                ✦ ビルドルール ✦
+                ビルドルール
             </h1>
 
             <p>
@@ -54,11 +54,25 @@
 
 <div class="setting-box regulation-setting-box">
 
+
+<div class="regulation-label-row">
+
     <label>
         レギュレーション
     </label>
 
-    <div id="regulation-buttons">
+    <button
+        type="button"
+        id="regulation-help-button"
+        onclick="openRegulationHelp()">
+
+        説明
+
+    </button>
+
+</div>
+
+<div id="regulation-buttons">
 
         <button
             type="button"
@@ -289,6 +303,72 @@
     </div>
 
 </div>
+
+
+<!-- =========================================
+     レギュレーション説明モーダル
+========================================= -->
+
+<div
+    id="regulation-help-modal"
+    class="regulation-help-modal"
+    onclick="closeRegulationHelp()">
+
+    <div
+        class="regulation-help-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="regulation-help-title"
+        onclick="event.stopPropagation()">
+
+        <h2 id="regulation-help-title">
+            レギュレーション
+        </h2>
+
+        <div class="regulation-help-item">
+            <h3>ベーシック</h3>
+            <p>
+                Basicのカード(No.001～032)のみ
+                使用可能
+            </p>
+        </div>
+
+        <div class="regulation-help-item">
+            <h3>フォークロア</h3>
+            <p>
+                Folkloreのカード(No.033～064)のみ
+                使用可能
+            </p>
+        </div>
+
+        <div class="regulation-help-item">
+            <h3>ミソロジー</h3>
+            <p>
+                Mythologyのカード(No.065～096)のみ
+                使用可能
+            </p>
+        </div>
+
+        <div class="regulation-help-item">
+            <h3>オールカード</h3>
+            <p>
+                すべてのカードが使用可能
+            </p>
+        </div>
+
+        <button
+            type="button"
+            id="regulation-help-close"
+            onclick="closeRegulationHelp()">
+
+            閉じる
+
+        </button>
+
+    </div>
+
+</div>
+
 
 
 <script src="../deck/cards.js"></script>
