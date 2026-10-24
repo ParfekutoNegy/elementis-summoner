@@ -384,14 +384,11 @@
 
 <script>
 
-// ============================================================
-// ビルドルール画面 縦表示固定
-// ============================================================
-
 
  // ============================================================
  // ビルドルールメニュー 縦表示固定
  // ============================================================
+
 
 function resizeBuildMenu(){
 
@@ -404,58 +401,84 @@ function resizeBuildMenu(){
         return;
     }
 
+    //----------------------------------
+    // 実際の表示領域
+    //----------------------------------
 
-    // ----------------------------------
-    // 表示領域
-    // ----------------------------------
+    const visual = window.visualViewport;
 
-    const visual =
-        window.visualViewport;
+    const width = visual
+        ? visual.width
+        : window.innerWidth;
 
-    const width =
-        visual
-            ? visual.width
-            : window.innerWidth;
-
-    const height =
-        visual
-            ? visual.height
-            : window.innerHeight;
-
+    const height = visual
+        ? visual.height
+        : window.innerHeight;
 
     if(width <= 0 || height <= 0){
         return;
     }
 
-
-    // ----------------------------------
+    //----------------------------------
     // スマホ横向き判定
-    // ----------------------------------
+    //----------------------------------
 
-    const isLandscape =
-        width > height;
+    const isLandscape = width > height;
 
     const isTouchDevice =
         window.matchMedia(
             "(pointer: coarse)"
         ).matches;
 
+    //----------------------------------
+    // ホーム画面起動判定
+    //----------------------------------
 
-    if(
-        isLandscape &&
-        isTouchDevice
-    ){
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
 
-        // 横向きでは縦横を入れ替える
+    if(isLandscape && isTouchDevice){
+
+        let menuWidth = height;
+        let menuHeight = width;
+        let scale = 1;
+
+        //----------------------------------
+        // ブラウザ起動時だけ縮小調整
+        //----------------------------------
+
+        if(!isStandalone){
+
+            const referenceWidth = 390;
+
+            if(menuWidth < referenceWidth){
+
+                scale = menuWidth / referenceWidth;
+
+                menuWidth = referenceWidth;
+
+                menuHeight = width / scale;
+
+            }
+
+        }
 
         viewport.style.setProperty(
             "--build-menu-width",
-            `${height}px`
+            `${menuWidth}px`
         );
 
         viewport.style.setProperty(
             "--build-menu-height",
-            `${width}px`
+            `${menuHeight}px`
+        );
+
+        viewport.style.setProperty(
+            "--build-menu-scale",
+            `${scale}`
         );
 
     }else{
@@ -468,9 +491,14 @@ function resizeBuildMenu(){
             "--build-menu-height"
         );
 
+        viewport.style.removeProperty(
+            "--build-menu-scale"
+        );
+
     }
 
 }
+
 
 
 // ============================================================

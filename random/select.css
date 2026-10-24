@@ -652,14 +652,21 @@ header h1 {
 
     transform-origin: top left;
 
-    transform:
-        translateY(var(--random-menu-width))
-        rotate(-90deg);
+transform:
+    translateY(
+        calc(
+            var(--random-menu-width) *
+            var(--random-menu-scale, 1)
+        )
+    )
+    rotate(-90deg)
+    scale(var(--random-menu-scale, 1));
 
     overflow-y: auto;
     overflow-x: hidden;
 
     overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 
 }
 

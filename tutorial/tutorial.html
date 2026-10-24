@@ -307,14 +307,11 @@ Tutorial Menu Screen
 
 <script>
 
+
 // ============================================================
 // チュートリアルメニュー 縦表示固定
 // ============================================================
 
-
- // ============================================================
- // チュートリアルメニュー 縦表示固定
- // ============================================================
 
 function resizeTutorialMenu(){
 
@@ -327,10 +324,9 @@ function resizeTutorialMenu(){
         return;
     }
 
-
-    // ----------------------------------
-    // 表示領域
-    // ----------------------------------
+    //----------------------------------
+    // 実際の表示領域
+    //----------------------------------
 
     const visual =
         window.visualViewport;
@@ -345,15 +341,13 @@ function resizeTutorialMenu(){
             ? visual.height
             : window.innerHeight;
 
-
     if(width <= 0 || height <= 0){
         return;
     }
 
-
-    // ----------------------------------
+    //----------------------------------
     // スマホ横向き判定
-    // ----------------------------------
+    //----------------------------------
 
     const isLandscape =
         width > height;
@@ -363,25 +357,73 @@ function resizeTutorialMenu(){
             "(pointer: coarse)"
         ).matches;
 
+    //----------------------------------
+    // ホーム画面起動判定
+    //----------------------------------
 
-    if(
-        isLandscape &&
-        isTouchDevice
-    ){
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
 
-        // 横向き時は縦横を入れ替える
+    //----------------------------------
+    // 横向き表示
+    //----------------------------------
+
+    if(isLandscape && isTouchDevice){
+
+        let menuWidth = height;
+        let menuHeight = width;
+        let scale = 1;
+
+        //----------------------------------
+        // ブラウザ起動時だけ縮小調整
+        //----------------------------------
+
+        if(!isStandalone){
+
+            const referenceWidth = 390;
+
+            if(menuWidth < referenceWidth){
+
+                scale =
+                    menuWidth / referenceWidth;
+
+                menuWidth =
+                    referenceWidth;
+
+                menuHeight =
+                    width / scale;
+
+            }
+
+        }
+
+        //----------------------------------
+        // CSS変数を更新
+        //----------------------------------
 
         viewport.style.setProperty(
             "--tutorial-menu-width",
-            `${height}px`
+            `${menuWidth}px`
         );
 
         viewport.style.setProperty(
             "--tutorial-menu-height",
-            `${width}px`
+            `${menuHeight}px`
+        );
+
+        viewport.style.setProperty(
+            "--tutorial-menu-scale",
+            `${scale}`
         );
 
     }else{
+
+        //----------------------------------
+        // 縦向きでは通常表示
+        //----------------------------------
 
         viewport.style.removeProperty(
             "--tutorial-menu-width"
@@ -391,9 +433,14 @@ function resizeTutorialMenu(){
             "--tutorial-menu-height"
         );
 
+        viewport.style.removeProperty(
+            "--tutorial-menu-scale"
+        );
+
     }
 
 }
+
 
 
 // ============================================================

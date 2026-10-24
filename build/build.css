@@ -1244,6 +1244,7 @@ body {
    回転する画面全体
 ---------------------------------- */
 
+
 #build-viewport{
 
     position: fixed;
@@ -1257,12 +1258,19 @@ body {
     transform-origin: top left;
 
     transform:
-        translateY(var(--build-menu-width))
-        rotate(-90deg);
+        translateY(
+            calc(
+                var(--build-menu-width) *
+                var(--build-menu-scale, 1)
+            )
+        )
+        rotate(-90deg)
+        scale(var(--build-menu-scale, 1));
 
     overflow: hidden;
 
 }
+
 
 
 
@@ -1281,6 +1289,7 @@ body {
         overflow-x: hidden;
 
         overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
 
     }
 
