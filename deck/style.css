@@ -2182,3 +2182,75 @@ body,
     }
 
 }
+
+/* ==========================================
+   カード詳細画像 サイズ修正
+   スマホ縦向き・横向き対応
+========================================== */
+
+/* スマホ縦向き */
+
+@media screen and (pointer:coarse)
+       and (orientation:portrait){
+
+    #card-modal{
+        padding:0 !important;
+    }
+
+    #card-modal .card-modal-content{
+        width:100vw !important;
+        max-width:none !important;
+    }
+
+    #card-modal .modal-card-image{
+        display:block;
+
+        width:100vw !important;
+        max-width:100vw !important;
+
+        height:auto !important;
+        max-height:none !important;
+
+        object-fit:contain;
+    }
+
+    #card-modal .card-action-grid{
+        width:100% !important;
+        max-width:none !important;
+    }
+
+}
+
+
+/* スマホ横向き */
+
+@media screen and (pointer:coarse)
+       and (orientation:landscape){
+
+    #card-modal{
+        padding:0 !important;
+    }
+
+    #card-modal .card-modal-content{
+        width:100% !important;
+        max-width:none !important;
+    }
+
+    #card-modal .modal-card-image{
+        display:block;
+
+        width:100% !important;
+        max-width:none !important;
+
+        height:auto !important;
+        max-height:none !important;
+
+        object-fit:contain;
+    }
+
+    #card-modal .card-action-grid{
+        width:100% !important;
+        max-width:none !important;
+    }
+
+}
