@@ -1454,82 +1454,52 @@ function toggleDeckPin(){
         return;
     }
 
-
-    //----------------------------------
-    // パソコン版か判定
-    //----------------------------------
-
-    const isPC =
-        window.matchMedia(
-            "(pointer: fine)"
-        ).matches;
-
-
     //----------------------------------
     // 固定状態切り替え
     //----------------------------------
 
     deckPinned = !deckPinned;
 
-
     if(deckPinned){
 
         //----------------------------------
-        // パソコン版
-        // 元のデッキ位置に空白を残さない
+        // 固定前の高さを取得
         //----------------------------------
 
-        if(isPC){
+        const originalHeight =
+            area.getBoundingClientRect().height;
 
-            spacer.style.display = "none";
-            spacer.style.height = "";
+        //----------------------------------
+        // デッキを固定
+        //----------------------------------
 
-            area.classList.add(
-                "deck-pinned"
-            );
+        area.classList.add(
+            "deck-pinned"
+        );
 
-        }else{
+        //----------------------------------
+        // 固定後の高さに合わせて
+        // 元の位置にスペースを確保
+        //----------------------------------
 
-            //----------------------------------
-            // スマホ版
-            // 従来どおり余白を確保
-            //----------------------------------
+        spacer.style.display = "block";
 
-            const originalHeight =
+        spacer.style.height =
+            originalHeight + "px";
+
+        requestAnimationFrame(() => {
+
+            if(!deckPinned){
+                return;
+            }
+
+            const fixedHeight =
                 area.getBoundingClientRect().height;
 
-            spacer.style.display = "block";
+spacer.style.height =
+    fixedHeight + "px";
 
-            spacer.style.height =
-                originalHeight + "px";
-
-            area.classList.add(
-                "deck-pinned"
-            );
-
-            requestAnimationFrame(() => {
-
-                if(!deckPinned){
-                    return;
-                }
-
-                const fixedHeight =
-                    area.getBoundingClientRect().height;
-
-                spacer.style.height =
-                    Math.max(
-                        originalHeight,
-                        fixedHeight
-                    ) + "px";
-
-            });
-
-        }
-
-
-        //----------------------------------
-        // 固定ボタン
-        //----------------------------------
+        });
 
         btn.textContent = "📍";
 

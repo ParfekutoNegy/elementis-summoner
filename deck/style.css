@@ -1,3 +1,9 @@
+/* =========================================================
+   Grimoire デッキビルダー CSS 整理版
+   元ファイル: 2026-10-25 提供版
+   既存のスマホ・PCレイアウトを維持し、重複と一部構文を整理
+========================================================= */
+
 html,
 body{
     margin:0;
@@ -62,8 +68,7 @@ div {
     padding:30px 20px;
     border-radius:12px;
     border:2px solid #8b7853;
-    box-shadow:
-    0 5px 12px rgba(0,0,0,0.28),
+    box-shadow:0 5px 12px rgba(0,0,0,0.28);
 }
 
 #main-deck-section{
@@ -138,8 +143,6 @@ div {
 }
 
 .card img{
-    box-shadow:
-    0 5px 12px rgba(0,0,0,0.28);
     width:100%;
     height:auto;
     border-radius:25px;
@@ -223,7 +226,7 @@ input[type="text"]{
 
 @media (max-width: 768px){
     .main-layout{
-        flex-direction: colum;
+        flex-direction: column;
     }
     .deck-panel{
         width:100%;
@@ -254,7 +257,6 @@ input[type="text"]{
     width:200px;
     height:200px;
     object-fit:contain;
-    filter:grayscale(100%);
     opacity:.55;
     transition:.2s;
     
@@ -669,7 +671,6 @@ input[type="text"]{
 
 .deck-pinned{
     position:fixed;
-    top:0;
     left:0;
     right:0;
     margin:0 !important;
@@ -819,7 +820,6 @@ h3{
     text-align: center;
 }
 .deck-image-btn:active {
-    transform:translateY(2px);
     box-shadow:
         inset 0 3px 6px rgba(0,0,0,.25);
     transform: scale(0.97);
@@ -1404,33 +1404,6 @@ body,
 
     }
 
-    #deck-viewport{
-
-        background:
-            radial-gradient(
-                circle at 15% 20%,
-                rgba(80,60,30,.06),
-                transparent 18%
-            ),
-            radial-gradient(
-                circle at 80% 70%,
-                rgba(120,90,40,.05),
-                transparent 20%
-            ),
-            radial-gradient(
-                circle at 45% 90%,
-                rgba(0,0,0,.03),
-                transparent 15%
-            ),
-            linear-gradient(
-                #e4d5b5,
-                #d8c7a3
-            );
-
-        background-color: #d8c7a3;
-
-    }
-
 }
 
 /* =========================================================
@@ -1756,63 +1729,113 @@ body,
     }
 
 
-    /* ----------------------------------
-       固定メインデッキ：左上・横10列
-    ---------------------------------- */
+/* ----------------------------------
+   固定メインデッキ：左上・横10列
+   パソコン専用
+---------------------------------- */
 
-    #main-deck-section.deck-pinned {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        right: auto;
-        transform: none;
-        width: 600px;
-        max-width: calc(100vw - 20px);
-        padding: 6px;
-        margin: 0 !important;
-        box-sizing: border-box;
-        z-index: 1000;
-        border: 2px solid #8b7853;
-        border-radius: 10px;
-        background: #f2ead6;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
+#main-deck-section.deck-pinned {
 
-    #main-deck-section.deck-pinned #main-deck {
-        display: grid;
-        grid-template-columns: repeat(10, minmax(0, 1fr));
-        gap: 3px;
-        padding: 5px;
-        margin: 0;
-    }
+    position: fixed;
 
-    #main-deck-section.deck-pinned .deck-card-wrapper {
-        width: 100%;
-        max-width: 50px;
-        min-width: 0;
-        margin: 0;
-    }
+    top: 10px;
+    left: 10px;
+    right: auto;
 
-    #main-deck-section.deck-pinned #main-deck img {
-        width: 100%;
-        max-width: 50px;
-        height: auto;
-    }
+    transform: none;
 
-    #main-deck-section.deck-pinned .move-buttons {
-        gap: 2px;
-    }
+    width: 850px;
+    max-width: calc(100vw - 20px);
 
-    #main-deck-section.deck-pinned .move-buttons button {
-        width: 22px;
-        height: 20px;
-        font-size: 10px;
-        padding: 0;
-    }
+    padding: 8px;
+    margin: 0 !important;
 
-    #main-deck-section.deck-pinned .main-header {
-        margin: 0;
-    }
+    box-sizing: border-box;
+
+    z-index: 1000;
+
+    border: 2px solid #8b7853;
+    border-radius: 10px;
+
+    background: #f2ead6;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.3);
+
+}
+
+/* メインデッキを横10列にする */
+
+#main-deck-section.deck-pinned #main-deck {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(10, minmax(0, 1fr));
+
+    gap: 5px;
+
+    padding: 6px;
+
+    margin: 0;
+
+}
+
+/* カードの表示領域 */
+
+#main-deck-section.deck-pinned .deck-card-wrapper {
+
+    width: 100%;
+
+    max-width: 75px;
+
+    min-width: 0;
+
+    margin: 0;
+
+}
+
+/* カード画像を約1.5倍に拡大 */
+
+#main-deck-section.deck-pinned #main-deck img {
+
+    width: 100%;
+
+    max-width: 75px;
+
+    height: auto;
+
+}
+
+/* 並び替えボタン */
+
+#main-deck-section.deck-pinned .move-buttons {
+
+    gap: 3px;
+
+}
+
+/* 並び替えボタンも少し拡大 */
+
+#main-deck-section.deck-pinned .move-buttons button {
+
+    width: 28px;
+
+    height: 24px;
+
+    font-size: 12px;
+
+    padding: 0;
+
+}
+
+/* ヘッダー */
+
+#main-deck-section.deck-pinned .main-header {
+
+    margin: 0;
+
+}
 
 }
 
@@ -2118,6 +2141,98 @@ body,
 
     #card-modal .modal-card-image{
         border-radius:40px;
+    }
+
+}
+
+
+/* =========================================================
+   パソコン版：フィルターモーダル・属性・タイプボタン
+   （過去の個別修正を一箇所に統合）
+========================================================= */
+@media screen and (pointer: fine) {
+
+    /* 検索フィルターモーダルを下部バーの前面に表示 */
+    #filter-modal {
+        z-index: 10001;
+        margin: 0;
+    }
+
+    #filter-modal .modal-content {
+
+        position: fixed;
+
+        left: 50%;
+        right: auto;
+        bottom: 0;
+
+        transform: translateX(-50%);
+
+        /* 下側の余白をなくす */
+        margin: 0;
+
+        width: min(700px, 90vw);
+        max-height: 85vh;
+
+        box-sizing: border-box;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        /* 下側の角丸をなくす */
+        border-radius: 18px 18px 0 0;
+
+    }
+
+    /* 属性シンボルの背景・枠を非表示 */
+    /* 通常時・選択時の枠と背景を消す */
+
+    .elementButton span,
+    .elementButton input:checked + span {
+
+        background: transparent;
+
+        border: none;
+
+        box-shadow: none;
+
+        outline: none;
+
+    }
+
+    /* 選択した属性シンボルだけ発光 */
+
+    .elementButton input:checked + span .element-icon {
+
+        opacity: 1;
+
+        transform: scale(1.08);
+
+        filter:
+            drop-shadow(
+                0 5px 6px rgba(0,0,0,0.45)
+            )
+            drop-shadow(
+                0 0 8px rgba(255,230,150,0.6)
+            );
+
+    }
+
+    /* タイプボタンの四隅のはみ出し防止 */
+    /* ボタン全体の角丸を維持 */
+
+    .typeButton span,
+    .typeButton input:checked + span {
+        border-radius: 10px;
+        background-clip: padding-box;
+    }
+
+    /* 外側の不要な影をなくす */
+
+    .typeButton {
+
+        box-shadow: none;
+
     }
 
 }
