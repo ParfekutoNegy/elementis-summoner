@@ -114,12 +114,12 @@
         <button
             onclick="showDeckListScreen()"
             class="deck-image-btn">
-            一覧へ戻る
+            一覧に戻る
         </button>
         <button
             onclick="showBuilderScreen()"
             class="deck-image-btn">
-            編集へ戻る
+            編集に戻る
         </button>
 
     </div>
@@ -158,10 +158,10 @@
                 placeholder="デッキ名を入力する"
                 oninput="autoSaveDeck()">
             <button onclick="showDeckImagePage()">
-                デッキ画像を表示
+                デッキ画像を出力
             </button>
             <button onclick="showDeckListScreen()">
-                デッキ一覧へ戻る
+                デッキ一覧に戻る
             </button>
             <button
                 id="candidate-toggle-btn"
@@ -305,30 +305,34 @@
 <div id="card-modal" class="card-modal">
     <div class="card-modal-content">
 
-        <img
-            id="modal-card-image"
-            class="modal-card-image"
-            alt="カード画像"
-        >
+
+<img
+    id="modal-card-image"
+    class="modal-card-image"
+    alt="カード画像"
+    onclick="closeCardModal()"
+    style="cursor:pointer;"
+>
+
 
         <div class="card-action-grid">
 
             <button
                 id="main-btn"
                 onclick="addToMainDeck()">
-                メインに追加
+                メインデッキに追加
             </button>
 
             <button
                 id="side-btn"
                 onclick="addToSideDeck()">
-                サイドに追加
+                サイドデッキに追加
             </button>
 
             <button
                 id="candidate-btn"
                 onclick="addToCandidate()">
-                検討中に追加
+                検討中カードに追加
             </button>
 
             <button

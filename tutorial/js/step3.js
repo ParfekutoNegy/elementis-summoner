@@ -602,6 +602,8 @@ function resetTutorialStep3Board(){
     step3State.blockPracticeActive =
         false;
 
+        updateTutorialStep3AttackButtonVisibility();
+
 
     //----------------------------------
     // LIFE
@@ -1285,6 +1287,8 @@ function setupTutorialStep3BlockLesson(){
     step3State.blockPracticeActive =
         true;
 
+        updateTutorialStep3AttackButtonVisibility();
+
 
     step3State.phase =
         "blockIntroduction";
@@ -1582,6 +1586,8 @@ function tutorialStep3BlockExecuted(
         false;
 
 
+updateTutorialStep3AttackButtonVisibility();
+
     step3State.phase =
         "blockResolving";
 
@@ -1701,6 +1707,8 @@ function completeTutorialStep3Block(){
 
     step3State.blockPracticeActive =
         false;
+updateTutorialStep3AttackButtonVisibility();
+
 
 
     step3State.phase =
@@ -1795,6 +1803,7 @@ function completeTutorialStep3(){
 
     step3State.blockPracticeActive =
         false;
+        updateTutorialStep3AttackButtonVisibility();
 
 
     if(
@@ -2037,7 +2046,8 @@ function tutorialStep3CaptureClick(
 
             setTutorialGuide(
                 "アタック",
-                "今回は相手プレイヤーを選んでください。"
+            "アタックできる対象が発光します。\n" +
+            "相手プレイヤーを選んでください。"
             );
 
 
@@ -2157,7 +2167,7 @@ function tutorialStep3CaptureClick(
 
             setTutorialGuide(
                 "アタック",
-                "ヨコ向きのサモンにアタックしましょう。"
+                "ヨコ向きの相手サモンを選んでください。"
             );
 
 
@@ -2219,7 +2229,7 @@ function tutorialStep3CaptureClick(
 
             setTutorialGuide(
                 "ブロック",
-                "タテ向きの『クラーケン』を選択し、ブロックボタンを押してください"
+                "ヨコ向きのサモンはブロックできません。\nタテ向きの『クラーケン』を選択し、ブロックボタンを押してください"
             );
 
 
@@ -2524,6 +2534,21 @@ function highlightTutorialStep3Summon(
 
     element.classList.add(
         "tutorial-zone-highlight"
+    );
+
+}
+
+
+/* ==========================================
+   STEP3 アタックボタン表示制御
+========================================== */
+
+function updateTutorialStep3AttackButtonVisibility(){
+
+    document.body.classList.toggle(
+        "tutorial-block-phase",
+        step3State.active &&
+        step3State.blockPracticeActive
     );
 
 }

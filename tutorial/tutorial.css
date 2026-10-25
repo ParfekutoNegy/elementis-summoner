@@ -1699,3 +1699,55 @@ body {
     border-radius: 10px;
 
 }
+
+
+/* STEP3 ブロック説明中だけアタック非表示 */
+
+body.tutorial-block-phase #attack-button,
+body.tutorial-block-phase #summon-attack-button {
+    display: none !important;
+}
+
+/* ==========================================
+   STEP3 ブロック練習中
+   アタックボタンを非表示
+========================================== */
+
+body.tutorial-step3.tutorial-block-phase #attack-button,
+body.tutorial-step3.tutorial-block-phase #summon-attack-button{
+
+    display: none !important;
+
+}
+
+/* ==========================================
+   チュートリアル共通
+
+   メニューボタン
+   サイズ調整
+========================================== */
+
+
+/* ------------------------------------------
+   メニューボタン
+------------------------------------------ */
+
+#tutorial-layout #menu-button {
+
+    min-width: 60px;
+
+    min-height: 60px;
+
+    padding: 6px;
+
+    font-size: 32px;
+
+    font-weight: bold;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    touch-action: manipulation;
+
+}

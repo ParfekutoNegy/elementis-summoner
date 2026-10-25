@@ -1112,6 +1112,50 @@ function tutorialStep2CaptureClick(
     const phase =
         step2State.phase;
 
+        
+/* =====================================================
+   STEP2 レジスト説明中の操作制限
+
+   次へボタンを押すまで
+   通常ゲーム側の操作を禁止する
+===================================================== */
+
+if(
+    phase === "waitingResist" ||
+    phase === "resistConditionExplanation"
+){
+
+    //----------------------------------
+    // 通常ゲーム側の操作対象
+    //----------------------------------
+
+    const gameArea =
+        document.getElementById(
+            "battle-screen"
+        );
+
+    if(
+        gameArea &&
+        gameArea.contains(
+            event.target
+        )
+    ){
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        console.log(
+            "STEP2：レジスト説明中の操作禁止"
+        );
+
+        return;
+
+    }
+
+}
+
+
 
 /* =====================================================
    STEP2ではアタック禁止
@@ -1145,11 +1189,7 @@ if(
 
 
 /* =====================================================
-   レジスト
-   「プレイしない / パス」
-
-   STEP2ではレジストを使う練習なので
-   パスはさせない
+   STEP2 レジストのパス禁止
 ===================================================== */
 
 if(
@@ -1159,62 +1199,51 @@ if(
 ){
 
     if(
-        phase === "selectResist" ||
-        phase === "resistConditionExplanation"
+        phase === "waitingResist" ||
+        phase === "resistConditionExplanation" ||
+        phase === "selectResist"
     ){
 
-        console.log(
-            "STEP2：レジストをプレイしない → 禁止"
-        );
-
-
-        //----------------------------------
-        // 通常ゲーム側へ流さない
-        //----------------------------------
-
         event.preventDefault();
-
         event.stopPropagation();
-
         event.stopImmediatePropagation();
 
+        console.log(
+            "STEP2：レジストのパス禁止",
+            phase
+        );
 
         //----------------------------------
-        // レジスト選択状態を維持
+        // 説明中はフェーズを変更しない
         //----------------------------------
 
-        step2State.phase =
-            "selectResist";
+        if(
+            phase === "waitingResist" ||
+            phase === "resistConditionExplanation"
+        ){
 
+            setTutorialMessage(
+                "次へボタンを押してください。"
+            );
+
+            return;
+
+        }
 
         //----------------------------------
-        // 説明
+        // レジスト練習中
         //----------------------------------
 
         setTutorialMessage(
             "条件を満たしたレジストを1枚選び、プレイボタンを押してください。"
         );
 
-
-        //----------------------------------
-        // 使用可能レジストを再発光
-        //----------------------------------
-
-        setTimeout(
-            () => {
-
-                enforceTutorialStep2UI();
-
-            },
-            30
-        );
-
-
         return;
 
     }
 
 }
+
 
 
     /* =====================================================

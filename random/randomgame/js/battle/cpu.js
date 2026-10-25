@@ -12746,6 +12746,7 @@ function getCpuPlannedMagiaCost(
 // CPU：オブリビオンレイン使用判定
 //======================================
 
+
 function cpuShouldUseOblivionRain(){
 
     //----------------------------------
@@ -12788,23 +12789,116 @@ function cpuShouldUseOblivionRain(){
                     !summon.card ||
                     summon.destroyed
                 ){
-
                     return false;
-
                 }
 
 
                 const cardId =
-                    Number(
-                        summon.card.id
-                    );
+                    Number(summon.card.id);
 
 
-                return (
-                    targetSummonIds.includes(
+                //----------------------------------
+                // 対象カードか確認
+                //----------------------------------
+
+                if(
+                    !targetSummonIds.includes(
                         cardId
                     )
-                );
+                ){
+                    return false;
+                }
+
+
+                //==================================
+                // シーサーペント専用条件
+                //==================================
+
+                if(cardId === 52){
+
+                    //----------------------------------
+                    // ヨコ向きであること
+                    //----------------------------------
+
+                    if(!summon.isRest){
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // CPUに攻撃可能なサモンが
+                    // 存在するか確認
+                    //----------------------------------
+
+                    const attackers =
+                        enemyField.filter(
+                            attacker =>
+                                attacker &&
+                                !attacker.destroyed &&
+                                attacker.owner === ENEMY &&
+                                !attacker.isRest &&
+                                (
+                                    attacker.attackReady ||
+                                    hasSummonAbility(
+                                        attacker,
+                                        "summonTurnAttack"
+                                    )
+                                )
+                        );
+
+
+                    if(attackers.length === 0){
+
+                        console.log(
+                            "CPU：シーサーペント対策温存",
+                            "攻撃可能なサモンなし"
+                        );
+
+                        return false;
+
+                    }
+
+
+                    //----------------------------------
+                    // 攻撃する価値があるか確認
+                    //
+                    // オブリビオンレイン使用後は
+                    // cannotBeAttacked が無効に
+                    // なる想定で判定
+                    //----------------------------------
+
+                    const canAttackSeaSerpent =
+                        attackers.some(
+                            attacker => {
+
+                                const damage =
+                                    getDamage(
+                                        attacker,
+                                        getPower(attacker)
+                                    );
+
+                                return damage > 0;
+
+                            }
+                        );
+
+
+                    if(!canAttackSeaSerpent){
+
+                        return false;
+
+                    }
+
+                }
+
+
+                //----------------------------------
+                // 使用条件成立
+                //----------------------------------
+
+                return true;
 
             }
         );

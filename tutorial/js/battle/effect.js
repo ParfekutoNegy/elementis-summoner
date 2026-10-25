@@ -319,6 +319,8 @@ function activateCardEffect(
 // ダメージ数値表示（画面回転対応）
 // ============================================================
 
+
+
 function createDamageNumber(
     element,
     damage,
@@ -339,83 +341,126 @@ function createDamageNumber(
     }
 
     //----------------------------------
-    // 対象のゲーム内座標を取得
+    // 対象の画面上の中心位置
     //----------------------------------
-
-    let x = 0;
-    let y = 0;
 
     const rect =
         element.getBoundingClientRect();
 
+    const screenX =
+        rect.left + rect.width / 2;
+
+    const screenY =
+        rect.top + rect.height / 2;
+
+    //----------------------------------
+    // battle-screen の座標変換
+    //----------------------------------
+
     const gameRect =
         game.getBoundingClientRect();
 
-    // battle-screen 内の座標へ変換
+    const style =
+        getComputedStyle(game);
+
     const matrix =
         new DOMMatrixReadOnly(
-            getComputedStyle(game).transform
+            style.transform
         );
 
-    const scale =
+    //----------------------------------
+    // チュートリアルの親回転を考慮
+    //----------------------------------
+
+    const tutorialLayout =
+        game.closest(
+            "#tutorial-layout"
+        );
+
+    let totalMatrix = matrix;
+
+    if(tutorialLayout){
+
+        const layoutStyle =
+            getComputedStyle(
+                tutorialLayout
+            );
+
+        const layoutMatrix =
+            new DOMMatrixReadOnly(
+                layoutStyle.transform
+            );
+
+        totalMatrix =
+            layoutMatrix.multiply(matrix);
+
+    }
+
+    //----------------------------------
+    // 拡大率と回転方向
+    //----------------------------------
+
+    const scaleX =
         Math.hypot(
-            matrix.a,
-            matrix.b
+            totalMatrix.a,
+            totalMatrix.b
+        ) || 1;
+
+    const scaleY =
+        Math.hypot(
+            totalMatrix.c,
+            totalMatrix.d
         ) || 1;
 
     const isRotated =
-        Math.abs(matrix.b) >
-        Math.abs(matrix.a);
+        Math.abs(totalMatrix.b) >
+        Math.abs(totalMatrix.a);
+
+    //----------------------------------
+    // 座標計算
+    //----------------------------------
+
+    let x;
+    let y;
+
+    const dx =
+        screenX -
+        (
+            gameRect.left +
+            gameRect.width / 2
+        );
+
+    const dy =
+        screenY -
+        (
+            gameRect.top +
+            gameRect.height / 2
+        );
 
     if(isRotated){
 
-        // 90度回転時
+        const direction =
+            Math.sign(
+                totalMatrix.b
+            ) || 1;
+
         x =
             game.clientWidth / 2 +
-            (
-                rect.top +
-                rect.height / 2 -
-                (
-                    gameRect.top +
-                    gameRect.height / 2
-                )
-            ) / scale;
+            direction * dy / scaleX;
 
         y =
             game.clientHeight / 2 -
-            (
-                rect.left +
-                rect.width / 2 -
-                (
-                    gameRect.left +
-                    gameRect.width / 2
-                )
-            ) / scale;
+            direction * dx / scaleY;
 
     }else{
 
-        // 通常表示時
         x =
             game.clientWidth / 2 +
-            (
-                rect.left +
-                rect.width / 2 -
-                (
-                    gameRect.left +
-                    gameRect.width / 2
-                )
-            ) / scale;
+            dx / scaleX;
 
         y =
             game.clientHeight / 2 +
-            (
-                rect.top +
-                rect.height / 2 -
-                (
-                    gameRect.top +
-                    gameRect.height / 2
-                )
-            ) / scale;
+            dy / scaleY;
 
     }
 
@@ -424,7 +469,9 @@ function createDamageNumber(
     //----------------------------------
 
     const number =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     number.className =
         "damage-number";
@@ -445,10 +492,12 @@ function createDamageNumber(
         "none";
 
     //----------------------------------
-    // ゲーム画面内に追加
+    // battle-screen 内に追加
     //----------------------------------
 
-    game.appendChild(number);
+    game.appendChild(
+        number
+    );
 
     //----------------------------------
     // 時間経過で削除
@@ -461,6 +510,7 @@ function createDamageNumber(
     }, duration);
 
 }
+
 
 
 // ============================================================

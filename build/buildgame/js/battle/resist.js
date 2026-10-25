@@ -3812,6 +3812,61 @@ const resistCards =
 
     }
 
+    
+    //==================================
+    // レジストでダメージが0になった場合
+    // 0ダメージを表示
+    //==================================
+
+    if(
+        currentResistEvent.damage === 0
+    ){
+
+        //----------------------------------
+        // プレイヤーへのダメージ
+        //----------------------------------
+
+        if(
+            currentResistEvent.type ===
+                GAME_EVENT.BEFORE_PLAYER_DAMAGE
+        ){
+
+            showPlayerDamageNumber(
+                currentResistEvent.player === PLAYER
+                    ? "player"
+                    : "enemy",
+                0
+            );
+
+        }
+
+
+        //----------------------------------
+        // サモンへのダメージ
+        //----------------------------------
+
+        if(
+            currentResistEvent.type ===
+                GAME_EVENT.BEFORE_SUMMON_DAMAGE
+        ){
+
+            const target =
+                currentResistEvent.target;
+
+            if(target && !target.destroyed){
+
+                showDamageNumber(
+                    target,
+                    0
+                );
+
+            }
+
+        }
+
+    }
+
+
 
     //==================================
     // ダメージ解決
