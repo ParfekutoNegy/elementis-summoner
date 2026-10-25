@@ -15362,41 +15362,67 @@ function finishMatch(winner){
 
         const japaneseText =
             isWin
-                ? "勝利"
-                : "敗北";
+                ? ""
+                : "";
 
         const guideText =
             isWin
-                ? "勝利を刻みました"
-                : "再び挑戦の時を待つ";
+                ? ""
+                : "";
 
-        panel.innerHTML = `
-            <div class="match-result-heading">
-                MATCH RESULT
-            </div>
 
-            <div class="match-result-emblem">
-                ${isWin ? "♛" : "◆"}
-            </div>
+        //----------------------------------
+        // マッチ結果表示
+        //----------------------------------
 
-            <div class="match-result-main-title">
-                ${resultText}
-            </div>
+panel.innerHTML = `
 
-            <div class="match-result-message">
-                ${japaneseText}
-            </div>
+    <span class="match-result-corner corner-tl"></span>
+    <span class="match-result-corner corner-tr"></span>
+    <span class="match-result-corner corner-bl"></span>
+    <span class="match-result-corner corner-br"></span>
 
-            <div class="match-result-divider"></div>
+    <div class="match-result-top-line"></div>
 
-            <div class="match-result-final-score">
-                PLAYER ${playerWins} - ${enemyWins} CPU
-            </div>
+    <div class="match-result-crest-slot">
+        ${
+            winner === PLAYER
+                ? `
+                    <span class="match-result-emblem">
+                        ♛
+                    </span>
+                `
+                : `
+                    <span class="match-result-silent-line"></span>
+                `
+        }
+    </div>
 
-            <div class="match-result-guide">
-                ${guideText}
-            </div>
-        `;
+    <div class="match-result-main-title">
+        ${
+            winner === PLAYER
+                ? "MATCH WIN"
+                : "MATCH LOSS"
+        }
+    </div>
+
+    <div class="match-result-divider">
+        <span class="match-result-diamond">◆</span>
+    </div>
+
+    <div class="match-result-score-caption">
+        FINAL SCORE
+    </div>
+
+    <div class="match-result-final-score">
+        PLAYER ${playerWins} - ${enemyWins} CPU
+    </div>
+
+    <div class="match-result-bottom-line"></div>
+
+`;
+
+
 
         //----------------------------------
         // 勝敗別のクラス
@@ -15523,6 +15549,7 @@ function createNextStartingHand(
 
 
 
+
 function showMatchResult(winner){
 
     const overlay =
@@ -15534,47 +15561,32 @@ function showMatchResult(winner){
         return;
     }
 
+
+    //----------------------------------
+    // 勝敗判定
+    //----------------------------------
+
     const isWin =
         winner === PLAYER;
+
+
+    //----------------------------------
+    // ゲーム番号
+    //----------------------------------
 
     const gameNumber =
         matchGameNumber;
 
+
     //----------------------------------
-    // 表示内容
+    // 勝敗タイトル
     //----------------------------------
 
     const resultTitle =
-        isWin ? "GAME WIN" : "GAME LOSS";
-
-    const resultMessage =
         isWin
-            ? `第${gameNumber}ゲーム 勝利！`
-            : `第${gameNumber}ゲーム 敗北`;
+            ? "GAME WIN"
+            : "GAME LOSS";
 
-    let guideMessage = "";
-
-    if(playerWins === 1 && enemyWins === 0){
-
-        guideMessage =
-            "あと1勝でマッチ勝利！";
-
-    }else if(playerWins === 0 && enemyWins === 1){
-
-        guideMessage =
-            "次のゲームへ！";
-
-    }else if(playerWins === 1 && enemyWins === 1){
-
-        guideMessage =
-            "次が最終ゲーム！";
-
-    }else{
-
-        guideMessage =
-            "次のゲームへ！";
-
-    }
 
     //----------------------------------
     // 既存の表示要素
@@ -15590,9 +15602,9 @@ function showMatchResult(winner){
             "match-result-score"
         );
 
+
     //----------------------------------
-    // 既存要素は非表示にする
-    // （マッチ結果表示用に残す）
+    // MATCH用の既存要素は非表示
     //----------------------------------
 
     if(title){
@@ -15603,14 +15615,38 @@ function showMatchResult(winner){
         score.style.display = "none";
     }
 
+
     //----------------------------------
-    // 結果パネルを取得・作成
+    // MATCH結果パネルが残っている場合
+    // GAME結果では非表示
+    //----------------------------------
+
+    const matchPanel =
+        document.getElementById(
+            "match-result-panel"
+        );
+
+    if(matchPanel){
+
+        matchPanel.style.display =
+            "none";
+
+    }
+
+
+    //----------------------------------
+    // GAME結果パネル取得
     //----------------------------------
 
     let panel =
         document.getElementById(
             "game-result-panel"
         );
+
+
+    //----------------------------------
+    // GAME結果パネルがなければ作成
+    //----------------------------------
 
     if(!panel){
 
@@ -15620,52 +15656,80 @@ function showMatchResult(winner){
         panel.id =
             "game-result-panel";
 
-        overlay.appendChild(panel);
+        overlay.appendChild(
+            panel
+        );
 
     }
 
+
     //----------------------------------
-    // 表示内容を設定
+    // パネル表示
     //----------------------------------
 
     panel.style.display = "";
 
+
+    //==================================
+    // GAME結果表示
+    //
+    // ・ゲーム番号
+    // ・勝敗タイトル
+    // ・装飾線
+    // ・現在のスコア
+    //
+    // 星・王冠・日本語メッセージなし
+    //==================================
+
     panel.innerHTML = `
+
+        <span class="game-result-corner corner-tl"></span>
+        <span class="game-result-corner corner-tr"></span>
+        <span class="game-result-corner corner-bl"></span>
+        <span class="game-result-corner corner-br"></span>
+
+        <div class="game-result-top-line"></div>
+
         <div class="game-result-heading">
-            GAME ${gameNumber} RESULT
+            GAME ${gameNumber}
         </div>
 
         <div class="game-result-main-title">
-            <span class="result-spark">✦</span>
             ${resultTitle}
-            <span class="result-spark">✦</span>
         </div>
 
-        <div class="game-result-message">
-            ${resultMessage}
+        <div class="game-result-divider">
+            <span class="game-result-diamond">
+                ◆
+            </span>
         </div>
 
-        <div class="game-result-divider"></div>
+        <div class="game-result-score-caption">
+            CURRENT SCORE
+        </div>
 
         <div class="game-result-score">
             PLAYER ${playerWins} - ${enemyWins} CPU
         </div>
 
-        <div class="game-result-guide">
-            ${guideMessage}
-        </div>
+        <div class="game-result-bottom-line"></div>
+
     `;
 
+
     //----------------------------------
-    // 勝敗別の演出
+    // 勝敗別の演出設定
     //----------------------------------
 
     overlay.classList.remove(
         "show",
         "result-win",
         "result-loss",
-        "result-match"
+        "result-match",
+        "match-win",
+        "match-loss"
     );
+
 
     overlay.classList.add(
         isWin
@@ -15673,13 +15737,36 @@ function showMatchResult(winner){
             : "result-loss"
     );
 
+
     //----------------------------------
     // アニメーション再実行
     //----------------------------------
 
     void overlay.offsetWidth;
 
-    overlay.classList.add("show");
+
+    //----------------------------------
+    // 結果画面表示
+    //----------------------------------
+
+    overlay.classList.add(
+        "show"
+    );
+
+
+    //----------------------------------
+    // 確認ログ
+    //----------------------------------
+
+    console.log(
+        "GAME結果表示",
+        {
+            gameNumber,
+            resultTitle,
+            playerWins,
+            enemyWins
+        }
+    );
 
 }
 

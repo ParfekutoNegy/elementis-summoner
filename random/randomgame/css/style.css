@@ -1,62 +1,81 @@
-:root{
+/* ==========================================================
+   Elementis Summoner | ランダムルール 結果画面 完全版
+   GAME RESULT / MATCH RESULT - Dark Fantasy
+   旧結果表示CSSと置き換えて使用する
+========================================================== */
 
-    --card-width:110px;
-    --card-height:165px;
+:root {
+    --card-width: 110px;
+    --card-height: 165px;
+    --panel-color: rgba(255,255,255,0.12);
+    --panel-border: rgba(255,255,255,0.25);
+    --button-color: #8d6e3b;
+    --button-hover: #b08d57;
+    --text-color: #ffffff;
 
-    --panel-color:rgba(255,255,255,0.12);
-    --panel-border:rgba(255,255,255,0.25);
-
-    --button-color:#8d6e3b;
-    --button-hover:#b08d57;
-
-    --text-color:#ffffff;
-
+    --result-gold: #bca477;
+    --result-gold-border: #81704f;
+    --result-red: #a86d73;
+    --result-red-border: #704b50;
 }
 
-
-*{
-
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-
-html,
-body{
-    width:100%;
-    height:100%;
-    margin:0;
-    padding:0;
-
-    background:#000;
-
-    overflow:hidden;
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #000;
+    overflow: hidden;
 }
-
-/* Elementis Summoner ランダムルール用 結果表示CSS
-   既存CSSの後に読み込む / 追記する。全体リセットは含みません。 */
 
 /* ==========================================================
-   1. GAME RESULT - 共通
+   1. 結果画面の共通オーバーレイ
+========================================================== */
+
+#match-result-overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 20000;
+}
+
+#match-result-overlay.show {
+    display: flex;
+}
+
+/* 従来のタイトル・スコア要素は新パネル内で表示する */
+#match-result-overlay.result-win #match-result-title,
+#match-result-overlay.result-loss #match-result-title,
+#match-result-overlay.result-match #match-result-title,
+#match-result-overlay.result-win #match-result-score,
+#match-result-overlay.result-loss #match-result-score,
+#match-result-overlay.result-match #match-result-score {
+    display: none;
+}
+
+/* ==========================================================
+   2. GAME RESULT（従来デザイン維持）
 ========================================================== */
 
 #match-result-overlay.result-win,
 #match-result-overlay.result-loss {
-    position: absolute;
-    inset: 0;
-    align-items: center;
-    justify-content: center;
-    z-index: 20000;
-    overflow: hidden;
     background: radial-gradient(ellipse at center,
         #22252b 0%, #11141b 55%, #080a0f 100%);
 }
 
-/* 旧バージョンの光の輪を無効化 */
 #match-result-overlay.result-win::before,
-#match-result-overlay.result-loss::before { display: none; }
+#match-result-overlay.result-loss::before {
+    display: none;
+}
 
 #game-result-panel {
     position: relative;
@@ -65,6 +84,7 @@ body{
     max-width: 90%;
     max-height: 94%;
     padding: 35px 45px;
+    overflow: hidden;
     border: 1px solid #71654d;
     border-radius: 4px;
     text-align: center;
@@ -75,15 +95,15 @@ body{
 }
 
 #match-result-overlay.result-loss #game-result-panel {
-    border-color: #704b50;
+    border-color: var(--result-red-border);
 }
 
 .game-result-heading {
+    margin-bottom: 24px;
     color: #a99a7a;
     font-size: 17px;
-    font-weight: normal;
+    font-weight: 400;
     letter-spacing: 5px;
-    margin-bottom: 24px;
 }
 
 #match-result-overlay.result-win .game-result-main-title,
@@ -97,23 +117,24 @@ body{
 }
 
 #match-result-overlay.result-win .game-result-main-title {
-    color: #bca477;
+    color: var(--result-gold);
     text-shadow: 0 2px 12px rgba(155,120,63,0.18);
 }
 
 #match-result-overlay.result-loss .game-result-main-title {
-    color: #a86d73;
+    color: var(--result-red);
     text-shadow: 0 2px 12px rgba(135,40,55,0.18);
 }
 
-/* キラキラ装飾はダークファンタジー版では使わない */
-.result-spark { display: none; }
+.result-spark {
+    display: none;
+}
 
 .game-result-message {
     margin-top: 20px;
     color: #d0c9bb;
     font-size: 24px;
-    font-weight: normal;
+    font-weight: 400;
     letter-spacing: 3px;
 }
 
@@ -127,7 +148,7 @@ body{
 
 .result-loss .game-result-divider {
     background: linear-gradient(90deg,
-        transparent, #704b50 50%, transparent);
+        transparent, var(--result-red-border) 50%, transparent);
 }
 
 .game-result-score {
@@ -137,19 +158,22 @@ body{
     letter-spacing: 2px;
 }
 
-.result-loss .game-result-score { color: #c7a6a9; }
+.result-loss .game-result-score {
+    color: #c7a6a9;
+}
 
 .game-result-guide {
     margin-top: 22px;
     color: #9e9789;
     font-size: 19px;
-    font-weight: normal;
+    font-weight: 400;
     letter-spacing: 1px;
 }
 
-.result-loss .game-result-guide { color: #a18b8e; }
+.result-loss .game-result-guide {
+    color: #a18b8e;
+}
 
-/* GAME：静かに浮かび上がる */
 #match-result-overlay.show #game-result-panel {
     animation: darkResultAppear 1.2s ease-out both;
 }
@@ -169,104 +193,202 @@ body{
 }
 
 /* ==========================================================
-   2. MATCH RESULT - 共通
+   3. MATCH RESULT（装飾付き・新デザイン）
 ========================================================== */
 
 #match-result-overlay.result-match {
-    z-index: 20000;
-    overflow: hidden;
     background: radial-gradient(ellipse at center,
         #24252b 0%, #12141a 55%, #08090d 100%);
 }
 
+/* マッチ中はGAME結果パネルを表示しない */
+#match-result-overlay.result-match #game-result-panel {
+    display: none;
+}
+
 #match-result-panel {
+    --match-accent: var(--result-gold-border);
     position: relative;
     z-index: 2;
     width: 760px;
     max-width: 90%;
-    padding: 28px 45px;
-    text-align: center;
-    border: 1px solid #81704f;
+    min-height: 330px;
+    padding: 26px 45px 29px;
+    margin: 0;
+    border: 1px solid var(--match-accent);
     border-radius: 4px;
+    text-align: center;
     background: linear-gradient(145deg,
-        #27282c, #181a20 65%, #111319);
+        #27282c 0%, #181a20 65%, #111319 100%);
     box-shadow: 0 18px 50px rgba(0,0,0,0.7),
                 inset 0 0 35px rgba(0,0,0,0.35);
 }
 
 #match-result-overlay.result-match #match-result-panel {
     margin-top: -85px;
-    margin-bottom: 0;
 }
 
-.result-match.match-loss #match-result-panel { border-color: #704b50; }
+#match-result-overlay.result-match.match-loss #match-result-panel {
+    --match-accent: var(--result-red-border);
+}
 
-.match-result-heading {
-    color: #a99a7a;
-    font-size: 16px;
-    letter-spacing: 5px;
-    margin-bottom: 12px;
+/* パネル四隅の金属装飾 */
+.match-result-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+}
+
+.match-result-corner.corner-tl {
+    top: 9px;
+    left: 9px;
+    border-top: 2px solid var(--match-accent);
+    border-left: 2px solid var(--match-accent);
+}
+
+.match-result-corner.corner-tr {
+    top: 9px;
+    right: 9px;
+    border-top: 2px solid var(--match-accent);
+    border-right: 2px solid var(--match-accent);
+}
+
+.match-result-corner.corner-bl {
+    bottom: 9px;
+    left: 9px;
+    border-bottom: 2px solid var(--match-accent);
+    border-left: 2px solid var(--match-accent);
+}
+
+.match-result-corner.corner-br {
+    bottom: 9px;
+    right: 9px;
+    border-bottom: 2px solid var(--match-accent);
+    border-right: 2px solid var(--match-accent);
+}
+
+/* 上下の控えめな飾り線 */
+.match-result-top-line,
+.match-result-bottom-line {
+    width: 78%;
+    height: 1px;
+    margin-inline: auto;
+    background: linear-gradient(90deg,
+        transparent, var(--match-accent), transparent);
+}
+
+.match-result-top-line {
+    margin-bottom: 11px;
+}
+
+.match-result-bottom-line {
+    margin-top: 19px;
+}
+
+/* 勝利の王冠／敗北時の細い横線を同じ領域に配置 */
+.match-result-crest-slot {
+    display: flex;
+    height: 82px;
+    align-items: center;
+    justify-content: center;
 }
 
 .match-result-emblem {
-    color: #bca477;
-    font-size: 34px;
-    line-height: 1.1;
-    margin-bottom: 8px;
+    display: block;
+    margin: 0;
+    color: var(--result-gold);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 1;
+    text-shadow: 0 3px 14px rgba(188,164,119,0.20);
 }
 
-.match-loss .match-result-emblem { color: #95646b; }
+.match-result-silent-line {
+    display: block;
+    width: 76px;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent, var(--match-accent), transparent);
+}
 
 .match-result-main-title {
-    font-family: Georgia, "Times New Roman", serif;
+    margin: 3px 0 0;
     color: #cbb486;
+    font-family: Georgia, "Times New Roman", serif;
     font-size: 68px;
     font-weight: 600;
     letter-spacing: 5px;
     line-height: 1.15;
+    white-space: nowrap;
     text-shadow: 0 2px 12px rgba(155,120,63,0.18);
 }
 
 .match-loss .match-result-main-title {
-    color: #a86d73;
+    color: var(--result-red);
     text-shadow: 0 2px 12px rgba(135,40,55,0.18);
 }
 
-.match-result-message {
-    margin-top: 12px;
-    font-size: 24px;
-    letter-spacing: 3px;
-    color: #d0c9bb;
-}
-
+/* 中央に小さな菱形を置く区切り線 */
 .match-result-divider {
+    position: relative;
+    display: flex;
     width: 78%;
-    height: 1px;
-    margin: 20px auto;
-    background: linear-gradient(90deg,
-        transparent, #71654d, transparent);
+    height: 20px;
+    margin: 13px auto 9px;
+    align-items: center;
+    justify-content: center;
+    background: none;
 }
 
-.match-loss .match-result-divider {
-    background: linear-gradient(90deg,
-        transparent, #704b50, transparent);
+.match-result-divider::before,
+.match-result-divider::after {
+    content: "";
+    height: 1px;
+    flex: 1;
+    background: linear-gradient(90deg, transparent, var(--match-accent));
+}
+
+.match-result-divider::after {
+    transform: scaleX(-1);
+}
+
+.match-result-diamond {
+    padding: 0 12px;
+    color: var(--match-accent);
+    font-size: 11px;
+    line-height: 1;
+}
+
+.match-result-score-caption {
+    margin-bottom: 10px;
+    color: #9e9178;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 4px;
+}
+
+.match-loss .match-result-score-caption {
+    color: #a18b8e;
 }
 
 .match-result-final-score {
     color: #d1c1a0;
     font-size: 28px;
+    font-weight: 500;
     letter-spacing: 2px;
 }
 
-.match-loss .match-result-final-score { color: #c7a6a9; }
-
-.match-result-guide {
-    margin-top: 15px;
-    font-size: 18px;
-    color: #9e9789;
+.match-loss .match-result-final-score {
+    color: #c7a6a9;
 }
 
-.match-loss .match-result-guide { color: #a18b8e; }
+/* 以前の日本語説明要素が残っていても表示しない */
+#match-result-overlay.result-match .match-result-heading,
+#match-result-overlay.result-match .match-result-message,
+#match-result-overlay.result-match .match-result-guide {
+    display: none;
+}
 
 #match-result-overlay.show.result-match #match-result-panel {
     animation: matchResultAppear 1.6s ease-out both;
@@ -278,22 +400,22 @@ body{
 }
 
 /* ==========================================================
-   3. MATCH RESULT - 操作ボタン（確定した配置）
+   4. MATCH RESULT 操作ボタン（既存位置維持）
 ========================================================== */
 
 #match-result-overlay.result-match #retry-game-button,
 #match-result-overlay.result-match #home-button {
     position: absolute;
     left: 50%;
-    transform: translateX(-50%);
+    z-index: 10;
     width: 220px;
     height: 50px;
     margin: 0;
-    z-index: 10;
-    background: #1b1d23;
-    color: #d0c9bb;
+    transform: translateX(-50%);
     border: 1px solid #75664e;
     border-radius: 4px;
+    background: #1b1d23;
+    color: #d0c9bb;
     font-size: 19px;
     font-weight: 500;
     letter-spacing: 1px;
@@ -314,7 +436,7 @@ body{
 }
 
 /* ==========================================================
-   4. 低い画面での調整
+   5. 高さの低い画面での調整
 ========================================================== */
 
 @media (max-height: 650px) {
@@ -328,12 +450,42 @@ body{
         font-size: 54px;
     }
 
-    .game-result-heading { margin-bottom: 12px; }
-    .game-result-divider { margin: 15px auto; }
+    .game-result-heading {
+        margin-bottom: 12px;
+    }
 
-    #match-result-panel { padding: 15px 35px; }
-    .match-result-main-title { font-size: 52px; }
-    .match-result-divider { margin: 12px auto; }
+    .game-result-divider {
+        margin: 15px auto;
+    }
+
+    #match-result-panel {
+        min-height: 0;
+        padding: 15px 35px 20px;
+    }
+
+    .match-result-crest-slot {
+        height: 65px;
+    }
+
+    .match-result-emblem {
+        font-size: 58px;
+    }
+
+    .match-result-main-title {
+        font-size: 52px;
+    }
+
+    .match-result-divider {
+        margin: 8px auto 6px;
+    }
+
+    .match-result-score-caption {
+        margin-bottom: 6px;
+    }
+
+    .match-result-bottom-line {
+        margin-top: 12px;
+    }
 }
 
 @media (max-height: 500px) {
@@ -348,4 +500,81 @@ body{
     #match-result-overlay.result-match #home-button {
         top: calc(50% + 235px);
     }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #match-result-overlay.show #game-result-panel,
+    #match-result-overlay.show .game-result-main-title,
+    #match-result-overlay.show.result-match #match-result-panel {
+        animation: none;
+    }
+}
+
+
+/* ==========================================================
+   GAME RESULT — 装飾付きデザイン（星・日本語メッセージなし）
+   MATCH結果とは独立した指定
+========================================================== */
+#match-result-overlay.result-win #game-result-panel,
+#match-result-overlay.result-loss #game-result-panel {
+    --game-accent: #81704f;
+    width: 760px;
+    max-width: 90%;
+    padding: 29px 45px 31px;
+    border-color: var(--game-accent);
+    background: linear-gradient(145deg,#27282c,#181a20 65%,#111319);
+    box-shadow: 0 18px 50px rgba(0,0,0,.7), inset 0 0 35px rgba(0,0,0,.35);
+}
+#match-result-overlay.result-loss #game-result-panel { --game-accent: #704b50; }
+/* 既存の説明・星をGAME結果内だけで隠す */
+#game-result-panel .game-result-message,
+#game-result-panel .game-result-guide,
+#game-result-panel .game-result-stars,
+#game-result-panel .win-star { display: none; }
+.game-result-corner {
+    position: absolute; width: 22px; height: 22px;
+    pointer-events: none; border-color: var(--game-accent);
+}
+.game-result-corner.corner-tl { top: 9px; left: 9px; border-top: 2px solid; border-left: 2px solid; }
+.game-result-corner.corner-tr { top: 9px; right: 9px; border-top: 2px solid; border-right: 2px solid; }
+.game-result-corner.corner-bl { bottom: 9px; left: 9px; border-bottom: 2px solid; border-left: 2px solid; }
+.game-result-corner.corner-br { bottom: 9px; right: 9px; border-bottom: 2px solid; border-right: 2px solid; }
+.game-result-top-line,.game-result-bottom-line {
+    width: 78%; height: 1px; margin: 0 auto;
+    background: linear-gradient(90deg,transparent,var(--game-accent),transparent);
+}
+.game-result-top-line { margin-bottom: 18px; }
+.game-result-bottom-line { margin-top: 21px; }
+#game-result-panel .game-result-heading {
+    margin: 0 0 14px; font-size: 16px; letter-spacing: 5px;
+    color: #a99a7a;
+}
+#match-result-overlay.result-loss #game-result-panel .game-result-heading { color: #a18b8e; }
+#game-result-panel .game-result-main-title {
+    margin: 0; font-size: 68px; line-height: 1.15;
+}
+#game-result-panel .game-result-divider {
+    position: relative; width: 78%; height: 1px;
+    margin: 22px auto 21px;
+    background: linear-gradient(90deg,transparent,var(--game-accent),transparent);
+}
+#game-result-panel .game-result-diamond {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    padding: 0 12px; color: var(--game-accent);
+    background: #1a1c22; font-size: 14px; line-height: 1;
+}
+.game-result-score-caption {
+    margin-bottom: 10px; font-size: 14px; letter-spacing: 4px; color: #9e9178;
+}
+#match-result-overlay.result-loss .game-result-score-caption { color: #a18b8e; }
+#game-result-panel .game-result-score { font-size: 28px; letter-spacing: 2px; }
+@media (max-height: 650px) {
+    #match-result-overlay.result-win #game-result-panel,
+    #match-result-overlay.result-loss #game-result-panel { padding: 17px 35px 19px; }
+    #game-result-panel .game-result-heading { margin-bottom: 8px; }
+    #game-result-panel .game-result-main-title { font-size: 52px; }
+    #game-result-panel .game-result-divider { margin: 14px auto; }
+    .game-result-top-line { margin-bottom: 12px; }
+    .game-result-bottom-line { margin-top: 12px; }
 }
