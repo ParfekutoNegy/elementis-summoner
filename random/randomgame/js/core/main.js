@@ -13610,6 +13610,7 @@ function updateWinStars(){
 // 1戦終了処理
 //======================================
 
+
 function finishBattleGame(winner){
 
     console.log(
@@ -13623,14 +13624,12 @@ function finishBattleGame(winner){
             : "ENEMY"
     );
 
-
     //----------------------------------
-    // CPU・ゲーム処理を停止
+    // ゲームを終了状態にする
     //----------------------------------
 
     game.state =
         TURN_STATE.END;
-
 
     //----------------------------------
     // 勝利数加算
@@ -13646,12 +13645,56 @@ function finishBattleGame(winner){
 
     }
 
+    
+    //==================================
+    // ゲーム勝利ログ
+    //==================================
 
-    //----------------------------------
-    // ☆更新
-    //----------------------------------
+    const gameWinnerName =
+        winner === PLAYER
+            ? "PLAYER"
+            : "CPU";
 
-    updateWinStars();
+    addBattleLog(
+        `${gameWinnerName}：第${matchGameNumber}ゲーム勝利！`
+    );
+
+
+
+    //==================================
+    // 勝利スター更新
+    //
+    // ゲーム終了から0.5秒後に
+    // 勝者の☆を★に変更する
+    //==================================
+
+    setTimeout(()=>{
+
+        //----------------------------------
+        // ゲーム終了状態を確認
+        //----------------------------------
+
+        if(
+            game.state !== TURN_STATE.END
+        ){
+            return;
+        }
+
+        //----------------------------------
+        // 勝利スター更新
+        //----------------------------------
+
+        updateWinStars();
+
+        console.log(
+            "勝利スター更新",
+            {
+                playerWins,
+                enemyWins
+            }
+        );
+
+    },500);
 
 
     //----------------------------------
@@ -13659,29 +13702,18 @@ function finishBattleGame(winner){
     //----------------------------------
 
     closeEnemyCoolModal();
-
     closeCoolModal();
-
     closeHandModal();
-
     closeSummonActionModal();
-
     closeCostView();
 
     resetAttackState();
-
     hideActionGuide();
-
-
-    //----------------------------------
-    // ターン終了ボタン停止
-    //----------------------------------
 
     const endTurnButton =
         document.getElementById(
             "endturn-button"
         );
-
 
     if(endTurnButton){
 
@@ -13689,49 +13721,63 @@ function finishBattleGame(winner){
 
     }
 
-
     //----------------------------------
-    // 2勝達成
+    // マッチ終了判定
     //----------------------------------
 
-    if(
+    const isMatchFinished =
         playerWins >= 2 ||
-        enemyWins >= 2
-    ){
+        enemyWins >= 2;
 
-        finishMatch(
-            winner
-        );
+    //==================================
+    // ゲーム終了時の盤面を3秒間表示
+    //==================================
 
-        return;
-
-    }
-
-
-    //----------------------------------
-    // 戦績表示
-    //----------------------------------
-
-    showMatchResult(
-        winner
+    console.log(
+        "盤面確認開始：3秒間"
     );
-
-
-    //----------------------------------
-    // 次のゲーム開始
-    //----------------------------------
 
     setTimeout(()=>{
 
-        hideMatchResult();
+        //----------------------------------
+        // 2勝・2敗ならマッチ結果へ
+        //----------------------------------
 
-        startNextGame(
-            winner
-        );
+        if(isMatchFinished){
 
-    },2000);
+            finishMatch(winner);
+
+            return;
+
+        }
+
+        //----------------------------------
+        // GAME WIN / GAME LOSS 表示
+        //----------------------------------
+
+        showMatchResult(winner);
+
+        //----------------------------------
+        // GAME結果を5秒間表示
+        //----------------------------------
+
+        setTimeout(()=>{
+
+            hideMatchResult();
+
+            //----------------------------------
+            // ランダムルールの次ゲーム開始
+            // 勝者を渡すことが重要
+            //----------------------------------
+
+            startNextGame(winner);
+
+        },5000);
+
+    },3000);
 
 }
+
 
 //======================================
 // 投了
@@ -14310,8 +14356,9 @@ function finishMatch(winner){
     }
 
 
+
     //----------------------------------
-    // 結果表示
+    // MATCH WIN / MATCH LOSS 表示
     //----------------------------------
 
     const overlay =
@@ -14319,32 +14366,139 @@ function finishMatch(winner){
             "match-result-overlay"
         );
 
-    const title =
-        document.getElementById(
-            "match-result-title"
-        );
+    if(overlay){
 
-    const score =
-        document.getElementById(
-            "match-result-score"
-        );
+        const isWin =
+            winner === PLAYER;
 
+        //----------------------------------
+        // GAME結果パネルを隠す
+        //----------------------------------
 
-    if(overlay && title && score){
+        const gamePanel =
+            document.getElementById(
+                "game-result-panel"
+            );
 
-        title.textContent =
-            winner === PLAYER
+        if(gamePanel){
+            gamePanel.style.display = "none";
+        }
+
+        //----------------------------------
+        // 従来の表示要素を隠す
+        //----------------------------------
+
+        const title =
+            document.getElementById(
+                "match-result-title"
+            );
+
+        const score =
+            document.getElementById(
+                "match-result-score"
+            );
+
+        if(title){
+            title.style.display = "none";
+        }
+
+        if(score){
+            score.style.display = "none";
+        }
+
+        //----------------------------------
+        // MATCH専用パネル
+        //----------------------------------
+
+        let panel =
+            document.getElementById(
+                "match-result-panel"
+            );
+
+        if(!panel){
+
+            panel =
+                document.createElement("div");
+
+            panel.id =
+                "match-result-panel";
+
+            overlay.appendChild(panel);
+
+        }
+
+        panel.style.display = "";
+
+        //----------------------------------
+        // 表示内容
+        //----------------------------------
+
+        const resultText =
+            isWin
                 ? "MATCH WIN"
                 : "MATCH LOSS";
 
+        const japaneseText =
+            isWin
+                ? "勝利"
+                : "敗北";
 
-        score.textContent =
-            `${playerWins} - ${enemyWins}`;
+        const guideText =
+            isWin
+                ? "勝利を刻みました"
+                : "再び挑戦の時を待つ";
 
+        panel.innerHTML = `
+            <div class="match-result-heading">
+                MATCH RESULT
+            </div>
+
+            <div class="match-result-emblem">
+                ${isWin ? "♛" : "◆"}
+            </div>
+
+            <div class="match-result-main-title">
+                ${resultText}
+            </div>
+
+            <div class="match-result-message">
+                ${japaneseText}
+            </div>
+
+            <div class="match-result-divider"></div>
+
+            <div class="match-result-final-score">
+                PLAYER ${playerWins} - ${enemyWins} CPU
+            </div>
+
+            <div class="match-result-guide">
+                ${guideText}
+            </div>
+        `;
+
+        //----------------------------------
+        // 演出クラス切り替え
+        //----------------------------------
+
+        overlay.classList.remove(
+            "show",
+            "result-win",
+            "result-loss",
+            "result-match",
+            "match-win",
+            "match-loss"
+        );
 
         overlay.classList.add(
-            "show"
+            "result-match",
+            isWin
+                ? "match-win"
+                : "match-loss"
         );
+
+        void overlay.offsetWidth;
+
+        overlay.classList.add("show");
 
     }
 
@@ -14442,12 +14596,69 @@ function createNextStartingHand(
 // マッチ結果表示
 //======================================
 
+
 function showMatchResult(winner){
 
     const overlay =
         document.getElementById(
             "match-result-overlay"
         );
+
+    if(!overlay){
+        return;
+    }
+
+    //----------------------------------
+    // 勝敗・ゲーム番号
+    //----------------------------------
+
+    const isWin =
+        winner === PLAYER;
+
+    const gameNumber =
+        matchGameNumber;
+
+    const resultTitle =
+        isWin
+            ? "GAME WIN"
+            : "GAME LOSS";
+
+    const resultMessage =
+        isWin
+            ? `第${gameNumber}ゲーム 勝利！`
+            : `第${gameNumber}ゲーム 敗北`;
+
+    //----------------------------------
+    // 次のゲームへの案内
+    //----------------------------------
+
+    let guideMessage = "";
+
+    if(playerWins === 1 && enemyWins === 0){
+
+        guideMessage =
+            "あと1勝でマッチ勝利！";
+
+    }else if(playerWins === 0 && enemyWins === 1){
+
+        guideMessage =
+            "次のゲームへ！";
+
+    }else if(playerWins === 1 && enemyWins === 1){
+
+        guideMessage =
+            "次が最終ゲーム！";
+
+    }else{
+
+        guideMessage =
+            "次のゲームへ！";
+
+    }
+
+    //----------------------------------
+    // 従来の表示要素を隠す
+    //----------------------------------
 
     const title =
         document.getElementById(
@@ -14459,48 +14670,107 @@ function showMatchResult(winner){
             "match-result-score"
         );
 
+    if(title){
+        title.style.display = "none";
+    }
 
-    if(!overlay || !title || !score){
+    if(score){
+        score.style.display = "none";
+    }
 
-        return;
+    //----------------------------------
+    // マッチ専用パネルを隠す
+    //----------------------------------
+
+    const matchPanel =
+        document.getElementById(
+            "match-result-panel"
+        );
+
+    if(matchPanel){
+        matchPanel.style.display = "none";
+    }
+
+    //----------------------------------
+    // GAME結果パネルを作成
+    //----------------------------------
+
+    let panel =
+        document.getElementById(
+            "game-result-panel"
+        );
+
+    if(!panel){
+
+        panel =
+            document.createElement("div");
+
+        panel.id =
+            "game-result-panel";
+
+        overlay.appendChild(panel);
 
     }
 
+    panel.style.display = "";
 
     //----------------------------------
-    // 勝者表示
+    // GAME結果の表示内容
     //----------------------------------
 
-    if(winner === PLAYER){
+    panel.innerHTML = `
+        <div class="game-result-heading">
+            GAME ${gameNumber} RESULT
+        </div>
 
-        title.textContent =
-            "PLAYER WIN";
+        <div class="game-result-main-title">
+            ${resultTitle}
+        </div>
 
-    }else{
+        <div class="game-result-message">
+            ${resultMessage}
+        </div>
 
-        title.textContent =
-            "CPU WIN";
+        <div class="game-result-divider"></div>
 
-    }
+        <div class="game-result-score">
+            PLAYER ${playerWins} - ${enemyWins} CPU
+        </div>
 
+        <div class="game-result-guide">
+            ${guideMessage}
+        </div>
+    `;
 
     //----------------------------------
-    // マッチスコア
+    // 表示クラス切り替え
     //----------------------------------
 
-    score.textContent =
-        `${playerWins} - ${enemyWins}`;
-
-
-    //----------------------------------
-    // 表示
-    //----------------------------------
-
-    overlay.classList.add(
-        "show"
+    overlay.classList.remove(
+        "show",
+        "result-win",
+        "result-loss",
+        "result-match",
+        "match-win",
+        "match-loss"
     );
 
+    overlay.classList.add(
+        isWin
+            ? "result-win"
+            : "result-loss"
+    );
+
+    //----------------------------------
+    // アニメーション再実行
+    //----------------------------------
+
+    void overlay.offsetWidth;
+
+    overlay.classList.add("show");
+
 }
+
 
 
 function hideMatchResult(){
