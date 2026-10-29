@@ -878,6 +878,36 @@ let secondPlayer = null;
 
 function startMatch(){
 
+    //==================================
+    // チャレンジ記録フラグ初期化
+    //==================================
+
+    if(isChallengeMode){
+
+        //----------------------------------
+        // 前回の対戦中断を確認
+        //----------------------------------
+
+        checkInterruptedChallengeBattle();
+
+        //----------------------------------
+        // 今回の対戦開始を記録
+        //----------------------------------
+
+        setChallengeBattleActive(true);
+
+        //----------------------------------
+        // 勝敗記録フラグ初期化
+        //----------------------------------
+
+        finishMatch.challengeRecorded = false;
+
+        finishMatch.challengeResult = null;
+
+    }
+
+    // この下は既存の処理
+
     battleGameConceded = false;
    battleGameEnding = false;
 
@@ -934,18 +964,29 @@ function startMatch(){
     game.turn = 0;
 
 
+
     //----------------------------------
     // LIFEリセット
     //----------------------------------
 
-    const restartLife = 5;
+    let restartLife = 5;
 
+    if(isChallengeMode){
+
+        const settings =
+            getChallengeGameSettings();
+
+        restartLife =
+            settings.life;
+
+    }
 
     game.playerLife =
         restartLife;
 
     game.enemyLife =
         restartLife;
+
 
 
     console.log(
@@ -958,6 +999,12 @@ function startMatch(){
     //----------------------------------
 
     setupGame();
+
+        //----------------------------------
+    // 初期ライフ表示を更新
+    //----------------------------------
+
+    updateLifeDisplay();
 
 
     //----------------------------------
@@ -1011,7 +1058,98 @@ function startMatch(){
 
 }
 
+//======================================
+// チャレンジ対戦中フラグ
+//======================================
 
+const CHALLENGE_ACTIVE_KEY =
+    "elementisChallengeBattleActive";
+
+
+//--------------------------------------
+// 対戦中フラグを保存
+//--------------------------------------
+
+function setChallengeBattleActive(active){
+
+    try{
+
+        if(active){
+
+            localStorage.setItem(
+                CHALLENGE_ACTIVE_KEY,
+                "true"
+            );
+
+        }else{
+
+            localStorage.removeItem(
+                CHALLENGE_ACTIVE_KEY
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ対戦状態保存失敗",
+            error
+        );
+
+    }
+
+}
+
+
+//--------------------------------------
+// 中断された対戦を確認
+//--------------------------------------
+
+function checkInterruptedChallengeBattle(){
+
+    if(!isChallengeMode){
+        return;
+    }
+
+    try{
+
+        const active =
+            localStorage.getItem(
+                CHALLENGE_ACTIVE_KEY
+            );
+
+        if(active !== "true"){
+            return;
+        }
+
+        console.log(
+            "チャレンジ：前回の対戦中断を検出"
+        );
+
+        //----------------------------------
+        // 前回の連勝を終了
+        //----------------------------------
+
+        updateChallengeRecord(
+            ENEMY
+        );
+
+        //----------------------------------
+        // 中断フラグを解除
+        //----------------------------------
+
+        setChallengeBattleActive(false);
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ中断確認失敗",
+            error
+        );
+
+    }
+
+}
 //======================================
 // 現在のゲームの先攻を決定
 //======================================
@@ -1024,12 +1162,33 @@ function decideFirstPlayerForMatch(){
 
     if(matchGameNumber === 1){
 
-        firstPlayer =
-            Math.random() < 0.5
-                ? PLAYER
-                : ENEMY;
+        //----------------------------------
+        // チャレンジ30連勝以上
+        // CPU先攻固定
+        //----------------------------------
+
+        if(
+            isChallengeMode &&
+            getChallengeGameSettings().cpuFirst
+        ){
+
+            firstPlayer = ENEMY;
+
+        }else{
+
+            //----------------------------------
+            // 通常の先攻ランダム決定
+            //----------------------------------
+
+            firstPlayer =
+                Math.random() < 0.5
+                    ? PLAYER
+                    : ENEMY;
+
+        }
 
     }
+
 
 
     //----------------------------------

@@ -3978,6 +3978,47 @@ if(
             currentResistEvent
         );
 
+        //==================================
+// ネレイド待機中のマギア再開処理
+//==================================
+
+if(
+    nereidWaiting &&
+    currentResistEvent.sourceType === "マギア"
+){
+
+    console.log(
+        "ネレイド：マギア再開処理を保存"
+    );
+
+    nereidDamageEvent.resume = () => {
+
+        console.log(
+            "ネレイド：レジスト後のマギアを再開"
+        );
+
+        currentResistEvent = null;
+
+        if(
+            typeof resistMagiaWaiting !== "undefined" &&
+            resistMagiaWaiting
+        ){
+
+            resumeMagiaAfterResist();
+
+        }
+        else{
+
+            console.warn(
+                "ネレイド：再開待機中のマギアなし"
+            );
+
+        }
+
+    };
+
+}
+
     if(nereidWaiting){
 
         // レジストの選択状態を終了

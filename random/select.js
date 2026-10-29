@@ -269,3 +269,238 @@ document.addEventListener(
 
     }
 );
+
+
+/* =====================================
+   チャレンジモード選択画面
+===================================== */
+
+
+//======================================
+// 連勝記録を表示
+//======================================
+
+function displayChallengeRecord(){
+
+    const currentElement =
+        document.getElementById(
+            "challenge-current"
+        );
+
+    const bestElement =
+        document.getElementById(
+            "challenge-best"
+        );
+
+    const nextInfo =
+        document.getElementById(
+            "challenge-next-info"
+        );
+
+    if(
+        !currentElement ||
+        !bestElement ||
+        !nextInfo
+    ){
+        return;
+    }
+
+    //----------------------------------
+    // 保存データ読み込み
+    //----------------------------------
+
+    let current = 0;
+    let best = 0;
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisChallengeRecord"
+            );
+
+        if(saved){
+
+            const data =
+                JSON.parse(saved);
+
+            current = Math.max(
+                0,
+                Math.floor(
+                    Number(data.currentStreak) || 0
+                )
+            );
+
+            best = Math.max(
+                current,
+                Math.floor(
+                    Number(data.bestStreak) || 0
+                )
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ記録読み込みエラー",
+            error
+        );
+
+    }
+
+    //----------------------------------
+    // 記録表示
+    //----------------------------------
+
+    currentElement.textContent =
+        current + "連勝";
+
+    bestElement.textContent =
+        best + "連勝";
+
+
+    //----------------------------------
+    // 次の対戦ルール
+    //----------------------------------
+
+    let life = 5;
+
+    if(current >= 20){
+
+        life = 1;
+
+    }else if(current >= 10){
+
+        life = 3;
+
+    }
+
+    const firstPlayer =
+        current >= 30
+            ? "CPU先攻"
+            : "先攻ランダム";
+
+    nextInfo.textContent =
+        "次の対戦：ライフ" +
+        life +
+        " / " +
+        firstPlayer;
+
+}
+
+
+
+/* =====================================
+   チャレンジモード開始
+===================================== */
+
+function startChallengeMode(){
+
+    //----------------------------------
+    // 保存済み連勝数を取得
+    //----------------------------------
+
+    let currentStreak = 0;
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisChallengeRecord"
+            );
+
+        if(saved){
+
+            const record =
+                JSON.parse(saved);
+
+            currentStreak = Math.max(
+                0,
+                Math.floor(
+                    Number(record.currentStreak) || 0
+                )
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ記録読み込みエラー",
+            error
+        );
+
+    }
+
+
+    //----------------------------------
+    // 連勝数に応じたライフ
+    //----------------------------------
+
+    let life = 5;
+
+    if(currentStreak >= 20){
+
+        life = 1;
+
+    }else if(currentStreak >= 10){
+
+        life = 3;
+
+    }
+
+
+    //----------------------------------
+    // 30連勝以上でCPU先攻固定
+    //----------------------------------
+
+    const cpuFirst =
+        currentStreak >= 30;
+
+
+    //----------------------------------
+    // バトル設定
+    //----------------------------------
+
+    const params =
+        new URLSearchParams({
+
+            mode: "4",
+
+            challenge: "1",
+
+            life: String(life),
+
+            cpuFirst:
+                cpuFirst ? "1" : "0",
+
+            summon: "2",
+
+            magia: "2",
+
+            resist: "2"
+
+        });
+
+
+    //----------------------------------
+    // 対戦画面へ移動
+    //----------------------------------
+
+    location.href =
+        "randomgame/index.html?" +
+        params.toString();
+
+}
+
+
+
+//======================================
+// 初期表示
+//======================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    displayChallengeRecord
+);

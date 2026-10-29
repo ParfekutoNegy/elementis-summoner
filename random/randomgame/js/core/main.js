@@ -6,6 +6,93 @@
 //==================================================
 
 
+/* =========================================
+   チャレンジモード設定
+========================================= */
+
+const challengeParams =
+    new URLSearchParams(
+        window.location.search
+    );
+
+const isChallengeMode =
+    challengeParams.get("challenge") === "1";
+
+
+//======================================
+// 保存済み連勝数
+//======================================
+
+function getCurrentChallengeStreak(){
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisChallengeRecord"
+            );
+
+        if(!saved){
+            return 0;
+        }
+
+        const record =
+            JSON.parse(saved);
+
+        return Math.max(
+            0,
+            Math.floor(
+                Number(record.currentStreak) || 0
+            )
+        );
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ記録読み込み失敗",
+            error
+        );
+
+        return 0;
+
+    }
+
+}
+
+
+//======================================
+// チャレンジ対戦条件
+//======================================
+
+function getChallengeGameSettings(){
+
+    const streak =
+        getCurrentChallengeStreak();
+
+    return {
+
+        life:
+            streak >= 20
+                ? 1
+                : streak >= 10
+                    ? 3
+                    : 5,
+
+        cpuFirst:
+            streak >= 30
+
+    };
+
+}
+
+
+console.log(
+    "チャレンジモード：",
+    isChallengeMode
+);
+
+
+
 //==================================================
 // グローバル
 //==================================================
@@ -1504,17 +1591,37 @@ if(menuHomeButton){
         }
 
 
-        //----------------------------------
-        // ホーム画面へ移動
-        //----------------------------------
+//----------------------------------
+// チャレンジモードの連勝終了
+//----------------------------------
 
-        console.log(
-            "★ ホーム画面へ移動"
-        );
+if(isChallengeMode){
+
+    console.log(
+        "チャレンジ：ホームに戻るため連勝終了"
+    );
+
+    //----------------------------------
+    // CPU敗北扱いで連勝数を0にする
+    //----------------------------------
+
+    updateChallengeRecord(
+        ENEMY
+    );
+
+}
 
 
-        location.href =
-            "../../index.html";
+//----------------------------------
+// ホーム画面へ移動
+//----------------------------------
+
+console.log(
+    "★ ホーム画面へ移動"
+);
+
+location.href =
+    "../../index.html";
 
     };
 
@@ -1647,16 +1754,40 @@ if(resetGameButton){
         }
 
 
-        //----------------------------------
-        // ゲームを最初から再読み込み
-        //----------------------------------
+//----------------------------------
+// チャレンジモードの連勝終了
+//----------------------------------
 
-        console.log(
-            "★ ゲームリロード"
-        );
+if(isChallengeMode){
+
+    console.log(
+        "チャレンジ：ゲーム初期化による連勝終了"
+    );
+
+    updateChallengeRecord(
+        ENEMY
+    );
+
+    //----------------------------------
+    // 次のゲームで記録更新できるようにする
+    //----------------------------------
+
+    finishMatch.challengeRecorded = false;
+
+    finishMatch.challengeResult = null;
+
+}
 
 
-        location.reload();
+//----------------------------------
+// ゲームを最初から再読み込み
+//----------------------------------
+
+console.log(
+    "★ ゲームリロード"
+);
+
+location.reload();
 
     };
 
@@ -13611,6 +13742,7 @@ function updateWinStars(){
 //======================================
 
 
+
 function finishBattleGame(winner){
 
     console.log(
@@ -13624,12 +13756,57 @@ function finishBattleGame(winner){
             : "ENEMY"
     );
 
+
+    //==================================
+    // チャレンジモード
+    // 勝敗確定時に連勝記録を保存
+    //==================================
+
+    if(isChallengeMode){
+
+        //----------------------------------
+        // 二重記録を防止
+        //----------------------------------
+
+        if(!finishMatch.challengeRecorded){
+
+            finishMatch.challengeRecorded = true;
+
+            //----------------------------------
+            // 勝敗に応じて連勝記録を更新
+            //----------------------------------
+
+            finishMatch.challengeResult =
+                updateChallengeRecord(winner);
+
+            console.log(
+                "チャレンジ：勝敗確定時に記録更新",
+                finishMatch.challengeResult
+            );
+
+        }
+
+
+        //----------------------------------
+        // 対戦中フラグを解除
+        //
+        // 勝敗が確定したので、
+        // この後リロードしても
+        // 対戦中断とは判定しない
+        //----------------------------------
+
+        setChallengeBattleActive(false);
+
+    }
+
+
     //----------------------------------
     // ゲームを終了状態にする
     //----------------------------------
 
     game.state =
         TURN_STATE.END;
+
 
     //----------------------------------
     // 勝利数加算
@@ -13645,7 +13822,7 @@ function finishBattleGame(winner){
 
     }
 
-    
+
     //==================================
     // ゲーム勝利ログ
     //==================================
@@ -13658,7 +13835,6 @@ function finishBattleGame(winner){
     addBattleLog(
         `${gameWinnerName}：第${matchGameNumber}ゲーム勝利！`
     );
-
 
 
     //==================================
@@ -13702,13 +13878,23 @@ function finishBattleGame(winner){
     //----------------------------------
 
     closeEnemyCoolModal();
+
     closeCoolModal();
+
     closeHandModal();
+
     closeSummonActionModal();
+
     closeCostView();
 
     resetAttackState();
+
     hideActionGuide();
+
+
+    //----------------------------------
+    // ターン終了ボタン停止
+    //----------------------------------
 
     const endTurnButton =
         document.getElementById(
@@ -13721,13 +13907,25 @@ function finishBattleGame(winner){
 
     }
 
-    //----------------------------------
+
+    //==================================
     // マッチ終了判定
-    //----------------------------------
+    //
+    // 通常ルール：2勝で終了
+    // チャレンジ：1勝で終了
+    //==================================
 
     const isMatchFinished =
-        playerWins >= 2 ||
-        enemyWins >= 2;
+        isChallengeMode
+            ? (
+                playerWins >= 1 ||
+                enemyWins >= 1
+            )
+            : (
+                playerWins >= 2 ||
+                enemyWins >= 2
+            );
+
 
     //==================================
     // ゲーム終了時の盤面を3秒間表示
@@ -13737,10 +13935,11 @@ function finishBattleGame(winner){
         "盤面確認開始：3秒間"
     );
 
+
     setTimeout(()=>{
 
         //----------------------------------
-        // 2勝・2敗ならマッチ結果へ
+        // マッチ終了なら結果表示へ
         //----------------------------------
 
         if(isMatchFinished){
@@ -13751,11 +13950,13 @@ function finishBattleGame(winner){
 
         }
 
+
         //----------------------------------
         // GAME WIN / GAME LOSS 表示
         //----------------------------------
 
         showMatchResult(winner);
+
 
         //----------------------------------
         // GAME結果を5秒間表示
@@ -13765,9 +13966,10 @@ function finishBattleGame(winner){
 
             hideMatchResult();
 
+
             //----------------------------------
-            // ランダムルールの次ゲーム開始
-            // 勝者を渡すことが重要
+            // 次ゲーム開始
+            // 勝者を渡す
             //----------------------------------
 
             startNextGame(winner);
@@ -14300,11 +14502,107 @@ console.log(
 }
 
 
+function shareChallengeRecord(streak, isFinal = false){
+
+    //----------------------------------
+    // 投稿文章
+    //----------------------------------
+
+    const message =
+        isFinal
+            ? (
+                `Elementis Summoner\n` +
+                `ランダムルール チャレンジモードで${streak}連勝！\n` +
+                `あなたは何連勝できる？\n` +
+                `#エレサモ #ElementisSummoner`
+            )
+            : (
+                `Elementis Summoner\n` +
+                `ランダムルール チャレンジモードで${streak}連勝達成！\n` +
+                `あなたは何連勝できる？\n` +
+                `#エレサモ #ElementisSummoner`
+            );
+
+
+    //----------------------------------
+    // ゲームURL
+    //----------------------------------
+
+//----------------------------------
+// X投稿用：公式サイトURL
+//----------------------------------
+
+const url =
+    "https://parfekutonegy.github.io/elementis-summoner/";
+
+
+    //----------------------------------
+    // X投稿URL
+    //----------------------------------
+
+    const shareUrl =
+        "https://twitter.com/intent/tweet?" +
+        new URLSearchParams({
+            text: message,
+            url: url
+        }).toString();
+
+
+    //----------------------------------
+    // X投稿画面を開く
+    //----------------------------------
+
+    window.open(
+        shareUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+
+}
+
 //======================================
 // 対戦終了
 //======================================
 
+
 function finishMatch(winner){
+
+    console.log(
+        "【チャレンジ敗北確認】",
+        "winner =", winner,
+        "isChallengeMode =", isChallengeMode,
+        "challengeRecorded =", finishMatch.challengeRecorded
+    );
+
+
+    //==================================
+    // チャレンジモード
+    // 連勝記録を更新
+    //==================================
+
+    if(isChallengeMode){
+
+        if(!finishMatch.challengeRecorded){
+
+            finishMatch.challengeRecorded = true;
+
+            const record =
+                updateChallengeRecord(winner);
+
+            // 敗北前の連勝数を
+            // リザルト表示用に保持
+            finishMatch.challengeResult =
+                record;
+
+            console.log(
+                "チャレンジ記録更新",
+                record
+            );
+
+        }
+
+    }
+
 
     console.log(
         "対戦終了",
@@ -14312,6 +14610,7 @@ function finishMatch(winner){
             ? "PLAYER WIN"
             : "CPU WIN"
     );
+
 
 
     //----------------------------------
@@ -14517,6 +14816,216 @@ panel.innerHTML = `
 
 
 
+    //==================================
+    // チャレンジ専用リザルト
+    //==================================
+
+    if(isChallengeMode){
+
+        //----------------------------------
+        // 保存された連勝記録を取得
+        //----------------------------------
+
+        let currentStreak = 0;
+        let finalStreak = 0;
+
+        try{
+
+            const saved =
+                localStorage.getItem(
+                    "elementisChallengeRecord"
+                );
+
+            if(saved){
+
+                const record =
+                    JSON.parse(saved);
+
+                currentStreak = Math.max(
+                    0,
+                    Math.floor(
+                        Number(record.currentStreak) || 0
+                    )
+                );
+
+            }
+
+        }catch(error){
+
+            console.error(
+                "チャレンジ記録取得失敗",
+                error
+            );
+
+        }
+
+
+        //----------------------------------
+        // 勝敗
+        //----------------------------------
+
+        const isChallengeWin =
+            winner === PLAYER;
+
+
+        //----------------------------------
+        // 敗北時：終了した連勝数
+        //----------------------------------
+
+        if(!isChallengeWin){
+
+            const previousRecord =
+                finishMatch.challengeResult;
+
+            if(previousRecord){
+
+                finalStreak = Math.max(
+                    0,
+                    Number(
+                        previousRecord.previousStreak
+                    ) || 0
+                );
+
+            }
+
+        }
+
+
+        //----------------------------------
+        // 10連勝ごとの節目
+        //----------------------------------
+
+        const isMilestone =
+            isChallengeWin &&
+            currentStreak > 0 &&
+            currentStreak % 10 === 0;
+
+
+        //==================================
+        // リザルトHTML
+        //==================================
+
+        panel.innerHTML = `
+
+            <span class="match-result-corner corner-tl"></span>
+            <span class="match-result-corner corner-tr"></span>
+            <span class="match-result-corner corner-bl"></span>
+            <span class="match-result-corner corner-br"></span>
+
+            <div class="match-result-top-line"></div>
+
+            <div class="match-result-crest-slot">
+
+                <span class="match-result-emblem">
+                    ${isChallengeWin ? "♛" : ""}
+                </span>
+
+            </div>
+
+            <div class="match-result-main-title">
+
+                ${isChallengeWin
+                    ? "CHALLENGE WIN"
+                    : "CHALLENGE LOSS"}
+
+            </div>
+
+            <div class="match-result-divider">
+                <span class="match-result-diamond">◆</span>
+            </div>
+
+
+            <!-- ==========================
+                 通常勝利
+            =========================== -->
+
+            ${isChallengeWin && !isMilestone
+                ? `
+
+                    <div class="match-result-score-caption">
+                        CURRENT WIN STREAK
+                    </div>
+
+                    <div class="match-result-final-score">
+                        ${currentStreak} 連勝
+                    </div>
+
+                `
+                : ""}
+
+
+            <!-- ==========================
+                 10連勝ごとの特別表示
+            =========================== -->
+
+            ${isMilestone
+                ? `
+
+                    <div class="challenge-milestone">
+
+                        <div class="challenge-milestone-label">
+                            MILESTONE ACHIEVED
+                        </div>
+
+                        <div class="challenge-milestone-number">
+                            ★ ${currentStreak}連勝達成 ★
+                        </div>
+
+                        <div class="challenge-milestone-message">
+                            おめでとうございます！
+                        </div>
+
+                        <button
+                            type="button"
+                            class="challenge-share-button"
+                            onclick="shareChallengeRecord(${currentStreak})"
+                        >
+                            Xに連勝記録を投稿
+                        </button>
+
+                    </div>
+
+                `
+                : ""}
+
+
+            <!-- ==========================
+                 敗北
+            =========================== -->
+
+            ${!isChallengeWin
+                ? `
+
+                    <div class="match-result-score-caption">
+                        FINAL WIN STREAK
+                    </div>
+
+                    <div class="match-result-final-score">
+                        ${finalStreak} 連勝
+                    </div>
+
+<div class="challenge-loss-message">
+    連勝記録は0にリセットされました
+</div>
+
+<button
+    type="button"
+    class="challenge-share-button"
+    onclick="shareChallengeRecord(${finalStreak}, true)"
+>
+    Xに最終連勝記録を投稿
+</button>
+
+                `
+                : ""}
+
+
+            <div class="match-result-bottom-line"></div>
+
+        `;
+
+    }
+
         //----------------------------------
         // 演出クラス切り替え
         //----------------------------------
@@ -14579,6 +15088,7 @@ if(homeButton){
 
 }
 }
+
 
 //======================================
 // 次の開始手札を生成
@@ -14886,11 +15396,41 @@ function hideMatchResult(){
 // もう一度遊ぶ
 //======================================
 
+
 function restartGame(){
+
+    //==================================
+    // チャレンジモード
+    //==================================
+
+    if(isChallengeMode){
+
+        finishMatch.challengeRecorded = false;
+
+        finishMatch.challengeResult = null;
+
+        window.location.reload();
+
+        return;
+
+    }
+
+
+    //==================================
+    // 通常ランダムルール
+    //==================================
+
+    //----------------------------------
+    // 記録更新フラグ初期化
+    //----------------------------------
+
+    finishMatch.challengeRecorded = false;
+
 
     console.log(
         "================================"
     );
+
 
     console.log(
         "===== もう一度遊ぶ ====="
@@ -15364,5 +15904,115 @@ function cancelSummonAbilityTarget(){
     updateGameState();
 
     updateButtons();
+
+}
+
+
+function updateChallengeRecord(winner){
+
+    //----------------------------------
+    // チャレンジ以外は更新しない
+    //----------------------------------
+
+    if(!isChallengeMode){
+        return null;
+    }
+
+    //----------------------------------
+    // 保存済み記録
+    //----------------------------------
+
+    let record = {
+        currentStreak: 0,
+        bestStreak: 0
+    };
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisChallengeRecord"
+            );
+
+        if(saved){
+
+            const data = JSON.parse(saved);
+
+            record.currentStreak = Math.max(
+                0,
+                Math.floor(
+                    Number(data.currentStreak) || 0
+                )
+            );
+
+            record.bestStreak = Math.max(
+                0,
+                Math.floor(
+                    Number(data.bestStreak) || 0
+                )
+            );
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ記録読み込み失敗",
+            error
+        );
+
+    }
+
+    //----------------------------------
+    // 勝敗による更新
+    //----------------------------------
+
+    const previousStreak =
+        record.currentStreak;
+
+    if(winner === PLAYER){
+
+        record.currentStreak++;
+
+        record.bestStreak = Math.max(
+            record.bestStreak,
+            record.currentStreak
+        );
+
+    }else{
+
+        record.currentStreak = 0;
+
+    }
+
+    //----------------------------------
+    // 保存
+    //----------------------------------
+
+    try{
+
+        localStorage.setItem(
+            "elementisChallengeRecord",
+            JSON.stringify(record)
+        );
+
+    }catch(error){
+
+        console.error(
+            "チャレンジ記録保存失敗",
+            error
+        );
+
+    }
+
+    console.log(
+        "チャレンジ記録更新",
+        record
+    );
+
+    return {
+        ...record,
+        previousStreak
+    };
 
 }

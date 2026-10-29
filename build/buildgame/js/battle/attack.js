@@ -5235,7 +5235,19 @@ if(afterResist){
 
     }
 
-
+console.log(
+    "【ネレイド再開状態確認】",
+    {
+        damageResume: !!damageResume,
+        fromResist: fromResist,
+        nereidMagiaWaiting: nereidMagiaWaiting,
+        nereidWaitingMagia:
+            nereidWaitingMagia?.name,
+        currentPlayer: game.currentPlayer,
+        gameState: game.state,
+        cpuWaiting: cpuWaiting
+    }
+);
 //==================================
 // 専用再開関数がある場合
 //==================================
@@ -5380,13 +5392,28 @@ if(
 
 }
 
-//==================================
-// 通常ダメージ経路
-//==================================
 
-console.log(
-    "ネレイド処理完了：通常ダメージ経路"
-);
+    //==================================
+    // 通常ダメージ経路
+    //==================================
+
+    console.warn(
+        "【ネレイド：再開処理なし】",
+        {
+            damage: finalDamage,
+            fromResist: fromResist,
+            hasDamageResume: !!damageResume,
+            attackResolving: attackResolving,
+            currentPlayer: game.currentPlayer,
+            nereidMagiaWaiting:
+                typeof nereidMagiaWaiting !== "undefined"
+                    ? nereidMagiaWaiting
+                    : "未定義",
+            hasTurnEndResume:
+                typeof nereidTurnEndResume === "function"
+        }
+    );
+
 
 }
 

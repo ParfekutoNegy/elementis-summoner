@@ -578,3 +578,88 @@ html, body {
     .game-result-top-line { margin-bottom: 12px; }
     .game-result-bottom-line { margin-top: 12px; }
 }
+
+
+/*======================================
+  チャレンジ連勝達成
+======================================*/
+
+.challenge-milestone {
+    margin: 16px auto 0;
+    text-align: center;
+    color: #f0d898;
+}
+
+.challenge-milestone-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #c8aa67;
+}
+
+.challenge-milestone-number {
+    margin-top: 8px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffe29b;
+    text-shadow: 0 0 12px rgba(255, 205, 90, 0.5);
+}
+
+.challenge-milestone-message {
+    margin-top: 5px;
+    font-size: 13px;
+    color: #e6d6b5;
+}
+
+.challenge-share-button {
+    display: block;
+    margin: 14px auto 0;
+    padding: 10px 20px;
+    border: 1px solid #c8aa67;
+    border-radius: 6px;
+    background: #172b38;
+    color: #f5dfaa;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.challenge-share-button:active {
+    background: #30495a;
+}
+
+.challenge-loss-message {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: #c8b9a0;
+    letter-spacing: 0.5px;
+}
+
+/*======================================
+  チャレンジリザルト コンパクト化
+======================================*/
+
+.challenge-milestone {
+    margin: 6px auto 0;
+}
+
+.challenge-milestone-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+}
+
+.challenge-milestone-number {
+    margin-top: 4px;
+    font-size: 19px;
+}
+
+.challenge-milestone-message {
+    margin-top: 3px;
+    font-size: 11px;
+}
+
+.challenge-share-button {
+    margin: 8px auto 0;
+    padding: 6px 14px;
+    font-size: 11px;
+}
