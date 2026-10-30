@@ -661,5 +661,20 @@ html, body {
 .challenge-share-button {
     margin: 8px auto 0;
     padding: 6px 14px;
-    font-size: 11px;
+    font-size: 20px;
+}
+/* ======================================
+   チャレンジリザルト
+   長いタイトルのはみ出し防止
+====================================== */
+
+#match-result-overlay.result-match
+.match-result-main-title.challenge-result-title {
+
+    font-size: 48px;
+
+    letter-spacing: 3px;
+
+    white-space: nowrap;
+
 }

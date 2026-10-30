@@ -87,78 +87,78 @@
         ========================= -->
 
         <section id="all-card-section">
+            <!-- 対戦開始 -->
 
-            <h2>オールカード</h2>
+            <button
+                type="button"
+                id="all-card-start"
+                class="rule-button"
+                onclick="startAllCardRule()"
+            >
+                オールカード
+            </button>
 
             <p class="setting-guide">
                 デッキに含めるカード種類の最低枚数を設定
             </p>
 
 
-            <!-- サモン -->
+<!-- カード種類の最低保証枚数 -->
 
-            <div class="setting-row">
+<div class="card-type-settings">
 
-                <label for="summon-min">
-                    サモン
-                </label>
+    <div class="card-type-setting">
 
-                <select id="summon-min">
-                    <option value="0">0枚</option>
-                    <option value="1">1枚</option>
-                    <option value="2" selected>2枚</option>
-                    <option value="3">3枚</option>
-                    <option value="4">4枚</option>
-                    <option value="5">5枚</option>
-                </select>
+        <label for="summon-min">
+            サモン
+        </label>
 
-                <span>以上</span>
+        <select id="summon-min">
+            <option value="0">0枚</option>
+            <option value="1">1枚</option>
+            <option value="2" selected>2枚</option>
+            <option value="3">3枚</option>
+            <option value="4">4枚</option>
+            <option value="5">5枚</option>
+        </select>
 
-            </div>
+    </div>
 
+    <div class="card-type-setting">
 
-            <!-- マギア -->
+        <label for="magia-min">
+            マギア
+        </label>
 
-            <div class="setting-row">
+        <select id="magia-min">
+            <option value="0">0枚</option>
+            <option value="1">1枚</option>
+            <option value="2" selected>2枚</option>
+            <option value="3">3枚</option>
+            <option value="4">4枚</option>
+            <option value="5">5枚</option>
+        </select>
 
-                <label for="magia-min">
-                    マギア
-                </label>
+    </div>
 
-                <select id="magia-min">
-                    <option value="0">0枚</option>
-                    <option value="1">1枚</option>
-                    <option value="2" selected>2枚</option>
-                    <option value="3">3枚</option>
-                    <option value="4">4枚</option>
-                    <option value="5">5枚</option>
-                </select>
+    <div class="card-type-setting">
 
-                <span>以上</span>
+        <label for="resist-min">
+            レジスト
+        </label>
 
-            </div>
+        <select id="resist-min">
+            <option value="0">0枚</option>
+            <option value="1">1枚</option>
+            <option value="2" selected>2枚</option>
+            <option value="3">3枚</option>
+            <option value="4">4枚</option>
+            <option value="5">5枚</option>
+        </select>
 
+    </div>
 
-            <!-- レジスト -->
-
-            <div class="setting-row">
-
-                <label for="resist-min">
-                    レジスト
-                </label>
-
-                <select id="resist-min">
-                    <option value="0">0枚</option>
-                    <option value="1">1枚</option>
-                    <option value="2" selected>2枚</option>
-                    <option value="3">3枚</option>
-                    <option value="4">4枚</option>
-                    <option value="5">5枚</option>
-                </select>
-
-                <span>以上</span>
-
-            </div>
+</div>
 
 
             <!-- 設定結果 -->
@@ -168,16 +168,7 @@
             <p id="setting-error"></p>
 
 
-            <!-- 対戦開始 -->
 
-            <button
-                type="button"
-                id="all-card-start"
-                class="rule-button"
-                onclick="startAllCardRule()"
-            >
-                オールカードで対戦開始
-            </button>
 
         </section>
 
@@ -187,8 +178,13 @@
         ========================= -->
 
         <section id="challenge-section">
-
-            <h2>チャレンジモード</h2>
+<button
+    type="button"
+    class="rule-button challenge-start-button"
+    onclick="startChallengeMode()"
+>
+    チャレンジモード
+</button>
 
             <p class="setting-guide">
                 CPUとの対戦で何連勝できるか挑戦！<br>
@@ -225,22 +221,10 @@
 
             </div>
 
-            <!-- 次の対戦情報 -->
-
-            <p id="challenge-next-info">
-                次の対戦：ライフ5 / 先攻ランダム
-            </p>
-
             <!-- 開始ボタン -->
 
 
-<button
-    type="button"
-    class="rule-button challenge-start-button"
-    onclick="startChallengeMode()"
->
-    チャレンジモードで対戦開始
-</button>
+
 
 
         </section>

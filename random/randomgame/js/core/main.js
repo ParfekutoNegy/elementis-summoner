@@ -14502,7 +14502,15 @@ console.log(
 }
 
 
-function shareChallengeRecord(streak, isFinal = false){
+
+//======================================
+// チャレンジ記録をXに投稿
+//======================================
+
+function shareChallengeRecord(
+    streak,
+    isFinal = false
+){
 
     //----------------------------------
     // 投稿文章
@@ -14523,18 +14531,38 @@ function shareChallengeRecord(streak, isFinal = false){
                 `#エレサモ #ElementisSummoner`
             );
 
+    //----------------------------------
+    // 公式サイトURL
+    //----------------------------------
+
+    const siteUrl =
+        "https://parfekutonegy.github.io/elementis-summoner/";
 
     //----------------------------------
-    // ゲームURL
+    // 節目の専用ページURL
     //----------------------------------
 
-//----------------------------------
-// X投稿用：公式サイトURL
-//----------------------------------
+    const milestonePages = {
 
-const url =
-    "https://parfekutonegy.github.io/elementis-summoner/";
+        10: siteUrl + "challenge/10.html",
 
+        20: siteUrl + "challenge/20.html",
+
+        30: siteUrl + "challenge/30.html"
+
+    };
+
+    //----------------------------------
+    // 投稿先URLを決定
+    //----------------------------------
+
+    // 最終連勝記録は通常の公式サイトURL
+    // 達成記録は専用ページを使用
+
+    const url =
+        !isFinal && milestonePages[streak]
+            ? milestonePages[streak]
+            : siteUrl;
 
     //----------------------------------
     // X投稿URL
@@ -14546,7 +14574,6 @@ const url =
             text: message,
             url: url
         }).toString();
-
 
     //----------------------------------
     // X投稿画面を開く
@@ -14922,13 +14949,13 @@ panel.innerHTML = `
 
             </div>
 
-            <div class="match-result-main-title">
+<div class="match-result-main-title challenge-result-title">
 
-                ${isChallengeWin
-                    ? "CHALLENGE WIN"
-                    : "CHALLENGE LOSS"}
+    ${isChallengeWin
+        ? "CHALLENGE WIN"
+        : "CHALLENGE LOSS"}
 
-            </div>
+</div>
 
             <div class="match-result-divider">
                 <span class="match-result-diamond">◆</span>
@@ -15005,7 +15032,7 @@ panel.innerHTML = `
                     </div>
 
 <div class="challenge-loss-message">
-    連勝記録は0にリセットされました
+    
 </div>
 
 <button
