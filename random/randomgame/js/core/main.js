@@ -14542,15 +14542,19 @@ function shareChallengeRecord(
     // 節目の専用ページURL
     //----------------------------------
 
-    const milestonePages = {
+const milestonePages = {
 
-        10: siteUrl + "challenge/10.html",
+    10: siteUrl + "challenge/10.html",
 
-        20: siteUrl + "challenge/20.html",
+    20: siteUrl + "challenge/20.html",
 
-        30: siteUrl + "challenge/30.html"
+    30: siteUrl + "challenge/30.html",
 
-    };
+    40: siteUrl + "challenge/40.html",
+
+    50: siteUrl + "challenge/50.html"
+
+};
 
     //----------------------------------
     // 投稿先URLを決定
