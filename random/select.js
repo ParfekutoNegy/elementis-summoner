@@ -270,3 +270,47 @@ document.addEventListener(
     }
 );
 
+//======================================
+// デッキの作成方法 開閉
+//======================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const button =
+            document.getElementById(
+                "deck-guide-button"
+            );
+
+        const content =
+            document.getElementById(
+                "deck-guide-content"
+            );
+
+        if (!button || !content) {
+            return;
+        }
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const isOpen = !content.hidden;
+
+                content.hidden = isOpen;
+
+                button.textContent = isOpen
+                    ? "デッキの作成方法を確認 ▼"
+                    : "説明を閉じる ▲";
+
+                button.setAttribute(
+                    "aria-expanded",
+                    String(!isOpen)
+                );
+
+            }
+        );
+
+    }
+);

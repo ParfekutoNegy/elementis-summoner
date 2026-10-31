@@ -1461,3 +1461,142 @@ body{
     letter-spacing: 1px;
 
 }
+
+/*======================================
+  デッキ作成方法
+======================================*/
+
+.deck-guide-section {
+    width: 100%;
+    margin: 24px auto;
+    box-sizing: border-box;
+}
+
+
+/*======================================
+  デッキ作成方法 確認ボタン
+======================================*/
+
+.deck-guide-button {
+    display: block;
+    width: 100%;
+    padding: 14px 12px;
+
+    /* 茶系グラデーション */
+    background: linear-gradient(
+        180deg,
+        #795431 0%,
+        #4a301d 100%
+    );
+
+    /* 文字色 */
+    color: #f5e4bd;
+
+    /* ゴールド系の枠 */
+    border: 1px solid #b5945e;
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    /* 立体感 */
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 235, 190, 0.15);
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s,
+        transform 0.2s;
+}
+
+
+/*======================================
+  ボタンを押したとき
+======================================*/
+
+.deck-guide-button:active {
+    background: #3d2819;
+    transform: translateY(1px);
+}
+
+
+/*======================================
+  デッキ作成方法 説明欄
+======================================*/
+
+.deck-guide-content {
+    margin-top: 10px;
+    padding: 18px 15px;
+
+    /* 濃い茶色 */
+    background: linear-gradient(
+        180deg,
+        #3b2a1d 0%,
+        #281c14 100%
+    );
+
+    /* 文字色 */
+    color: #f5e9d4;
+
+    /* ゴールド系の枠 */
+    border: 1px solid #a88958;
+    border-radius: 8px;
+
+    font-size: 14px;
+    line-height: 1.8;
+
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+
+/*======================================
+  非表示状態
+======================================*/
+
+.deck-guide-content[hidden] {
+    display: none;
+}
+
+
+/*======================================
+  説明欄タイトル
+======================================*/
+
+.deck-guide-content h3 {
+    margin: 0 0 14px;
+
+    color: #f0d49b;
+
+    font-size: 17px;
+    text-align: center;
+}
+
+
+/*======================================
+  説明文
+======================================*/
+
+.deck-guide-content p {
+    margin: 0 0 14px;
+}
+
+
+/*======================================
+  最後の説明文
+======================================*/
+
+.deck-guide-content p:last-child {
+    margin-bottom: 0;
+}
+
+
+/*======================================
+  1戦目・2戦目・3戦目
+======================================*/
+
+.deck-guide-content strong {
+    color: #f0d49b;
+}
