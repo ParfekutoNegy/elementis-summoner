@@ -815,3 +815,34 @@ body{
     line-height: 1.4;
 
 }
+
+/* =========================================
+   ホーム画面に追加ボタン
+   注意喚起用の赤系デザイン
+========================================= */
+
+#home-install-button {
+
+    background: #a83232;
+
+    color: #ffffff;
+
+    border: 2px solid #e57373;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+}
+
+#home-install-button:hover {
+
+    background: #c43c3c;
+
+}
+
+#home-install-button:active {
+
+    background: #852525;
+
+}
