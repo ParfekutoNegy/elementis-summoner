@@ -1790,3 +1790,70 @@ body {
 #battle-screen {
     transition: none !important;
 }
+
+/* =========================================
+   チャレンジモード 連勝数表示
+========================================= */
+
+#challenge-streak-display {
+
+    display: none;
+
+    position: absolute;
+
+    top: 3px;
+    left: 100px;
+
+    z-index: 20;
+
+    width: 180px;
+    height: 60px;
+
+    box-sizing: border-box;
+
+background: linear-gradient(
+    135deg,
+    #861f35,
+    #420d20
+);
+
+border: 2px solid #e7e7ef;
+
+box-shadow:
+    0 0 10px rgba(255, 80, 110, 0.5),
+    inset 0 0 8px rgba(255, 255, 255, 0.12);
+
+color: #ffffff;
+
+    text-align: center;
+
+    pointer-events: none;
+
+    border-radius: 7px;
+
+}
+
+#challenge-streak-value {
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 100%;
+
+    font-size: 28px;
+    font-weight: bold;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+color: #ffffff;
+
+text-shadow:
+    0 0 5px rgba(255, 255, 255, 0.65),
+    0 0 10px rgba(255, 100, 130, 0.4);
+
+}

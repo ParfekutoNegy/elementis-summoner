@@ -1,0 +1,420 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        チャレンジモード - Elementis Summoner
+    </title>
+
+    <!-- ランダムルールと共通のCSS -->
+    <link
+        rel="stylesheet"
+        href="../random/select.css"
+    >
+
+    <!-- チャレンジ専用CSS -->
+    <link
+        rel="stylesheet"
+        href="challenge.css"
+    >
+
+</head>
+
+<body>
+
+<div id="random-select-viewport">
+
+    <div id="random-select-screen">
+
+        <!-- =========================
+             タイトル
+        ========================= -->
+
+        <header>
+            <h1>チャレンジモード</h1>
+        </header>
+
+        <main>
+
+            <p class="select-guide">
+                CPUとの対戦で何連勝できるか挑戦！
+            </p>
+
+            <p class="setting-guide">
+                10連勝ごとに対戦条件が変化します。
+            </p>
+
+
+            <!-- =========================
+                 連勝記録
+            ========================= -->
+
+            <section id="challenge-section">
+
+                
+<!-- =========================
+     プレイヤー情報
+========================= -->
+
+<section class="challenge-player-info">
+
+    <!-- プレイヤーアイコン -->
+
+    <img
+        id="challenge-player-icon"
+        src="../images/ui/character-01.png"
+        alt="プレイヤーアイコン"
+    >
+
+
+    <!-- プレイヤーネーム -->
+
+    <div class="challenge-player-text">
+
+        <span class="challenge-player-label">
+            PLAYER
+        </span>
+
+        <div
+            id="challenge-player-name"
+            class="challenge-player-name"
+        >
+            ゲスト
+        </div>
+
+    </div>
+
+</section>
+
+
+                <div class="challenge-records">
+
+                    <div class="challenge-record">
+
+                        <span class="challenge-record-label">
+                            現在の連勝数
+                        </span>
+
+                        <strong id="challenge-current">
+                            0連勝
+                        </strong>
+
+                    </div>
+
+                    <div class="challenge-record">
+
+                        <span class="challenge-record-label">
+                            最大連勝数
+                        </span>
+
+                        <strong id="challenge-best">
+                            0連勝
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+<!-- =========================
+     次の対戦
+========================= -->
+
+<div class="challenge-next-box">
+
+    <h2 class="challenge-next-title">
+        次の対戦
+    </h2>
+
+    <!-- 対戦ルール -->
+
+    <div class="challenge-next-row">
+
+        <span class="challenge-next-label">
+            対戦ルール：
+        </span>
+
+<span>
+    ランダム（オールカード）
+</span>
+
+    </div>
+
+    <!-- 対戦条件 -->
+
+    <div class="challenge-next-row">
+
+        <span class="challenge-next-label">
+            対戦条件：
+        </span>
+
+        <span id="challenge-next-condition">
+            ライフ 5   /   先攻 ランダム
+        </span>
+
+    </div>
+
+    <!-- 区切り線 -->
+
+    <hr class="challenge-next-divider">
+
+    <!-- 次の条件変更 -->
+
+    <div id="challenge-next-info">
+        次の対戦条件変更：10連勝達成時（あと10勝）
+    </div>
+
+</div>
+
+
+            </section>
+
+
+            <!-- =========================
+                 チャレンジ開始
+            ========================= -->
+
+            <button
+                type="button"
+                class="rule-button challenge-start-button"
+                onclick="startChallengeMode()"
+            >
+                チャレンジ開始
+            </button>
+
+
+            <!-- =========================
+                 ホームへ戻る
+            ========================= -->
+
+            <a
+                class="back-button"
+                href="../index.html"
+            >
+                ホームに戻る
+            </a>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<!-- チャレンジモード処理 -->
+<script src="challenge.js"></script>
+
+
+<script>
+
+/* =========================================================
+チャレンジモード選択画面 縦表示固定
+========================================================= */
+
+function resizeChallengeMenu(){
+
+    const viewport =
+        document.getElementById(
+            "random-select-viewport"
+        );
+
+    if(!viewport){
+        return;
+    }
+
+    //----------------------------------
+    // 実際の表示領域
+    //----------------------------------
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+    //----------------------------------
+    // スマホ横向き判定
+    //----------------------------------
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+    //----------------------------------
+    // ホーム画面起動判定
+    //----------------------------------
+
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
+
+    //----------------------------------
+    // 横向き表示
+    //----------------------------------
+
+    if(isLandscape && isTouchDevice){
+
+        let menuWidth = height;
+        let menuHeight = width;
+        let scale = 1;
+
+        //----------------------------------
+        // ブラウザ起動時だけ縮小調整
+        //----------------------------------
+
+        if(!isStandalone){
+
+            const referenceWidth = 390;
+
+            if(menuWidth < referenceWidth){
+
+                scale =
+                    menuWidth / referenceWidth;
+
+                menuWidth =
+                    referenceWidth;
+
+                menuHeight =
+                    width / scale;
+
+            }
+
+        }
+
+        viewport.style.setProperty(
+            "--random-menu-width",
+            `${menuWidth}px`
+        );
+
+        viewport.style.setProperty(
+            "--random-menu-height",
+            `${menuHeight}px`
+        );
+
+        viewport.style.setProperty(
+            "--random-menu-scale",
+            `${scale}`
+        );
+
+    }else{
+
+        viewport.style.removeProperty(
+            "--random-menu-width"
+        );
+
+        viewport.style.removeProperty(
+            "--random-menu-height"
+        );
+
+        viewport.style.removeProperty(
+            "--random-menu-scale"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+回転・サイズ変更時の再計算
+========================================================= */
+
+let challengeResizeTimers = [];
+
+function scheduleChallengeMenuResize(){
+
+    challengeResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    challengeResizeTimers = [];
+
+    resizeChallengeMenu();
+
+    requestAnimationFrame(
+        resizeChallengeMenu
+    );
+
+    const delays = [
+        100,
+        300,
+        600
+    ];
+
+    delays.forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeChallengeMenu,
+                    delay
+                );
+
+            challengeResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+イベント登録
+========================================================= */
+
+window.addEventListener(
+    "DOMContentLoaded",
+    scheduleChallengeMenuResize
+);
+
+window.addEventListener(
+    "resize",
+    scheduleChallengeMenuResize
+);
+
+window.addEventListener(
+    "orientationchange",
+    scheduleChallengeMenuResize
+);
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        scheduleChallengeMenuResize
+    );
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,617 @@
+
+/* =========================================================
+Elementis Summoner
+Challenge Mode Selection
+========================================================= */
+
+
+/* =========================================================
+チャレンジモード説明
+========================================================= */
+
+#random-select-screen .select-guide {
+
+    margin-bottom: 8px;
+
+}
+
+#random-select-screen .setting-guide {
+
+    text-align: center;
+
+    margin-top: 0;
+
+    margin-bottom: 24px;
+
+}
+
+
+/* =========================================================
+チャレンジ記録エリア
+========================================================= */
+
+#challenge-section {
+
+    width: 100%;
+
+    margin: 20px auto 28px;
+
+    padding: 20px 14px;
+
+    background: rgba(0, 0, 0, 0.25);
+
+    border: 1px solid #b08a50;
+
+    border-radius: 12px;
+
+}
+
+
+/* =========================================================
+連勝記録を横2列に表示
+========================================================= */
+
+.challenge-records {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+
+    width: 100%;
+
+}
+
+
+/* =========================================================
+連勝記録の個別表示
+========================================================= */
+
+.challenge-record {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    min-width: 0;
+
+    padding: 18px 8px;
+
+    background: linear-gradient(
+        180deg,
+        #392c20,
+        #211912
+    );
+
+    border: 1px solid #9d7845;
+
+    border-radius: 10px;
+
+    text-align: center;
+
+}
+
+
+/* =========================================================
+連勝記録ラベル
+========================================================= */
+
+.challenge-record-label {
+
+    color: #e1c89b;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+}
+
+
+/* =========================================================
+連勝数
+========================================================= */
+
+.challenge-record strong {
+
+    color: #f7d68c;
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+    line-height: 1.2;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+次の対戦条件
+========================================================= */
+
+#challenge-next-info {
+
+    margin: 22px 0 0;
+
+    padding: 14px 10px;
+
+    background: rgba(0, 0, 0, 0.25);
+
+    border: 1px solid #80623e;
+
+    border-radius: 8px;
+
+    color: #f0ddb7;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    text-align: center;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================================================
+チャレンジ開始ボタン
+========================================================= */
+
+#random-select-screen .challenge-start-button {
+
+    display: block;
+
+    width: 100%;
+
+    margin: 0 auto 24px;
+
+    padding: 20px 12px;
+
+    background: linear-gradient(
+        180deg,
+        #a47b3f,
+        #65431f
+    );
+
+    border: 2px solid #e3c17d;
+
+    border-radius: 10px;
+
+    color: #fff4d9;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+ボタン操作時
+========================================================= */
+
+#random-select-screen .challenge-start-button:active {
+
+    transform: scale(0.98);
+
+    filter: brightness(1.15);
+
+}
+
+
+/* =========================================================
+スマホの狭い画面
+========================================================= */
+
+@media (max-width: 360px) {
+
+    #challenge-section {
+
+        padding: 14px 10px;
+
+    }
+
+    .challenge-records {
+
+        gap: 8px;
+
+    }
+
+    .challenge-record {
+
+        padding: 14px 5px;
+
+    }
+
+    .challenge-record-label {
+
+        font-size: 12px;
+
+    }
+
+    .challenge-record strong {
+
+        font-size: 23px;
+
+    }
+
+    #challenge-next-info {
+
+        font-size: 13px;
+
+    }
+
+}
+
+/* =========================================================
+チャレンジモード プレイヤー情報
+========================================================= */
+
+.challenge-player-info {
+
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+    justify-content: flex-start;
+
+    gap: 16px;
+
+    margin: 18px 0 20px;
+    padding: 14px 18px;
+
+    background: #191510;
+
+    border: 1px solid #9a7742;
+    border-radius: 10px;
+
+    box-shadow:
+        0 4px 12px rgba(0,0,0,0.35);
+
+}
+
+
+/* =========================================================
+プレイヤーアイコン
+========================================================= */
+
+#challenge-player-icon {
+
+    display: block;
+
+    width: 76px;
+    height: 76px;
+
+    flex-shrink: 0;
+
+    object-fit: cover;
+
+    border: 2px solid #c5a16d;
+    border-radius: 10px;
+
+    box-shadow:
+        0 3px 10px rgba(0,0,0,0.5);
+
+}
+
+
+/* =========================================================
+プレイヤー情報テキスト
+========================================================= */
+
+.challenge-player-text {
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+    justify-content: center;
+
+    gap: 6px;
+
+    flex: 1;
+    min-width: 0;
+
+}
+
+
+/* =========================================================
+PLAYERラベル
+========================================================= */
+
+.challenge-player-label {
+
+    color: #cbb68d;
+
+    font-size: 12px;
+    letter-spacing: 2px;
+
+}
+
+
+/* =========================================================
+プレイヤーネーム
+========================================================= */
+
+.challenge-player-name {
+
+    max-width: 100%;
+
+    color: #f1dfb5;
+
+    font-size: 20px;
+    font-weight: bold;
+
+    text-align: left;
+
+    overflow-wrap: anywhere;
+
+}
+
+/* =========================================================
+次の対戦情報
+========================================================= */
+
+.challenge-next-box {
+
+    margin: 20px 0;
+
+    padding: 16px;
+
+    background: #191510;
+
+    border: 1px solid #9a7742;
+    border-radius: 10px;
+
+    color: #f1dfb5;
+
+}
+
+
+/* タイトル */
+
+.challenge-next-title {
+
+    margin: 0 0 16px;
+
+    font-size: 20px;
+    font-weight: bold;
+
+    text-align: center;
+
+    color: #f1dfb5;
+
+}
+
+
+/* 対戦情報の各行 */
+
+.challenge-next-row {
+
+    display: flex;
+
+    align-items: baseline;
+
+    gap: 6px;
+
+    margin-bottom: 12px;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+}
+
+
+/* 項目名 */
+
+.challenge-next-label {
+
+    flex-shrink: 0;
+
+    font-weight: bold;
+
+    color: #d5c19a;
+
+}
+
+
+/* 区切り線 */
+
+.challenge-next-divider {
+
+    border: none;
+
+    border-top: 1px solid #806a40;
+
+    margin: 14px 0;
+
+}
+
+
+/* 次の条件変更 */
+
+#challenge-next-info {
+
+    margin: 0;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    line-height: 1.6;
+
+    color: #f2d48d;
+
+}
+/* =========================================
+対戦ルールの2行表示
+========================================= */
+
+.challenge-rule-value {
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    min-width: 0;
+
+}
+
+.challenge-rule-series {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+チャレンジ画面 コンパクト表示
+========================================================= */
+
+/* プレイヤー情報 */
+
+.challenge-player-info {
+    margin-top: 10px;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    gap: 12px;
+}
+
+#challenge-player-icon {
+    width: 64px;
+    height: 64px;
+}
+
+.challenge-player-text {
+    gap: 3px;
+}
+
+
+/* 連勝数表示 */
+
+.challenge-records {
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.challenge-record {
+    padding: 10px 8px;
+}
+
+
+/* 次の対戦情報 */
+
+.challenge-next-box {
+    margin: 12px 0;
+    padding: 12px 14px;
+}
+
+.challenge-next-title {
+    margin-bottom: 10px;
+}
+
+.challenge-next-row {
+    margin-bottom: 7px;
+    line-height: 1.4;
+}
+
+.challenge-next-divider {
+    margin: 10px 0;
+}
+
+#challenge-next-info {
+    line-height: 1.4;
+}
+
+
+/* チャレンジ開始ボタン */
+
+.challenge-start-button {
+    margin-top: 12px;
+    margin-bottom: 12px;
+}
+
+
+/* ホームに戻るボタン */
+
+#challenge-section + .challenge-start-button + .back-button {
+    margin-top: 8px;
+}
+
+/* =========================================================
+チャレンジ画面 余白の微調整
+========================================================= */
+
+/* 画面上部の説明文 */
+
+.select-guide {
+    margin-bottom: 6px;
+}
+
+.setting-guide {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+
+/* プレイヤー情報 */
+
+.challenge-player-info {
+    margin-top: 6px;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+}
+
+
+/* 連勝数表示 */
+
+.challenge-records {
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.challenge-record {
+    padding: 8px 6px;
+}
+
+
+/* 次の対戦情報 */
+
+.challenge-next-box {
+    margin: 8px 0;
+    padding: 10px 12px;
+}
+
+.challenge-next-title {
+    margin-bottom: 8px;
+}
+
+.challenge-next-row {
+    margin-bottom: 5px;
+}
+
+.challenge-next-divider {
+    margin: 8px 0;
+}
+
+
+/* チャレンジ開始ボタン */
+
+.challenge-start-button {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}

@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>設定 - Elementis Summoner</title>
+
+    <link
+        rel="stylesheet"
+        href="../random/select.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="settings.css"
+    >
+</head>
+
+<body>
+
+<div id="random-select-viewport">
+
+    <div id="random-select-screen">
+
+        <header>
+            <h1>設定</h1>
+        </header>
+
+        <main>
+
+            <!-- プレイヤーネーム -->
+
+            <section class="settings-section">
+
+                <h2>プレイヤーネーム</h2>
+
+                <input
+                    type="text"
+                    id="player-name"
+                    maxlength="20"
+                    placeholder="プレイヤーネームを入力"
+                    autocomplete="off"
+                >
+
+            </section>
+
+
+            <!-- プレイヤーアイコン -->
+
+            <section class="settings-section">
+
+                <h2>プレイヤーアイコン</h2>
+
+                <p class="setting-guide">
+                    使用するアイコンを選択してください。
+                </p>
+
+                <div id="icon-grid"></div>
+
+                <button
+                    type="button"
+                    id="icon-random"
+                    class="settings-sub-button"
+                >
+                    ランダムに戻す
+                </button>
+
+            </section>
+
+
+            <!-- 保存 -->
+
+            <button
+                type="button"
+                id="save-settings"
+                class="rule-button"
+            >
+                設定を保存
+            </button>
+
+            <p
+                id="settings-message"
+                role="status"
+                aria-live="polite"
+            ></p>
+
+
+            <!-- 戻る -->
+
+            <a
+                href="../index.html"
+                class="back-button"
+            >
+                ホームに戻る
+            </a>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script src="settings.js"></script>
+
+
+<script>
+
+//==================================================
+// 設定画面 縦表示固定
+// ランダムルールと同じ方式
+//==================================================
+
+function resizeSettingsMenu(){
+
+    const viewport =
+        document.getElementById(
+            "random-select-viewport"
+        );
+
+    if(!viewport){
+        return;
+    }
+
+    //----------------------------------
+    // 表示領域取得
+    //----------------------------------
+
+    const visual =
+        window.visualViewport;
+
+    const width =
+        visual
+            ? visual.width
+            : window.innerWidth;
+
+    const height =
+        visual
+            ? visual.height
+            : window.innerHeight;
+
+    if(width <= 0 || height <= 0){
+        return;
+    }
+
+    //----------------------------------
+    // 横向き・タッチ端末判定
+    //----------------------------------
+
+    const isLandscape =
+        width > height;
+
+    const isTouchDevice =
+        window.matchMedia(
+            "(pointer: coarse)"
+        ).matches;
+
+    //----------------------------------
+    // ホーム画面起動判定
+    //----------------------------------
+
+    const isStandalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
+
+    //----------------------------------
+    // 横向き表示
+    //----------------------------------
+
+    if(isLandscape && isTouchDevice){
+
+        let menuWidth = height;
+        let menuHeight = width;
+        let scale = 1;
+
+        //----------------------------------
+        // ブラウザ起動時の縮小調整
+        //----------------------------------
+
+        if(!isStandalone){
+
+            const referenceWidth = 390;
+
+            if(menuWidth < referenceWidth){
+
+                scale =
+                    menuWidth / referenceWidth;
+
+                menuWidth =
+                    referenceWidth;
+
+                menuHeight =
+                    width / scale;
+
+            }
+
+        }
+
+        viewport.style.setProperty(
+            "--random-menu-width",
+            `${menuWidth}px`
+        );
+
+        viewport.style.setProperty(
+            "--random-menu-height",
+            `${menuHeight}px`
+        );
+
+        viewport.style.setProperty(
+            "--random-menu-scale",
+            `${scale}`
+        );
+
+    }else{
+
+        viewport.style.removeProperty(
+            "--random-menu-width"
+        );
+
+        viewport.style.removeProperty(
+            "--random-menu-height"
+        );
+
+        viewport.style.removeProperty(
+            "--random-menu-scale"
+        );
+
+    }
+
+}
+
+
+//==================================================
+// 回転後の再計算
+//==================================================
+
+let settingsResizeTimers = [];
+
+function scheduleSettingsMenuResize(){
+
+    settingsResizeTimers.forEach(
+        timer => clearTimeout(timer)
+    );
+
+    settingsResizeTimers = [];
+
+    resizeSettingsMenu();
+
+    requestAnimationFrame(
+        resizeSettingsMenu
+    );
+
+    [100, 300, 600].forEach(
+        delay => {
+
+            const timer =
+                setTimeout(
+                    resizeSettingsMenu,
+                    delay
+                );
+
+            settingsResizeTimers.push(
+                timer
+            );
+
+        }
+    );
+
+}
+
+
+//==================================================
+// イベント登録
+//==================================================
+
+window.addEventListener(
+    "DOMContentLoaded",
+    scheduleSettingsMenuResize
+);
+
+window.addEventListener(
+    "resize",
+    scheduleSettingsMenuResize
+);
+
+window.addEventListener(
+    "orientationchange",
+    scheduleSettingsMenuResize
+);
+
+if(window.visualViewport){
+
+    window.visualViewport.addEventListener(
+        "resize",
+        scheduleSettingsMenuResize
+    );
+
+}
+
+</script>
+
+
+
+</body>
+</html>

@@ -59,6 +59,73 @@ function getCurrentChallengeStreak(){
 
 }
 
+/* =========================================
+   チャレンジモード 連勝数表示
+========================================= */
+
+function displayChallengeStreak(){
+
+    const display =
+        document.getElementById(
+            "challenge-streak-display"
+        );
+
+    const value =
+        document.getElementById(
+            "challenge-streak-value"
+        );
+
+    if(!display || !value){
+        return;
+    }
+
+    //----------------------------------
+    // 通常対戦では非表示
+    //----------------------------------
+
+    if(!isChallengeMode){
+
+        display.style.display = "none";
+        return;
+
+    }
+
+    //----------------------------------
+    // 現在の連勝数を取得
+    //----------------------------------
+
+    const currentStreak =
+        getCurrentChallengeStreak();
+
+    //----------------------------------
+    // 連勝数を表示
+    //----------------------------------
+
+    value.textContent =
+        `${currentStreak}連勝中`;
+
+    display.style.display = "block";
+
+}
+
+
+/* =========================================
+   画面読み込み時に表示
+========================================= */
+
+if(document.readyState === "loading"){
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        displayChallengeStreak
+    );
+
+}else{
+
+    displayChallengeStreak();
+
+}
+
 
 //======================================
 // チャレンジ対戦条件
@@ -918,9 +985,57 @@ let currentPlayerIcon = null;
 let currentEnemyIcon = null;
 
 
-//==================================================
-// 新しいマッチ用アイコンをランダム決定
-//==================================================
+
+/* =========================================================
+保存済みプレイヤーアイコンを取得
+========================================================= */
+
+function getSavedPlayerIcon(){
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisPlayerSettings"
+            );
+
+        if(!saved){
+            return null;
+        }
+
+        const settings =
+            JSON.parse(saved);
+
+        const iconNumber =
+            settings.playerIcon;
+
+        if(
+            Number.isInteger(iconNumber) &&
+            iconNumber >= 1 &&
+            iconNumber <= 16
+        ){
+
+            return iconNumber;
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "プレイヤーアイコン読み込みエラー",
+            error
+        );
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+新しいマッチ用アイコンを決定
+========================================================= */
 
 function selectRandomMatchIcons(){
 
@@ -933,31 +1048,78 @@ function selectRandomMatchIcons(){
 
 
     //----------------------------------
-    // PLAYER用をランダム選択
+    // 保存済みアイコンを取得
     //----------------------------------
 
-    const playerIndex =
-        Math.floor(
-            Math.random() *
-            icons.length
+    const savedIconNumber =
+        getSavedPlayerIcon();
+
+
+    //----------------------------------
+    // PLAYER用アイコンを決定
+    //----------------------------------
+
+    if(savedIconNumber !== null){
+
+        //----------------------------------
+        // 設定済みアイコンを使用
+        //----------------------------------
+
+        const iconIndex =
+            savedIconNumber - 1;
+
+        currentPlayerIcon =
+            characterIcons[iconIndex];
+
+
+        //----------------------------------
+        // CPUとの重複を防止
+        //----------------------------------
+
+        const index =
+            icons.indexOf(
+                currentPlayerIcon
+            );
+
+        if(index !== -1){
+
+            icons.splice(
+                index,
+                1
+            );
+
+        }
+
+    }else{
+
+        //----------------------------------
+        // 未設定ならランダム選択
+        //----------------------------------
+
+        const playerIndex =
+            Math.floor(
+                Math.random() *
+                icons.length
+            );
+
+        currentPlayerIcon =
+            icons[playerIndex];
+
+
+        //----------------------------------
+        // 選択したアイコンを除外
+        //----------------------------------
+
+        icons.splice(
+            playerIndex,
+            1
         );
 
-    currentPlayerIcon =
-        icons[playerIndex];
+    }
 
 
     //----------------------------------
-    // PLAYERに選ばれたものを削除
-    //----------------------------------
-
-    icons.splice(
-        playerIndex,
-        1
-    );
-
-
-    //----------------------------------
-    // CPU用をランダム選択
+    // CPU用アイコンをランダム選択
     //----------------------------------
 
     const enemyIndex =
@@ -970,6 +1132,10 @@ function selectRandomMatchIcons(){
         icons[enemyIndex];
 
 
+    //----------------------------------
+    // 確認ログ
+    //----------------------------------
+
     console.log(
         "今回のマッチのアイコン",
         "PLAYER:",
@@ -979,6 +1145,7 @@ function selectRandomMatchIcons(){
     );
 
 }
+
 
 //==================================================
 // 現在のマッチのアイコンを画面へ設定
@@ -14503,14 +14670,65 @@ console.log(
 
 
 
-//======================================
-// チャレンジ記録をXに投稿
-//======================================
+
+/* =========================================================
+チャレンジ記録をXに投稿
+========================================================= */
 
 function shareChallengeRecord(
     streak,
     isFinal = false
 ){
+
+    //----------------------------------
+    // プレイヤーネーム取得
+    //----------------------------------
+
+    let playerName = "";
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisPlayerSettings"
+            );
+
+        if(saved){
+
+            const settings =
+                JSON.parse(saved);
+
+            if(
+                typeof settings.playerName ===
+                "string"
+            ){
+
+                playerName =
+                    settings.playerName.trim();
+
+            }
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "プレイヤーネーム読み込みエラー",
+            error
+        );
+
+    }
+
+
+    //----------------------------------
+    // プレイヤーネーム表示
+    //----------------------------------
+
+    const nameText =
+        playerName
+            ? `プレイヤー：${playerName}\n`
+            : "";
+
 
     //----------------------------------
     // 投稿文章
@@ -14520,16 +14738,19 @@ function shareChallengeRecord(
         isFinal
             ? (
                 `Elementis Summoner\n` +
-                `ランダムルール チャレンジモードで${streak}連勝！\n` +
+                nameText +
+                `チャレンジモードで${streak}連勝！\n` +
                 `あなたは何連勝できる？\n` +
                 `#エレサモ #ElementisSummoner`
             )
             : (
                 `Elementis Summoner\n` +
-                `ランダムルール チャレンジモードで${streak}連勝達成！\n` +
+                nameText +
+                `チャレンジモードで${streak}連勝達成！\n` +
                 `あなたは何連勝できる？\n` +
                 `#エレサモ #ElementisSummoner`
             );
+
 
     //----------------------------------
     // 公式サイトURL
@@ -14538,37 +14759,37 @@ function shareChallengeRecord(
     const siteUrl =
         "https://parfekutonegy.github.io/elementis-summoner/";
 
+
     //----------------------------------
     // 節目の専用ページURL
     //----------------------------------
 
-const milestonePages = {
+    const milestonePages = {
 
-    10: siteUrl + "challenge/10.html",
-    20: siteUrl + "challenge/20.html",
-    30: siteUrl + "challenge/30.html",
-    40: siteUrl + "challenge/40.html",
-    50: siteUrl + "challenge/50.html",
+        10: siteUrl + "challenge/10.html",
+        20: siteUrl + "challenge/20.html",
+        30: siteUrl + "challenge/30.html",
+        40: siteUrl + "challenge/40.html",
+        50: siteUrl + "challenge/50.html",
 
-    60: siteUrl + "challenge/60.html",
-    70: siteUrl + "challenge/70.html",
-    80: siteUrl + "challenge/80.html",
-    90: siteUrl + "challenge/90.html",
-    100: siteUrl + "challenge/100.html"
+        60: siteUrl + "challenge/60.html",
+        70: siteUrl + "challenge/70.html",
+        80: siteUrl + "challenge/80.html",
+        90: siteUrl + "challenge/90.html",
+        100: siteUrl + "challenge/100.html"
 
-};
+    };
+
 
     //----------------------------------
     // 投稿先URLを決定
     //----------------------------------
 
-    // 最終連勝記録は通常の公式サイトURL
-    // 達成記録は専用ページを使用
-
     const url =
         !isFinal && milestonePages[streak]
             ? milestonePages[streak]
             : siteUrl;
+
 
     //----------------------------------
     // X投稿URL
@@ -14581,6 +14802,7 @@ const milestonePages = {
             url: url
         }).toString();
 
+
     //----------------------------------
     // X投稿画面を開く
     //----------------------------------
@@ -14592,6 +14814,7 @@ const milestonePages = {
     );
 
 }
+
 
 //======================================
 // 対戦終了
@@ -14935,6 +15158,35 @@ currentStreak <= 100 &&
 currentStreak % 10 === 0
 
 
+        //----------------------------------
+        // 次の対戦条件変更のお知らせ
+        //----------------------------------
+
+        let nextConditionMessage = "";
+
+        if(isChallengeWin){
+
+            if(currentStreak === 10){
+
+                nextConditionMessage =
+                    "次の対戦から、お互いのライフが3になります。";
+
+            }else if(currentStreak === 20){
+
+                nextConditionMessage =
+                    "次の対戦から、お互いのライフが1になります。";
+
+            }else if(currentStreak === 30){
+
+                nextConditionMessage =
+                    "次の対戦から、CPUが必ず先攻になります。";
+
+            }
+
+        }
+
+
+
         //==================================
         // リザルトHTML
         //==================================
@@ -15008,6 +15260,18 @@ currentStreak % 10 === 0
                         <div class="challenge-milestone-message">
                             おめでとうございます！
                         </div>
+
+                        
+                        ${
+                            nextConditionMessage
+                                ? `
+<div class="challenge-condition-notice">
+    ${nextConditionMessage}
+</div>
+                                `
+                                : ""
+                        }
+
 
                         <button
                             type="button"

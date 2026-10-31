@@ -678,3 +678,51 @@ html, body {
     white-space: nowrap;
 
 }
+
+
+
+/* =========================================
+   チャレンジ 対戦条件変更のお知らせ
+========================================= */
+
+.challenge-condition-notice {
+
+    margin: 6px auto;
+
+    padding: 5px 10px;
+
+    max-width: 420px;
+
+    background: rgba(30, 22, 12, 0.85);
+
+    border: 1px solid #c5a16d;
+    border-radius: 5px;
+
+    color: #f1dfb5;
+
+    font-size: 13px;
+    line-height: 1.4;
+
+    text-align: center;
+
+}
+
+.challenge-condition-title {
+
+    margin-bottom: 6px;
+
+    color: #f2d48d;
+
+    font-size: 16px;
+    font-weight: bold;
+
+}
+
+.challenge-condition-text {
+
+    color: #f1dfb5;
+
+    font-size: 14px;
+    line-height: 1.5;
+
+}
