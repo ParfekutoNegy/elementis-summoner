@@ -239,14 +239,70 @@ if(
     }
 
 
-    //----------------------------------
-    // 回収するカード
-    //
-    // 回収可能カードの先頭
-    //----------------------------------
+//----------------------------------
+// CPU手札の種類別枚数
+//----------------------------------
 
-    const card =
-        recoverableCards[0];
+const typeCounts = {
+    "サモン": 0,
+    "マギア": 0,
+    "レジスト": 0
+};
+
+enemyHandCards.forEach(card => {
+
+    if(typeCounts[card.type] !== undefined){
+        typeCounts[card.type]++;
+    }
+
+});
+
+
+//----------------------------------
+// 回収可能カードの中から
+// 手札に最も少ない種類を調べる
+//----------------------------------
+
+const minCount = Math.min(
+    ...recoverableCards.map(card =>
+        typeCounts[card.type] ?? 0
+    )
+);
+
+
+//----------------------------------
+// 最少枚数の種類を候補にする
+//----------------------------------
+
+const candidates = recoverableCards.filter(card =>
+    (typeCounts[card.type] ?? 0) === minCount
+);
+
+
+//----------------------------------
+// 同数の場合はランダムに選択
+//----------------------------------
+
+const card = candidates[
+    Math.floor(
+        Math.random() * candidates.length
+    )
+];
+
+
+//----------------------------------
+// CPU選択ログ
+//----------------------------------
+
+console.log(
+    "CPUクール回収：手札種類別枚数",
+    typeCounts
+);
+
+console.log(
+    "CPUクール回収候補",
+    candidates.map(card => card.name)
+);
 
 
     if(!card){
