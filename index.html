@@ -637,8 +637,12 @@ const isXBrowser =
 
 if(isXBrowser){
 
-    button.textContent =
-        "ホーム画面に追加\n（Xアプリ内では一部機能が使用できません）";
+    button.innerHTML = `
+        ホーム画面に追加
+        <span class="home-install-warning">
+            （Xアプリ内では一部機能が使用できません）
+        </span>
+    `;
 
 }else{
 
