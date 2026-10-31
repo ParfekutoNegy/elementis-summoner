@@ -1943,13 +1943,32 @@ function showGameConfirm(
         buttons
     );
 
-    overlay.appendChild(
-        modal
+overlay.appendChild(
+    modal
+);
+
+//----------------------------------
+// ゲーム画面内にモーダルを配置
+//----------------------------------
+
+const battleScreen =
+    document.getElementById(
+        "battle-screen"
     );
+
+if(battleScreen){
+
+    battleScreen.appendChild(
+        overlay
+    );
+
+}else{
 
     document.body.appendChild(
         overlay
     );
+
+}
 
 }
 
