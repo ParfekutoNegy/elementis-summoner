@@ -46,6 +46,28 @@
     </header>
 
 
+    <!-- =========================
+         ホーム画面に追加
+    ========================= -->
+
+    <div id="home-install-area">
+
+        <button
+            type="button"
+            id="home-install-button"
+        >
+            ホーム画面に追加
+        </button>
+
+        <p id="home-install-description">
+            データ記録や誤操作防止、ゲームを円滑にプレイするため、<br>ホーム画面からの起動を推奨します。
+        </p>
+
+    </div>
+
+</main>
+
+
 
 <main id="top-menu">
 
@@ -192,26 +214,7 @@
 
 
 
-    <!-- =========================
-         ホーム画面に追加
-    ========================= -->
 
-    <div id="home-install-area">
-
-        <button
-            type="button"
-            id="home-install-button"
-        >
-            ホーム画面に追加
-        </button>
-
-        <p id="home-install-description">
-            データ記録や誤操作防止、ゲームを円滑にプレイするため、<br>ホーム画面からの起動を推奨します。
-        </p>
-
-    </div>
-
-</main>
 
     <!-- =========================
          フッター
@@ -676,10 +679,9 @@ function initializeHomeInstall(){
             if(isIOS){
 
                 guide.textContent =
-                    "1. Safariでこのページを開きます。\n" +
-                    "2. 共有ボタンを押します。\n" +
-                    "3.「ホーム画面に追加」を選びます。\n" +
-                    "4.「追加」を押します。";
+                    "1. ブラウザでこのページを開きます。\n" +
+                    "2.「ホーム画面に追加」を選びます。\n" +
+                    "3.「追加」を押します。";
 
             }else{
 
