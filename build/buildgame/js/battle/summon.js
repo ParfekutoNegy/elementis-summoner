@@ -405,9 +405,32 @@ function getPower(summon){
     // 基本パワー
     //----------------------------------
 
-    let power =
-        summon.card.power +
-        summon.powerBonus;
+let power =
+    (Number(summon.card.power) || 0) +
+    (Number(summon.powerBonus) || 0);
+
+
+
+
+//----------------------------------
+// 場にいるサモンか確認
+//----------------------------------
+
+const isOnField =
+    playerField.includes(summon) ||
+    enemyField.includes(summon);
+
+
+//----------------------------------
+// 場にいない場合は
+// 常時能力を適用しない
+//----------------------------------
+
+if(!isOnField){
+
+    return power;
+
+}
 
 
     //==================================

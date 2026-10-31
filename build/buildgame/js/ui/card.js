@@ -282,6 +282,30 @@ this.element.classList.toggle(
 );
 
 //=========================
+// 場以外ではパワー変動表示を解除
+//=========================
+
+if(
+    this.area !== "field" &&
+    this.area !== "enemyField"
+){
+
+    if(
+        this.currentPowerElement
+    ){
+
+        this.currentPowerElement.style.display =
+            "none";
+
+        this.currentPowerElement.textContent =
+            "";
+
+    }
+
+}
+
+
+//=========================
 // 表示状態更新
 //=========================
 

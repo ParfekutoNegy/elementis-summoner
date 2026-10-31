@@ -963,6 +963,58 @@ let currentEnemyIcon = null;
 // 新しいマッチ用アイコンをランダム決定
 //==================================================
 
+
+/* =========================================================
+設定済みプレイヤーアイコンを取得
+========================================================= */
+
+function getSavedPlayerIcon(){
+
+    try{
+
+        const saved =
+            localStorage.getItem(
+                "elementisPlayerSettings"
+            );
+
+        if(!saved){
+            return null;
+        }
+
+        const settings =
+            JSON.parse(saved);
+
+        const iconNumber =
+            settings.playerIcon;
+
+        if(
+            Number.isInteger(iconNumber) &&
+            iconNumber >= 1 &&
+            iconNumber <= 16
+        ){
+
+            return iconNumber;
+
+        }
+
+    }catch(error){
+
+        console.error(
+            "プレイヤーアイコン読み込みエラー",
+            error
+        );
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================================================
+新しいマッチ用アイコンを決定
+========================================================= */
+
 function selectRandomMatchIcons(){
 
     //----------------------------------
@@ -974,31 +1026,68 @@ function selectRandomMatchIcons(){
 
 
     //----------------------------------
-    // PLAYER用をランダム選択
+    // 保存済みアイコン番号を取得
     //----------------------------------
 
-    const playerIndex =
-        Math.floor(
-            Math.random() *
-            icons.length
+    const savedIconNumber =
+        getSavedPlayerIcon();
+
+
+    //----------------------------------
+    // PLAYER用アイコンを決定
+    //----------------------------------
+
+    if(savedIconNumber !== null){
+
+        const iconIndex =
+            savedIconNumber - 1;
+
+        currentPlayerIcon =
+            characterIcons[iconIndex];
+
+        //----------------------------------
+        // CPUとの重複を防止
+        //----------------------------------
+
+        const index =
+            icons.indexOf(
+                currentPlayerIcon
+            );
+
+        if(index !== -1){
+
+            icons.splice(
+                index,
+                1
+            );
+
+        }
+
+    }else{
+
+        //----------------------------------
+        // 未設定なら従来どおりランダム
+        //----------------------------------
+
+        const playerIndex =
+            Math.floor(
+                Math.random() *
+                icons.length
+            );
+
+        currentPlayerIcon =
+            icons[playerIndex];
+
+        icons.splice(
+            playerIndex,
+            1
         );
 
-    currentPlayerIcon =
-        icons[playerIndex];
+    }
 
 
     //----------------------------------
-    // PLAYERに選ばれたものを削除
-    //----------------------------------
-
-    icons.splice(
-        playerIndex,
-        1
-    );
-
-
-    //----------------------------------
-    // CPU用をランダム選択
+    // CPU用アイコンをランダム選択
     //----------------------------------
 
     const enemyIndex =
@@ -1010,6 +1099,10 @@ function selectRandomMatchIcons(){
     currentEnemyIcon =
         icons[enemyIndex];
 
+
+    //----------------------------------
+    // ログ
+    //----------------------------------
 
     console.log(
         "今回のマッチのアイコン",
