@@ -1948,6 +1948,56 @@ overlay.appendChild(
 );
 
 //----------------------------------
+// 確認モーダルの表示方向
+//----------------------------------
+
+const viewport =
+    window.visualViewport;
+
+const width =
+    viewport
+        ? viewport.width
+        : window.innerWidth;
+
+const height =
+    viewport
+        ? viewport.height
+        : window.innerHeight;
+
+const isPortrait =
+    width < height;
+
+//----------------------------------
+// 縦向きなら90度回転
+//----------------------------------
+
+if(isPortrait){
+
+    overlay.style.width = `${height}px`;
+    overlay.style.height = `${width}px`;
+
+    overlay.style.inset = "auto";
+
+    overlay.style.left = `${width}px`;
+    overlay.style.top = "0px";
+
+    overlay.style.transformOrigin =
+        "top left";
+
+    overlay.style.transform =
+        "rotate(90deg)";
+
+}
+
+//----------------------------------
+// bodyに配置
+//----------------------------------
+
+document.body.appendChild(
+    overlay
+);
+
+//----------------------------------
 // ゲーム画面内にモーダルを配置
 //----------------------------------
 
