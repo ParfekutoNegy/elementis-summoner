@@ -620,3 +620,180 @@ body{
     }
 
 }
+
+/* =========================================
+   ホーム画面に追加
+========================================= */
+
+#home-install-area {
+
+    display: block;
+
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    margin-top: 12px;
+
+    text-align: center;
+
+}
+
+/* 追加ボタン */
+
+#home-install-button {
+
+    display: block;
+
+    width: 100%;
+
+    min-height: 58px;
+
+    padding: 12px;
+
+    background: linear-gradient(
+        145deg,
+        #397e63,
+        #20513f
+    );
+
+    border: 2px solid #8fd2a7;
+
+    border-radius: 12px;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 19px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 12px rgba(0,0,0,0.4);
+
+}
+
+#home-install-button:active {
+
+    transform: translateY(2px);
+
+}
+
+/* 説明文 */
+
+#home-install-description {
+
+    margin: 10px 0 0;
+
+    color: #e0cfaa;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+}
+
+/* =========================================
+   追加方法の案内モーダル
+========================================= */
+
+#home-install-modal {
+
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 9999;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0,0,0,0.75);
+
+}
+
+#home-install-modal-content {
+
+    width: 100%;
+
+    max-width: 360px;
+
+    padding: 25px 20px;
+
+    background: #342414;
+
+    border: 2px solid #b99558;
+
+    border-radius: 14px;
+
+    color: #f4e6c5;
+
+    text-align: center;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.6);
+
+}
+
+#home-install-modal-content h2 {
+
+    margin: 0 0 20px;
+
+    font-size: 22px;
+
+}
+
+#home-install-guide {
+
+    font-size: 15px;
+
+    line-height: 2;
+
+    white-space: pre-line;
+
+}
+
+#home-install-close {
+
+    margin-top: 20px;
+
+    padding: 10px 35px;
+
+    background: #79552e;
+
+    border: 1px solid #c7a16a;
+
+    border-radius: 8px;
+
+    color: white;
+
+    font-size: 16px;
+
+    cursor: pointer;
+
+}
+
+
+
+/* =========================================
+   アプリ起動時だけ非表示
+========================================= */
+
+@media (display-mode: standalone),
+       (display-mode: fullscreen) {
+
+    #home-install-area {
+
+        display: none !important;
+
+    }
+
+}

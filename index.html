@@ -190,9 +190,28 @@
 
     </a>
 
+
+
+    <!-- =========================
+         ホーム画面に追加
+    ========================= -->
+
+    <div id="home-install-area">
+
+        <button
+            type="button"
+            id="home-install-button"
+        >
+            ホーム画面に追加
+        </button>
+
+        <p id="home-install-description">
+            ゲームを円滑にプレイするために、ホーム画面からの起動を推奨します。
+        </p>
+
+    </div>
+
 </main>
-
-
 
     <!-- =========================
          フッター
@@ -472,6 +491,278 @@ if(window.visualViewport){
 
 </script>
 
+<!-- =========================
+     ホーム画面追加の案内
+========================= -->
+
+<div id="home-install-modal">
+
+    <div id="home-install-modal-content">
+
+        <h2>ホーム画面に追加</h2>
+
+        <p id="home-install-guide"></p>
+
+        <button
+            type="button"
+            id="home-install-close"
+        >
+            閉じる
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+// ============================================================
+// ホーム画面に追加
+// ============================================================
+
+let deferredInstallPrompt = null;
+
+
+// ----------------------------------
+// アプリ起動判定
+// ----------------------------------
+
+function isHomeScreenMode(){
+
+    return (
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+
+        window.matchMedia(
+            "(display-mode: fullscreen)"
+        ).matches ||
+
+        window.navigator.standalone === true
+    );
+
+}
+
+
+// ----------------------------------
+// インストール可能イベント
+// ----------------------------------
+
+window.addEventListener(
+    "beforeinstallprompt",
+    event => {
+
+        event.preventDefault();
+
+        deferredInstallPrompt = event;
+
+    }
+);
+
+
+// ----------------------------------
+// 初期化
+// ----------------------------------
+
+function initializeHomeInstall(){
+
+    const area =
+        document.getElementById(
+            "home-install-area"
+        );
+
+    const button =
+        document.getElementById(
+            "home-install-button"
+        );
+
+    const modal =
+        document.getElementById(
+            "home-install-modal"
+        );
+
+    const guide =
+        document.getElementById(
+            "home-install-guide"
+        );
+
+    const close =
+        document.getElementById(
+            "home-install-close"
+        );
+
+    if(
+        !area ||
+        !button ||
+        !modal ||
+        !guide ||
+        !close
+    ){
+        return;
+    }
+
+
+    // ----------------------------------
+    // ホーム画面から起動している場合
+    // ----------------------------------
+
+    if(isHomeScreenMode()){
+
+        area.style.display = "none";
+
+        return;
+
+    }
+
+
+    // ----------------------------------
+    // ブラウザから起動している場合
+    // ----------------------------------
+
+    area.style.display = "block";
+
+
+    // ----------------------------------
+    // ボタンを押したとき
+    // ----------------------------------
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            // Androidなどのインストール画面
+
+            if(deferredInstallPrompt){
+
+                const promptEvent =
+                    deferredInstallPrompt;
+
+                deferredInstallPrompt = null;
+
+                try{
+
+                    await promptEvent.prompt();
+
+                    await promptEvent.userChoice;
+
+                }catch(error){
+
+                    console.error(
+                        "インストール案内エラー",
+                        error
+                    );
+
+                }
+
+                return;
+
+            }
+
+
+            // ----------------------------------
+            // iPhone / iPad 判定
+            // ----------------------------------
+
+            const isIOS =
+                /iPhone|iPad|iPod/.test(
+                    navigator.userAgent
+                ) ||
+                (
+                    navigator.platform === "MacIntel" &&
+                    navigator.maxTouchPoints > 1
+                );
+
+
+            if(isIOS){
+
+                guide.textContent =
+                    "1. Safariでこのページを開きます。\n" +
+                    "2. 共有ボタンを押します。\n" +
+                    "3.「ホーム画面に追加」を選びます。\n" +
+                    "4.「追加」を押してください。";
+
+            }else{
+
+                guide.textContent =
+                    "ブラウザのメニューから\n" +
+                    "「ホーム画面に追加」または\n" +
+                    "「アプリをインストール」を\n" +
+                    "選択してください。";
+
+            }
+
+
+            modal.style.display = "flex";
+
+        }
+    );
+
+
+    // ----------------------------------
+    // 閉じる
+    // ----------------------------------
+
+    close.addEventListener(
+        "click",
+        () => {
+
+            modal.style.display = "none";
+
+        }
+    );
+
+
+    modal.addEventListener(
+        "click",
+        event => {
+
+            if(event.target === modal){
+
+                modal.style.display = "none";
+
+            }
+
+        }
+    );
+
+}
+
+
+// ----------------------------------
+// インストール完了
+// ----------------------------------
+
+window.addEventListener(
+    "appinstalled",
+    () => {
+
+        deferredInstallPrompt = null;
+
+        // インストール直後も通常ブラウザなら
+        // 案内を残し、アプリ起動時に非表示にする
+
+    }
+);
+
+
+// ----------------------------------
+// 初期表示
+// ----------------------------------
+
+if(document.readyState === "loading"){
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeHomeInstall
+    );
+
+}else{
+
+    initializeHomeInstall();
+
+}
+
+</script>
 
 </body>
 
