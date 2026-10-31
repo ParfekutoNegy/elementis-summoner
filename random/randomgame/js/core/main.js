@@ -14545,14 +14545,16 @@ function shareChallengeRecord(
 const milestonePages = {
 
     10: siteUrl + "challenge/10.html",
-
     20: siteUrl + "challenge/20.html",
-
     30: siteUrl + "challenge/30.html",
-
     40: siteUrl + "challenge/40.html",
+    50: siteUrl + "challenge/50.html",
 
-    50: siteUrl + "challenge/50.html"
+    60: siteUrl + "challenge/60.html",
+    70: siteUrl + "challenge/70.html",
+    80: siteUrl + "challenge/80.html",
+    90: siteUrl + "challenge/90.html",
+    100: siteUrl + "challenge/100.html"
 
 };
 
@@ -14928,8 +14930,9 @@ panel.innerHTML = `
 
         const isMilestone =
             isChallengeWin &&
-            currentStreak > 0 &&
-            currentStreak % 10 === 0;
+currentStreak > 0 &&
+currentStreak <= 100 &&
+currentStreak % 10 === 0
 
 
         //==================================
@@ -15038,14 +15041,6 @@ panel.innerHTML = `
 <div class="challenge-loss-message">
     
 </div>
-
-<button
-    type="button"
-    class="challenge-share-button"
-    onclick="shareChallengeRecord(${finalStreak}, true)"
->
-    Xに最終連勝記録を投稿
-</button>
 
                 `
                 : ""}
