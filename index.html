@@ -505,14 +505,24 @@ if(window.visualViewport){
 
         <h2>ホーム画面に追加</h2>
 
-        <p id="home-install-guide"></p>
+<p id="home-install-guide"></p>
 
-        <button
-            type="button"
-            id="home-install-close"
-        >
-            閉じる
-        </button>
+<!-- サイトURLコピー -->
+<button
+    type="button"
+    id="home-install-copy"
+>
+    📋 サイトURLをコピー
+</button>
+
+<p id="home-install-copy-message"></p>
+
+<button
+    type="button"
+    id="home-install-close"
+>
+    閉じる
+</button>
 
     </div>
 
@@ -594,6 +604,69 @@ function initializeHomeInstall(){
         document.getElementById(
             "home-install-close"
         );
+
+        //----------------------------------
+// サイトURLコピー
+//----------------------------------
+
+const copyButton =
+    document.getElementById(
+        "home-install-copy"
+    );
+
+const copyMessage =
+    document.getElementById(
+        "home-install-copy-message"
+    );
+
+if(copyButton && copyMessage){
+
+    copyButton.addEventListener(
+        "click",
+        async ()=>{
+
+            const siteUrl =
+                new URL("./", window.location.href).href;
+
+            try{
+
+                await navigator.clipboard.writeText(
+                    siteUrl
+                );
+
+                copyMessage.textContent =
+                    "URLをコピーしました！";
+
+            }catch(error){
+
+                // コピーできない環境では
+                // URLを選択できる状態にする
+
+                copyMessage.textContent =
+                    "コピーできない場合は、以下のURLを長押ししてコピーしてください。";
+
+                const urlInput =
+                    document.createElement("input");
+
+                urlInput.type = "text";
+                urlInput.value = siteUrl;
+                urlInput.readOnly = true;
+
+                urlInput.style.width = "100%";
+                urlInput.style.boxSizing = "border-box";
+                urlInput.style.marginTop = "8px";
+
+                copyMessage.appendChild(urlInput);
+
+                urlInput.focus();
+                urlInput.select();
+
+            }
+
+        }
+    );
+
+}
 
     if(
         !area ||
@@ -702,22 +775,28 @@ if(isXBrowser){
                 );
 
 
-            if(isIOS){
+if(isIOS){
 
-                guide.textContent =
-                    "1. ブラウザでこのページを開きます。\n" +
-                    "2.「ホーム画面に追加」を選びます。\n" +
-                    "3.「追加」を押します。";
+    guide.textContent =
+        "1. ブラウザでこのページを開きます。\n" +
+        "2.「ホーム画面に追加」を選びます。\n" +
+        "3.「追加」を押します。";
 
-            }else{
+}else{
 
-                guide.textContent =
-                    "ブラウザのメニューから\n" +
-                    "「ホーム画面に追加」または\n" +
-                    "「アプリをインストール」を\n" +
-                    "選択してください。";
+    guide.textContent =
+        "ブラウザのメニューから\n" +
+        "「ホーム画面に追加」または\n" +
+        "「アプリをインストール」を\n" +
+        "選択してください。";
 
-            }
+}
+
+// 案内文を左寄せにする
+guide.style.textAlign = "left";
+
+// 改行を反映する
+guide.style.whiteSpace = "pre-line";
 
 
             modal.style.display = "flex";

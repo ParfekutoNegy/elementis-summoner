@@ -846,3 +846,76 @@ body{
     background: #852525;
 
 }
+
+/* =========================================
+   サイトURLコピーボタン
+========================================= */
+
+#home-install-copy{
+
+    display: block;
+
+    width: 100%;
+
+    box-sizing: border-box;
+
+    margin: 16px 0 8px;
+
+    padding: 12px;
+
+    background: #a83232;
+
+    color: #ffffff;
+
+    border: 1px solid #e57373;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+#home-install-copy-message{
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    text-align: center;
+
+    color: #f0c47c;
+
+    white-space: pre-line;
+
+}
+
+/* =========================================
+   サイトURLコピーボタン
+   落ち着いた茶系
+========================================= */
+
+#home-install-copy{
+
+    background: #6e4d32;
+
+    color: #ffffff;
+
+    border: 1px solid #9c7955;
+
+}
+
+#home-install-copy:hover{
+
+    background: #805c3d;
+
+}
+
+#home-install-copy:active{
+
+    background: #503824;
+
+}
