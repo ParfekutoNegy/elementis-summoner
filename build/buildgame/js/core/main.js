@@ -1779,248 +1779,7 @@ if(menuHomeButton){
 
 }
 
-// ============================================================
-// ゲーム共通確認モーダル
-// ============================================================
 
-function showGameConfirm(
-    message,
-    onConfirm
-){
-
-    //----------------------------------
-    // モーダル作成
-    //----------------------------------
-
-    const overlay =
-        document.createElement("div");
-
-    overlay.style.cssText = `
-        position: fixed;
-        inset: 0;
-        z-index: 999999;
-        background: rgba(0,0,0,0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    `;
-
-
-    const modal =
-        document.createElement("div");
-
-    modal.style.cssText = `
-        width: 80%;
-        max-width: 420px;
-        padding: 25px;
-        background: #252c3b;
-        border: 2px solid #a88a54;
-        border-radius: 12px;
-        color: white;
-        text-align: center;
-        box-sizing: border-box;
-    `;
-
-
-    //----------------------------------
-    // メッセージ
-    //----------------------------------
-
-    const text =
-        document.createElement("div");
-
-    text.textContent = message;
-
-    text.style.cssText = `
-        white-space: pre-line;
-        font-size: 18px;
-        line-height: 1.7;
-        margin-bottom: 25px;
-    `;
-
-
-    //----------------------------------
-    // ボタン配置
-    //----------------------------------
-
-    const buttons =
-        document.createElement("div");
-
-    buttons.style.cssText = `
-        display: flex;
-        gap: 15px;
-        justify-content: center;
-    `;
-
-
-    const cancelButton =
-        document.createElement("button");
-
-    cancelButton.textContent =
-        "キャンセル";
-
-
-    const confirmButton =
-        document.createElement("button");
-
-    confirmButton.textContent =
-        "OK";
-
-
-    //----------------------------------
-    // ボタン共通デザイン
-    //----------------------------------
-
-    [cancelButton, confirmButton].forEach(
-        button => {
-
-            button.style.cssText = `
-                flex: 1;
-                padding: 12px;
-                font-size: 17px;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                touch-action: manipulation;
-            `;
-
-        }
-    );
-
-    cancelButton.style.background =
-        "#596273";
-
-    confirmButton.style.background =
-        "#9d4242";
-
-
-    //----------------------------------
-    // キャンセル
-    //----------------------------------
-
-    cancelButton.onclick = ()=>{
-
-        overlay.remove();
-
-    };
-
-
-    //----------------------------------
-    // OK
-    //----------------------------------
-
-    confirmButton.onclick = ()=>{
-
-        overlay.remove();
-
-        if(typeof onConfirm === "function"){
-
-            onConfirm();
-
-        }
-
-    };
-
-
-    //----------------------------------
-    // 組み立て
-    //----------------------------------
-
-    buttons.appendChild(
-        cancelButton
-    );
-
-    buttons.appendChild(
-        confirmButton
-    );
-
-    modal.appendChild(
-        text
-    );
-
-    modal.appendChild(
-        buttons
-    );
-
-overlay.appendChild(
-    modal
-);
-
-//----------------------------------
-// 確認モーダルの表示方向
-//----------------------------------
-
-const viewport =
-    window.visualViewport;
-
-const width =
-    viewport
-        ? viewport.width
-        : window.innerWidth;
-
-const height =
-    viewport
-        ? viewport.height
-        : window.innerHeight;
-
-const isPortrait =
-    width < height;
-
-//----------------------------------
-// 縦向きなら90度回転
-//----------------------------------
-
-if(isPortrait){
-
-    overlay.style.width = `${height}px`;
-    overlay.style.height = `${width}px`;
-
-    overlay.style.inset = "auto";
-
-    overlay.style.left = `${width}px`;
-    overlay.style.top = "0px";
-
-    overlay.style.transformOrigin =
-        "top left";
-
-    overlay.style.transform =
-        "rotate(90deg)";
-
-}
-
-//----------------------------------
-// bodyに配置
-//----------------------------------
-
-document.body.appendChild(
-    overlay
-);
-
-//----------------------------------
-// ゲーム画面内にモーダルを配置
-//----------------------------------
-
-const battleScreen =
-    document.getElementById(
-        "battle-screen"
-    );
-
-if(battleScreen){
-
-    battleScreen.appendChild(
-        overlay
-    );
-
-}else{
-
-    document.body.appendChild(
-        overlay
-    );
-
-}
-
-}
 
 //=========================
 // 投了ボタン
@@ -2036,40 +1795,45 @@ if(concedeButton){
 
     concedeButton.onclick = ()=>{
 
-        showGameConfirm(
-
-            "投了しますか？\n\n" +
-            "投了すると、このゲームはCPUの勝利になります。",
-
-            ()=>{
-
-                //----------------------------------
-                // メニューを閉じる
-                //----------------------------------
-
-                if(gameMenu){
-
-                    gameMenu.classList.remove(
-                        "show"
-                    );
-
-                }
+        const result =
+            window.confirm(
+                "投了しますか？\n\n投了すると、このゲームはCPUの勝利になります。"
+            );
 
 
-                //----------------------------------
-                // 投了
-                //----------------------------------
+        if(!result){
 
-                concedeGame();
+            console.log(
+                "投了キャンセル"
+            );
 
-            }
+            return;
 
-        );
+        }
+
+
+        //----------------------------------
+        // メニューを閉じる
+        //----------------------------------
+
+        if(gameMenu){
+
+            gameMenu.classList.remove(
+                "show"
+            );
+
+        }
+
+
+        //----------------------------------
+        // 投了
+        //----------------------------------
+
+        concedeGame();
 
     };
 
 }
-
 
 
 //======================================
