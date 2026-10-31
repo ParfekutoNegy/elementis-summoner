@@ -626,6 +626,27 @@ function initializeHomeInstall(){
 
     area.style.display = "block";
 
+    //----------------------------------
+// Xアプリ内ブラウザ判定
+//----------------------------------
+
+const isXBrowser =
+    /Twitter/i.test(
+        navigator.userAgent
+    );
+
+if(isXBrowser){
+
+    button.textContent =
+        "ブラウザで開いてください";
+
+}else{
+
+    button.textContent =
+        "ホーム画面に追加";
+
+}
+
 
     // ----------------------------------
     // ボタンを押したとき
