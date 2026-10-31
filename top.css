@@ -98,7 +98,7 @@ body {
 
 
 /* =========================
-   メニュー
+   トップメニュー 2列配置
 ========================= */
 
 #top-menu {
@@ -107,11 +107,23 @@ body {
 
     max-width: 620px;
 
-    display: flex;
+    display: grid;
 
-    flex-direction: column;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-    gap: 18px;
+    gap: 14px;
+
+}
+
+
+/* =========================
+   公式ホームページは横幅いっぱい
+========================= */
+
+.top-menu-official {
+
+    grid-column: 1 / -1;
 
 }
 
@@ -130,9 +142,9 @@ body {
 
     justify-content: center;
 
-    min-height: 95px;
+    min-height: 105px;
 
-    padding: 18px 25px;
+    padding: 14px 8px;
 
     text-decoration: none;
 
@@ -170,26 +182,34 @@ body {
 
 .menu-title {
 
-    font-size: 24px;
+    font-size: 19px;
 
     font-weight: bold;
 
-    letter-spacing: 2px;
+    letter-spacing: 0.5px;
+
+    text-align: center;
+
+    line-height: 1.4;
 
 }
 
 
 /* =========================
-   説明
+   ボタン説明文
 ========================= */
 
 .menu-description {
 
     margin-top: 7px;
 
-    font-size: 13px;
+    font-size: 11px;
 
     color: #cbb68d;
+
+    text-align: center;
+
+    line-height: 1.5;
 
 }
 
@@ -492,3 +512,111 @@ body{
 
 }
 
+
+/* =========================================================
+   トップメニュー 2列表示 最終調整
+========================================================= */
+
+@media (max-width: 600px) {
+
+    #top-menu {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+
+    }
+
+    .top-menu-button {
+
+        min-height: 100px;
+
+        padding: 12px 6px;
+
+    }
+
+    .menu-title {
+
+        font-size: 17px;
+
+        letter-spacing: 0;
+
+        line-height: 1.4;
+
+    }
+
+    .menu-description {
+
+        font-size: 10px;
+
+        line-height: 1.5;
+
+    }
+
+    .top-menu-official {
+
+        grid-column: 1 / -1;
+
+        min-height: 76px;
+
+    }
+
+}
+
+
+/* =========================================================
+   スマホ横向き時も2列表示を維持
+========================================================= */
+
+@media screen and (orientation: landscape)
+       and (pointer: coarse) {
+
+    #top-menu {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 12px;
+
+    }
+
+    .top-menu-button {
+
+        min-height: 100px;
+
+        padding: 12px 6px;
+
+    }
+
+    .menu-title {
+
+        font-size: 17px;
+
+        letter-spacing: 0;
+
+        line-height: 1.4;
+
+    }
+
+    .menu-description {
+
+        font-size: 10px;
+
+        line-height: 1.5;
+
+    }
+
+    .top-menu-official {
+
+        grid-column: 1 / -1;
+
+        min-height: 76px;
+
+    }
+
+}
